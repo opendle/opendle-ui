@@ -41,6 +41,13 @@ export declare const designTokens: {
         readonly blue: "--od-color-blue";
         readonly purple: "--od-color-purple";
         readonly focus: "--od-color-focus";
+        readonly amber: "--od-color-amber";
+        readonly limeSoft: "--od-color-lime-soft";
+        readonly blueSoft: "--od-color-blue-soft";
+        readonly purpleSoft: "--od-color-purple-soft";
+        readonly coralSoft: "--od-color-coral-soft";
+        readonly amberSoft: "--od-color-amber-soft";
+        readonly shadow: "--od-shadow";
     };
     readonly radius: {
         readonly sm: "--od-radius-sm";

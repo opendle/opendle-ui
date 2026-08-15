@@ -103,6 +103,13 @@ export const designTokens = {
         blue: "--od-color-blue",
         purple: "--od-color-purple",
         focus: "--od-color-focus",
+        amber: "--od-color-amber",
+        limeSoft: "--od-color-lime-soft",
+        blueSoft: "--od-color-blue-soft",
+        purpleSoft: "--od-color-purple-soft",
+        coralSoft: "--od-color-coral-soft",
+        amberSoft: "--od-color-amber-soft",
+        shadow: "--od-shadow",
     },
     radius: {
         sm: "--od-radius-sm",
