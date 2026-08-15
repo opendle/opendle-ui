@@ -5,6 +5,11 @@ set -euo pipefail
 repository_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$repository_root"
 
+if [[ "$(node --version)" != "v24.17.0" ]]; then
+  echo "Node.js 24.17.0 is required." >&2
+  exit 1
+fi
+
 required_files=(
   "AGENTS.md"
   "README.md"
@@ -16,6 +21,8 @@ required_files=(
   "tsconfig.json"
   "tsconfig.build.json"
   "src/index.tsx"
+  "dist/index.js"
+  "dist/index.d.ts"
   "styles/tokens.css"
   ".claude/skills/design-system/SKILL.md"
   ".claude/skills/repository-tooling/SKILL.md"
