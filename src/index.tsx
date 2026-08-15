@@ -204,8 +204,19 @@ export const designTokens = {
     background: "--od-color-background",
     foreground: "--od-color-foreground",
     muted: "--od-color-muted",
+    mutedStrong: "--od-color-muted-strong",
     accent: "--od-color-accent",
     border: "--od-color-border",
+    borderStrong: "--od-color-border-strong",
+    surface: "--od-color-surface",
+    surfaceRaised: "--od-color-surface-raised",
+    sidebar: "--od-color-sidebar",
+    sidebarMuted: "--od-color-sidebar-muted",
+    lime: "--od-color-lime",
+    coral: "--od-color-coral",
+    blue: "--od-color-blue",
+    purple: "--od-color-purple",
+    focus: "--od-color-focus",
   },
   radius: {
     sm: "--od-radius-sm",
@@ -219,4 +230,18 @@ export const designTokens = {
     lg: "--od-space-lg",
     xl: "--od-space-xl",
   },
+  font: {
+    body: "--od-font-body",
+    display: "--od-font-display",
+    mono: "--od-font-mono",
+  },
 } as const;
+
+export { Button, type ButtonProps, type ButtonVariant } from "./components/Button.js";
+export { Card, type CardProps } from "./components/Card.js";
+export { ChainStep, type ChainStepProps } from "./components/ChainStep.js";
+export { ContextItem, type ContextItemProps } from "./components/ContextItem.js";
+export { PageHeading, type PageHeadingProps } from "./components/PageHeading.js";
+export { PlanCardShell, type PlanCardShellProps } from "./components/PlanCardShell.js";
+export { ShellErrorBoundary, type ShellErrorBoundaryProps } from "./components/ShellErrorBoundary.js";
+export { StatCard, type StatCardProps } from "./components/StatCard.js";

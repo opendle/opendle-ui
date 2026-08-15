@@ -15,6 +15,15 @@ The package starts as `@opendle/ui`. Add a shared primitive here when at least
 two host projects need the same behavior. Keep the public API small and test
 the user-visible behavior.
 
+The package includes accessible primitives and composition components such as
+buttons, cards, page headings, context items, statistic cards, route steps,
+review-plan shells, status indicators, and error boundaries. Host apps keep
+their navigation, routes, product copy, mock data, and service behavior here.
+
+Typography uses the Xbot design as the source of truth: Aptos for body text,
+Aptos Display for headings, and Aptos Mono with system fallbacks for technical
+text. Use the `--od-*` tokens instead of adding a host-specific font system.
+
 The three host applications use the `main` branch of this Git repository. This
 keeps all apps on the current shared package without release coordination or
 package version updates. The Git dependency is an intentional exception to

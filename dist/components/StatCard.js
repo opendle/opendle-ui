@@ -1,0 +1,5 @@
+import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
+export function StatCard({ className, icon, label, note, tone, trend, unit, value, visual, }) {
+    return (_jsxs("article", { className: ["od-stat-card", "stat-card", tone ? `od-stat-card-${tone}` : null, className].filter(Boolean).join(" "), children: [_jsxs("div", { className: "od-stat-top stat-top", children: [_jsx("span", { className: "od-stat-label stat-label", children: label }), _jsx("span", { className: ["od-stat-icon", "stat-icon", tone ? `stat-icon-${tone}` : null].filter(Boolean).join(" "), children: icon })] }), _jsxs("strong", { children: [value, unit ? _jsx("span", { className: "od-stat-unit", children: unit }) : null] }), trend || note ? (_jsxs("span", { className: "od-stat-trend stat-trend", children: [trend, " ", note ? _jsx("em", { children: note }) : null] })) : null, visual] }));
+}
+//# sourceMappingURL=StatCard.js.map
