@@ -15,6 +15,11 @@ The package starts as `@opendle/ui`. Add a shared primitive here when at least
 two host projects need the same behavior. Keep the public API small and test
 the user-visible behavior.
 
+The three host applications use a local sibling `file:` dependency. This keeps
+all apps on the current shared worktree without release coordination. Build
+this package before a host app check. The local dependency is an intentional
+exception to host dependency age and exact-version checks.
+
 ## Development
 
 ```sh

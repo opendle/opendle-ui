@@ -15,7 +15,7 @@ required_files=(
   "package.json"
   "tsconfig.json"
   "tsconfig.build.json"
-  "src/index.ts"
+  "src/index.tsx"
   "styles/tokens.css"
   ".claude/skills/design-system/SKILL.md"
   ".claude/skills/repository-tooling/SKILL.md"
@@ -27,8 +27,8 @@ for required_file in "${required_files[@]}"; do
 done
 
 grep -Fqx "Copyright 2026 tubededentifrice" LICENSE.md
-grep -Fqx '"license": "FSL-1.1-ALv2"' package.json
+grep -Fq '"license": "FSL-1.1-ALv2"' package.json
 grep -Fq 'FSL-1.1-ALv2' README.md
-grep -Fq 'export const OPENDLE_UI_VERSION' src/index.ts
+grep -Fq 'export const OPENDLE_UI_VERSION' src/index.tsx
 
 echo "Repository checks passed."
