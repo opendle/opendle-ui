@@ -1,0 +1,15 @@
+:root {
+  --od-color-background: #ffffff;
+  --od-color-foreground: #172033;
+  --od-color-muted: #5b6475;
+  --od-color-accent: #3157d5;
+  --od-color-border: #d8deea;
+  --od-radius-sm: 0.25rem;
+  --od-radius-md: 0.5rem;
+  --od-radius-lg: 0.75rem;
+  --od-space-xs: 0.25rem;
+  --od-space-sm: 0.5rem;
+  --od-space-md: 1rem;
+  --od-space-lg: 1.5rem;
+  --od-space-xl: 2rem;
+}
