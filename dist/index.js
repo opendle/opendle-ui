@@ -1,5 +1,4 @@
 import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
-import { useLayoutEffect, useRef } from "react";
 /** Public package version. Keep this value aligned with package.json. */
 export const OPENDLE_UI_VERSION = "0.1.0";
 const iconPaths = {
@@ -43,46 +42,6 @@ export function StatusDot({ tone = "green", className, ...props }) {
 }
 export function StatusPill({ tone, children, className }) {
     return (_jsxs("span", { className: ["od-status-pill", `od-status-${tone}`, className].filter(Boolean).join(" "), children: [_jsx(StatusDot, { tone: tone }), children] }));
-}
-function resizeTextarea(textarea, maxHeight) {
-    if (!textarea)
-        return;
-    textarea.style.height = "auto";
-    const nextHeight = Math.min(textarea.scrollHeight, maxHeight);
-    textarea.style.height = `${nextHeight}px`;
-    textarea.style.overflowY = textarea.scrollHeight > maxHeight ? "auto" : "hidden";
-}
-export function AutoGrowTextarea({ maxHeight = 240, onInput, rows = 2, style, value, defaultValue, ...props }) {
-    const textareaRef = useRef(null);
-    useLayoutEffect(() => {
-        resizeTextarea(textareaRef.current, maxHeight);
-    }, [defaultValue, maxHeight, value]);
-    useLayoutEffect(() => {
-        const textarea = textareaRef.current;
-        if (!textarea || typeof ResizeObserver === "undefined")
-            return;
-        let observedWidth = textarea.getBoundingClientRect().width;
-        const observer = new ResizeObserver(([entry]) => {
-            if (!entry || entry.contentRect.width === observedWidth)
-                return;
-            observedWidth = entry.contentRect.width;
-            resizeTextarea(textarea, maxHeight);
-        });
-        observer.observe(textarea);
-        return () => observer.disconnect();
-    }, [maxHeight]);
-    function resizeForContent(event) {
-        resizeTextarea(event.currentTarget, maxHeight);
-        onInput?.(event);
-    }
-    return (_jsx("textarea", { ...props, ref: textareaRef, rows: rows, value: value, defaultValue: defaultValue, onInput: resizeForContent, style: {
-            ...style,
-            height: "auto",
-            minHeight: 0,
-            maxHeight,
-            overflowY: "hidden",
-            resize: "none",
-        } }));
 }
 /** Shared token names. Values are defined in styles/tokens.css. */
 export const designTokens = {
@@ -129,13 +88,26 @@ export const designTokens = {
         mono: "--od-font-mono",
     },
 };
+export { AutoGrowTextarea } from "./components/AutoGrowTextarea.js";
 export { Button } from "./components/Button.js";
+export { AccountMenu } from "./components/AccountMenu.js";
+export { AgentSidebar } from "./components/AgentSidebar.js";
+export { AttentionRow } from "./components/AttentionRow.js";
+export { CalendarBoard } from "./components/CalendarBoard.js";
 export { Card } from "./components/Card.js";
 export { ChainStep } from "./components/ChainStep.js";
 export { ContextItem } from "./components/ContextItem.js";
+export { HealthBar } from "./components/HealthBar.js";
 export { IconButton } from "./components/IconButton.js";
+export { NavigationItem } from "./components/NavigationItem.js";
+export { NavigationLink } from "./components/NavigationLink.js";
+export { MobileNavigation } from "./components/MobileNavigation.js";
 export { PageHeading } from "./components/PageHeading.js";
+export { Panel, PanelHeader } from "./components/Panel.js";
 export { PlanCardShell } from "./components/PlanCardShell.js";
+export { ReviewPlanCard } from "./components/ReviewPlanCard.js";
 export { ShellErrorBoundary } from "./components/ShellErrorBoundary.js";
 export { StatCard } from "./components/StatCard.js";
+export { Toast } from "./components/Toast.js";
+export { WorkspaceSelector } from "./components/WorkspaceSelector.js";
 //# sourceMappingURL=index.js.map

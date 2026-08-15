@@ -1,4 +1,4 @@
-import type { HTMLAttributes, ReactNode, SVGAttributes, TextareaHTMLAttributes } from "react";
+import type { HTMLAttributes, ReactNode, SVGAttributes } from "react";
 /** Public package version. Keep this value aligned with package.json. */
 export declare const OPENDLE_UI_VERSION: "0.1.0";
 export type IconName = "activity" | "arrow-up" | "audit" | "book" | "chevron" | "clock" | "cloud" | "database" | "eye" | "file" | "filter" | "grid" | "health" | "key" | "layers" | "list" | "lock" | "logout" | "menu" | "more" | "moon" | "plus" | "refresh" | "search" | "server" | "settings" | "shield" | "spark" | "users" | "warning" | "workspace";
@@ -18,10 +18,6 @@ export interface StatusPillProps {
     readonly className?: string;
 }
 export declare function StatusPill({ tone, children, className }: StatusPillProps): import("react").JSX.Element;
-export interface AutoGrowTextareaProps extends TextareaHTMLAttributes<HTMLTextAreaElement> {
-    readonly maxHeight?: number;
-}
-export declare function AutoGrowTextarea({ maxHeight, onInput, rows, style, value, defaultValue, ...props }: AutoGrowTextareaProps): import("react").JSX.Element;
 /** Shared token names. Values are defined in styles/tokens.css. */
 export declare const designTokens: {
     readonly color: {
@@ -67,13 +63,26 @@ export declare const designTokens: {
         readonly mono: "--od-font-mono";
     };
 };
+export { AutoGrowTextarea, type AutoGrowTextareaProps } from "./components/AutoGrowTextarea.js";
 export { Button, type ButtonProps, type ButtonVariant } from "./components/Button.js";
+export { AccountMenu, type AccountMenuProps } from "./components/AccountMenu.js";
+export { AgentSidebar, type AgentSidebarProps } from "./components/AgentSidebar.js";
+export { AttentionRow, type AttentionRowProps, type AttentionTone } from "./components/AttentionRow.js";
+export { CalendarBoard, type CalendarBoardProps, type CalendarEvent, type CalendarEventState, type CalendarMode } from "./components/CalendarBoard.js";
 export { Card, type CardProps } from "./components/Card.js";
 export { ChainStep, type ChainStepProps } from "./components/ChainStep.js";
 export { ContextItem, type ContextItemProps } from "./components/ContextItem.js";
+export { HealthBar, type HealthBarProps } from "./components/HealthBar.js";
 export { IconButton, type IconButtonProps } from "./components/IconButton.js";
+export { NavigationItem, type NavigationItemProps } from "./components/NavigationItem.js";
+export { NavigationLink, type NavigationLinkProps } from "./components/NavigationLink.js";
+export { MobileNavigation, type MobileNavigationItem, type MobileNavigationProps } from "./components/MobileNavigation.js";
 export { PageHeading, type PageHeadingProps } from "./components/PageHeading.js";
+export { Panel, PanelHeader, type PanelHeaderProps, type PanelProps } from "./components/Panel.js";
 export { PlanCardShell, type PlanCardShellProps } from "./components/PlanCardShell.js";
+export { ReviewPlanCard, type ReviewPlanCardProps, type ReviewPlanDetail, type ReviewPlanState } from "./components/ReviewPlanCard.js";
 export { ShellErrorBoundary, type ShellErrorBoundaryProps } from "./components/ShellErrorBoundary.js";
 export { StatCard, type StatCardProps } from "./components/StatCard.js";
+export { Toast, type ToastProps } from "./components/Toast.js";
+export { WorkspaceSelector, type WorkspaceSelectorProps } from "./components/WorkspaceSelector.js";
 //# sourceMappingURL=index.d.ts.map

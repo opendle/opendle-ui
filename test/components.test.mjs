@@ -4,16 +4,29 @@ import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import {
   AutoGrowTextarea,
+  AccountMenu,
+  AgentSidebar,
+  AttentionRow,
   Button,
   Card,
+  CalendarBoard,
   ContextItem,
+  HealthBar,
   Icon,
   IconButton,
+  NavigationItem,
+  NavigationLink,
+  MobileNavigation,
   PageHeading,
+  Panel,
+  PanelHeader,
   PlanCardShell,
+  ReviewPlanCard,
   ShellErrorBoundary,
   StatCard,
   StatusPill,
+  Toast,
+  WorkspaceSelector,
 } from "../dist/index.js";
 
 test("Icon renders a decorative SVG with the shared class", () => {
@@ -97,6 +110,50 @@ test("PlanCardShell keeps an accessible article boundary", () => {
   assert.match(markup, /class="od-plan-card shared-plan-card"/);
   assert.match(markup, /aria-label="Review plan"/);
   assert.match(markup, /Waiting for review/);
+});
+
+test("shared shell controls expose semantic labels and states", () => {
+  const markup = renderToStaticMarkup(
+    React.createElement(
+      "div",
+      null,
+      React.createElement(WorkspaceSelector, { avatar: "TD", detail: "Personal", name: "Workspace" }),
+      React.createElement(AccountMenu, { avatar: "VL", detail: "Administrator", name: "Vincent" }),
+      React.createElement(NavigationItem, { active: true, icon: React.createElement(Icon, { name: "grid" }), label: "Overview" }),
+      React.createElement(NavigationLink, { active: false, href: "/audit", icon: React.createElement(Icon, { name: "audit" }), label: "Audit" }),
+      React.createElement(MobileNavigation, { "aria-label": "Mobile navigation", items: [{ id: "home", label: "Home", icon: React.createElement(Icon, { name: "grid" }), active: true, badge: 2 }], onSelect: () => undefined }),
+      React.createElement(Panel, { "aria-label": "Health" }, React.createElement(PanelHeader, { title: "Health", description: "Current status" }), React.createElement(HealthBar, { label: "API", value: 88 })),
+      React.createElement(AttentionRow, { icon: React.createElement(Icon, { name: "warning" }), title: "Review", detail: "Needs action", onClick: () => undefined }),
+      React.createElement(Toast, null, "Saved"),
+    ),
+  );
+  assert.match(markup, /od-workspace-selector/);
+  assert.match(markup, /od-account-menu/);
+  assert.match(markup, /aria-current="page"/);
+  assert.match(markup, /href="\/audit"/);
+  assert.match(markup, /role="progressbar"/);
+  assert.match(markup, /od-attention-row/);
+  assert.match(markup, /role="status"/);
+  assert.match(markup, /od-mobile-navigation/);
+});
+
+test("ReviewPlanCard and CalendarBoard provide generic interactive views", () => {
+  const items = [{ id: "event-1", title: "Review", detail: "Check", date: "2026-08-12", start: "10:00", end: "10:30", kind: "reminder", state: "planned", editable: true }];
+  const markup = renderToStaticMarkup(
+    React.createElement(
+      "div",
+      null,
+      React.createElement(ReviewPlanCard, { ariaLabel: "Review plan", meta: "Needs review", state: "pending", text: "Check the release.", title: "Review", onApprove: () => undefined, onEdit: () => undefined, onRefuse: () => undefined, onRestore: () => undefined }),
+      React.createElement(CalendarBoard, { mode: "week", items, weekDates: ["2026-08-12"], weekHours: ["10:00"], today: "2026-08-12", selectedId: null, draggedId: null, dropDate: null, onSelect: () => undefined, onDragStart: () => undefined, onDragEnd: () => undefined, onAllowDrop: () => undefined, onClearDrop: () => undefined, onMove: () => undefined }),
+    ),
+  );
+  const monthMarkup = renderToStaticMarkup(
+    React.createElement(CalendarBoard, { mode: "month", items, weekDates: [], weekHours: [], today: "2027-02-10", selectedId: null, draggedId: null, dropDate: null, onSelect: () => undefined, onDragStart: () => undefined, onDragEnd: () => undefined, onAllowDrop: () => undefined, onClearDrop: () => undefined, onMove: () => undefined }),
+  );
+  assert.match(markup, /od-plan-card/);
+  assert.match(markup, /calendar-week/);
+  assert.match(markup, /Review/);
+  assert.match(monthMarkup, /February 2027 month view/);
 });
 
 test("ShellErrorBoundary renders its children when no error exists", () => {

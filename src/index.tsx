@@ -1,10 +1,7 @@
-import { useLayoutEffect, useRef } from "react";
 import type {
   HTMLAttributes,
-  InputEvent as ReactInputEvent,
   ReactNode,
   SVGAttributes,
-  TextareaHTMLAttributes,
 } from "react";
 
 /** Public package version. Keep this value aligned with package.json. */
@@ -133,71 +130,6 @@ export function StatusPill({ tone, children, className }: StatusPillProps) {
   );
 }
 
-export interface AutoGrowTextareaProps extends TextareaHTMLAttributes<HTMLTextAreaElement> {
-  readonly maxHeight?: number;
-}
-
-function resizeTextarea(textarea: HTMLTextAreaElement | null, maxHeight: number) {
-  if (!textarea) return;
-  textarea.style.height = "auto";
-  const nextHeight = Math.min(textarea.scrollHeight, maxHeight);
-  textarea.style.height = `${nextHeight}px`;
-  textarea.style.overflowY = textarea.scrollHeight > maxHeight ? "auto" : "hidden";
-}
-
-export function AutoGrowTextarea({
-  maxHeight = 240,
-  onInput,
-  rows = 2,
-  style,
-  value,
-  defaultValue,
-  ...props
-}: AutoGrowTextareaProps) {
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
-
-  useLayoutEffect(() => {
-    resizeTextarea(textareaRef.current, maxHeight);
-  }, [defaultValue, maxHeight, value]);
-
-  useLayoutEffect(() => {
-    const textarea = textareaRef.current;
-    if (!textarea || typeof ResizeObserver === "undefined") return;
-    let observedWidth = textarea.getBoundingClientRect().width;
-    const observer = new ResizeObserver(([entry]) => {
-      if (!entry || entry.contentRect.width === observedWidth) return;
-      observedWidth = entry.contentRect.width;
-      resizeTextarea(textarea, maxHeight);
-    });
-    observer.observe(textarea);
-    return () => observer.disconnect();
-  }, [maxHeight]);
-
-  function resizeForContent(event: ReactInputEvent<HTMLTextAreaElement>) {
-    resizeTextarea(event.currentTarget, maxHeight);
-    onInput?.(event);
-  }
-
-  return (
-    <textarea
-      {...props}
-      ref={textareaRef}
-      rows={rows}
-      value={value}
-      defaultValue={defaultValue}
-      onInput={resizeForContent}
-      style={{
-        ...style,
-        height: "auto",
-        minHeight: 0,
-        maxHeight,
-        overflowY: "hidden",
-        resize: "none",
-      }}
-    />
-  );
-}
-
 /** Shared token names. Values are defined in styles/tokens.css. */
 export const designTokens = {
   color: {
@@ -244,12 +176,25 @@ export const designTokens = {
   },
 } as const;
 
+export { AutoGrowTextarea, type AutoGrowTextareaProps } from "./components/AutoGrowTextarea.js";
 export { Button, type ButtonProps, type ButtonVariant } from "./components/Button.js";
+export { AccountMenu, type AccountMenuProps } from "./components/AccountMenu.js";
+export { AgentSidebar, type AgentSidebarProps } from "./components/AgentSidebar.js";
+export { AttentionRow, type AttentionRowProps, type AttentionTone } from "./components/AttentionRow.js";
+export { CalendarBoard, type CalendarBoardProps, type CalendarEvent, type CalendarEventState, type CalendarMode } from "./components/CalendarBoard.js";
 export { Card, type CardProps } from "./components/Card.js";
 export { ChainStep, type ChainStepProps } from "./components/ChainStep.js";
 export { ContextItem, type ContextItemProps } from "./components/ContextItem.js";
+export { HealthBar, type HealthBarProps } from "./components/HealthBar.js";
 export { IconButton, type IconButtonProps } from "./components/IconButton.js";
+export { NavigationItem, type NavigationItemProps } from "./components/NavigationItem.js";
+export { NavigationLink, type NavigationLinkProps } from "./components/NavigationLink.js";
+export { MobileNavigation, type MobileNavigationItem, type MobileNavigationProps } from "./components/MobileNavigation.js";
 export { PageHeading, type PageHeadingProps } from "./components/PageHeading.js";
+export { Panel, PanelHeader, type PanelHeaderProps, type PanelProps } from "./components/Panel.js";
 export { PlanCardShell, type PlanCardShellProps } from "./components/PlanCardShell.js";
+export { ReviewPlanCard, type ReviewPlanCardProps, type ReviewPlanDetail, type ReviewPlanState } from "./components/ReviewPlanCard.js";
 export { ShellErrorBoundary, type ShellErrorBoundaryProps } from "./components/ShellErrorBoundary.js";
 export { StatCard, type StatCardProps } from "./components/StatCard.js";
+export { Toast, type ToastProps } from "./components/Toast.js";
+export { WorkspaceSelector, type WorkspaceSelectorProps } from "./components/WorkspaceSelector.js";
