@@ -10,6 +10,7 @@ export interface StatCardProps {
     readonly visual?: ReactNode;
     readonly tone?: string;
     readonly className?: string;
+    readonly orientation?: "stacked" | "inline";
 }
-export declare function StatCard({ className, icon, label, note, tone, trend, trendClassName, unit, value, visual, }: StatCardProps): import("react").JSX.Element;
+export declare function StatCard({ className, icon, label, note, orientation, tone, trend, trendClassName, unit, value, visual, }: StatCardProps): import("react").JSX.Element;
 //# sourceMappingURL=StatCard.d.ts.map

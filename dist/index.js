@@ -133,6 +133,7 @@ export { Button } from "./components/Button.js";
 export { Card } from "./components/Card.js";
 export { ChainStep } from "./components/ChainStep.js";
 export { ContextItem } from "./components/ContextItem.js";
+export { IconButton } from "./components/IconButton.js";
 export { PageHeading } from "./components/PageHeading.js";
 export { PlanCardShell } from "./components/PlanCardShell.js";
 export { ShellErrorBoundary } from "./components/ShellErrorBoundary.js";

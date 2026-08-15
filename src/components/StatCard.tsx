@@ -11,6 +11,7 @@ export interface StatCardProps {
   readonly visual?: ReactNode;
   readonly tone?: string;
   readonly className?: string;
+  readonly orientation?: "stacked" | "inline";
 }
 
 export function StatCard({
@@ -18,6 +19,7 @@ export function StatCard({
   icon,
   label,
   note,
+  orientation = "stacked",
   tone,
   trend,
   trendClassName,
@@ -26,21 +28,43 @@ export function StatCard({
   visual,
 }: StatCardProps) {
   return (
-    <article className={["od-stat-card", "stat-card", tone ? `od-stat-card-${tone}` : null, className].filter(Boolean).join(" ")}>
-      <div className="od-stat-top stat-top">
-        <span className="od-stat-label stat-label">{label}</span>
-        <span className={["od-stat-icon", "stat-icon", tone ? `stat-icon-${tone}` : null].filter(Boolean).join(" ")}>{icon}</span>
-      </div>
-      <strong>
-        {value}
-        {unit ? <span className="od-stat-unit">{unit}</span> : null}
-      </strong>
-      {trend || note ? (
-        <span className={["od-stat-trend", "stat-trend", trendClassName].filter(Boolean).join(" ")}>
-          {trend} {note ? <em>{note}</em> : null}
-        </span>
-      ) : null}
-      {visual}
+    <article className={["od-stat-card", orientation === "inline" ? "od-stat-card-inline" : null, "stat-card", tone ? `od-stat-card-${tone}` : null, className].filter(Boolean).join(" ")}>
+      {orientation === "inline" ? (
+        <>
+          <span className={["od-stat-icon", "stat-icon", tone ? `stat-icon-${tone}` : null].filter(Boolean).join(" ")}>{icon}</span>
+          <div className="od-stat-copy">
+            <span className="od-stat-label stat-label">{label}</span>
+            <strong>
+              {value}
+              {unit ? <span className="od-stat-unit">{unit}</span> : null}
+            </strong>
+            {note ? <small className="od-stat-note">{note}</small> : null}
+            {trend ? (
+              <span className={["od-stat-trend", "stat-trend", trendClassName].filter(Boolean).join(" ")}>
+                {trend}
+              </span>
+            ) : null}
+            {visual}
+          </div>
+        </>
+      ) : (
+        <>
+          <div className="od-stat-top stat-top">
+            <span className="od-stat-label stat-label">{label}</span>
+            <span className={["od-stat-icon", "stat-icon", tone ? `stat-icon-${tone}` : null].filter(Boolean).join(" ")}>{icon}</span>
+          </div>
+          <strong>
+            {value}
+            {unit ? <span className="od-stat-unit">{unit}</span> : null}
+          </strong>
+          {trend || note ? (
+            <span className={["od-stat-trend", "stat-trend", trendClassName].filter(Boolean).join(" ")}>
+              {trend} {note ? <em>{note}</em> : null}
+            </span>
+          ) : null}
+          {visual}
+        </>
+      )}
     </article>
   );
 }

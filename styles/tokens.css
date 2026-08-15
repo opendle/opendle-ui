@@ -36,6 +36,22 @@
   --od-font-mono: "Aptos Mono", "Cascadia Mono", ui-monospace, monospace;
 }
 
+html {
+  min-width: 20rem;
+  background: var(--od-color-background);
+}
+
+body {
+  min-width: 20rem;
+  min-height: 100vh;
+  margin: 0;
+  color: var(--od-color-foreground);
+  background: var(--od-color-background);
+  font-family: var(--od-font-body);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+}
+
 * {
   box-sizing: border-box;
 }
@@ -58,9 +74,23 @@ button:not(:disabled) {
 button:focus-visible,
 input:focus-visible,
 select:focus-visible,
-textarea:focus-visible {
+textarea:focus-visible,
+a:focus-visible {
   outline: 3px solid color-mix(in srgb, var(--od-color-focus) 58%, transparent);
   outline-offset: 2px;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--od-font-display);
+}
+
+code,
+kbd,
+pre,
+samp {
+  font-family: var(--od-font-mono);
 }
 
 .od-icon {
@@ -99,6 +129,17 @@ textarea:focus-visible {
 .od-button-icon {
   width: 2.375rem;
   padding: 0;
+}
+
+.od-icon-button {
+  display: inline-grid;
+  width: 2.375rem;
+  height: 2.375rem;
+  place-items: center;
+  padding: 0;
+  border: 1px solid var(--od-color-border);
+  border-radius: var(--od-radius-md);
+  background: var(--od-color-surface-raised);
 }
 
 .od-card {
@@ -210,6 +251,37 @@ textarea:focus-visible {
   border-radius: var(--od-radius-lg);
   background: var(--od-color-surface-raised);
   box-shadow: var(--od-shadow);
+}
+
+.od-stat-card-inline {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.8125rem;
+  min-height: 7rem;
+}
+
+.od-stat-card-inline .od-stat-icon {
+  width: 2.125rem;
+  height: 2.125rem;
+}
+
+.od-stat-copy {
+  min-width: 0;
+}
+
+.od-stat-card-inline .od-stat-label,
+.od-stat-note {
+  display: block;
+}
+
+.od-stat-card-inline .od-stat-label {
+  margin: 0.0625rem 0 0.4375rem;
+}
+
+.od-stat-note {
+  margin-top: 0.3125rem;
+  color: var(--od-color-muted);
+  font-size: 0.625rem;
 }
 
 .od-stat-top {

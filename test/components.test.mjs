@@ -8,6 +8,7 @@ import {
   Card,
   ContextItem,
   Icon,
+  IconButton,
   PageHeading,
   PlanCardShell,
   ShellErrorBoundary,
@@ -67,6 +68,22 @@ test("shared composition components expose semantic classes and content", () => 
   assert.match(markup, /class="od-stat-trend stat-trend trend-up"/);
   assert.match(markup, /class="od-button od-button-secondary"/);
   assert.match(markup, />Continue<\/button>/);
+});
+
+test("shared controls support heading levels, inline statistics, and icon buttons", () => {
+  const markup = renderToStaticMarkup(
+    React.createElement(
+      "div",
+      null,
+      React.createElement(PageHeading, { eyebrow: "Area", headingLevel: "h2", title: "Details" }),
+      React.createElement(StatCard, { icon: React.createElement(Icon, { name: "server" }), label: "Services", note: "Healthy", orientation: "inline", value: "8" }),
+      React.createElement(IconButton, { "aria-label": "Refresh", icon: React.createElement(Icon, { name: "refresh" }) }),
+    ),
+  );
+  assert.match(markup, /<h2>Details<\/h2>/);
+  assert.match(markup, /class="od-stat-card od-stat-card-inline stat-card"/);
+  assert.match(markup, /class="od-icon-button"/);
+  assert.match(markup, /aria-label="Refresh"/);
 });
 
 test("PlanCardShell keeps an accessible article boundary", () => {

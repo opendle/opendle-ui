@@ -248,6 +248,7 @@ export { Button, type ButtonProps, type ButtonVariant } from "./components/Butto
 export { Card, type CardProps } from "./components/Card.js";
 export { ChainStep, type ChainStepProps } from "./components/ChainStep.js";
 export { ContextItem, type ContextItemProps } from "./components/ContextItem.js";
+export { IconButton, type IconButtonProps } from "./components/IconButton.js";
 export { PageHeading, type PageHeadingProps } from "./components/PageHeading.js";
 export { PlanCardShell, type PlanCardShellProps } from "./components/PlanCardShell.js";
 export { ShellErrorBoundary, type ShellErrorBoundaryProps } from "./components/ShellErrorBoundary.js";

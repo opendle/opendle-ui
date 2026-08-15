@@ -16,8 +16,9 @@ two host projects need the same behavior. Keep the public API small and test
 the user-visible behavior.
 
 The package includes accessible primitives and composition components such as
-buttons, cards, page headings, context items, statistic cards, route steps,
-review-plan shells, status indicators, and error boundaries. Host apps keep
+buttons, icon buttons, cards, page headings, context items, statistic cards,
+route steps, review-plan shells, status indicators, and error boundaries. Host
+apps keep
 their navigation, routes, product copy, mock data, and service behavior here.
 
 Typography uses the Xbot design as the source of truth: Aptos for body text,
