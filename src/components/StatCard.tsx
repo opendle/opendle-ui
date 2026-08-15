@@ -6,6 +6,7 @@ export interface StatCardProps {
   readonly value: ReactNode;
   readonly unit?: ReactNode;
   readonly trend?: ReactNode;
+  readonly trendClassName?: string;
   readonly note?: ReactNode;
   readonly visual?: ReactNode;
   readonly tone?: string;
@@ -19,6 +20,7 @@ export function StatCard({
   note,
   tone,
   trend,
+  trendClassName,
   unit,
   value,
   visual,
@@ -34,7 +36,7 @@ export function StatCard({
         {unit ? <span className="od-stat-unit">{unit}</span> : null}
       </strong>
       {trend || note ? (
-        <span className="od-stat-trend stat-trend">
+        <span className={["od-stat-trend", "stat-trend", trendClassName].filter(Boolean).join(" ")}>
           {trend} {note ? <em>{note}</em> : null}
         </span>
       ) : null}

@@ -55,7 +55,7 @@ test("shared composition components expose semantic classes and content", () => 
       ),
       React.createElement(
         StatCard,
-        { icon: React.createElement(Icon, { name: "health" }), label: "Health", value: "100%" },
+        { icon: React.createElement(Icon, { name: "health" }), label: "Health", trend: "up", trendClassName: "trend-up", value: "100%" },
       ),
       React.createElement(Button, { variant: "secondary" }, "Continue"),
     ),
@@ -64,6 +64,7 @@ test("shared composition components expose semantic classes and content", () => 
   assert.match(markup, /class="od-page-heading"/);
   assert.match(markup, /class="od-context-item"/);
   assert.match(markup, /class="od-stat-card stat-card"/);
+  assert.match(markup, /class="od-stat-trend stat-trend trend-up"/);
   assert.match(markup, /class="od-button od-button-secondary"/);
   assert.match(markup, />Continue<\/button>/);
 });
