@@ -1,6 +1,5 @@
 import { cpSync, existsSync, readFileSync } from "node:fs";
 import { mkdirSync, rmSync, statSync } from "node:fs";
-import { createHash } from "node:crypto";
 import { createRequire } from "node:module";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
@@ -65,13 +64,13 @@ function buildSource(sourceRoot) {
 }
 
 function lockName(sourceRoot) {
-  const digest = createHash("sha256").update(resolve(sourceRoot)).digest("hex").slice(0, 16);
-  return join("/tmp", `opendle-ui-build-${digest}.lock`);
+  return join(sourceRoot, "node_modules/.cache/opendle-ui-build.lock");
 }
 
 async function withBuildLock(sourceRoot, action) {
   const lock = lockName(sourceRoot);
   const staleAfter = 5 * 60 * 1000;
+  mkdirSync(dirname(lock), { recursive: true });
   while (true) {
     try {
       mkdirSync(lock);
@@ -95,8 +94,16 @@ async function withBuildLock(sourceRoot, action) {
 
 function syncBuild(sourceRoot, installedRoot) {
   if (resolve(sourceRoot) === resolve(installedRoot)) return;
-  cpSync(join(sourceRoot, "dist"), join(installedRoot, "dist"), { recursive: true, force: true });
-  cpSync(join(sourceRoot, "styles"), join(installedRoot, "styles"), { recursive: true, force: true });
+  try {
+    cpSync(join(sourceRoot, "dist"), join(installedRoot, "dist"), { recursive: true, force: true });
+    cpSync(join(sourceRoot, "styles"), join(installedRoot, "styles"), { recursive: true, force: true });
+  } catch (error) {
+    if (error.code === "EACCES" || error.code === "EROFS") {
+      console.warn("The installed @opendle/ui package is read-only. Export verification will confirm it is current.");
+      return;
+    }
+    throw error;
+  }
 }
 
 async function verify(installedRoot, expectedRoot = null) {
