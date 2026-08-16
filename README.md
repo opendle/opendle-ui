@@ -41,11 +41,16 @@ also serializes concurrent host builds so no host reads partial output.
 
 ```sh
 npm install
+npm run format:check
+npm run lint
 npm run typecheck
 npm run build
 npm test
 ./scripts/check-repository.sh
 ```
+
+The repository check also runs the 14-day dependency policy, dependency audit,
+and React Doctor. React Doctor must report score 100 with zero diagnostics.
 
 Read [`AGENTS.md`](AGENTS.md) before work. Use the skills in
 [`.claude/skills/`](.claude/skills/) for design-system work, repository

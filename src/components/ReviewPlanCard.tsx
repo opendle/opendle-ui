@@ -1,10 +1,11 @@
-import { useId, useState, type FormEvent, type ReactNode } from "react";
+import { useId, useState, type ReactNode, type SyntheticEvent } from "react";
 import type { ReactElement } from "react";
 import { AutoGrowTextarea } from "./AutoGrowTextarea.js";
 
 export type ReviewPlanState = "pending" | "approved" | "rejected";
 
 export interface ReviewPlanDetail {
+  readonly id?: string;
   readonly label: ReactNode;
   readonly value: ReactNode;
   readonly icon?: ReactNode;
@@ -28,7 +29,11 @@ export interface ReviewPlanCardProps {
   readonly onRefuse: (feedback: string) => void;
   readonly onRestore: () => void;
   readonly renderIcon?: (state: ReviewPlanState) => ReactNode;
-  readonly renderActions?: (actions: { approve: () => void; edit: () => void; refuse: () => void }) => ReactElement;
+  readonly renderActions?: (actions: {
+    approve: () => void;
+    edit: () => void;
+    refuse: () => void;
+  }) => ReactElement;
   readonly className?: string;
   readonly editLabel?: string;
   readonly saveEditLabel?: string;
@@ -38,6 +43,19 @@ export interface ReviewPlanCardProps {
 }
 
 type ReviewMode = "idle" | "edit" | "refuse";
+
+function detailKey(detail: ReviewPlanDetail) {
+  if (detail.id) return detail.id;
+  const primitiveParts = [detail.label, detail.value].filter(
+    (part): part is string | number | bigint =>
+      typeof part === "string" ||
+      typeof part === "number" ||
+      typeof part === "bigint",
+  );
+  return primitiveParts.length > 0
+    ? primitiveParts.map(String).join(":")
+    : "detail";
+}
 
 export function ReviewPlanCard({
   age = "now",
@@ -67,10 +85,10 @@ export function ReviewPlanCard({
 }: ReviewPlanCardProps) {
   const fieldId = useId();
   const [mode, setMode] = useState<ReviewMode>("idle");
-  const [draft, setDraft] = useState(text);
+  const [draft, setDraft] = useState("");
   const [feedback, setFeedback] = useState("");
 
-  function saveEdit(event: FormEvent<HTMLFormElement>) {
+  function saveEdit(event: SyntheticEvent<HTMLFormElement>) {
     event.preventDefault();
     const next = draft.trim();
     if (!next) return;
@@ -78,19 +96,38 @@ export function ReviewPlanCard({
     setMode("idle");
   }
 
-  function refuse(event: FormEvent<HTMLFormElement>) {
+  function refuse(event: SyntheticEvent<HTMLFormElement>) {
     event.preventDefault();
     onRefuse(feedback.trim());
     setMode("idle");
   }
 
-  const actions = { approve: onApprove, edit: () => { setDraft(text); setMode("edit"); }, refuse: () => setMode("refuse") };
+  const actions = {
+    approve: onApprove,
+    edit: () => {
+      setDraft(text);
+      setMode("edit");
+    },
+    refuse: () => {
+      setMode("refuse");
+    },
+  };
   return (
-    <article className={["od-plan-card", "shared-plan-card", className].filter(Boolean).join(" ")} aria-label={ariaLabel} data-compact={compact} data-state={state}>
+    <article
+      className={["od-plan-card", "shared-plan-card", className]
+        .filter(Boolean)
+        .join(" ")}
+      aria-label={ariaLabel}
+      data-compact={compact}
+      data-state={state}
+    >
       <div className="od-plan-heading plan-heading">
         <span>{renderIcon?.(state)}</span>
         <div>
-          <small>{priority ? `${String(priority)} · ` : ""}{meta}</small>
+          <small>
+            {priority ? <>{priority} · </> : null}
+            {meta}
+          </small>
           <strong>{title}</strong>
         </div>
         <span className="od-plan-age">{age}</span>
@@ -98,15 +135,143 @@ export function ReviewPlanCard({
       {state === "pending" ? (
         <>
           <div className="od-plan-copy plan-copy">
-            {channel ? <span className="od-plan-channel channel-badge">{channel}</span> : null}
+            {channel ? (
+              <span className="od-plan-channel channel-badge">{channel}</span>
+            ) : null}
             <p>{text}</p>
           </div>
-          {details?.length ? <dl className="od-plan-details plan-details">{details.map((detail, index) => <div key={index}><dt>{detail.label}</dt><dd>{detail.icon}{detail.value}</dd></div>)}</dl> : null}
-          {mode === "edit" ? <form className="od-plan-inline-form plan-inline-form" onSubmit={saveEdit}><label htmlFor={`${fieldId}-edit`}>{editLabel}</label><AutoGrowTextarea id={`${fieldId}-edit`} value={draft} onChange={(event) => setDraft(event.target.value)} maxLength={textMaxLength} rows={2} />{textMaxLength ? <small>{draft.length} / {textMaxLength}</small> : null}<div><button type="button" className="od-button od-button-quiet text-button" onClick={() => setMode("idle")}>Cancel</button><button type="submit" className="od-button od-button-primary primary-button" disabled={!draft.trim()}>{saveEditLabel}</button></div></form> : null}
-          {mode === "refuse" ? <form className="od-plan-inline-form plan-inline-form" onSubmit={refuse}><label htmlFor={`${fieldId}-feedback`}>Tell the agent what to change</label><AutoGrowTextarea id={`${fieldId}-feedback`} value={feedback} onChange={(event) => setFeedback(event.target.value)} rows={2} /><div><button type="button" className="od-button od-button-quiet text-button" onClick={() => setMode("idle")}>Cancel</button><button type="submit" className="od-button od-button-secondary secondary-button">{feedback.trim() || !refuseEmptyLabel ? refuseSubmitLabel : refuseEmptyLabel}</button></div></form> : null}
-          {mode === "idle" ? <div className="od-plan-actions plan-actions">{renderActions?.(actions) ?? <><button type="button" className="od-button od-button-secondary secondary-button" onClick={actions.refuse}>Refuse</button><button type="button" className="od-button od-button-secondary secondary-button" onClick={actions.edit}>Edit</button><button type="button" className="od-button od-button-primary primary-button" onClick={actions.approve}>Approve</button></>}</div> : null}
+          {details?.length ? (
+            <dl className="od-plan-details plan-details">
+              {details.map((detail) => (
+                <div key={detailKey(detail)}>
+                  <dt>{detail.label}</dt>
+                  <dd>
+                    {detail.icon}
+                    {detail.value}
+                  </dd>
+                </div>
+              ))}
+            </dl>
+          ) : null}
+          {mode === "edit" ? (
+            <form
+              className="od-plan-inline-form plan-inline-form"
+              onSubmit={saveEdit}
+            >
+              <label htmlFor={`${fieldId}-edit`}>{editLabel}</label>
+              <AutoGrowTextarea
+                id={`${fieldId}-edit`}
+                value={draft}
+                onChange={(event) => {
+                  setDraft(event.target.value);
+                }}
+                maxLength={textMaxLength}
+                rows={2}
+              />
+              {textMaxLength ? (
+                <small>
+                  {draft.length} / {textMaxLength}
+                </small>
+              ) : null}
+              <div>
+                <button
+                  type="button"
+                  className="od-button od-button-quiet text-button"
+                  onClick={() => {
+                    setMode("idle");
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="od-button od-button-primary primary-button"
+                  disabled={!draft.trim()}
+                >
+                  {saveEditLabel}
+                </button>
+              </div>
+            </form>
+          ) : null}
+          {mode === "refuse" ? (
+            <form
+              className="od-plan-inline-form plan-inline-form"
+              onSubmit={refuse}
+            >
+              <label htmlFor={`${fieldId}-feedback`}>
+                Tell the agent what to change
+              </label>
+              <AutoGrowTextarea
+                id={`${fieldId}-feedback`}
+                value={feedback}
+                onChange={(event) => {
+                  setFeedback(event.target.value);
+                }}
+                rows={2}
+              />
+              <div>
+                <button
+                  type="button"
+                  className="od-button od-button-quiet text-button"
+                  onClick={() => {
+                    setMode("idle");
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="od-button od-button-secondary secondary-button"
+                >
+                  {feedback.trim() || !refuseEmptyLabel
+                    ? refuseSubmitLabel
+                    : refuseEmptyLabel}
+                </button>
+              </div>
+            </form>
+          ) : null}
+          {mode === "idle" ? (
+            <div className="od-plan-actions plan-actions">
+              {renderActions?.(actions) ?? (
+                <>
+                  <button
+                    type="button"
+                    className="od-button od-button-secondary secondary-button"
+                    onClick={actions.refuse}
+                  >
+                    Refuse
+                  </button>
+                  <button
+                    type="button"
+                    className="od-button od-button-secondary secondary-button"
+                    onClick={actions.edit}
+                  >
+                    Edit
+                  </button>
+                  <button
+                    type="button"
+                    className="od-button od-button-primary primary-button"
+                    onClick={actions.approve}
+                  >
+                    Approve
+                  </button>
+                </>
+              )}
+            </div>
+          ) : null}
         </>
-      ) : <div className="od-plan-result plan-result"><p>{state === "approved" ? approvedMessage : rejectionMessage}</p><button type="button" className="od-button od-button-quiet" onClick={onRestore}>Restore plan</button></div>}
+      ) : (
+        <div className="od-plan-result plan-result">
+          <p>{state === "approved" ? approvedMessage : rejectionMessage}</p>
+          <button
+            type="button"
+            className="od-button od-button-quiet"
+            onClick={onRestore}
+          >
+            Restore plan
+          </button>
+        </div>
+      )}
     </article>
   );
 }

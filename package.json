@@ -3,7 +3,13 @@
   "version": "0.1.0",
   "description": "Shared React design system and frontend primitives for OpenDLE projects.",
   "type": "module",
-  "files": ["dist", "styles", "scripts", "README.md", "LICENSE.md"],
+  "files": [
+    "dist",
+    "styles",
+    "scripts",
+    "README.md",
+    "LICENSE.md"
+  ],
   "main": "./dist/index.js",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -32,15 +38,26 @@
   },
   "scripts": {
     "build": "tsc --project tsconfig.build.json",
+    "format": "prettier --write src test styles scripts/*.mjs scripts/tests/fixtures/*.json eslint.config.mjs package.json react-doctor.config.json renovate.json tsconfig.json tsconfig.build.json",
+    "format:check": "prettier --check src test styles scripts/*.mjs scripts/tests/fixtures/*.json eslint.config.mjs package.json react-doctor.config.json renovate.json tsconfig.json tsconfig.build.json",
+    "lint": "eslint src --max-warnings 0",
     "prepare": "npm run build",
+    "react-doctor": "react-doctor . --json --json-compact --full --fail-on none",
+    "security": "npm audit --audit-level=high",
     "typecheck": "tsc --noEmit",
     "test": "npm run build && node --test"
   },
   "devDependencies": {
+    "@eslint/js": "9.39.5",
     "@types/react": "19.2.17",
     "@types/react-dom": "19.2.3",
+    "eslint": "10.8.0",
+    "eslint-plugin-react-hooks": "7.1.1",
+    "prettier": "3.9.6",
     "react": "19.2.8",
+    "react-doctor": "0.2.3",
     "react-dom": "19.2.8",
-    "typescript": "6.0.3"
+    "typescript": "6.0.3",
+    "typescript-eslint": "8.65.0"
   }
 }

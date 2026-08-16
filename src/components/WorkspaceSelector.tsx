@@ -1,6 +1,9 @@
 import type { ButtonHTMLAttributes, ReactNode } from "react";
 
-export interface WorkspaceSelectorProps extends Omit<ButtonHTMLAttributes<HTMLButtonElement>, "children" | "name"> {
+export interface WorkspaceSelectorProps extends Omit<
+  ButtonHTMLAttributes<HTMLButtonElement>,
+  "children" | "name"
+> {
   readonly name: ReactNode;
   readonly detail?: ReactNode;
   readonly avatar: ReactNode;

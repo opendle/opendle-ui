@@ -1,6 +1,9 @@
 import type { AnchorHTMLAttributes, ReactNode } from "react";
 
-export interface NavigationLinkProps extends Omit<AnchorHTMLAttributes<HTMLAnchorElement>, "children" | "title"> {
+export interface NavigationLinkProps extends Omit<
+  AnchorHTMLAttributes<HTMLAnchorElement>,
+  "children" | "title"
+> {
   readonly icon: ReactNode;
   readonly label: ReactNode;
   readonly active?: boolean;

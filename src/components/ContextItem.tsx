@@ -8,10 +8,20 @@ export interface ContextItemProps {
   readonly iconClassName?: string;
 }
 
-export function ContextItem({ icon, iconClassName, label, value, className }: ContextItemProps) {
+export function ContextItem({
+  icon,
+  iconClassName,
+  label,
+  value,
+  className,
+}: ContextItemProps) {
   return (
     <div className={["od-context-item", className].filter(Boolean).join(" ")}>
-      <span className={["od-context-icon", iconClassName].filter(Boolean).join(" ")}>{icon}</span>
+      <span
+        className={["od-context-icon", iconClassName].filter(Boolean).join(" ")}
+      >
+        {icon}
+      </span>
       <span>
         <small>{label}</small>
         <strong>{value}</strong>

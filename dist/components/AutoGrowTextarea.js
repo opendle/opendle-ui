@@ -5,8 +5,9 @@ function resizeTextarea(textarea, maxHeight) {
         return;
     textarea.style.height = "auto";
     const nextHeight = Math.min(textarea.scrollHeight, maxHeight);
-    textarea.style.height = `${nextHeight}px`;
-    textarea.style.overflowY = textarea.scrollHeight > maxHeight ? "auto" : "hidden";
+    textarea.style.height = `${String(nextHeight)}px`;
+    textarea.style.overflowY =
+        textarea.scrollHeight > maxHeight ? "auto" : "hidden";
 }
 export function AutoGrowTextarea({ maxHeight = 240, onInput, rows = 2, style, value, defaultValue, ...props }) {
     const textareaRef = useRef(null);
@@ -25,7 +26,9 @@ export function AutoGrowTextarea({ maxHeight = 240, onInput, rows = 2, style, va
             resizeTextarea(textarea, maxHeight);
         });
         observer.observe(textarea);
-        return () => observer.disconnect();
+        return () => {
+            observer.disconnect();
+        };
     }, [maxHeight]);
     function resizeForContent(event) {
         resizeTextarea(event.currentTarget, maxHeight);

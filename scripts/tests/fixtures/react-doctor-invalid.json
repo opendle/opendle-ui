@@ -1,0 +1,9 @@
+{
+  "projects": [
+    {
+      "score": { "score": 99 },
+      "diagnostics": [{ "rule": "example" }]
+    }
+  ],
+  "summary": { "totalDiagnosticCount": 1 }
+}

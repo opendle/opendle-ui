@@ -6,13 +6,19 @@ export interface PanelProps extends HTMLAttributes<HTMLElement> {
 
 export function Panel({ children, className, ...props }: PanelProps) {
   return (
-    <section {...props} className={["od-panel", className].filter(Boolean).join(" ")}>
+    <section
+      {...props}
+      className={["od-panel", className].filter(Boolean).join(" ")}
+    >
       {children}
     </section>
   );
 }
 
-export interface PanelHeaderProps extends Omit<HTMLAttributes<HTMLElement>, "title"> {
+export interface PanelHeaderProps extends Omit<
+  HTMLAttributes<HTMLElement>,
+  "title"
+> {
   readonly title: ReactNode;
   readonly description?: ReactNode;
   readonly kicker?: ReactNode;
@@ -28,7 +34,10 @@ export function PanelHeader({
   ...props
 }: PanelHeaderProps) {
   return (
-    <header {...props} className={["od-panel-header", className].filter(Boolean).join(" ")}>
+    <header
+      {...props}
+      className={["od-panel-header", className].filter(Boolean).join(" ")}
+    >
       <div>
         {kicker ? <p className="od-panel-kicker">{kicker}</p> : null}
         <h2>{title}</h2>

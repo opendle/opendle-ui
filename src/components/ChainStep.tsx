@@ -1,6 +1,5 @@
 import type { ReactNode } from "react";
 
-
 export interface ChainStepProps {
   readonly number: ReactNode;
   readonly title: ReactNode;
@@ -19,7 +18,16 @@ export function ChainStep({
   tone,
 }: ChainStepProps) {
   return (
-    <div className={["od-chain-step", "chain-step", tone === "lime" ? "od-chain-step-current current" : null, className].filter(Boolean).join(" ")}>
+    <div
+      className={[
+        "od-chain-step",
+        "chain-step",
+        tone === "lime" ? "od-chain-step-current current" : null,
+        className,
+      ]
+        .filter(Boolean)
+        .join(" ")}
+    >
       <span>{number}</span>
       <div>
         <strong>{title}</strong>

@@ -26,7 +26,9 @@ export function PlanCardShell({
   return (
     <article
       aria-label={ariaLabel}
-      className={["od-plan-card", "shared-plan-card", className].filter(Boolean).join(" ")}
+      className={["od-plan-card", "shared-plan-card", className]
+        .filter(Boolean)
+        .join(" ")}
       data-compact={compact}
       data-state={state}
     >

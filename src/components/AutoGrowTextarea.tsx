@@ -1,16 +1,23 @@
 import { useLayoutEffect, useRef } from "react";
-import type { InputEvent as ReactInputEvent, TextareaHTMLAttributes } from "react";
+import type {
+  InputEvent as ReactInputEvent,
+  TextareaHTMLAttributes,
+} from "react";
 
 export interface AutoGrowTextareaProps extends TextareaHTMLAttributes<HTMLTextAreaElement> {
   readonly maxHeight?: number;
 }
 
-function resizeTextarea(textarea: HTMLTextAreaElement | null, maxHeight: number) {
+function resizeTextarea(
+  textarea: HTMLTextAreaElement | null,
+  maxHeight: number,
+) {
   if (!textarea) return;
   textarea.style.height = "auto";
   const nextHeight = Math.min(textarea.scrollHeight, maxHeight);
-  textarea.style.height = `${nextHeight}px`;
-  textarea.style.overflowY = textarea.scrollHeight > maxHeight ? "auto" : "hidden";
+  textarea.style.height = `${String(nextHeight)}px`;
+  textarea.style.overflowY =
+    textarea.scrollHeight > maxHeight ? "auto" : "hidden";
 }
 
 export function AutoGrowTextarea({
@@ -38,7 +45,9 @@ export function AutoGrowTextarea({
       resizeTextarea(textarea, maxHeight);
     });
     observer.observe(textarea);
-    return () => observer.disconnect();
+    return () => {
+      observer.disconnect();
+    };
   }, [maxHeight]);
 
   function resizeForContent(event: ReactInputEvent<HTMLTextAreaElement>) {

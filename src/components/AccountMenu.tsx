@@ -1,6 +1,9 @@
 import type { ButtonHTMLAttributes, ReactNode } from "react";
 
-export interface AccountMenuProps extends Omit<ButtonHTMLAttributes<HTMLButtonElement>, "children" | "name"> {
+export interface AccountMenuProps extends Omit<
+  ButtonHTMLAttributes<HTMLButtonElement>,
+  "children" | "name"
+> {
   readonly avatar: ReactNode;
   readonly name: ReactNode;
   readonly detail?: ReactNode;

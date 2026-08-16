@@ -1,4 +1,4 @@
-import { Component, type ErrorInfo, type ReactNode } from "react";
+import { Component, type ReactNode } from "react";
 export interface ShellErrorBoundaryProps {
     readonly children: ReactNode;
     readonly resetKey: unknown;
@@ -12,9 +12,9 @@ interface ShellErrorBoundaryState {
 }
 export declare class ShellErrorBoundary extends Component<ShellErrorBoundaryProps, ShellErrorBoundaryState> {
     state: ShellErrorBoundaryState;
-    static getDerivedStateFromError(_error: unknown): Partial<ShellErrorBoundaryState>;
+    static getDerivedStateFromError(): Partial<ShellErrorBoundaryState>;
     static getDerivedStateFromProps(props: ShellErrorBoundaryProps, state: ShellErrorBoundaryState): Partial<ShellErrorBoundaryState> | null;
-    componentDidCatch(_error: unknown, _errorInfo: ErrorInfo): void;
+    componentDidCatch(): void;
     render(): string | number | bigint | boolean | Iterable<ReactNode> | Promise<string | number | bigint | boolean | import("react").ReactElement<unknown, string | import("react").JSXElementConstructor<any>> | import("react").ReactPortal | Iterable<ReactNode> | null | undefined> | import("react").JSX.Element | null | undefined;
 }
 export {};

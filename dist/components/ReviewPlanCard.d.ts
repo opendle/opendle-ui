@@ -2,6 +2,7 @@ import { type ReactNode } from "react";
 import type { ReactElement } from "react";
 export type ReviewPlanState = "pending" | "approved" | "rejected";
 export interface ReviewPlanDetail {
+    readonly id?: string;
     readonly label: ReactNode;
     readonly value: ReactNode;
     readonly icon?: ReactNode;

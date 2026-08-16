@@ -31,5 +31,5 @@ export interface CalendarBoardProps {
     readonly currentTimeLabel?: string;
     readonly renderChannel?: (channel: string) => ReactNode;
 }
-export declare function CalendarBoard({ mode, items, weekDates, weekHours, today, selectedId, draggedId, dropDate, onSelect, onDragStart, onDragEnd, onAllowDrop, onClearDrop, onMove, currentTimeLabel, renderChannel }: CalendarBoardProps): import("react").JSX.Element;
+export declare function CalendarBoard({ mode, items, weekDates, weekHours, today, selectedId, draggedId, dropDate, onSelect, onDragStart, onDragEnd, onAllowDrop, onClearDrop, onMove, currentTimeLabel, renderChannel, }: CalendarBoardProps): import("react").JSX.Element;
 //# sourceMappingURL=CalendarBoard.d.ts.map

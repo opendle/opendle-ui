@@ -1,4 +1,4 @@
-import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
+import { jsx as _jsx } from "react/jsx-runtime";
 /** Public package version. Keep this value aligned with package.json. */
 export const OPENDLE_UI_VERSION = "0.1.0";
 const iconPaths = {
@@ -36,12 +36,6 @@ const iconPaths = {
 };
 export function Icon({ name, size = 18, ...props }) {
     return (_jsx("svg", { ...props, "aria-hidden": props["aria-label"] ? undefined : true, className: ["od-icon", props.className].filter(Boolean).join(" "), height: size, viewBox: "0 0 24 24", width: size, fill: "none", stroke: "currentColor", strokeLinecap: "round", strokeLinejoin: "round", strokeWidth: props.strokeWidth ?? 1.8, children: _jsx("path", { d: iconPaths[name] }) }));
-}
-export function StatusDot({ tone = "green", className, ...props }) {
-    return (_jsx("span", { ...props, "aria-hidden": props["aria-label"] ? undefined : true, className: ["od-status-dot", `od-status-${tone}`, className].filter(Boolean).join(" ") }));
-}
-export function StatusPill({ tone, children, className }) {
-    return (_jsxs("span", { className: ["od-status-pill", `od-status-${tone}`, className].filter(Boolean).join(" "), children: [_jsx(StatusDot, { tone: tone }), children] }));
 }
 /** Shared token names. Values are defined in styles/tokens.css. */
 export const designTokens = {
@@ -88,26 +82,28 @@ export const designTokens = {
         mono: "--od-font-mono",
     },
 };
-export { AutoGrowTextarea } from "./components/AutoGrowTextarea.js";
-export { Button } from "./components/Button.js";
-export { AccountMenu } from "./components/AccountMenu.js";
-export { AgentSidebar } from "./components/AgentSidebar.js";
-export { AttentionRow } from "./components/AttentionRow.js";
-export { CalendarBoard } from "./components/CalendarBoard.js";
+export { AutoGrowTextarea, } from "./components/AutoGrowTextarea.js";
+export { Button, } from "./components/Button.js";
+export { AccountMenu, } from "./components/AccountMenu.js";
+export { AgentSidebar, } from "./components/AgentSidebar.js";
+export { AttentionRow, } from "./components/AttentionRow.js";
+export { CalendarBoard, } from "./components/CalendarBoard.js";
 export { Card } from "./components/Card.js";
 export { ChainStep } from "./components/ChainStep.js";
-export { ContextItem } from "./components/ContextItem.js";
+export { ContextItem, } from "./components/ContextItem.js";
 export { HealthBar } from "./components/HealthBar.js";
 export { IconButton } from "./components/IconButton.js";
-export { NavigationItem } from "./components/NavigationItem.js";
-export { NavigationLink } from "./components/NavigationLink.js";
-export { MobileNavigation } from "./components/MobileNavigation.js";
-export { PageHeading } from "./components/PageHeading.js";
-export { Panel, PanelHeader } from "./components/Panel.js";
-export { PlanCardShell } from "./components/PlanCardShell.js";
-export { ReviewPlanCard } from "./components/ReviewPlanCard.js";
-export { ShellErrorBoundary } from "./components/ShellErrorBoundary.js";
+export { NavigationItem, } from "./components/NavigationItem.js";
+export { NavigationLink, } from "./components/NavigationLink.js";
+export { MobileNavigation, } from "./components/MobileNavigation.js";
+export { PageHeading, } from "./components/PageHeading.js";
+export { Panel, PanelHeader, } from "./components/Panel.js";
+export { PlanCardShell, } from "./components/PlanCardShell.js";
+export { ReviewPlanCard, } from "./components/ReviewPlanCard.js";
+export { ShellErrorBoundary, } from "./components/ShellErrorBoundary.js";
 export { StatCard } from "./components/StatCard.js";
+export { StatusDot, } from "./components/StatusDot.js";
+export { StatusPill } from "./components/StatusPill.js";
 export { Toast } from "./components/Toast.js";
-export { WorkspaceSelector } from "./components/WorkspaceSelector.js";
+export { WorkspaceSelector, } from "./components/WorkspaceSelector.js";
 //# sourceMappingURL=index.js.map

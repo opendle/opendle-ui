@@ -2,7 +2,10 @@ import type { ButtonHTMLAttributes, ReactNode } from "react";
 
 export type AttentionTone = "amber" | "blue" | "lime" | "red" | "slate";
 
-export interface AttentionRowProps extends Omit<ButtonHTMLAttributes<HTMLButtonElement>, "children" | "title"> {
+export interface AttentionRowProps extends Omit<
+  ButtonHTMLAttributes<HTMLButtonElement>,
+  "children" | "title"
+> {
   readonly icon: ReactNode;
   readonly title: ReactNode;
   readonly detail?: ReactNode;

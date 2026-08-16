@@ -23,7 +23,9 @@ export function PageHeading({
       <div>
         <p className="od-eyebrow">{eyebrow}</p>
         <Heading>{title}</Heading>
-        {description ? <p className="od-page-description">{description}</p> : null}
+        {description ? (
+          <p className="od-page-description">{description}</p>
+        ) : null}
       </div>
       {actions ? <div className="od-heading-actions">{actions}</div> : null}
     </div>

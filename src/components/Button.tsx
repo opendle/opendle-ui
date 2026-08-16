@@ -18,7 +18,9 @@ export function Button({
   return (
     <button
       {...props}
-      className={["od-button", `od-button-${variant}`, className].filter(Boolean).join(" ")}
+      className={["od-button", `od-button-${variant}`, className]
+        .filter(Boolean)
+        .join(" ")}
       type={type}
     >
       {icon}

@@ -6,5 +6,5 @@ export interface ContextItemProps {
     readonly className?: string;
     readonly iconClassName?: string;
 }
-export declare function ContextItem({ icon, iconClassName, label, value, className }: ContextItemProps): import("react").JSX.Element;
+export declare function ContextItem({ icon, iconClassName, label, value, className, }: ContextItemProps): import("react").JSX.Element;
 //# sourceMappingURL=ContextItem.d.ts.map

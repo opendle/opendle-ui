@@ -1,10 +1,18 @@
 import type { ButtonHTMLAttributes, ReactNode } from "react";
 
-export interface IconButtonProps extends Omit<ButtonHTMLAttributes<HTMLButtonElement>, "children"> {
+export interface IconButtonProps extends Omit<
+  ButtonHTMLAttributes<HTMLButtonElement>,
+  "children"
+> {
   readonly icon: ReactNode;
 }
 
-export function IconButton({ className, icon, type = "button", ...props }: IconButtonProps) {
+export function IconButton({
+  className,
+  icon,
+  type = "button",
+  ...props
+}: IconButtonProps) {
   return (
     <button
       {...props}

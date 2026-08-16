@@ -28,7 +28,9 @@ function packageRoot(packageName) {
   try {
     return dirname(requireFromConsumer.resolve(`${packageName}/package.json`));
   } catch {
-    throw new Error(`Cannot find ${packageName} from ${consumerRoot}. Run npm install first.`);
+    throw new Error(
+      `Cannot find ${packageName} from ${consumerRoot}. Run npm install first.`,
+    );
   }
 }
 
@@ -49,18 +51,30 @@ function findSourceRoot() {
     resolve(consumerRoot, "../../opendle-ui"),
     helperRoot,
   ].filter(Boolean);
-  return candidates.find((candidate) => isSharedPackage(candidate) && existsSync(join(candidate, "src/index.tsx"))) ?? null;
+  return (
+    candidates.find(
+      (candidate) =>
+        isSharedPackage(candidate) &&
+        existsSync(join(candidate, "src/index.tsx")),
+    ) ?? null
+  );
 }
 
 function buildSource(sourceRoot) {
   const compiler = join(sourceRoot, "node_modules/typescript/bin/tsc");
   if (!existsSync(compiler)) {
-    throw new Error(`Cannot build @opendle/ui at ${sourceRoot}: TypeScript is not installed there.`);
+    throw new Error(
+      `Cannot build @opendle/ui at ${sourceRoot}: TypeScript is not installed there.`,
+    );
   }
-  execFileSync(process.execPath, [compiler, "--project", join(sourceRoot, "tsconfig.build.json")], {
-    cwd: sourceRoot,
-    stdio: "inherit",
-  });
+  execFileSync(
+    process.execPath,
+    [compiler, "--project", join(sourceRoot, "tsconfig.build.json")],
+    {
+      cwd: sourceRoot,
+      stdio: "inherit",
+    },
+  );
 }
 
 function lockName(sourceRoot) {
@@ -78,7 +92,8 @@ async function withBuildLock(sourceRoot, action) {
     } catch (error) {
       if (error.code !== "EEXIST") throw error;
       try {
-        if (Date.now() - statSync(lock).mtimeMs > staleAfter) rmSync(lock, { recursive: true, force: true });
+        if (Date.now() - statSync(lock).mtimeMs > staleAfter)
+          rmSync(lock, { recursive: true, force: true });
       } catch {
         // The lock can disappear between the check and the read.
       }
@@ -95,11 +110,19 @@ async function withBuildLock(sourceRoot, action) {
 function syncBuild(sourceRoot, installedRoot) {
   if (resolve(sourceRoot) === resolve(installedRoot)) return;
   try {
-    cpSync(join(sourceRoot, "dist"), join(installedRoot, "dist"), { recursive: true, force: true });
-    cpSync(join(sourceRoot, "styles"), join(installedRoot, "styles"), { recursive: true, force: true });
+    cpSync(join(sourceRoot, "dist"), join(installedRoot, "dist"), {
+      recursive: true,
+      force: true,
+    });
+    cpSync(join(sourceRoot, "styles"), join(installedRoot, "styles"), {
+      recursive: true,
+      force: true,
+    });
   } catch (error) {
     if (error.code === "EACCES" || error.code === "EROFS") {
-      console.warn("The installed @opendle/ui package is read-only. Export verification will confirm it is current.");
+      console.warn(
+        "The installed @opendle/ui package is read-only. Export verification will confirm it is current.",
+      );
       return;
     }
     throw error;
@@ -108,17 +131,21 @@ function syncBuild(sourceRoot, installedRoot) {
 
 async function verify(installedRoot, expectedRoot = null) {
   const query = `?consumer-check=${Date.now()}`;
-  const installedEntry = pathToFileURL(join(installedRoot, "dist/index.js")).href;
+  const installedEntry = pathToFileURL(
+    join(installedRoot, "dist/index.js"),
+  ).href;
   const installed = await import(`${installedEntry}${query}`);
   const expected = expectedRoot
-    ? await import(`${pathToFileURL(join(expectedRoot, "dist/index.js")).href}${query}`)
+    ? await import(
+        `${pathToFileURL(join(expectedRoot, "dist/index.js")).href}${query}`
+      )
     : null;
   const expectedExports = expected ? Object.keys(expected) : requiredExports;
   const missing = expectedExports.filter((name) => !(name in installed));
   if (missing.length > 0) {
     throw new Error(
       `@opendle/ui is missing exports: ${missing.join(", ")}. ` +
-      "Refresh the Git dependency or set OPENDLE_UI_PATH to the shared repository.",
+        "Refresh the Git dependency or set OPENDLE_UI_PATH to the shared repository.",
     );
   }
 }
@@ -134,7 +161,9 @@ if (sourceRoot) {
   });
   console.log(`Built @opendle/ui from ${sourceRoot}.`);
 } else {
-  console.log("No local @opendle/ui source found. Checking the installed package.");
+  console.log(
+    "No local @opendle/ui source found. Checking the installed package.",
+  );
   await verify(installedRoot);
 }
 console.log("@opendle/ui exports are ready for this consumer.");

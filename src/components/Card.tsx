@@ -6,7 +6,10 @@ export interface CardProps extends HTMLAttributes<HTMLElement> {
 
 export function Card({ children, className, ...props }: CardProps) {
   return (
-    <section {...props} className={["od-card", className].filter(Boolean).join(" ")}>
+    <section
+      {...props}
+      className={["od-card", className].filter(Boolean).join(" ")}
+    >
       {children}
     </section>
   );

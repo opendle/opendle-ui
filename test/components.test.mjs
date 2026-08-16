@@ -30,7 +30,9 @@ import {
 } from "../dist/index.js";
 
 test("Icon renders a decorative SVG with the shared class", () => {
-  const markup = renderToStaticMarkup(React.createElement(Icon, { name: "search", size: 16 }));
+  const markup = renderToStaticMarkup(
+    React.createElement(Icon, { name: "search", size: 16 }),
+  );
   assert.match(markup, /class="od-icon"/);
   assert.match(markup, /aria-hidden="true"/);
   assert.match(markup, /width="16"/);
@@ -47,7 +49,11 @@ test("StatusPill renders one status dot and its label", () => {
 
 test("AutoGrowTextarea keeps the public textarea attributes", () => {
   const markup = renderToStaticMarkup(
-    React.createElement(AutoGrowTextarea, { "aria-label": "Draft", maxHeight: 120, rows: 3 }),
+    React.createElement(AutoGrowTextarea, {
+      "aria-label": "Draft",
+      maxHeight: 120,
+      rows: 3,
+    }),
   );
   assert.match(markup, /aria-label="Draft"/);
   assert.match(markup, /rows="3"/);
@@ -59,18 +65,23 @@ test("shared composition components expose semantic classes and content", () => 
     React.createElement(
       Card,
       { "aria-label": "Example card" },
-      React.createElement(
-        PageHeading,
-        { description: "Review the current state.", eyebrow: "Overview", title: "Shared UI" },
-      ),
-      React.createElement(
-        ContextItem,
-        { icon: React.createElement(Icon, { name: "activity" }), label: "State", value: "Ready" },
-      ),
-      React.createElement(
-        StatCard,
-        { icon: React.createElement(Icon, { name: "health" }), label: "Health", trend: "up", trendClassName: "trend-up", value: "100%" },
-      ),
+      React.createElement(PageHeading, {
+        description: "Review the current state.",
+        eyebrow: "Overview",
+        title: "Shared UI",
+      }),
+      React.createElement(ContextItem, {
+        icon: React.createElement(Icon, { name: "activity" }),
+        label: "State",
+        value: "Ready",
+      }),
+      React.createElement(StatCard, {
+        icon: React.createElement(Icon, { name: "health" }),
+        label: "Health",
+        trend: "up",
+        trendClassName: "trend-up",
+        value: "100%",
+      }),
       React.createElement(Button, { variant: "secondary" }, "Continue"),
     ),
   );
@@ -88,9 +99,22 @@ test("shared controls support heading levels, inline statistics, and icon button
     React.createElement(
       "div",
       null,
-      React.createElement(PageHeading, { eyebrow: "Area", headingLevel: "h2", title: "Details" }),
-      React.createElement(StatCard, { icon: React.createElement(Icon, { name: "server" }), label: "Services", note: "Healthy", orientation: "inline", value: "8" }),
-      React.createElement(IconButton, { "aria-label": "Refresh", icon: React.createElement(Icon, { name: "refresh" }) }),
+      React.createElement(PageHeading, {
+        eyebrow: "Area",
+        headingLevel: "h2",
+        title: "Details",
+      }),
+      React.createElement(StatCard, {
+        icon: React.createElement(Icon, { name: "server" }),
+        label: "Services",
+        note: "Healthy",
+        orientation: "inline",
+        value: "8",
+      }),
+      React.createElement(IconButton, {
+        "aria-label": "Refresh",
+        icon: React.createElement(Icon, { name: "refresh" }),
+      }),
     ),
   );
   assert.match(markup, /<h2>Details<\/h2>/);
@@ -103,7 +127,14 @@ test("PlanCardShell keeps an accessible article boundary", () => {
   const markup = renderToStaticMarkup(
     React.createElement(
       PlanCardShell,
-      { age: "now", ariaLabel: "Review plan", icon: React.createElement(Icon, { name: "clock" }), meta: "Review", state: "pending", title: "Publish" },
+      {
+        age: "now",
+        ariaLabel: "Review plan",
+        icon: React.createElement(Icon, { name: "clock" }),
+        meta: "Review",
+        state: "pending",
+        title: "Publish",
+      },
       React.createElement("p", null, "Waiting for review."),
     ),
   );
@@ -117,13 +148,55 @@ test("shared shell controls expose semantic labels and states", () => {
     React.createElement(
       "div",
       null,
-      React.createElement(WorkspaceSelector, { avatar: "TD", detail: "Personal", name: "Workspace" }),
-      React.createElement(AccountMenu, { avatar: "VL", detail: "Administrator", name: "Vincent" }),
-      React.createElement(NavigationItem, { active: true, icon: React.createElement(Icon, { name: "grid" }), label: "Overview" }),
-      React.createElement(NavigationLink, { active: false, href: "/audit", icon: React.createElement(Icon, { name: "audit" }), label: "Audit" }),
-      React.createElement(MobileNavigation, { "aria-label": "Mobile navigation", items: [{ id: "home", label: "Home", icon: React.createElement(Icon, { name: "grid" }), active: true, badge: 2 }], onSelect: () => undefined }),
-      React.createElement(Panel, { "aria-label": "Health" }, React.createElement(PanelHeader, { title: "Health", description: "Current status" }), React.createElement(HealthBar, { label: "API", value: 88 })),
-      React.createElement(AttentionRow, { icon: React.createElement(Icon, { name: "warning" }), title: "Review", detail: "Needs action", onClick: () => undefined }),
+      React.createElement(WorkspaceSelector, {
+        avatar: "TD",
+        detail: "Personal",
+        name: "Workspace",
+      }),
+      React.createElement(AccountMenu, {
+        avatar: "VL",
+        detail: "Administrator",
+        name: "Vincent",
+      }),
+      React.createElement(NavigationItem, {
+        active: true,
+        icon: React.createElement(Icon, { name: "grid" }),
+        label: "Overview",
+      }),
+      React.createElement(NavigationLink, {
+        active: false,
+        href: "/audit",
+        icon: React.createElement(Icon, { name: "audit" }),
+        label: "Audit",
+      }),
+      React.createElement(MobileNavigation, {
+        "aria-label": "Mobile navigation",
+        items: [
+          {
+            id: "home",
+            label: "Home",
+            icon: React.createElement(Icon, { name: "grid" }),
+            active: true,
+            badge: 2,
+          },
+        ],
+        onSelect: () => undefined,
+      }),
+      React.createElement(
+        Panel,
+        { "aria-label": "Health" },
+        React.createElement(PanelHeader, {
+          title: "Health",
+          description: "Current status",
+        }),
+        React.createElement(HealthBar, { label: "API", value: 88 }),
+      ),
+      React.createElement(AttentionRow, {
+        icon: React.createElement(Icon, { name: "warning" }),
+        title: "Review",
+        detail: "Needs action",
+        onClick: () => undefined,
+      }),
       React.createElement(Toast, null, "Saved"),
     ),
   );
@@ -131,24 +204,77 @@ test("shared shell controls expose semantic labels and states", () => {
   assert.match(markup, /od-account-menu/);
   assert.match(markup, /aria-current="page"/);
   assert.match(markup, /href="\/audit"/);
-  assert.match(markup, /role="progressbar"/);
+  assert.match(markup, /<progress[^>]*max="100"/);
+  assert.match(markup, /<progress[^>]*value="88"/);
   assert.match(markup, /od-attention-row/);
-  assert.match(markup, /role="status"/);
+  assert.match(markup, /<output class="od-toast"/);
   assert.match(markup, /od-mobile-navigation/);
 });
 
 test("ReviewPlanCard and CalendarBoard provide generic interactive views", () => {
-  const items = [{ id: "event-1", title: "Review", detail: "Check", date: "2026-08-12", start: "10:00", end: "10:30", kind: "reminder", state: "planned", editable: true }];
+  const items = [
+    {
+      id: "event-1",
+      title: "Review",
+      detail: "Check",
+      date: "2026-08-12",
+      start: "10:00",
+      end: "10:30",
+      kind: "reminder",
+      state: "planned",
+      editable: true,
+    },
+  ];
   const markup = renderToStaticMarkup(
     React.createElement(
       "div",
       null,
-      React.createElement(ReviewPlanCard, { ariaLabel: "Review plan", meta: "Needs review", state: "pending", text: "Check the release.", title: "Review", onApprove: () => undefined, onEdit: () => undefined, onRefuse: () => undefined, onRestore: () => undefined }),
-      React.createElement(CalendarBoard, { mode: "week", items, weekDates: ["2026-08-12"], weekHours: ["10:00"], today: "2026-08-12", selectedId: null, draggedId: null, dropDate: null, onSelect: () => undefined, onDragStart: () => undefined, onDragEnd: () => undefined, onAllowDrop: () => undefined, onClearDrop: () => undefined, onMove: () => undefined }),
+      React.createElement(ReviewPlanCard, {
+        ariaLabel: "Review plan",
+        meta: "Needs review",
+        state: "pending",
+        text: "Check the release.",
+        title: "Review",
+        onApprove: () => undefined,
+        onEdit: () => undefined,
+        onRefuse: () => undefined,
+        onRestore: () => undefined,
+      }),
+      React.createElement(CalendarBoard, {
+        mode: "week",
+        items,
+        weekDates: ["2026-08-12"],
+        weekHours: ["10:00"],
+        today: "2026-08-12",
+        selectedId: null,
+        draggedId: null,
+        dropDate: null,
+        onSelect: () => undefined,
+        onDragStart: () => undefined,
+        onDragEnd: () => undefined,
+        onAllowDrop: () => undefined,
+        onClearDrop: () => undefined,
+        onMove: () => undefined,
+      }),
     ),
   );
   const monthMarkup = renderToStaticMarkup(
-    React.createElement(CalendarBoard, { mode: "month", items, weekDates: [], weekHours: [], today: "2027-02-10", selectedId: null, draggedId: null, dropDate: null, onSelect: () => undefined, onDragStart: () => undefined, onDragEnd: () => undefined, onAllowDrop: () => undefined, onClearDrop: () => undefined, onMove: () => undefined }),
+    React.createElement(CalendarBoard, {
+      mode: "month",
+      items,
+      weekDates: [],
+      weekHours: [],
+      today: "2027-02-10",
+      selectedId: null,
+      draggedId: null,
+      dropDate: null,
+      onSelect: () => undefined,
+      onDragStart: () => undefined,
+      onDragEnd: () => undefined,
+      onAllowDrop: () => undefined,
+      onClearDrop: () => undefined,
+      onMove: () => undefined,
+    }),
   );
   assert.match(markup, /od-plan-card/);
   assert.match(markup, /calendar-week/);
@@ -158,7 +284,11 @@ test("ReviewPlanCard and CalendarBoard provide generic interactive views", () =>
 
 test("ShellErrorBoundary renders its children when no error exists", () => {
   const markup = renderToStaticMarkup(
-    React.createElement(ShellErrorBoundary, { resetKey: "initial" }, React.createElement("p", null, "Ready")),
+    React.createElement(
+      ShellErrorBoundary,
+      { resetKey: "initial" },
+      React.createElement("p", null, "Ready"),
+    ),
   );
   assert.equal(markup, "<p>Ready</p>");
 });
