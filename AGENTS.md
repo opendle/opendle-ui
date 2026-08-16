@@ -20,8 +20,9 @@ data in this repository. Keep this package independent of any one host app.
    search and commands.
 4. Keep components semantic, keyboard accessible, responsive, and usable with
    a screen reader. Add tests for public behavior.
-5. Do not copy a component into a host app. Add or improve the shared package
-   when two projects need the same design behavior.
+5. Do not copy a component into a host app. Add it to this shared package when
+   it could be reused by another OpenDLE project. Do not wait for a second
+   caller. Update the host app to use the shared component in the same change.
 6. Use the `design-system` skill for design work and
    `repository-tooling` for repeatable agent or test friction.
 7. Keep this file limited to durable policy. Put detailed workflows in skills
