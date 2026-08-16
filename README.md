@@ -11,9 +11,9 @@ This repository owns shared design tokens, accessible React primitives,
 composition patterns, and frontend quality tools. Host applications own
 product behavior, routing, data access, and service integration.
 
-The package starts as `@opendle/ui`. Add a shared primitive here when at least
-two host projects need the same behavior. Keep the public API small and test
-the user-visible behavior.
+The package starts as `@opendle/ui`. Add a shared primitive here when it could
+be reused by another host project. Do not wait for a second caller. Keep the
+public API small and test the user-visible behavior.
 
 The package includes accessible primitives and composition components such as
 buttons, icon buttons, cards, page headings, context items, statistic cards,
@@ -31,6 +31,11 @@ keeps all apps on the current shared package without release coordination or
 package version updates. The Git dependency is an intentional exception to
 host dependency age and exact-version checks. Keep the built `dist/` files in
 Git because host installs can use `npm ci --ignore-scripts`.
+
+Host projects run `scripts/build-consumer.mjs` before development, build,
+typecheck, and test commands. The helper builds local shared source, updates a
+local installed copy when needed, and checks the required public exports. It
+also serializes concurrent host builds so no host reads partial output.
 
 ## Development
 

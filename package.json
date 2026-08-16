@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "description": "Shared React design system and frontend primitives for OpenDLE projects.",
   "type": "module",
-  "files": ["dist", "styles", "README.md", "LICENSE.md"],
+  "files": ["dist", "styles", "scripts", "README.md", "LICENSE.md"],
   "main": "./dist/index.js",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -13,6 +13,7 @@
       "import": "./dist/index.js"
     },
     "./styles.css": "./styles/tokens.css",
+    "./scripts/build-consumer.mjs": "./scripts/build-consumer.mjs",
     "./package.json": "./package.json"
   },
   "engines": {
