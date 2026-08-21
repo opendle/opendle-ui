@@ -50,6 +50,9 @@ valid work.
 - Put shared CSS tokens in `styles/`.
 - Keep host-specific layout, routing, data access, and product copy in the
   calling repository.
+- Backend behavior with reuse potential belongs in `../opendle-lib`, not in
+  this frontend package. Keep backend adapters and product rules in the host
+  or owning service.
 - Use stable, accessible APIs. Document breaking changes before release.
 - Keep React as a peer dependency so host applications control one React copy.
 
