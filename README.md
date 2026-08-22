@@ -16,10 +16,11 @@ be reused by another host project. Do not wait for a second caller. Keep the
 public API small and test the user-visible behavior.
 
 The package includes accessible primitives and composition components such as
-buttons, icon buttons, cards, page headings, context items, statistic cards,
-route steps, workspace and account selectors, navigation items, panels,
-attention rows, health bars, review-plan cards, agent sidebars, calendar
-boards, status indicators, and error boundaries. Host apps keep
+application shells, grouped navigation, buttons, icon buttons, cards, page
+headings, context items, statistic cards, route steps, workspace and account
+selectors, navigation items, panels, attention rows, health bars, review-plan
+cards, agent sidebars, calendar boards, status indicators, and error
+boundaries. Host apps keep
 their navigation, routes, product copy, mock data, and service behavior here.
 
 Typography uses the Xbot design as the source of truth: Aptos for body text,

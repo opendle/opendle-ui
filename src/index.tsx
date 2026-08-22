@@ -153,6 +153,18 @@ export {
   type AutoGrowTextareaProps,
 } from "./components/AutoGrowTextarea.js";
 export {
+  ApplicationNavigation,
+  ApplicationNavigationGroup,
+  ApplicationShell,
+  ApplicationSidebar,
+  ApplicationTopbar,
+  type ApplicationNavigationGroupProps,
+  type ApplicationNavigationProps,
+  type ApplicationShellProps,
+  type ApplicationSidebarProps,
+  type ApplicationTopbarProps,
+} from "./components/ApplicationShell.js";
+export {
   Button,
   type ButtonProps,
   type ButtonVariant,

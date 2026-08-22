@@ -3,6 +3,11 @@ import test from "node:test";
 import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import {
+  ApplicationNavigation,
+  ApplicationNavigationGroup,
+  ApplicationShell,
+  ApplicationSidebar,
+  ApplicationTopbar,
   AutoGrowTextarea,
   AccountMenu,
   AgentSidebar,
@@ -95,6 +100,73 @@ test("shared composition components expose semantic classes and content", () => 
   assert.match(markup, /class="od-stat-trend stat-trend trend-up"/);
   assert.match(markup, /class="od-button od-button-secondary"/);
   assert.match(markup, />Continue<\/button>/);
+});
+
+test("application shell components keep caller-owned content in semantic slots", () => {
+  const sidebar = React.createElement(ApplicationSidebar, {
+    brand: React.createElement("strong", null, "Example"),
+    context: React.createElement(WorkspaceSelector, {
+      avatar: "EX",
+      detail: "Workspace",
+      name: "Example scope",
+    }),
+    footer: React.createElement("small", null, "Session active"),
+    navigation: React.createElement(
+      ApplicationNavigation,
+      { "aria-label": "Primary navigation" },
+      React.createElement(
+        ApplicationNavigationGroup,
+        { label: "Manage" },
+        React.createElement(NavigationItem, {
+          active: true,
+          icon: React.createElement(Icon, { name: "grid" }),
+          label: "Overview",
+        }),
+      ),
+    ),
+  });
+  const topbar = React.createElement(ApplicationTopbar, {
+    actions: React.createElement(Button, null, "Refresh"),
+    leading: React.createElement(Icon, { name: "menu" }),
+    title: React.createElement("strong", null, "Overview"),
+  });
+  const mobileNavigation = React.createElement(MobileNavigation, {
+    "aria-label": "Mobile navigation",
+    items: [
+      {
+        active: true,
+        icon: React.createElement(Icon, { name: "grid" }),
+        id: "overview",
+        label: "Overview",
+      },
+    ],
+    onSelect: () => undefined,
+  });
+  const markup = renderToStaticMarkup(
+    React.createElement(
+      ApplicationShell,
+      {
+        mainProps: { id: "main-content", "aria-label": "Current page" },
+        mobileNavigation,
+        sidebar,
+        topbar,
+      },
+      React.createElement("h1", null, "Application content"),
+    ),
+  );
+  assert.match(markup, /class="od-application-shell"/);
+  assert.match(markup, /<aside[^>]*class="od-application-sidebar"/);
+  assert.match(markup, /<nav[^>]*aria-label="Primary navigation"/);
+  assert.match(markup, /<section[^>]*class="od-application-navigation-group"/);
+  assert.match(markup, /aria-labelledby="[^"]+"/);
+  assert.match(markup, /<header[^>]*class="od-application-topbar"/);
+  assert.match(
+    markup,
+    /<main[^>]*id="main-content"[^>]*aria-label="Current page"/,
+  );
+  assert.match(markup, /<h1>Application content<\/h1>/);
+  assert.match(markup, /class="od-application-mobile-navigation"/);
+  assert.match(markup, /aria-label="Mobile navigation"/);
 });
 
 test("session components keep one named page and caller-supplied states", () => {

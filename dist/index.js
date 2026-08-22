@@ -83,6 +83,7 @@ export const designTokens = {
     },
 };
 export { AutoGrowTextarea, } from "./components/AutoGrowTextarea.js";
+export { ApplicationNavigation, ApplicationNavigationGroup, ApplicationShell, ApplicationSidebar, ApplicationTopbar, } from "./components/ApplicationShell.js";
 export { Button, } from "./components/Button.js";
 export { AccountMenu, } from "./components/AccountMenu.js";
 export { AgentSidebar, } from "./components/AgentSidebar.js";
