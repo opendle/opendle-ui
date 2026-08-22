@@ -22,8 +22,11 @@ import {
   PanelHeader,
   PlanCardShell,
   ReviewPlanCard,
+  SessionCard,
+  SessionPage,
   ShellErrorBoundary,
   StatCard,
+  StatePanel,
   StatusPill,
   Toast,
   WorkspaceSelector,
@@ -92,6 +95,66 @@ test("shared composition components expose semantic classes and content", () => 
   assert.match(markup, /class="od-stat-trend stat-trend trend-up"/);
   assert.match(markup, /class="od-button od-button-secondary"/);
   assert.match(markup, />Continue<\/button>/);
+});
+
+test("session components keep one named page and caller-supplied states", () => {
+  const markup = renderToStaticMarkup(
+    React.createElement(
+      SessionPage,
+      { "aria-label": "Session access" },
+      React.createElement(SessionCard, {
+        actions: React.createElement(Button, { disabled: true }, "Opening…"),
+        description: "Use your shared account.",
+        eyebrow: "Identity",
+        feedback: React.createElement("p", { role: "alert" }, "Try again."),
+        footer: "This account does not grant access.",
+        headingLevel: "h2",
+        icon: React.createElement(Icon, { name: "shield" }),
+        title: "Sign in",
+      }),
+    ),
+  );
+  assert.match(markup, /<main[^>]*class="od-session-page"/);
+  assert.match(markup, /aria-label="Session access"/);
+  assert.match(markup, /aria-labelledby="[^"]+"/);
+  assert.match(markup, /<h2 id="[^"]+">Sign in<\/h2>/);
+  assert.match(markup, /class="od-session-icon"/);
+  assert.match(markup, /<button[^>]*disabled=""[^>]*>Opening…<\/button>/);
+  assert.match(markup, /<p role="alert">Try again.<\/p>/);
+  assert.match(markup, /<footer class="od-session-footer">/);
+});
+
+test("state panels expose status, error, action, and heading states", () => {
+  const loading = renderToStaticMarkup(
+    React.createElement(
+      StatePanel,
+      { title: "Loading" },
+      React.createElement("p", null, "Wait for the result."),
+    ),
+  );
+  const failure = renderToStaticMarkup(
+    React.createElement(
+      StatePanel,
+      {
+        headingLevel: "h3",
+        kind: "error",
+        onRetry: () => undefined,
+        retryLabel: "Load again",
+        title: "Not available",
+      },
+      "No automatic retry was sent.",
+    ),
+  );
+  assert.match(
+    loading,
+    /class="od-panel od-state-panel od-state-panel-loading"/,
+  );
+  assert.match(loading, /role="status"/);
+  assert.match(loading, /<h2>Loading<\/h2>/);
+  assert.match(failure, /od-state-panel-error/);
+  assert.match(failure, /role="alert"/);
+  assert.match(failure, /<h3>Not available<\/h3>/);
+  assert.match(failure, />Load again<\/button>/);
 });
 
 test("shared controls support heading levels, inline statistics, and icon buttons", () => {
