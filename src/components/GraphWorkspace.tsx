@@ -102,6 +102,51 @@ export function GraphViewport({
   );
 }
 
+export interface GraphEmptyStateProps extends Omit<
+  HTMLAttributes<HTMLDivElement>,
+  "title"
+> {
+  readonly icon: ReactNode;
+  readonly title: ReactNode;
+  readonly description: ReactNode;
+  readonly actions?: ReactNode;
+  readonly headingLevel?: "h2" | "h3";
+}
+
+/** An accessible empty state for a graph canvas. */
+export function GraphEmptyState({
+  actions,
+  className,
+  description,
+  headingLevel = "h2",
+  icon,
+  role = "status",
+  title,
+  ...props
+}: GraphEmptyStateProps) {
+  const titleId = useId();
+  const Heading = headingLevel;
+  return (
+    <div
+      {...props}
+      aria-labelledby={props["aria-labelledby"] ?? titleId}
+      className={classes("od-graph-empty-state", className)}
+      role={role}
+    >
+      <span aria-hidden="true" className="od-graph-empty-state-icon">
+        {icon}
+      </span>
+      <div className="od-graph-empty-state-copy">
+        <Heading id={titleId}>{title}</Heading>
+        <div className="od-graph-empty-state-description">{description}</div>
+      </div>
+      {actions ? (
+        <div className="od-graph-empty-state-actions">{actions}</div>
+      ) : null}
+    </div>
+  );
+}
+
 export type GraphNodeTone =
   "neutral" | "lime" | "blue" | "purple" | "coral" | "amber";
 

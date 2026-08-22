@@ -18,6 +18,7 @@ import {
   ContextItem,
   GraphEdge,
   GraphEdges,
+  GraphEmptyState,
   GraphInspector,
   GraphNode,
   GraphToolbar,
@@ -42,6 +43,7 @@ import {
   StatusPill,
   Toast,
   WorkspaceSelector,
+  layoutLayeredDirectedGraph,
   layoutTree,
   treeEdgePath,
 } from "../dist/index.js";
@@ -264,6 +266,74 @@ test("tree helpers make stable horizontal and vertical layouts", () => {
       ]),
     /cycle/,
   );
+});
+
+test("layered graph layout is stable for multiple parents and unknown roots", () => {
+  const graph = [
+    { id: "child", parentIds: ["root-b", "root-a", "missing"] },
+    { id: "root-b", parentIds: [] },
+    { id: "orphan", parentIds: ["unknown"] },
+    { id: "root-a", parentIds: [] },
+  ];
+  const first = layoutLayeredDirectedGraph(graph, { padding: 20 });
+  const second = layoutLayeredDirectedGraph(
+    [...graph]
+      .reverse()
+      .map((item) => ({ ...item, parentIds: [...item.parentIds].reverse() })),
+    { padding: 20 },
+  );
+
+  assert.deepEqual(first, second);
+  assert.deepEqual(
+    first.nodes.map(({ id, depth }) => [id, depth]),
+    [
+      ["orphan", 0],
+      ["root-a", 0],
+      ["root-b", 0],
+      ["child", 1],
+    ],
+  );
+  assert.deepEqual(
+    first.edges.map(({ sourceId, targetId }) => [sourceId, targetId]),
+    [
+      ["root-a", "child"],
+      ["root-b", "child"],
+    ],
+  );
+  assert.throws(
+    () =>
+      layoutLayeredDirectedGraph([
+        { id: "same", parentIds: [] },
+        { id: "same", parentIds: [] },
+      ]),
+    /unique/,
+  );
+  assert.throws(
+    () =>
+      layoutLayeredDirectedGraph([
+        { id: "a", parentIds: ["b"] },
+        { id: "b", parentIds: ["a"] },
+      ]),
+    /cycle/,
+  );
+});
+
+test("GraphEmptyState labels its title and keeps actions available", () => {
+  const markup = renderToStaticMarkup(
+    React.createElement(GraphEmptyState, {
+      actions: React.createElement(Button, null, "Create service"),
+      description: "Create the first service to start the graph.",
+      headingLevel: "h3",
+      icon: React.createElement(Icon, { name: "layers" }),
+      title: "No services",
+    }),
+  );
+  assert.match(markup, /class="od-graph-empty-state"/);
+  assert.match(markup, /role="status"/);
+  assert.match(markup, /aria-labelledby="[^"]+"/);
+  assert.match(markup, /<h3 id="[^"]+">No services<\/h3>/);
+  assert.match(markup, /aria-hidden="true" class="od-graph-empty-state-icon"/);
+  assert.match(markup, />Create service<\/button>/);
 });
 
 test("session components keep one named page and caller-supplied states", () => {

@@ -20,6 +20,12 @@ export function GraphViewport({ canvasWidth, canvasHeight, canvasClassName, canv
     };
     return (_jsx("div", { ...props, className: classes("od-graph-viewport", className), children: _jsx("div", { ...canvasProps, className: classes("od-graph-canvas", canvasClassName, canvasProps?.className), role: canvasProps?.role ?? "group", style: canvasStyle, children: children }) }));
 }
+/** An accessible empty state for a graph canvas. */
+export function GraphEmptyState({ actions, className, description, headingLevel = "h2", icon, role = "status", title, ...props }) {
+    const titleId = useId();
+    const Heading = headingLevel;
+    return (_jsxs("div", { ...props, "aria-labelledby": props["aria-labelledby"] ?? titleId, className: classes("od-graph-empty-state", className), role: role, children: [_jsx("span", { "aria-hidden": "true", className: "od-graph-empty-state-icon", children: icon }), _jsxs("div", { className: "od-graph-empty-state-copy", children: [_jsx(Heading, { id: titleId, children: title }), _jsx("div", { className: "od-graph-empty-state-description", children: description })] }), actions ? (_jsx("div", { className: "od-graph-empty-state-actions", children: actions })) : null] }));
+}
 /** An accessible positioned graph node. Arrow-key movement stays host-owned. */
 export function GraphNode({ x, y, title, eyebrow, icon, meta, selected = false, dragging = false, dropTarget = false, root = false, tone = "neutral", className, style, type = "button", ...props }) {
     return (_jsxs("button", { ...props, "aria-pressed": props["aria-pressed"] ?? selected, className: classes("od-graph-node", className), "data-root": root, "data-selected": selected, "data-dragging": dragging, "data-drop-target": dropTarget, "data-tone": tone, style: {

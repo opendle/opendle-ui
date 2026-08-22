@@ -28,6 +28,27 @@ export interface TreeLayoutResult {
     readonly nodes: readonly TreeLayoutNode[];
     readonly edges: readonly TreeLayoutEdge[];
 }
+export interface LayeredGraphLayoutItem {
+    readonly id: string;
+    readonly parentIds: readonly string[];
+}
+export type LayeredGraphLayoutOptions = TreeLayoutOptions;
+export interface LayeredGraphLayoutNode {
+    readonly id: string;
+    readonly parentIds: readonly string[];
+    readonly x: number;
+    readonly y: number;
+    readonly depth: number;
+}
+export type LayeredGraphLayoutEdge = TreeLayoutEdge;
+export interface LayeredGraphLayoutResult {
+    readonly width: number;
+    readonly height: number;
+    readonly nodes: readonly LayeredGraphLayoutNode[];
+    readonly edges: readonly LayeredGraphLayoutEdge[];
+}
+/** Create a stable layered layout for a directed acyclic graph. */
+export declare function layoutLayeredDirectedGraph(items: readonly LayeredGraphLayoutItem[], options?: LayeredGraphLayoutOptions): LayeredGraphLayoutResult;
 /** Create a stable, dependency-free layout for one or more rooted trees. */
 export declare function layoutTree(items: readonly TreeLayoutItem[], options?: TreeLayoutOptions): TreeLayoutResult;
 export interface TreeEdgePathOptions {

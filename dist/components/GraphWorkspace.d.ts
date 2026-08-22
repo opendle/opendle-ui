@@ -20,6 +20,15 @@ export interface GraphViewportProps extends HTMLAttributes<HTMLDivElement> {
 }
 /** A scrollable viewport and a positioned canvas for nodes and edges. */
 export declare function GraphViewport({ canvasWidth, canvasHeight, canvasClassName, canvasProps, children, className, ...props }: GraphViewportProps): import("react").JSX.Element;
+export interface GraphEmptyStateProps extends Omit<HTMLAttributes<HTMLDivElement>, "title"> {
+    readonly icon: ReactNode;
+    readonly title: ReactNode;
+    readonly description: ReactNode;
+    readonly actions?: ReactNode;
+    readonly headingLevel?: "h2" | "h3";
+}
+/** An accessible empty state for a graph canvas. */
+export declare function GraphEmptyState({ actions, className, description, headingLevel, icon, role, title, ...props }: GraphEmptyStateProps): import("react").JSX.Element;
 export type GraphNodeTone = "neutral" | "lime" | "blue" | "purple" | "coral" | "amber";
 export interface GraphNodeProps extends Omit<ButtonHTMLAttributes<HTMLButtonElement>, "children" | "title"> {
     readonly x: number;

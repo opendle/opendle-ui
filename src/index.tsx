@@ -199,6 +199,7 @@ export { HealthBar, type HealthBarProps } from "./components/HealthBar.js";
 export {
   GraphEdge,
   GraphEdges,
+  GraphEmptyState,
   GraphInspector,
   GraphNode,
   GraphToolbar,
@@ -206,6 +207,7 @@ export {
   GraphWorkspace,
   type GraphEdgeProps,
   type GraphEdgesProps,
+  type GraphEmptyStateProps,
   type GraphInspectorProps,
   type GraphNodeProps,
   type GraphNodeTone,
@@ -214,8 +216,14 @@ export {
   type GraphWorkspaceProps,
 } from "./components/GraphWorkspace.js";
 export {
+  layoutLayeredDirectedGraph,
   layoutTree,
   treeEdgePath,
+  type LayeredGraphLayoutEdge,
+  type LayeredGraphLayoutItem,
+  type LayeredGraphLayoutNode,
+  type LayeredGraphLayoutOptions,
+  type LayeredGraphLayoutResult,
   type TreeEdgePathOptions,
   type TreeLayoutEdge,
   type TreeLayoutItem,
