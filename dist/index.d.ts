@@ -63,6 +63,8 @@ export { Card, type CardProps } from "./components/Card.js";
 export { ChainStep, type ChainStepProps } from "./components/ChainStep.js";
 export { ContextItem, type ContextItemProps, } from "./components/ContextItem.js";
 export { HealthBar, type HealthBarProps } from "./components/HealthBar.js";
+export { GraphEdge, GraphEdges, GraphInspector, GraphNode, GraphToolbar, GraphViewport, GraphWorkspace, type GraphEdgeProps, type GraphEdgesProps, type GraphInspectorProps, type GraphNodeProps, type GraphNodeTone, type GraphToolbarProps, type GraphViewportProps, type GraphWorkspaceProps, } from "./components/GraphWorkspace.js";
+export { layoutTree, treeEdgePath, type TreeEdgePathOptions, type TreeLayoutEdge, type TreeLayoutItem, type TreeLayoutNode, type TreeLayoutOptions, type TreeLayoutResult, } from "./GraphLayout.js";
 export { IconButton, type IconButtonProps } from "./components/IconButton.js";
 export { NavigationItem, type NavigationItemProps, } from "./components/NavigationItem.js";
 export { NavigationLink, type NavigationLinkProps, } from "./components/NavigationLink.js";

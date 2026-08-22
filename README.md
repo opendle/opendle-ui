@@ -23,6 +23,12 @@ cards, agent sidebars, calendar boards, status indicators, and error
 boundaries. Host apps keep
 their navigation, routes, product copy, mock data, and service behavior here.
 
+Graph applications can compose `GraphWorkspace`, `GraphToolbar`,
+`GraphViewport`, `GraphNode`, `GraphEdges`, `GraphEdge`, and `GraphInspector`.
+The `layoutTree` and `treeEdgePath` helpers give host apps a stable tree without
+a graph-library dependency. Host apps still own graph data, selection, editing,
+drag behavior, and persistence.
+
 Typography uses the Xbot design as the source of truth: Aptos for body text,
 Aptos Display for headings, and Aptos Mono with system fallbacks for technical
 text. Use the `--od-*` tokens instead of adding a host-specific font system.

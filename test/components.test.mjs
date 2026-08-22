@@ -16,6 +16,13 @@ import {
   Card,
   CalendarBoard,
   ContextItem,
+  GraphEdge,
+  GraphEdges,
+  GraphInspector,
+  GraphNode,
+  GraphToolbar,
+  GraphViewport,
+  GraphWorkspace,
   HealthBar,
   Icon,
   IconButton,
@@ -35,6 +42,8 @@ import {
   StatusPill,
   Toast,
   WorkspaceSelector,
+  layoutTree,
+  treeEdgePath,
 } from "../dist/index.js";
 
 test("Icon renders a decorative SVG with the shared class", () => {
@@ -167,6 +176,94 @@ test("application shell components keep caller-owned content in semantic slots",
   assert.match(markup, /<h1>Application content<\/h1>/);
   assert.match(markup, /class="od-application-mobile-navigation"/);
   assert.match(markup, /aria-label="Mobile navigation"/);
+});
+
+test("graph workspace components expose one labelled canvas and inspector", () => {
+  const markup = renderToStaticMarkup(
+    React.createElement(
+      GraphWorkspace,
+      {
+        "aria-label": "Service inheritance",
+        toolbar: React.createElement(GraphToolbar, {
+          actions: React.createElement(Button, null, "Create root"),
+        }),
+        inspector: React.createElement(
+          GraphInspector,
+          { onClose: () => undefined, title: "Platform" },
+          React.createElement("p", null, "Root service"),
+        ),
+      },
+      React.createElement(
+        GraphViewport,
+        {
+          "aria-label": "Service tree",
+          canvasHeight: 480,
+          canvasProps: { "aria-label": "Three services" },
+          canvasWidth: 720,
+        },
+        React.createElement(
+          GraphEdges,
+          { "aria-label": "Inheritance links" },
+          React.createElement(GraphEdge, { path: "M 0 0 L 10 10" }),
+          React.createElement(GraphEdge, {
+            "aria-label": "Move Platform under Shared",
+            onSelect: () => undefined,
+            path: "M 10 10 L 20 20",
+          }),
+        ),
+        React.createElement(GraphNode, {
+          "aria-label": "Inspect Platform",
+          eyebrow: "Root service",
+          meta: "2 children",
+          draggable: true,
+          dragging: true,
+          dropTarget: true,
+          root: true,
+          selected: true,
+          title: "Platform",
+          tone: "lime",
+          x: 48,
+          y: 96,
+        }),
+      ),
+    ),
+  );
+  assert.match(markup, /class="od-graph-workspace"/);
+  assert.match(markup, /aria-label="Service tree"/);
+  assert.match(markup, /class="od-graph-canvas" role="group"/);
+  assert.match(markup, /transform:translate\(48px, 96px\)/);
+  assert.match(markup, /data-root="true"/);
+  assert.match(markup, /data-dragging="true"/);
+  assert.match(markup, /data-drop-target="true"/);
+  assert.match(markup, /aria-pressed="true"/);
+  assert.match(markup, /aria-label="Close inspector"/);
+  assert.match(markup, /aria-hidden="true"/);
+  assert.match(markup, /aria-label="Move Platform under Shared"/);
+  assert.match(markup, /role="button"/);
+});
+
+test("tree helpers make stable horizontal and vertical layouts", () => {
+  const items = [
+    { id: "root", parentId: null },
+    { id: "child-a", parentId: "root" },
+    { id: "child-b", parentId: "root" },
+  ];
+  const horizontal = layoutTree(items, { padding: 20 });
+  const vertical = layoutTree(items, { direction: "vertical", padding: 20 });
+  assert.equal(horizontal.nodes[0].x, 20);
+  assert.equal(horizontal.nodes[1].x, 260);
+  assert.equal(horizontal.edges.length, 2);
+  assert.equal(vertical.nodes[0].y, 20);
+  assert.equal(vertical.nodes[1].y, 120);
+  assert.match(treeEdgePath(horizontal.nodes[0], horizontal.nodes[1]), /^M /);
+  assert.throws(
+    () =>
+      layoutTree([
+        { id: "a", parentId: "b" },
+        { id: "b", parentId: "a" },
+      ]),
+    /cycle/,
+  );
 });
 
 test("session components keep one named page and caller-supplied states", () => {
