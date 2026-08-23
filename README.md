@@ -33,6 +33,12 @@ items with no known parent as roots and rejects duplicate identifiers and
 cycles. Host apps still own graph data, selection, editing, drag behavior, and
 persistence.
 
+`ServiceAssignmentGraph` gives service-scoped assignment views one controlled
+graph, side inspector, and accessible list. It shows direct, inherited,
+implicit-default, empty-chain, and unconfigured states. Hosts supply the
+effective ordered candidates, last-use text, observed requirements, actions,
+and all product behavior.
+
 Typography uses the Xbot design as the source of truth: Aptos for body text,
 Aptos Display for headings, and Aptos Mono with system fallbacks for technical
 text. Use the `--od-*` tokens instead of adding a host-specific font system.

@@ -1,4 +1,5 @@
 import { strict as assert } from "node:assert";
+import { readFile } from "node:fs/promises";
 import test from "node:test";
 import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
@@ -35,6 +36,7 @@ import {
   PanelHeader,
   PlanCardShell,
   ReviewPlanCard,
+  ServiceAssignmentGraph,
   SessionCard,
   SessionPage,
   ShellErrorBoundary,
@@ -47,6 +49,7 @@ import {
   layoutTree,
   treeEdgePath,
 } from "../dist/index.js";
+import { serviceAssignmentFocusIndex } from "../dist/ServiceAssignmentKeyboard.js";
 
 test("Icon renders a decorative SVG with the shared class", () => {
   const markup = renderToStaticMarkup(
@@ -348,6 +351,166 @@ test("GraphEmptyState labels its title and keeps actions available", () => {
   assert.match(markup, /<h3 id="[^"]+">No services<\/h3>/);
   assert.match(markup, /aria-hidden="true" class="od-graph-empty-state-icon"/);
   assert.match(markup, />Create service<\/button>/);
+});
+
+const serviceAssignments = [
+  {
+    id: "default",
+    name: "default",
+    source: { kind: "implicit", label: "Root service" },
+    candidates: [],
+    isDefault: true,
+    lastUsed: null,
+    observedRequirements: [],
+  },
+  {
+    id: "support-chat",
+    name: "support.chat",
+    source: { kind: "direct", label: "Support service" },
+    candidates: [
+      { id: "fast", label: "Fast text model", detail: "Region A" },
+      { id: "steady", label: "Steady text model" },
+    ],
+    lastUsed: {
+      dateTime: "2026-08-23T12:00:00Z",
+      label: "23 Aug 2026, 12:00 UTC",
+    },
+    observedRequirements: ["text input", "tool calls"],
+  },
+  {
+    id: "summary",
+    name: "summary",
+    source: { kind: "inherited", label: "Shared service" },
+    candidates: [{ id: "steady", label: "Steady text model" }],
+    inheritsFrom: "default",
+    lastUsed: null,
+    observedRequirements: ["text input"],
+  },
+  {
+    id: "image-caption",
+    name: "image.caption",
+    source: { kind: "direct", label: "Support service" },
+    candidates: [],
+    lastUsed: null,
+    observedRequirements: ["image input"],
+  },
+];
+
+test("ServiceAssignmentGraph shows source, chain, use, and requirement states with list parity", () => {
+  const markup = renderToStaticMarkup(
+    React.createElement(ServiceAssignmentGraph, {
+      "aria-label": "Support service assignments",
+      assignments: serviceAssignments,
+      id: "support-assignments",
+      onSelectionChange: () => undefined,
+      actionsForAssignment: (assignment) =>
+        React.createElement(Button, null, `Edit ${assignment.name}`),
+      selectedAssignmentId: "support-chat",
+    }),
+  );
+
+  assert.match(markup, /class="od-service-assignment-graph"/);
+  assert.match(markup, /role="group"/);
+  assert.match(markup, /aria-label="Support service assignments visual graph"/);
+  assert.match(
+    markup,
+    /aria-label="4 assignments and their ordered candidate chains"/,
+  );
+  assert.match(
+    markup,
+    /aria-keyshortcuts="ArrowUp ArrowDown ArrowLeft ArrowRight Home End Escape"/,
+  );
+  assert.match(markup, /aria-expanded="true"/);
+  assert.match(markup, /aria-live="polite"/);
+  assert.match(markup, /Direct definition from Support service/);
+  assert.match(markup, /Inherited definition from Shared service/);
+  assert.match(markup, /Implicit default from Root service/);
+  assert.match(markup, /Empty default chain/);
+  assert.match(markup, /Unconfigured/);
+  assert.match(markup, /Inherits default/);
+  assert.match(markup, /Fast text model/);
+  assert.match(markup, /Steady text model/);
+  assert.match(markup, /<time dateTime="2026-08-23T12:00:00Z">/);
+  assert.match(markup, /tool calls/);
+  assert.match(markup, /<h4>Ordered candidates<\/h4>/);
+  assert.match(markup, /<h4>Observed requirements<\/h4>/);
+  assert.match(markup, /id="support-assignments-list-title">Assignment list/);
+  assert.match(
+    markup,
+    /The list contains the same records and actions as the graph/,
+  );
+  assert.equal(
+    (markup.match(/>Edit support\.chat<\/button>/g) ?? []).length,
+    2,
+  );
+  assert.equal((markup.match(/support\.chat/g) ?? []).length >= 3, true);
+});
+
+test("ServiceAssignmentGraph keeps empty data labelled in both views", () => {
+  const markup = renderToStaticMarkup(
+    React.createElement(ServiceAssignmentGraph, {
+      "aria-label": "Empty service assignments",
+      assignments: [],
+      id: "empty-assignments",
+      onSelectionChange: () => undefined,
+    }),
+  );
+
+  assert.match(markup, /role="status"/);
+  assert.match(markup, /Supply assignments to show this graph/);
+  assert.match(
+    markup,
+    /class="od-service-assignment-list-empty">No assignments/,
+  );
+});
+
+test("ServiceAssignmentGraph keeps a valid tab stop for a stale selection", () => {
+  const markup = renderToStaticMarkup(
+    React.createElement(ServiceAssignmentGraph, {
+      "aria-label": "Service assignments",
+      assignments: serviceAssignments,
+      id: "stale-selection",
+      onSelectionChange: () => undefined,
+      selectedAssignmentId: "removed-assignment",
+    }),
+  );
+
+  assert.equal((markup.match(/tabindex="0"/g) ?? []).length, 1);
+  assert.doesNotMatch(markup, /id="stale-selection-inspector"/);
+});
+
+test("ServiceAssignmentGraph keyboard navigation stays within assignment nodes", () => {
+  assert.equal(serviceAssignmentFocusIndex(0, 4, "ArrowDown"), 1);
+  assert.equal(serviceAssignmentFocusIndex(3, 4, "ArrowRight"), 3);
+  assert.equal(serviceAssignmentFocusIndex(2, 4, "ArrowUp"), 1);
+  assert.equal(serviceAssignmentFocusIndex(0, 4, "ArrowLeft"), 0);
+  assert.equal(serviceAssignmentFocusIndex(2, 4, "Home"), 0);
+  assert.equal(serviceAssignmentFocusIndex(1, 4, "End"), 3);
+  assert.equal(serviceAssignmentFocusIndex(1, 4, "Enter"), null);
+  assert.equal(serviceAssignmentFocusIndex(0, 0, "ArrowDown"), null);
+});
+
+test("ServiceAssignmentGraph has bounded phone layout rules", async () => {
+  const stylesheet = await readFile(
+    new URL("../styles/tokens.css", import.meta.url),
+    "utf8",
+  );
+  const phoneStyles = stylesheet.slice(
+    stylesheet.indexOf("@media (max-width: 48rem)"),
+  );
+  assert.notEqual(phoneStyles, stylesheet);
+  assert.match(
+    phoneStyles,
+    /\.od-service-assignment-list-record-heading\s*\{[\s\S]*?flex-direction: column;/,
+  );
+  assert.match(
+    phoneStyles,
+    /\.od-service-assignment-facts > div\s*\{[\s\S]*?grid-template-columns: 1fr;/,
+  );
+  assert.match(
+    phoneStyles,
+    /\.od-service-assignment-visual \.od-graph-workspace\s*\{[\s\S]*?height: max\(34rem, calc\(100dvh - 6rem\)\);/,
+  );
 });
 
 test("session components keep one named page and caller-supplied states", () => {

@@ -216,6 +216,15 @@ export {
   type GraphWorkspaceProps,
 } from "./components/GraphWorkspace.js";
 export {
+  ServiceAssignmentGraph,
+  type ServiceAssignmentCandidate,
+  type ServiceAssignmentGraphProps,
+  type ServiceAssignmentItem,
+  type ServiceAssignmentLastUse,
+  type ServiceAssignmentSource,
+  type ServiceAssignmentSourceKind,
+} from "./components/ServiceAssignmentGraph.js";
+export {
   layoutLayeredDirectedGraph,
   layoutTree,
   treeEdgePath,
