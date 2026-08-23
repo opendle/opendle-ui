@@ -95,14 +95,14 @@ export interface PlaygroundEmbeddingOutput {
 }
 
 interface PlaygroundMediaOutputValue {
-  /** A host-created browser-safe object URL. */
+  /** A host-created blob URL. The host owns its lifetime and must revoke it. */
   readonly objectUrl: string;
   readonly label: string;
   readonly mediaType?: string;
 }
 
 export interface PlaygroundMediaCaptions {
-  /** A host-created browser-safe object URL. */
+  /** A host-created blob URL. The host owns its lifetime and must revoke it. */
   readonly objectUrl: string;
   readonly label: string;
   readonly language: string;
@@ -188,6 +188,32 @@ function validateOperations(operations: readonly PlaygroundOperation[]): void {
   }
   if (new Set(operations).size !== operations.length) {
     throw new Error("Available playground operations must be unique.");
+  }
+}
+
+function validateObjectUrl(name: string, value: string): void {
+  let protocol: string;
+  try {
+    protocol = new URL(value).protocol;
+  } catch {
+    throw new Error(`${name} must be a valid blob URL.`);
+  }
+  if (protocol !== "blob:") {
+    throw new Error(`${name} must use the blob protocol.`);
+  }
+}
+
+function validateOutput(output: PlaygroundOutput): void {
+  if (
+    output.kind !== "image" &&
+    output.kind !== "video" &&
+    output.kind !== "audio"
+  ) {
+    return;
+  }
+  validateObjectUrl("Media output object URL", output.objectUrl);
+  if (output.kind !== "image" && output.captions !== undefined) {
+    validateObjectUrl("Media captions object URL", output.captions.objectUrl);
   }
 }
 
@@ -445,6 +471,7 @@ function ImageInputControls({
 function PlaygroundForm({
   assignmentOptions,
   availableOperations,
+  busy,
   disabled,
   headingLevel,
   id,
@@ -461,6 +488,7 @@ function PlaygroundForm({
 }: {
   readonly assignmentOptions: readonly PlaygroundTargetOption[];
   readonly availableOperations: readonly PlaygroundOperation[];
+  readonly busy: boolean;
   readonly disabled: boolean;
   readonly headingLevel: "h3" | "h4";
   readonly id: string;
@@ -502,7 +530,7 @@ function PlaygroundForm({
 
   return (
     <form
-      aria-busy={disabled}
+      aria-busy={busy}
       aria-labelledby={`${id}-controls-title`}
       className="od-playground-form"
       onSubmit={submit}
@@ -613,6 +641,7 @@ function PlaygroundForm({
                   aria-label="Output limit"
                   disabled={disabled}
                   id={`${id}-output-limit`}
+                  max={1000000}
                   min={1}
                   onChange={(event) => {
                     onValueChange({
@@ -663,9 +692,19 @@ function PlaygroundForm({
 function ResultOutput({ output }: { readonly output: PlaygroundOutput }) {
   if (output.kind === "text" || output.kind === "json") {
     return (
-      <pre className="od-playground-text-output" data-output-kind={output.kind}>
-        {output.content || "No output content"}
-      </pre>
+      <>
+        {/* A tab stop lets keyboard users scroll a bounded long output. */}
+        {/* react-doctor-disable-next-line react-doctor/no-noninteractive-tabindex */}
+        <pre
+          aria-label={output.kind === "json" ? "JSON output" : "Text output"}
+          className="od-playground-text-output"
+          data-output-kind={output.kind}
+          role="region"
+          tabIndex={0}
+        >
+          {output.content || "No output content"}
+        </pre>
+      </>
     );
   }
   if (output.kind === "embedding") {
@@ -908,6 +947,7 @@ export function OperationPlayground({
   validateIdentities("Input image", inputImages);
   if (runState.status === "success") {
     validateIdentities("Usage item", runState.result.usage);
+    validateOutput(runState.result.output);
   }
   const Heading = headingLevel as ElementType;
   const sectionHeadingLevel = headingLevel === "h2" ? "h3" : "h4";
@@ -937,6 +977,7 @@ export function OperationPlayground({
       <PlaygroundForm
         assignmentOptions={assignmentOptions}
         availableOperations={availableOperations}
+        busy={loading}
         disabled={disabled || loading}
         headingLevel={sectionHeadingLevel}
         id={id}

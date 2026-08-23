@@ -1099,7 +1099,8 @@ samp {
   font-weight: 750;
 }
 
-.od-playground-optional-controls > summary:focus-visible {
+.od-playground-optional-controls > summary:focus-visible,
+.od-playground-embedding-output summary:focus-visible {
   outline: 3px solid color-mix(in srgb, var(--od-color-focus) 58%, transparent);
   outline-offset: 2px;
 }
@@ -1337,6 +1338,11 @@ samp {
   line-height: 1.55;
   overflow-wrap: anywhere;
   white-space: pre-wrap;
+}
+
+.od-playground-text-output:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--od-color-focus) 58%, transparent);
+  outline-offset: 2px;
 }
 
 .od-playground-embedding-output {

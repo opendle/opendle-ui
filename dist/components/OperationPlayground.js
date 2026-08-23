@@ -1,4 +1,4 @@
-import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
+import { jsx as _jsx, jsxs as _jsxs, Fragment as _Fragment } from "react/jsx-runtime";
 import { AutoGrowTextarea } from "./AutoGrowTextarea.js";
 import { Button } from "./Button.js";
 const allOperations = [
@@ -34,6 +34,29 @@ function validateOperations(operations) {
     }
     if (new Set(operations).size !== operations.length) {
         throw new Error("Available playground operations must be unique.");
+    }
+}
+function validateObjectUrl(name, value) {
+    let protocol;
+    try {
+        protocol = new URL(value).protocol;
+    }
+    catch {
+        throw new Error(`${name} must be a valid blob URL.`);
+    }
+    if (protocol !== "blob:") {
+        throw new Error(`${name} must use the blob protocol.`);
+    }
+}
+function validateOutput(output) {
+    if (output.kind !== "image" &&
+        output.kind !== "video" &&
+        output.kind !== "audio") {
+        return;
+    }
+    validateObjectUrl("Media output object URL", output.objectUrl);
+    if (output.kind !== "image" && output.captions !== undefined) {
+        validateObjectUrl("Media captions object URL", output.captions.objectUrl);
     }
 }
 function inputCopy(operation) {
@@ -122,7 +145,7 @@ function ImageInputControls({ disabled, id, images, onAdd, onRemove, }) {
                                 onRemove(image.id);
                             }, variant: "quiet", children: "Remove" }))] }, image.id))) }))] }));
 }
-function PlaygroundForm({ assignmentOptions, availableOperations, disabled, headingLevel, id, images, onAddInputImages, onRemoveInputImage, onReset, onRun, onValueChange, providerModelOptions, resetLabel, runLabel, value, }) {
+function PlaygroundForm({ assignmentOptions, availableOperations, busy, disabled, headingLevel, id, images, onAddInputImages, onRemoveInputImage, onReset, onRun, onValueChange, providerModelOptions, resetLabel, runLabel, value, }) {
     const Heading = headingLevel;
     const effectiveOperation = availableOperations.includes(value.operation)
         ? value.operation
@@ -139,7 +162,7 @@ function PlaygroundForm({ assignmentOptions, availableOperations, disabled, head
         }
         onRun(value);
     }
-    return (_jsxs("form", { "aria-busy": disabled, "aria-labelledby": `${id}-controls-title`, className: "od-playground-form", onSubmit: submit, children: [_jsx(Heading, { id: `${id}-controls-title`, children: "Request" }), _jsxs("label", { className: "od-playground-field", htmlFor: `${id}-operation`, children: [_jsx("span", { children: "Operation" }), _jsxs("select", { disabled: disabled, id: `${id}-operation`, onChange: (event) => {
+    return (_jsxs("form", { "aria-busy": busy, "aria-labelledby": `${id}-controls-title`, className: "od-playground-form", onSubmit: submit, children: [_jsx(Heading, { id: `${id}-controls-title`, children: "Request" }), _jsxs("label", { className: "od-playground-field", htmlFor: `${id}-operation`, children: [_jsx("span", { children: "Operation" }), _jsxs("select", { disabled: disabled, id: `${id}-operation`, onChange: (event) => {
                             onValueChange({
                                 ...value,
                                 operation: event.currentTarget.value,
@@ -156,7 +179,7 @@ function PlaygroundForm({ assignmentOptions, availableOperations, disabled, head
                                                         ...value,
                                                         temperature: optionalNumber(event),
                                                     });
-                                                }, step: 0.1, type: "number", value: value.temperature ?? "" })] }), _jsxs("label", { className: "od-playground-field", htmlFor: `${id}-output-limit`, children: [_jsx("span", { children: "Output limit" }), _jsx("input", { "aria-label": "Output limit", disabled: disabled, id: `${id}-output-limit`, min: 1, onChange: (event) => {
+                                                }, step: 0.1, type: "number", value: value.temperature ?? "" })] }), _jsxs("label", { className: "od-playground-field", htmlFor: `${id}-output-limit`, children: [_jsx("span", { children: "Output limit" }), _jsx("input", { "aria-label": "Output limit", disabled: disabled, id: `${id}-output-limit`, max: 1000000, min: 1, onChange: (event) => {
                                                     onValueChange({
                                                         ...value,
                                                         outputLimit: optionalNumber(event),
@@ -168,7 +191,7 @@ function PlaygroundForm({ assignmentOptions, availableOperations, disabled, head
 }
 function ResultOutput({ output }) {
     if (output.kind === "text" || output.kind === "json") {
-        return (_jsx("pre", { className: "od-playground-text-output", "data-output-kind": output.kind, children: output.content || "No output content" }));
+        return (_jsx(_Fragment, { children: _jsx("pre", { "aria-label": output.kind === "json" ? "JSON output" : "Text output", className: "od-playground-text-output", "data-output-kind": output.kind, role: "region", tabIndex: 0, children: output.content || "No output content" }) }));
     }
     if (output.kind === "embedding") {
         return (_jsxs("div", { className: "od-playground-embedding-output", children: [_jsxs("dl", { children: [_jsxs("div", { children: [_jsx("dt", { children: "Vectors" }), _jsx("dd", { children: String(output.vectorCount) })] }), _jsxs("div", { children: [_jsx("dt", { children: "Dimensions" }), _jsx("dd", { children: String(output.dimensions) })] })] }), output.preview === undefined || output.preview.length === 0 ? null : (_jsxs("details", { children: [_jsx("summary", { children: "Vector preview" }), _jsx("code", { children: output.preview.slice(0, 12).join(", ") })] }))] }));
@@ -213,6 +236,7 @@ export function OperationPlayground({ assignmentOptions, availableOperations = a
     validateIdentities("Input image", inputImages);
     if (runState.status === "success") {
         validateIdentities("Usage item", runState.result.usage);
+        validateOutput(runState.result.output);
     }
     const Heading = headingLevel;
     const sectionHeadingLevel = headingLevel === "h2" ? "h3" : "h4";
@@ -223,6 +247,6 @@ export function OperationPlayground({ assignmentOptions, availableOperations = a
         : null;
     return (_jsxs("section", { "aria-labelledby": `${id}-title`, className: classes("od-playground", className), "data-operation": selectedOperation ?? undefined, children: [_jsxs("header", { className: "od-playground-heading", children: [_jsxs("div", { children: [_jsx(Heading, { id: `${id}-title`, children: title }), description === undefined ? null : _jsx("p", { children: description })] }), _jsx("span", { children: selectedOperation === null
                             ? "Operation unavailable"
-                            : operationLabels[selectedOperation] })] }), _jsx(PlaygroundForm, { assignmentOptions: assignmentOptions, availableOperations: availableOperations, disabled: disabled || loading, headingLevel: sectionHeadingLevel, id: id, images: inputImages, onAddInputImages: onAddInputImages, onRemoveInputImage: onRemoveInputImage, onReset: onReset, onRun: onRun, onValueChange: onValueChange, providerModelOptions: providerModelOptions, resetLabel: resetLabel, runLabel: loading ? "Running…" : runLabel, value: value }), _jsxs("section", { "aria-labelledby": `${id}-output-title`, className: "od-playground-output", children: [_jsx(SectionHeading, { id: `${id}-output-title`, children: "Output" }), _jsx(PlaygroundResultState, { id: id, sectionHeadingLevel: sectionHeadingLevel, state: runState })] })] }));
+                            : operationLabels[selectedOperation] })] }), _jsx(PlaygroundForm, { assignmentOptions: assignmentOptions, availableOperations: availableOperations, busy: loading, disabled: disabled || loading, headingLevel: sectionHeadingLevel, id: id, images: inputImages, onAddInputImages: onAddInputImages, onRemoveInputImage: onRemoveInputImage, onReset: onReset, onRun: onRun, onValueChange: onValueChange, providerModelOptions: providerModelOptions, resetLabel: resetLabel, runLabel: loading ? "Running…" : runLabel, value: value }), _jsxs("section", { "aria-labelledby": `${id}-output-title`, className: "od-playground-output", children: [_jsx(SectionHeading, { id: `${id}-output-title`, children: "Output" }), _jsx(PlaygroundResultState, { id: id, sectionHeadingLevel: sectionHeadingLevel, state: runState })] })] }));
 }
 //# sourceMappingURL=OperationPlayground.js.map

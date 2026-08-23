@@ -737,12 +737,17 @@ test("OperationPlayground shows controlled model inputs and complete result fact
   assert.match(markup, /id="operation-test-temperature"/);
   assert.match(markup, /value="0.3"/);
   assert.match(markup, /id="operation-test-output-limit"/);
+  assert.match(markup, /max="1000000"/);
   assert.match(markup, /value="240"/);
   assert.match(markup, /accept="image\/jpeg,image\/png,image\/webp"/);
   assert.match(markup, /receipt\.png/);
   assert.match(markup, /aria-label="Remove receipt\.png"/);
   assert.match(markup, /role="status"/);
   assert.match(markup, /Result ready/);
+  assert.match(
+    markup,
+    /aria-label="Text output"[^>]*data-output-kind="text" role="region" tabindex="0"/,
+  );
   assert.match(markup, /The operation completed\./);
   assert.match(markup, /Selected route/);
   assert.match(markup, /steady-text/);
@@ -915,6 +920,64 @@ test("OperationPlayground labels empty, loading, and corrective error states", (
   assert.match(error, /How to correct it/);
   assert.match(error, /Select a route that supports image output/);
   assert.match(error, /<code>route_incompatible<\/code>/);
+
+  const disabled = renderPlayground({ disabled: true });
+  assert.match(disabled, /<form[^>]*aria-busy="false"/);
+  assert.match(
+    disabled,
+    /<button[^>]*disabled=""[^>]*>Run operation<\/button>/,
+  );
+});
+
+test("OperationPlayground accepts only host-owned blob URLs for media", () => {
+  for (const objectUrl of [
+    "https://router.invalid/v1/media-jobs/job-1/content",
+    "data:image/png;base64,AAAA",
+    "not a URL",
+  ]) {
+    assert.throws(
+      () =>
+        renderPlayground({
+          value: { ...playgroundValue, operation: "image" },
+          runState: {
+            status: "success",
+            result: {
+              ...playgroundSuccess.result,
+              output: {
+                kind: "image",
+                objectUrl,
+                label: "Generated image",
+              },
+            },
+          },
+        }),
+      /Media output object URL must/,
+    );
+  }
+
+  assert.throws(
+    () =>
+      renderPlayground({
+        value: { ...playgroundValue, operation: "video" },
+        runState: {
+          status: "success",
+          result: {
+            ...playgroundSuccess.result,
+            output: {
+              kind: "video",
+              objectUrl: "blob:https://host.invalid/video-result",
+              label: "Generated video",
+              captions: {
+                objectUrl: "https://host.invalid/captions.vtt",
+                label: "English",
+                language: "en",
+              },
+            },
+          },
+        },
+      }),
+    /Media captions object URL must use the blob protocol/,
+  );
 });
 
 test("OperationPlayground keeps stale or unavailable route selections safe", () => {
@@ -1034,7 +1097,11 @@ test("OperationPlayground has responsive phone and motion rules", async () => {
   );
   assert.match(
     stylesheet,
-    /\.od-playground-optional-controls > summary:focus-visible\s*\{[\s\S]*?outline:/,
+    /\.od-playground-optional-controls > summary:focus-visible,[\s\S]*?\.od-playground-embedding-output summary:focus-visible\s*\{[\s\S]*?outline:/,
+  );
+  assert.match(
+    stylesheet,
+    /\.od-playground-text-output:focus-visible\s*\{[\s\S]*?outline:/,
   );
 });
 

@@ -56,13 +56,13 @@ export interface PlaygroundEmbeddingOutput {
     readonly preview?: readonly number[];
 }
 interface PlaygroundMediaOutputValue {
-    /** A host-created browser-safe object URL. */
+    /** A host-created blob URL. The host owns its lifetime and must revoke it. */
     readonly objectUrl: string;
     readonly label: string;
     readonly mediaType?: string;
 }
 export interface PlaygroundMediaCaptions {
-    /** A host-created browser-safe object URL. */
+    /** A host-created blob URL. The host owns its lifetime and must revoke it. */
     readonly objectUrl: string;
     readonly label: string;
     readonly language: string;
