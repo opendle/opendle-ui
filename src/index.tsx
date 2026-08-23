@@ -225,6 +225,27 @@ export {
   type ServiceAssignmentSourceKind,
 } from "./components/ServiceAssignmentGraph.js";
 export {
+  OperationPlayground,
+  type OperationPlaygroundProps,
+  type PlaygroundCorrectiveError,
+  type PlaygroundCost,
+  type PlaygroundEmbeddingOutput,
+  type PlaygroundInputImage,
+  type PlaygroundMediaCaptions,
+  type PlaygroundMediaOutput,
+  type PlaygroundOperation,
+  type PlaygroundOutput,
+  type PlaygroundResult,
+  type PlaygroundRunState,
+  type PlaygroundSelectedRoute,
+  type PlaygroundSelection,
+  type PlaygroundSelectionKind,
+  type PlaygroundTargetOption,
+  type PlaygroundTextOutput,
+  type PlaygroundUsageItem,
+  type PlaygroundValue,
+} from "./components/OperationPlayground.js";
+export {
   layoutLayeredDirectedGraph,
   layoutTree,
   treeEdgePath,

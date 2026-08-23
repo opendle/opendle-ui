@@ -95,6 +95,7 @@ export { ContextItem, } from "./components/ContextItem.js";
 export { HealthBar } from "./components/HealthBar.js";
 export { GraphEdge, GraphEdges, GraphEmptyState, GraphInspector, GraphNode, GraphToolbar, GraphViewport, GraphWorkspace, } from "./components/GraphWorkspace.js";
 export { ServiceAssignmentGraph, } from "./components/ServiceAssignmentGraph.js";
+export { OperationPlayground, } from "./components/OperationPlayground.js";
 export { layoutLayeredDirectedGraph, layoutTree, treeEdgePath, } from "./GraphLayout.js";
 export { IconButton } from "./components/IconButton.js";
 export { NavigationItem, } from "./components/NavigationItem.js";

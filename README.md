@@ -39,6 +39,12 @@ implicit-default, empty-chain, and unconfigured states. Hosts supply the
 effective ordered candidates, last-use text, observed requirements, actions,
 and all product behavior.
 
+`OperationPlayground` gives host applications one controlled, provider-neutral
+surface for model, embedding, image, video, and audio operations. It supports
+an assignment or exact provider-model selection and shows output, the selected
+route, latency, usage, cost, and corrective errors. The host owns all API
+calls, credentials, data access, routing, product copy, state, and mutations.
+
 Typography uses the Xbot design as the source of truth: Aptos for body text,
 Aptos Display for headings, and Aptos Mono with system fallbacks for technical
 text. Use the `--od-*` tokens instead of adding a host-specific font system.

@@ -31,6 +31,7 @@ import {
   NavigationItem,
   NavigationLink,
   MobileNavigation,
+  OperationPlayground,
   PageHeading,
   Panel,
   PanelHeader,
@@ -649,6 +650,391 @@ test("ServiceAssignmentGraph has bounded graph and phone layout rules", async ()
   assert.match(
     phoneStyles,
     /\.od-service-assignment-visual \.od-graph-workspace\s*\{[\s\S]*?height: max\(34rem, calc\(100dvh - 6rem\)\);/,
+  );
+});
+
+const playgroundValue = {
+  operation: "model",
+  selection: { kind: "assignment", id: "support-chat" },
+  input: "Give one short answer.",
+  systemPrompt: "Use plain language.",
+  temperature: 0.3,
+  outputLimit: 240,
+};
+
+const playgroundAssignments = [
+  {
+    id: "support-chat",
+    label: "Support chat",
+    detail: "Two routes",
+  },
+];
+
+const playgroundProviderModels = [
+  {
+    id: "steady-text",
+    label: "Steady text model",
+    detail: "Text and tools",
+  },
+  {
+    id: "unavailable-model",
+    label: "Unavailable model",
+    disabled: true,
+  },
+];
+
+const playgroundSuccess = {
+  status: "success",
+  result: {
+    output: { kind: "text", content: "The operation completed." },
+    selectedRoute: {
+      label: "steady-text",
+      detail: "Selected from support-chat",
+    },
+    latencyMs: 184,
+    usage: [
+      { id: "input", label: "Input tokens", value: "22" },
+      { id: "output", label: "Output tokens", value: "8" },
+    ],
+    cost: { amount: "0.00042", currency: "USD" },
+  },
+};
+
+function renderPlayground(overrides = {}) {
+  return renderToStaticMarkup(
+    React.createElement(OperationPlayground, {
+      assignmentOptions: playgroundAssignments,
+      description: "Run one provider-neutral operation.",
+      id: "operation-test",
+      inputImages: [{ id: "input-1", name: "receipt.png", detail: "82 KB" }],
+      onAddInputImages: () => undefined,
+      onRemoveInputImage: () => undefined,
+      onReset: () => undefined,
+      onRun: () => undefined,
+      onValueChange: () => undefined,
+      providerModelOptions: playgroundProviderModels,
+      runState: playgroundSuccess,
+      title: "Operation playground",
+      value: playgroundValue,
+      ...overrides,
+    }),
+  );
+}
+
+test("OperationPlayground shows controlled model inputs and complete result facts", () => {
+  const markup = renderPlayground();
+
+  assert.match(markup, /class="od-playground"/);
+  assert.match(markup, /aria-labelledby="operation-test-title"/);
+  assert.match(markup, /<form[^>]*aria-busy="false"/);
+  assert.match(markup, /<label[^>]*for="operation-test-operation"/);
+  assert.match(markup, /<option value="model" selected="">Model/);
+  assert.match(markup, /name="operation-test-route-kind"/);
+  assert.match(markup, /<input[^>]*type="radio"[^>]*checked=""/);
+  assert.match(markup, /Support chat · Two routes/);
+  assert.match(markup, /<summary>Model controls<\/summary>/);
+  assert.match(markup, /id="operation-test-system-prompt"/);
+  assert.match(markup, /id="operation-test-temperature"/);
+  assert.match(markup, /value="0.3"/);
+  assert.match(markup, /id="operation-test-output-limit"/);
+  assert.match(markup, /value="240"/);
+  assert.match(markup, /accept="image\/jpeg,image\/png,image\/webp"/);
+  assert.match(markup, /receipt\.png/);
+  assert.match(markup, /aria-label="Remove receipt\.png"/);
+  assert.match(markup, /role="status"/);
+  assert.match(markup, /Result ready/);
+  assert.match(markup, /The operation completed\./);
+  assert.match(markup, /Selected route/);
+  assert.match(markup, /steady-text/);
+  assert.match(markup, /184 ms/);
+  assert.match(markup, /Input tokens/);
+  assert.match(markup, />22<\/dd>/);
+  assert.match(markup, /0\.00042 USD/);
+  assert.doesNotMatch(markup, /service[ -]?key/i);
+  assert.doesNotMatch(markup, /authorization/i);
+});
+
+test("OperationPlayground shows only the controls that apply to each operation", () => {
+  const embedding = renderPlayground({
+    value: { ...playgroundValue, operation: "embedding" },
+    inputImages: [],
+    runState: {
+      status: "success",
+      result: {
+        ...playgroundSuccess.result,
+        output: {
+          kind: "embedding",
+          vectorCount: 2,
+          dimensions: 1536,
+          preview: [0.1, 0.2, 0.3],
+        },
+        usage: [],
+        cost: null,
+      },
+    },
+  });
+  assert.match(embedding, /data-operation="embedding"/);
+  assert.match(embedding, />Input text<\/span>/);
+  assert.match(embedding, /Put each input item on a new line/);
+  assert.match(embedding, /Vectors/);
+  assert.match(embedding, />2<\/dd>/);
+  assert.match(embedding, /Dimensions/);
+  assert.match(embedding, />1536<\/dd>/);
+  assert.match(embedding, /Vector preview/);
+  assert.match(embedding, /No usage reported/);
+  assert.match(embedding, /Not reported/);
+  assert.doesNotMatch(embedding, /id="operation-test-system-prompt"/);
+  assert.doesNotMatch(embedding, /Input images/);
+
+  const image = renderPlayground({
+    value: { ...playgroundValue, operation: "image" },
+    runState: {
+      status: "success",
+      result: {
+        ...playgroundSuccess.result,
+        output: {
+          kind: "image",
+          objectUrl: "blob:https://host.invalid/image-result",
+          label: "Generated landscape",
+          mediaType: "image/png",
+        },
+      },
+    },
+  });
+  assert.match(image, /data-operation="image"/);
+  assert.match(image, /<img alt="Generated landscape"/);
+  assert.match(image, /referrerPolicy="no-referrer"/);
+  assert.match(image, /<figcaption>Generated landscape<\/figcaption>/);
+  assert.doesNotMatch(image, /Model controls/);
+
+  const video = renderPlayground({
+    value: { ...playgroundValue, operation: "video" },
+    runState: {
+      status: "success",
+      result: {
+        ...playgroundSuccess.result,
+        output: {
+          kind: "video",
+          objectUrl: "blob:https://host.invalid/video-result",
+          label: "Generated clip",
+          mediaType: "video/mp4",
+        },
+      },
+    },
+  });
+  assert.match(video, /data-operation="video"/);
+  assert.match(video, /<video aria-label="Generated clip" controls=""/);
+  assert.match(video, /preload="metadata"/);
+  assert.match(video, /type="video\/mp4"/);
+  assert.doesNotMatch(video, /<track/);
+
+  const audio = renderPlayground({
+    value: { ...playgroundValue, operation: "audio" },
+    inputImages: [],
+    runState: {
+      status: "success",
+      result: {
+        ...playgroundSuccess.result,
+        output: {
+          kind: "audio",
+          objectUrl: "blob:https://host.invalid/audio-result",
+          label: "Generated speech",
+          mediaType: "audio/mpeg",
+        },
+      },
+    },
+  });
+  assert.match(audio, /data-operation="audio"/);
+  assert.match(audio, />Text<\/span>/);
+  assert.match(audio, /<audio aria-label="Generated speech" controls=""/);
+  assert.doesNotMatch(audio, /<track/);
+  assert.doesNotMatch(audio, /Input images/);
+});
+
+test("OperationPlayground renders optional media captions when supplied", () => {
+  for (const kind of ["video", "audio"]) {
+    const markup = renderPlayground({
+      value: { ...playgroundValue, operation: kind },
+      runState: {
+        status: "success",
+        result: {
+          ...playgroundSuccess.result,
+          output: {
+            kind,
+            objectUrl: `blob:https://host.invalid/${kind}-result`,
+            label: `Generated ${kind}`,
+            mediaType: `${kind}/test`,
+            captions: {
+              objectUrl: `blob:https://host.invalid/${kind}-captions`,
+              label: "English",
+              language: "en",
+            },
+          },
+        },
+      },
+    });
+    assert.match(markup, /<track[^>]*kind="captions"/);
+    assert.match(markup, /label="English"/);
+    assert.match(markup, /srcLang="en"/);
+  }
+});
+
+test("OperationPlayground labels empty, loading, and corrective error states", () => {
+  const empty = renderPlayground({
+    runState: { status: "empty", message: "No saved result." },
+  });
+  assert.match(empty, /od-playground-state-empty/);
+  assert.match(empty, /<output aria-live="polite"/);
+  assert.match(empty, /No result/);
+  assert.match(empty, /No saved result/);
+
+  const loading = renderPlayground({
+    runState: { status: "loading", message: "The media job is pending." },
+  });
+  assert.match(loading, /aria-busy="true"/);
+  assert.match(loading, /aria-live="polite"/);
+  assert.match(loading, /Operation running/);
+  assert.match(loading, /The media job is pending/);
+  assert.match(loading, /disabled=""[^>]*>Running…<\/button>/);
+
+  const error = renderPlayground({
+    runState: {
+      status: "error",
+      error: {
+        title: "The route is not available",
+        message: "The selected route cannot run this operation.",
+        correction:
+          "Select a route that supports image output and run it again.",
+        code: "route_incompatible",
+      },
+    },
+  });
+  assert.match(error, /role="alert"/);
+  assert.match(error, /aria-live="assertive"/);
+  assert.match(error, /The route is not available/);
+  assert.match(error, /How to correct it/);
+  assert.match(error, /Select a route that supports image output/);
+  assert.match(error, /<code>route_incompatible<\/code>/);
+});
+
+test("OperationPlayground keeps stale or unavailable route selections safe", () => {
+  const stale = renderPlayground({
+    value: {
+      ...playgroundValue,
+      selection: { kind: "assignment", id: "removed-assignment" },
+    },
+  });
+  assert.match(
+    stale,
+    /<option value="" selected="">Select assignment<\/option>/,
+  );
+  assert.match(stale, /<button[^>]*disabled=""[^>]*>Run operation<\/button>/);
+
+  const noAssignments = renderPlayground({
+    assignmentOptions: [],
+    value: {
+      ...playgroundValue,
+      selection: { kind: "assignment", id: "" },
+    },
+  });
+  assert.match(noAssignments, /No assignments available/);
+  assert.match(
+    noAssignments,
+    /<input(?=[^>]*disabled="")(?=[^>]*type="radio")(?=[^>]*checked="")[^>]*>/,
+  );
+
+  const noEnabledProviderModels = renderPlayground({
+    providerModelOptions: playgroundProviderModels.map((option) => ({
+      ...option,
+      disabled: true,
+    })),
+    value: {
+      ...playgroundValue,
+      selection: { kind: "provider-model", id: "" },
+    },
+  });
+  assert.match(
+    noEnabledProviderModels,
+    /<select disabled="" id="operation-test-target"/,
+  );
+  assert.match(noEnabledProviderModels, /No provider-models available/);
+
+  const unavailableOperation = renderPlayground({
+    availableOperations: ["embedding", "image"],
+    value: playgroundValue,
+  });
+  assert.match(unavailableOperation, /Operation unavailable/);
+  assert.doesNotMatch(unavailableOperation, /data-operation=/);
+  assert.match(
+    unavailableOperation,
+    /<button[^>]*disabled=""[^>]*>Run operation<\/button>/,
+  );
+});
+
+test("OperationPlayground rejects ambiguous options and operation lists", () => {
+  assert.throws(
+    () =>
+      renderPlayground({
+        assignmentOptions: [
+          playgroundAssignments[0],
+          { ...playgroundAssignments[0], label: "Duplicate" },
+        ],
+      }),
+    /Assignment option id must be unique/,
+  );
+  assert.throws(
+    () => renderPlayground({ availableOperations: [] }),
+    /must not be empty/,
+  );
+  assert.throws(
+    () => renderPlayground({ availableOperations: ["model", "model"] }),
+    /must be unique/,
+  );
+  assert.throws(
+    () =>
+      renderPlayground({
+        runState: {
+          ...playgroundSuccess,
+          result: {
+            ...playgroundSuccess.result,
+            usage: [
+              playgroundSuccess.result.usage[0],
+              playgroundSuccess.result.usage[0],
+            ],
+          },
+        },
+      }),
+    /Usage item id must be unique/,
+  );
+});
+
+test("OperationPlayground has responsive phone and motion rules", async () => {
+  const stylesheet = await readFile(
+    new URL("../styles/tokens.css", import.meta.url),
+    "utf8",
+  );
+  const phoneStyles = stylesheet.slice(
+    stylesheet.lastIndexOf("@media (max-width: 48rem)"),
+  );
+  assert.match(
+    stylesheet,
+    /\.od-playground\s*\{[\s\S]*?grid-template-columns: minmax\(0, 1\.08fr\) minmax\(18rem, 0\.92fr\);/,
+  );
+  assert.match(
+    phoneStyles,
+    /\.od-playground\s*\{[\s\S]*?grid-template-columns: minmax\(0, 1fr\);/,
+  );
+  assert.match(
+    phoneStyles,
+    /\.od-playground-route-kind,[\s\S]*?grid-template-columns: minmax\(0, 1fr\);/,
+  );
+  assert.match(
+    stylesheet,
+    /@media \(prefers-reduced-motion: reduce\)[\s\S]*?\.od-playground-state-loading > span[\s\S]*?animation: none;/,
+  );
+  assert.match(
+    stylesheet,
+    /\.od-playground-optional-controls > summary:focus-visible\s*\{[\s\S]*?outline:/,
   );
 });
 
