@@ -1081,7 +1081,10 @@ samp {
   border-radius: var(--od-radius-md);
   color: var(--od-color-muted);
   background: transparent;
+  font-size: 0.875rem;
+  font-weight: 600;
   text-align: left;
+  text-decoration: none;
 }
 
 .od-navigation-item:hover {

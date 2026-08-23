@@ -27,9 +27,10 @@ Graph applications can compose `GraphWorkspace`, `GraphToolbar`,
 `GraphViewport`, `GraphNode`, `GraphEdges`, `GraphEdge`, `GraphInspector`, and
 `GraphEmptyState`. The `layoutTree`, `layoutLayeredDirectedGraph`, and
 `treeEdgePath` helpers give host apps stable tree and multiple-parent graph
-layouts without a graph-library dependency. The layered layout treats items
-with no known parent as roots and rejects duplicate identifiers and cycles.
-Host apps still own graph data, selection, editing, drag behavior, and
+layouts without a graph-library dependency. Layouts run from top to bottom by
+default. A host can request a left-to-right layout. The layered layout treats
+items with no known parent as roots and rejects duplicate identifiers and
+cycles. Host apps still own graph data, selection, editing, drag behavior, and
 persistence.
 
 Typography uses the Xbot design as the source of truth: Aptos for body text,

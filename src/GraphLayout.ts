@@ -66,7 +66,7 @@ export function layoutLayeredDirectedGraph(
   items: readonly LayeredGraphLayoutItem[],
   options: LayeredGraphLayoutOptions = {},
 ): LayeredGraphLayoutResult {
-  const direction = options.direction ?? "horizontal";
+  const direction = options.direction ?? "vertical";
   const nodeWidth = options.nodeWidth ?? 176;
   const nodeHeight = options.nodeHeight ?? 72;
   const horizontalGap = options.horizontalGap ?? 64;
@@ -193,7 +193,7 @@ export function layoutTree(
   items: readonly TreeLayoutItem[],
   options: TreeLayoutOptions = {},
 ): TreeLayoutResult {
-  const direction = options.direction ?? "horizontal";
+  const direction = options.direction ?? "vertical";
   const nodeWidth = options.nodeWidth ?? 176;
   const nodeHeight = options.nodeHeight ?? 72;
   const horizontalGap = options.horizontalGap ?? 64;
@@ -311,7 +311,7 @@ export function treeEdgePath(
   target: Pick<TreeLayoutNode, "x" | "y">,
   options: TreeEdgePathOptions = {},
 ) {
-  const direction = options.direction ?? "horizontal";
+  const direction = options.direction ?? "vertical";
   const nodeWidth = options.nodeWidth ?? 176;
   const nodeHeight = options.nodeHeight ?? 72;
   if (direction === "vertical") {

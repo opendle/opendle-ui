@@ -3,7 +3,7 @@ function compareIds(left, right) {
 }
 /** Create a stable layered layout for a directed acyclic graph. */
 export function layoutLayeredDirectedGraph(items, options = {}) {
-    const direction = options.direction ?? "horizontal";
+    const direction = options.direction ?? "vertical";
     const nodeWidth = options.nodeWidth ?? 176;
     const nodeHeight = options.nodeHeight ?? 72;
     const horizontalGap = options.horizontalGap ?? 64;
@@ -112,7 +112,7 @@ export function layoutLayeredDirectedGraph(items, options = {}) {
 }
 /** Create a stable, dependency-free layout for one or more rooted trees. */
 export function layoutTree(items, options = {}) {
-    const direction = options.direction ?? "horizontal";
+    const direction = options.direction ?? "vertical";
     const nodeWidth = options.nodeWidth ?? 176;
     const nodeHeight = options.nodeHeight ?? 72;
     const horizontalGap = options.horizontalGap ?? 64;
@@ -210,7 +210,7 @@ export function layoutTree(items, options = {}) {
 }
 /** Create a smooth path between two nodes from layoutTree. */
 export function treeEdgePath(source, target, options = {}) {
-    const direction = options.direction ?? "horizontal";
+    const direction = options.direction ?? "vertical";
     const nodeWidth = options.nodeWidth ?? 176;
     const nodeHeight = options.nodeHeight ?? 72;
     if (direction === "vertical") {

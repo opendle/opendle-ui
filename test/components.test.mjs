@@ -244,20 +244,32 @@ test("graph workspace components expose one labelled canvas and inspector", () =
   assert.match(markup, /role="button"/);
 });
 
-test("tree helpers make stable horizontal and vertical layouts", () => {
+test("tree helpers use stable vertical layouts by default", () => {
   const items = [
     { id: "root", parentId: null },
     { id: "child-a", parentId: "root" },
     { id: "child-b", parentId: "root" },
   ];
-  const horizontal = layoutTree(items, { padding: 20 });
-  const vertical = layoutTree(items, { direction: "vertical", padding: 20 });
+  const vertical = layoutTree(items, { padding: 20 });
+  const horizontal = layoutTree(items, {
+    direction: "horizontal",
+    padding: 20,
+  });
+  assert.equal(vertical.nodes[0].y, 20);
+  assert.equal(vertical.nodes[1].y, 120);
   assert.equal(horizontal.nodes[0].x, 20);
   assert.equal(horizontal.nodes[1].x, 260);
   assert.equal(horizontal.edges.length, 2);
-  assert.equal(vertical.nodes[0].y, 20);
-  assert.equal(vertical.nodes[1].y, 120);
-  assert.match(treeEdgePath(horizontal.nodes[0], horizontal.nodes[1]), /^M /);
+  assert.equal(
+    treeEdgePath(vertical.nodes[0], vertical.nodes[1]),
+    "M 228 92 C 228 106 108 106 108 120",
+  );
+  assert.equal(
+    treeEdgePath(horizontal.nodes[0], horizontal.nodes[1], {
+      direction: "horizontal",
+    }),
+    "M 196 106 C 228 106 228 56 260 56",
+  );
   assert.throws(
     () =>
       layoutTree([
@@ -293,6 +305,8 @@ test("layered graph layout is stable for multiple parents and unknown roots", ()
       ["child", 1],
     ],
   );
+  assert.equal(first.nodes.find((node) => node.id === "root-a")?.y, 20);
+  assert.equal(first.nodes.find((node) => node.id === "child")?.y, 120);
   assert.deepEqual(
     first.edges.map(({ sourceId, targetId }) => [sourceId, targetId]),
     [
