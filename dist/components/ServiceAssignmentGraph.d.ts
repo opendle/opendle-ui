@@ -21,7 +21,8 @@ export interface ServiceAssignmentItem {
     /** A stable identifier within the graph. */
     readonly id: string;
     readonly name: string;
-    readonly source: ServiceAssignmentSource;
+    /** The effective definition source, or null when no definition exists. */
+    readonly source: ServiceAssignmentSource | null;
     /** The effective candidate chain in its complete order. */
     readonly candidates: readonly ServiceAssignmentCandidate[];
     /** The assignment that this definition resolves through, when applicable. */

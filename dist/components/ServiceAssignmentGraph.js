@@ -1,4 +1,5 @@
 import { jsx as _jsx, jsxs as _jsxs, Fragment as _Fragment } from "react/jsx-runtime";
+import { useEffect, useRef } from "react";
 import { GraphEdge, GraphEdges, GraphEmptyState, GraphInspector, GraphNode, GraphViewport, GraphWorkspace, } from "./GraphWorkspace.js";
 import { serviceAssignmentFocusIndex } from "../ServiceAssignmentKeyboard.js";
 const assignmentX = 32;
@@ -10,14 +11,20 @@ const candidateGap = 12;
 function classes(...values) {
     return values.filter(Boolean).join(" ");
 }
-function sourceLabel(source) {
-    if (source.kind === "direct")
+function sourceLabel(assignment) {
+    if (assignment.source === null)
+        return "No definition";
+    if (assignment.source.kind === "direct")
         return "Direct definition";
-    if (source.kind === "inherited")
+    if (assignment.source.kind === "inherited")
         return "Inherited definition";
-    return "Implicit default";
+    return assignment.isDefault === true
+        ? "Implicit root default"
+        : "Implicit assignment";
 }
 function sourceTone(source) {
+    if (source === null)
+        return "neutral";
     if (source.kind === "direct")
         return "lime";
     if (source.kind === "inherited")
@@ -25,6 +32,11 @@ function sourceTone(source) {
     return "amber";
 }
 function definitionLabel(assignment) {
+    if (assignment.source === null && assignment.inheritsFrom !== undefined) {
+        return `Unconfigured · inherits ${assignment.inheritsFrom}`;
+    }
+    if (assignment.source === null)
+        return "Unconfigured";
     if (assignment.inheritsFrom !== undefined) {
         return `Inherits ${assignment.inheritsFrom}`;
     }
@@ -48,7 +60,38 @@ function assignmentAriaLabel(assignment) {
     const requirements = assignment.observedRequirements.length === 0
         ? "No observed requirements"
         : `Observed requirements: ${assignment.observedRequirements.join(", ")}`;
-    return `${assignment.name}. ${sourceLabel(assignment.source)} from ${assignment.source.label}. ${assignmentSummary(assignment)}. Last use: ${lastUse}. ${requirements}.`;
+    const source = assignment.source === null
+        ? sourceLabel(assignment)
+        : `${sourceLabel(assignment)} from ${assignment.source.label}`;
+    return `${assignment.name}. ${source}. ${assignmentSummary(assignment)}. Last use: ${lastUse}. ${requirements}.`;
+}
+function validateAssignmentIdentity(assignments) {
+    const assignmentIds = new Set();
+    const assignmentNames = new Set();
+    for (const assignment of assignments) {
+        if (assignmentIds.has(assignment.id)) {
+            throw new Error(`Service assignment id must be unique: ${assignment.id}`);
+        }
+        assignmentIds.add(assignment.id);
+        if (assignmentNames.has(assignment.name)) {
+            throw new Error(`Service assignment name must be unique: ${assignment.name}`);
+        }
+        assignmentNames.add(assignment.name);
+        const candidateIds = new Set();
+        for (const candidate of assignment.candidates) {
+            if (candidateIds.has(candidate.id)) {
+                throw new Error(`Candidate id must be unique in ${assignment.name}: ${candidate.id}`);
+            }
+            candidateIds.add(candidate.id);
+        }
+        const observedRequirements = new Set();
+        for (const requirement of assignment.observedRequirements) {
+            if (observedRequirements.has(requirement)) {
+                throw new Error(`Observed requirement must be unique in ${assignment.name}: ${requirement}`);
+            }
+            observedRequirements.add(requirement);
+        }
+    }
 }
 function edgePath(y) {
     const centerY = y + 36;
@@ -77,13 +120,25 @@ function RequirementDetails({ headingLevel = "h3", requirements, }) {
     return (_jsxs("section", { className: "od-service-assignment-detail-section", children: [_jsx(Heading, { children: "Observed requirements" }), requirements.length === 0 ? (_jsx("p", { className: "od-service-assignment-empty-value", children: "None observed" })) : (_jsx("ul", { className: "od-service-assignment-requirements", children: requirements.map((requirement) => (_jsx("li", { children: requirement }, requirement))) }))] }));
 }
 function AssignmentFacts({ assignment, }) {
-    return (_jsxs("dl", { className: "od-service-assignment-facts", children: [_jsxs("div", { children: [_jsx("dt", { children: "Source" }), _jsxs("dd", { children: [_jsx("span", { "data-source": assignment.source.kind, children: sourceLabel(assignment.source) }), _jsx("small", { children: assignment.source.label })] })] }), _jsxs("div", { children: [_jsx("dt", { children: "Definition" }), _jsx("dd", { children: definitionLabel(assignment) })] }), _jsxs("div", { children: [_jsx("dt", { children: "Last use" }), _jsx("dd", { children: _jsx(LastUse, { value: assignment.lastUsed }) })] })] }));
+    return (_jsxs("dl", { className: "od-service-assignment-facts", children: [_jsxs("div", { children: [_jsx("dt", { children: "Source" }), _jsxs("dd", { children: [_jsx("span", { "data-source": assignment.source?.kind ?? "none", children: sourceLabel(assignment) }), assignment.source === null ? null : (_jsx("small", { children: assignment.source.label }))] })] }), _jsxs("div", { children: [_jsx("dt", { children: "Definition" }), _jsx("dd", { children: definitionLabel(assignment) })] }), _jsxs("div", { children: [_jsx("dt", { children: "Last use" }), _jsx("dd", { children: _jsx(LastUse, { value: assignment.lastUsed }) })] })] }));
 }
-function AssignmentInspector({ assignment, actionsForAssignment, id, onClose, selectedNodeId, }) {
+function AssignmentInspector({ assignment, actionsForAssignment, getReturnFocusTarget, id, onClose, selectedNodeId, }) {
     const actions = actionsForAssignment?.(assignment);
-    return (_jsxs(GraphInspector, { "aria-live": "polite", closeLabel: "Close assignment details", eyebrow: sourceLabel(assignment.source), id: `${id}-inspector`, onClose: () => {
-            globalThis.document.getElementById(selectedNodeId)?.focus();
-            onClose();
+    function closeInspector() {
+        const fallbackTarget = globalThis.document.getElementById(selectedNodeId);
+        const returnFocusTarget = getReturnFocusTarget();
+        const focusTarget = returnFocusTarget?.isConnected
+            ? returnFocusTarget
+            : fallbackTarget;
+        focusTarget?.focus();
+        onClose();
+    }
+    return (_jsxs(GraphInspector, { "aria-live": "polite", closeLabel: `Close ${assignment.name} details`, eyebrow: sourceLabel(assignment), id: `${id}-inspector`, onClose: closeInspector, onKeyDown: (event) => {
+            if (event.defaultPrevented || event.key !== "Escape")
+                return;
+            event.preventDefault();
+            event.stopPropagation();
+            closeInspector();
         }, title: assignment.name, tone: sourceTone(assignment.source), actions: actions, children: [_jsx(AssignmentFacts, { assignment: assignment }), _jsx(OrderedCandidateDetails, { assignment: assignment }), _jsx(RequirementDetails, { requirements: assignment.observedRequirements })] }));
 }
 function moveGraphFocus(event, assignmentIndex, assignmentCount) {
@@ -97,13 +152,13 @@ function moveGraphFocus(event, assignmentIndex, assignmentCount) {
     const nodes = graph?.querySelectorAll("[data-service-assignment-node='true']");
     nodes?.item(nextIndex).focus();
 }
-function AssignmentList({ actionsForAssignment, assignments, id, onSelectionChange, selectedAssignmentId, }) {
+function AssignmentList({ actionsForAssignment, assignments, id, onOpenAssignment, selectedAssignmentId, }) {
     return (_jsxs("section", { "aria-labelledby": `${id}-list-title`, className: "od-service-assignment-list", children: [_jsxs("header", { className: "od-service-assignment-list-heading", children: [_jsxs("div", { children: [_jsx("h2", { id: `${id}-list-title`, children: "Assignment list" }), _jsx("p", { children: "The list contains the same records and actions as the graph." })] }), _jsx("span", { children: assignmentCountLabel(assignments.length) })] }), assignments.length === 0 ? (_jsx("p", { className: "od-service-assignment-list-empty", children: "No assignments" })) : (_jsx("ol", { className: "od-service-assignment-list-records", children: assignments.map((assignment) => {
                     const selected = assignment.id === selectedAssignmentId;
                     const actions = actionsForAssignment?.(assignment);
-                    return (_jsx("li", { "data-selected": selected, children: _jsxs("article", { children: [_jsxs("header", { className: "od-service-assignment-list-record-heading", children: [_jsx("h3", { children: _jsx("button", { "aria-controls": selected ? `${id}-inspector` : undefined, "aria-expanded": selected, onClick: () => {
-                                                    onSelectionChange(assignment.id);
-                                                }, type: "button", children: assignment.name }) }), _jsx("span", { "data-source": assignment.source.kind, children: sourceLabel(assignment.source) })] }), _jsx(AssignmentFacts, { assignment: assignment }), _jsx(OrderedCandidateDetails, { assignment: assignment, headingLevel: "h4" }), _jsx(RequirementDetails, { headingLevel: "h4", requirements: assignment.observedRequirements }), actions !== undefined ? (_jsx("footer", { "aria-label": `${assignment.name} actions`, className: "od-service-assignment-list-actions", children: actions })) : null] }) }, assignment.id));
+                    return (_jsx("li", { "data-selected": selected, children: _jsxs("article", { children: [_jsxs("header", { className: "od-service-assignment-list-record-heading", children: [_jsx("h3", { children: _jsx("button", { "aria-controls": selected ? `${id}-inspector` : undefined, "aria-expanded": selected, onClick: (event) => {
+                                                    onOpenAssignment(assignment.id, event.currentTarget);
+                                                }, type: "button", children: assignment.name }) }), _jsx("span", { "data-source": assignment.source?.kind ?? "none", children: sourceLabel(assignment) })] }), _jsx(AssignmentFacts, { assignment: assignment }), _jsx(OrderedCandidateDetails, { assignment: assignment, headingLevel: "h4" }), _jsx(RequirementDetails, { headingLevel: "h4", requirements: assignment.observedRequirements }), actions ? (_jsx("footer", { "aria-label": `${assignment.name} actions`, className: "od-service-assignment-list-actions", children: actions })) : null] }) }, assignment.id));
                 }) }))] }));
 }
 /**
@@ -111,6 +166,7 @@ function AssignmentList({ actionsForAssignment, assignments, id, onSelectionChan
  * Hosts own data access, formatting, routes, and mutations.
  */
 export function ServiceAssignmentGraph({ actionsForAssignment, assignments, className, id, onSelectionChange, selectedAssignmentId = null, "aria-label": ariaLabel, ...props }) {
+    validateAssignmentIdentity(assignments);
     const selectedAssignment = assignments.find((assignment) => assignment.id === selectedAssignmentId) ??
         null;
     const effectiveSelectedAssignmentId = selectedAssignment?.id ?? null;
@@ -120,6 +176,31 @@ export function ServiceAssignmentGraph({ actionsForAssignment, assignments, clas
     const longestChain = assignments.reduce((longest, assignment) => Math.max(longest, Math.max(assignment.candidates.length, 1)), 1);
     const canvasWidth = Math.max(720, candidateX + longestChain * (candidateWidth + candidateGap) + 32);
     const canvasHeight = Math.max(480, rowStart + assignments.length * rowHeight + 32);
+    const returnFocusRef = useRef(null);
+    const focusInspectorForIdRef = useRef(null);
+    useEffect(() => {
+        if (effectiveSelectedAssignmentId === null ||
+            focusInspectorForIdRef.current !== effectiveSelectedAssignmentId) {
+            return;
+        }
+        focusInspectorForIdRef.current = null;
+        globalThis.document
+            .getElementById(`${id}-inspector`)
+            ?.querySelector(".od-graph-inspector-close")
+            ?.focus();
+    }, [effectiveSelectedAssignmentId, id]);
+    function openFromList(assignmentId, trigger) {
+        returnFocusRef.current = { assignmentId, target: trigger };
+        if (effectiveSelectedAssignmentId === assignmentId) {
+            globalThis.document
+                .getElementById(`${id}-inspector`)
+                ?.querySelector(".od-graph-inspector-close")
+                ?.focus();
+            return;
+        }
+        focusInspectorForIdRef.current = assignmentId;
+        onSelectionChange(assignmentId);
+    }
     return (_jsxs("div", { ...props, "aria-label": ariaLabel, className: classes("od-service-assignment-graph", className), "data-service-assignment-graph": "true", id: id, role: props.role ?? "group", children: [_jsx("div", { className: "od-service-assignment-visual", children: _jsxs(GraphWorkspace, { "aria-label": `${ariaLabel} visual graph`, children: [_jsxs(GraphViewport, { "aria-label": "Assignment graph canvas", canvasHeight: canvasHeight, canvasProps: {
                                 "aria-label": `${assignmentCountLabel(assignments.length)} and their ordered candidate chains`,
                             }, canvasWidth: canvasWidth, children: [assignments.length === 0 ? (_jsx(GraphEmptyState, { description: "Supply assignments to show this graph.", icon: _jsx("span", { children: "0" }), title: "No assignments" })) : null, _jsx(GraphEdges, { height: canvasHeight, width: canvasWidth, children: assignments.map((assignment, index) => {
@@ -128,11 +209,17 @@ export function ServiceAssignmentGraph({ actionsForAssignment, assignments, clas
                                     }) }), assignments.map((assignment, index) => {
                                     const selected = assignment.id === effectiveSelectedAssignmentId;
                                     const y = rowStart + index * rowHeight;
-                                    return (_jsxs("div", { children: [_jsx(GraphNode, { "aria-controls": selected ? `${id}-inspector` : undefined, "aria-expanded": selected, "aria-keyshortcuts": "ArrowUp ArrowDown ArrowLeft ArrowRight Home End Escape", "aria-label": assignmentAriaLabel(assignment), "data-service-assignment-node": "true", eyebrow: sourceLabel(assignment.source), id: `${id}-assignment-${String(index)}`, meta: assignmentSummary(assignment), onClick: () => {
+                                    return (_jsxs("div", { children: [_jsx(GraphNode, { "aria-controls": selected ? `${id}-inspector` : undefined, "aria-expanded": selected, "aria-keyshortcuts": "ArrowUp ArrowDown ArrowLeft ArrowRight Home End Escape", "aria-label": assignmentAriaLabel(assignment), "data-service-assignment-node": "true", eyebrow: sourceLabel(assignment), id: `${id}-assignment-${String(index)}`, meta: assignmentSummary(assignment), onClick: (event) => {
+                                                    returnFocusRef.current = {
+                                                        assignmentId: assignment.id,
+                                                        target: event.currentTarget,
+                                                    };
+                                                    focusInspectorForIdRef.current = null;
                                                     onSelectionChange(assignment.id);
                                                 }, onKeyDown: (event) => {
                                                     if (event.key === "Escape" && selected) {
                                                         event.preventDefault();
+                                                        returnFocusRef.current = null;
                                                         onSelectionChange(null);
                                                         return;
                                                     }
@@ -141,8 +228,12 @@ export function ServiceAssignmentGraph({ actionsForAssignment, assignments, clas
                                                     (effectiveSelectedAssignmentId === null && index === 0)
                                                     ? 0
                                                     : -1, title: assignment.name, tone: sourceTone(assignment.source), x: assignmentX, y: y }), _jsx(AssignmentCandidateChain, { assignment: assignment, style: { left: candidateX, top: y } })] }, assignment.id));
-                                })] }), selectedAssignment === null ? null : (_jsx(AssignmentInspector, { actionsForAssignment: actionsForAssignment, assignment: selectedAssignment, id: id, onClose: () => {
+                                })] }), selectedAssignment === null ? null : (_jsx(AssignmentInspector, { actionsForAssignment: actionsForAssignment, assignment: selectedAssignment, getReturnFocusTarget: () => returnFocusRef.current?.assignmentId === selectedAssignment.id
+                                ? returnFocusRef.current.target
+                                : null, id: id, onClose: () => {
+                                returnFocusRef.current = null;
+                                focusInspectorForIdRef.current = null;
                                 onSelectionChange(null);
-                            }, selectedNodeId: `${id}-assignment-${String(selectedAssignmentIndex)}` }))] }) }), _jsx(AssignmentList, { actionsForAssignment: actionsForAssignment, assignments: assignments, id: id, onSelectionChange: onSelectionChange, selectedAssignmentId: effectiveSelectedAssignmentId })] }));
+                            }, selectedNodeId: `${id}-assignment-${String(selectedAssignmentIndex)}` }))] }) }), _jsx(AssignmentList, { actionsForAssignment: actionsForAssignment, assignments: assignments, id: id, onOpenAssignment: openFromList, selectedAssignmentId: effectiveSelectedAssignmentId })] }));
 }
 //# sourceMappingURL=ServiceAssignmentGraph.js.map

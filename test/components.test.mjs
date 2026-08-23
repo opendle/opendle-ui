@@ -389,10 +389,32 @@ const serviceAssignments = [
   {
     id: "image-caption",
     name: "image.caption",
-    source: { kind: "direct", label: "Support service" },
-    candidates: [],
+    source: null,
+    candidates: [{ id: "vision", label: "Vision text model" }],
+    inheritsFrom: "default",
     lastUsed: null,
     observedRequirements: ["image input"],
+  },
+  {
+    id: "report-generate",
+    name: "report.generate",
+    source: { kind: "implicit", label: "Support service" },
+    candidates: [
+      { id: "fast", label: "Fast text model" },
+      { id: "steady", label: "Steady text model" },
+    ],
+    inheritsFrom: "default",
+    lastUsed: null,
+    observedRequirements: ["text input"],
+  },
+  {
+    id: "empty-inherited",
+    name: "empty.inherited",
+    source: { kind: "inherited", label: "Root service" },
+    candidates: [],
+    inheritsFrom: "default",
+    lastUsed: null,
+    observedRequirements: [],
   },
 ];
 
@@ -404,7 +426,9 @@ test("ServiceAssignmentGraph shows source, chain, use, and requirement states wi
       id: "support-assignments",
       onSelectionChange: () => undefined,
       actionsForAssignment: (assignment) =>
-        React.createElement(Button, null, `Edit ${assignment.name}`),
+        assignment.source === null
+          ? null
+          : React.createElement(Button, null, `Edit ${assignment.name}`),
       selectedAssignmentId: "support-chat",
     }),
   );
@@ -414,7 +438,7 @@ test("ServiceAssignmentGraph shows source, chain, use, and requirement states wi
   assert.match(markup, /aria-label="Support service assignments visual graph"/);
   assert.match(
     markup,
-    /aria-label="4 assignments and their ordered candidate chains"/,
+    /aria-label="6 assignments and their ordered candidate chains"/,
   );
   assert.match(
     markup,
@@ -424,12 +448,23 @@ test("ServiceAssignmentGraph shows source, chain, use, and requirement states wi
   assert.match(markup, /aria-live="polite"/);
   assert.match(markup, /Direct definition from Support service/);
   assert.match(markup, /Inherited definition from Shared service/);
-  assert.match(markup, /Implicit default from Root service/);
+  assert.match(markup, /Implicit root default from Root service/);
+  assert.match(markup, /Implicit assignment from Support service/);
+  assert.match(markup, /No definition\. Unconfigured · inherits default/);
+  assert.match(
+    markup,
+    /image\.caption[\s\S]*?Unconfigured · inherits default · 1 candidate/,
+  );
+  assert.match(markup, /Vision text model/);
   assert.match(markup, /Empty default chain/);
   assert.match(markup, /Unconfigured/);
   assert.match(markup, /Inherits default/);
   assert.match(markup, /Fast text model/);
   assert.match(markup, /Steady text model/);
+  assert.match(
+    markup,
+    /Primary[\s\S]*?Fast text model[\s\S]*?Fallback 1[\s\S]*?Steady text model/,
+  );
   assert.match(markup, /<time dateTime="2026-08-23T12:00:00Z">/);
   assert.match(markup, /tool calls/);
   assert.match(markup, /<h4>Ordered candidates<\/h4>/);
@@ -443,6 +478,18 @@ test("ServiceAssignmentGraph shows source, chain, use, and requirement states wi
     (markup.match(/>Edit support\.chat<\/button>/g) ?? []).length,
     2,
   );
+  assert.equal((markup.match(/>Edit default<\/button>/g) ?? []).length, 1);
+  assert.equal((markup.match(/>Edit summary<\/button>/g) ?? []).length, 1);
+  assert.equal(
+    (markup.match(/>Edit report\.generate<\/button>/g) ?? []).length,
+    1,
+  );
+  assert.equal(
+    (markup.match(/>Edit empty\.inherited<\/button>/g) ?? []).length,
+    1,
+  );
+  assert.doesNotMatch(markup, /image\.caption actions/);
+  assert.match(markup, /aria-label="Close support\.chat details"/);
   assert.equal((markup.match(/support\.chat/g) ?? []).length >= 3, true);
 });
 
@@ -490,10 +537,102 @@ test("ServiceAssignmentGraph keyboard navigation stays within assignment nodes",
   assert.equal(serviceAssignmentFocusIndex(0, 0, "ArrowDown"), null);
 });
 
-test("ServiceAssignmentGraph has bounded phone layout rules", async () => {
+test("ServiceAssignmentGraph rejects ambiguous record and candidate identities", () => {
+  const renderAssignments = (assignments) =>
+    renderToStaticMarkup(
+      React.createElement(ServiceAssignmentGraph, {
+        "aria-label": "Service assignments",
+        assignments,
+        id: "identity-check",
+        onSelectionChange: () => undefined,
+      }),
+    );
+
+  assert.throws(
+    () =>
+      renderAssignments([
+        serviceAssignments[0],
+        { ...serviceAssignments[1], id: serviceAssignments[0].id },
+      ]),
+    /Service assignment id must be unique/,
+  );
+  assert.throws(
+    () =>
+      renderAssignments([
+        serviceAssignments[0],
+        { ...serviceAssignments[1], name: serviceAssignments[0].name },
+      ]),
+    /Service assignment name must be unique/,
+  );
+  assert.throws(
+    () =>
+      renderAssignments([
+        {
+          ...serviceAssignments[1],
+          candidates: [
+            serviceAssignments[1].candidates[0],
+            serviceAssignments[1].candidates[0],
+          ],
+        },
+      ]),
+    /Candidate id must be unique/,
+  );
+  assert.throws(
+    () =>
+      renderAssignments([
+        {
+          ...serviceAssignments[1],
+          observedRequirements: ["text input", "text input"],
+        },
+      ]),
+    /Observed requirement must be unique/,
+  );
+});
+
+test("ServiceAssignmentGraph shows implicit default inheritance and an inherited empty chain", () => {
+  const markup = renderToStaticMarkup(
+    React.createElement(ServiceAssignmentGraph, {
+      "aria-label": "Service assignments",
+      assignments: [
+        serviceAssignments[0],
+        serviceAssignments[4],
+        serviceAssignments[5],
+      ],
+      id: "effective-chain-states",
+      onSelectionChange: () => undefined,
+      selectedAssignmentId: "report-generate",
+    }),
+  );
+
+  assert.match(markup, /Implicit root default from Root service/);
+  assert.match(markup, /Implicit assignment from Support service/);
+  assert.match(
+    markup,
+    /report\.generate[\s\S]*?Inherits default · 2 candidates/,
+  );
+  assert.match(
+    markup,
+    /Primary[\s\S]*?Fast text model[\s\S]*?Fallback 1[\s\S]*?Steady text model/,
+  );
+  assert.match(
+    markup,
+    /empty\.inherited[\s\S]*?Inherited definition from Root service[\s\S]*?Inherits default · 0 candidates/,
+  );
+  assert.match(markup, /No effective candidates/);
+});
+
+test("ServiceAssignmentGraph has bounded graph and phone layout rules", async () => {
   const stylesheet = await readFile(
     new URL("../styles/tokens.css", import.meta.url),
     "utf8",
+  );
+  assert.match(
+    stylesheet,
+    /\.od-service-assignment-candidate > strong\s*\{[\s\S]*?max-height: 1\.875rem;[\s\S]*?overflow: hidden;/,
+  );
+  assert.match(
+    stylesheet,
+    /\.od-service-assignment-candidate-detail\s*\{[\s\S]*?max-height: 1\.6875rem;[\s\S]*?overflow: hidden;/,
   );
   const phoneStyles = stylesheet.slice(
     stylesheet.indexOf("@media (max-width: 48rem)"),

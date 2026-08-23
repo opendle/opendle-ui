@@ -1,3 +1,4 @@
+import { useEffect, useRef } from "react";
 import type {
   CSSProperties,
   HTMLAttributes,
@@ -53,7 +54,8 @@ export interface ServiceAssignmentItem {
   /** A stable identifier within the graph. */
   readonly id: string;
   readonly name: string;
-  readonly source: ServiceAssignmentSource;
+  /** The effective definition source, or null when no definition exists. */
+  readonly source: ServiceAssignmentSource | null;
   /** The effective candidate chain in its complete order. */
   readonly candidates: readonly ServiceAssignmentCandidate[];
   /** The assignment that this definition resolves through, when applicable. */
@@ -79,19 +81,27 @@ export interface ServiceAssignmentGraphProps extends Omit<
   readonly "aria-label": string;
 }
 
-function sourceLabel(source: ServiceAssignmentSource): string {
-  if (source.kind === "direct") return "Direct definition";
-  if (source.kind === "inherited") return "Inherited definition";
-  return "Implicit default";
+function sourceLabel(assignment: ServiceAssignmentItem): string {
+  if (assignment.source === null) return "No definition";
+  if (assignment.source.kind === "direct") return "Direct definition";
+  if (assignment.source.kind === "inherited") return "Inherited definition";
+  return assignment.isDefault === true
+    ? "Implicit root default"
+    : "Implicit assignment";
 }
 
-function sourceTone(source: ServiceAssignmentSource): GraphNodeTone {
+function sourceTone(source: ServiceAssignmentSource | null): GraphNodeTone {
+  if (source === null) return "neutral";
   if (source.kind === "direct") return "lime";
   if (source.kind === "inherited") return "blue";
   return "amber";
 }
 
 function definitionLabel(assignment: ServiceAssignmentItem): string {
+  if (assignment.source === null && assignment.inheritsFrom !== undefined) {
+    return `Unconfigured · inherits ${assignment.inheritsFrom}`;
+  }
+  if (assignment.source === null) return "Unconfigured";
   if (assignment.inheritsFrom !== undefined) {
     return `Inherits ${assignment.inheritsFrom}`;
   }
@@ -118,7 +128,50 @@ function assignmentAriaLabel(assignment: ServiceAssignmentItem): string {
     assignment.observedRequirements.length === 0
       ? "No observed requirements"
       : `Observed requirements: ${assignment.observedRequirements.join(", ")}`;
-  return `${assignment.name}. ${sourceLabel(assignment.source)} from ${assignment.source.label}. ${assignmentSummary(assignment)}. Last use: ${lastUse}. ${requirements}.`;
+  const source =
+    assignment.source === null
+      ? sourceLabel(assignment)
+      : `${sourceLabel(assignment)} from ${assignment.source.label}`;
+  return `${assignment.name}. ${source}. ${assignmentSummary(assignment)}. Last use: ${lastUse}. ${requirements}.`;
+}
+
+function validateAssignmentIdentity(
+  assignments: readonly ServiceAssignmentItem[],
+): void {
+  const assignmentIds = new Set<string>();
+  const assignmentNames = new Set<string>();
+  for (const assignment of assignments) {
+    if (assignmentIds.has(assignment.id)) {
+      throw new Error(`Service assignment id must be unique: ${assignment.id}`);
+    }
+    assignmentIds.add(assignment.id);
+    if (assignmentNames.has(assignment.name)) {
+      throw new Error(
+        `Service assignment name must be unique: ${assignment.name}`,
+      );
+    }
+    assignmentNames.add(assignment.name);
+
+    const candidateIds = new Set<string>();
+    for (const candidate of assignment.candidates) {
+      if (candidateIds.has(candidate.id)) {
+        throw new Error(
+          `Candidate id must be unique in ${assignment.name}: ${candidate.id}`,
+        );
+      }
+      candidateIds.add(candidate.id);
+    }
+
+    const observedRequirements = new Set<string>();
+    for (const requirement of assignment.observedRequirements) {
+      if (observedRequirements.has(requirement)) {
+        throw new Error(
+          `Observed requirement must be unique in ${assignment.name}: ${requirement}`,
+        );
+      }
+      observedRequirements.add(requirement);
+    }
+  }
 }
 
 function edgePath(y: number): string {
@@ -252,10 +305,12 @@ function AssignmentFacts({
       <div>
         <dt>Source</dt>
         <dd>
-          <span data-source={assignment.source.kind}>
-            {sourceLabel(assignment.source)}
+          <span data-source={assignment.source?.kind ?? "none"}>
+            {sourceLabel(assignment)}
           </span>
-          <small>{assignment.source.label}</small>
+          {assignment.source === null ? null : (
+            <small>{assignment.source.label}</small>
+          )}
         </dd>
       </div>
       <div>
@@ -275,6 +330,7 @@ function AssignmentFacts({
 function AssignmentInspector({
   assignment,
   actionsForAssignment,
+  getReturnFocusTarget,
   id,
   onClose,
   selectedNodeId,
@@ -282,20 +338,33 @@ function AssignmentInspector({
   readonly assignment: ServiceAssignmentItem;
   readonly actionsForAssignment:
     ServiceAssignmentGraphProps["actionsForAssignment"] | undefined;
+  readonly getReturnFocusTarget: () => HTMLElement | null;
   readonly id: string;
   readonly onClose: () => void;
   readonly selectedNodeId: string;
 }) {
   const actions = actionsForAssignment?.(assignment);
+  function closeInspector(): void {
+    const fallbackTarget = globalThis.document.getElementById(selectedNodeId);
+    const returnFocusTarget = getReturnFocusTarget();
+    const focusTarget = returnFocusTarget?.isConnected
+      ? returnFocusTarget
+      : fallbackTarget;
+    focusTarget?.focus();
+    onClose();
+  }
   return (
     <GraphInspector
       aria-live="polite"
-      closeLabel="Close assignment details"
-      eyebrow={sourceLabel(assignment.source)}
+      closeLabel={`Close ${assignment.name} details`}
+      eyebrow={sourceLabel(assignment)}
       id={`${id}-inspector`}
-      onClose={() => {
-        globalThis.document.getElementById(selectedNodeId)?.focus();
-        onClose();
+      onClose={closeInspector}
+      onKeyDown={(event) => {
+        if (event.defaultPrevented || event.key !== "Escape") return;
+        event.preventDefault();
+        event.stopPropagation();
+        closeInspector();
       }}
       title={assignment.name}
       tone={sourceTone(assignment.source)}
@@ -334,14 +403,17 @@ function AssignmentList({
   actionsForAssignment,
   assignments,
   id,
-  onSelectionChange,
+  onOpenAssignment,
   selectedAssignmentId,
 }: {
   readonly actionsForAssignment:
     ServiceAssignmentGraphProps["actionsForAssignment"] | undefined;
   readonly assignments: readonly ServiceAssignmentItem[];
   readonly id: string;
-  readonly onSelectionChange: (assignmentId: string | null) => void;
+  readonly onOpenAssignment: (
+    assignmentId: string,
+    trigger: HTMLButtonElement,
+  ) => void;
   readonly selectedAssignmentId: string | null;
 }) {
   return (
@@ -371,16 +443,16 @@ function AssignmentList({
                       <button
                         aria-controls={selected ? `${id}-inspector` : undefined}
                         aria-expanded={selected}
-                        onClick={() => {
-                          onSelectionChange(assignment.id);
+                        onClick={(event) => {
+                          onOpenAssignment(assignment.id, event.currentTarget);
                         }}
                         type="button"
                       >
                         {assignment.name}
                       </button>
                     </h3>
-                    <span data-source={assignment.source.kind}>
-                      {sourceLabel(assignment.source)}
+                    <span data-source={assignment.source?.kind ?? "none"}>
+                      {sourceLabel(assignment)}
                     </span>
                   </header>
                   <AssignmentFacts assignment={assignment} />
@@ -392,7 +464,7 @@ function AssignmentList({
                     headingLevel="h4"
                     requirements={assignment.observedRequirements}
                   />
-                  {actions !== undefined ? (
+                  {actions ? (
                     <footer
                       aria-label={`${assignment.name} actions`}
                       className="od-service-assignment-list-actions"
@@ -424,6 +496,7 @@ export function ServiceAssignmentGraph({
   "aria-label": ariaLabel,
   ...props
 }: ServiceAssignmentGraphProps) {
+  validateAssignmentIdentity(assignments);
   const selectedAssignment =
     assignments.find((assignment) => assignment.id === selectedAssignmentId) ??
     null;
@@ -447,6 +520,41 @@ export function ServiceAssignmentGraph({
     480,
     rowStart + assignments.length * rowHeight + 32,
   );
+  const returnFocusRef = useRef<{
+    readonly assignmentId: string;
+    readonly target: HTMLElement;
+  } | null>(null);
+  const focusInspectorForIdRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (
+      effectiveSelectedAssignmentId === null ||
+      focusInspectorForIdRef.current !== effectiveSelectedAssignmentId
+    ) {
+      return;
+    }
+    focusInspectorForIdRef.current = null;
+    globalThis.document
+      .getElementById(`${id}-inspector`)
+      ?.querySelector<HTMLElement>(".od-graph-inspector-close")
+      ?.focus();
+  }, [effectiveSelectedAssignmentId, id]);
+
+  function openFromList(
+    assignmentId: string,
+    trigger: HTMLButtonElement,
+  ): void {
+    returnFocusRef.current = { assignmentId, target: trigger };
+    if (effectiveSelectedAssignmentId === assignmentId) {
+      globalThis.document
+        .getElementById(`${id}-inspector`)
+        ?.querySelector<HTMLElement>(".od-graph-inspector-close")
+        ?.focus();
+      return;
+    }
+    focusInspectorForIdRef.current = assignmentId;
+    onSelectionChange(assignmentId);
+  }
 
   return (
     <div
@@ -497,15 +605,21 @@ export function ServiceAssignmentGraph({
                     aria-keyshortcuts="ArrowUp ArrowDown ArrowLeft ArrowRight Home End Escape"
                     aria-label={assignmentAriaLabel(assignment)}
                     data-service-assignment-node="true"
-                    eyebrow={sourceLabel(assignment.source)}
+                    eyebrow={sourceLabel(assignment)}
                     id={`${id}-assignment-${String(index)}`}
                     meta={assignmentSummary(assignment)}
-                    onClick={() => {
+                    onClick={(event) => {
+                      returnFocusRef.current = {
+                        assignmentId: assignment.id,
+                        target: event.currentTarget,
+                      };
+                      focusInspectorForIdRef.current = null;
                       onSelectionChange(assignment.id);
                     }}
                     onKeyDown={(event) => {
                       if (event.key === "Escape" && selected) {
                         event.preventDefault();
+                        returnFocusRef.current = null;
                         onSelectionChange(null);
                         return;
                       }
@@ -535,8 +649,15 @@ export function ServiceAssignmentGraph({
             <AssignmentInspector
               actionsForAssignment={actionsForAssignment}
               assignment={selectedAssignment}
+              getReturnFocusTarget={() =>
+                returnFocusRef.current?.assignmentId === selectedAssignment.id
+                  ? returnFocusRef.current.target
+                  : null
+              }
               id={id}
               onClose={() => {
+                returnFocusRef.current = null;
+                focusInspectorForIdRef.current = null;
                 onSelectionChange(null);
               }}
               selectedNodeId={`${id}-assignment-${String(selectedAssignmentIndex)}`}
@@ -548,7 +669,7 @@ export function ServiceAssignmentGraph({
         actionsForAssignment={actionsForAssignment}
         assignments={assignments}
         id={id}
-        onSelectionChange={onSelectionChange}
+        onOpenAssignment={openFromList}
         selectedAssignmentId={effectiveSelectedAssignmentId}
       />
     </div>

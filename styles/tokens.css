@@ -605,12 +605,16 @@ samp {
 }
 
 .od-service-assignment-candidate > strong {
+  max-height: 1.875rem;
+  overflow: hidden;
   overflow-wrap: anywhere;
   font-size: 0.75rem;
   line-height: 1.25;
 }
 
 .od-service-assignment-candidate-detail {
+  max-height: 1.6875rem;
+  overflow: hidden;
   color: #aab4b3;
   font-size: 0.625rem;
   line-height: 1.35;
