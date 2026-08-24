@@ -99,6 +99,7 @@ export { HealthBar } from "./components/HealthBar.js";
 export { PageSurface, } from "./components/PageSurface.js";
 export { GraphEdge, GraphEdges, GraphEmptyState, GraphInspector, GraphNode, GraphToolbar, GraphViewport, GraphWorkspace, } from "./components/GraphWorkspace.js";
 export { ServiceAssignmentGraph, } from "./components/ServiceAssignmentGraph.js";
+export { RelationshipGraph, } from "./components/RelationshipGraph.js";
 export { OperationPlayground, } from "./components/OperationPlayground.js";
 export { layoutLayeredDirectedGraph, layoutTree, treeEdgePath, } from "./GraphLayout.js";
 export { IconButton } from "./components/IconButton.js";

@@ -258,6 +258,15 @@ export {
   type ServiceAssignmentSourceKind,
 } from "./components/ServiceAssignmentGraph.js";
 export {
+  RelationshipGraph,
+  type RelationshipGraphColumn,
+  type RelationshipGraphNode,
+  type RelationshipGraphNodeContext,
+  type RelationshipGraphNodeState,
+  type RelationshipGraphProps,
+  type RelationshipGraphRelationship,
+} from "./components/RelationshipGraph.js";
+export {
   OperationPlayground,
   type OperationPlaygroundProps,
   type PlaygroundCorrectiveError,

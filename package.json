@@ -44,7 +44,7 @@
     "prepare": "npm run build",
     "react-doctor": "react-doctor . --json --json-compact --full --fail-on none",
     "security": "npm audit --audit-level=high",
-    "test:browser": "npm run build && node scripts/ontology-explorer-browser.mjs && node scripts/data-table-browser.mjs && node scripts/editable-table-browser.mjs && node scripts/graph-workspace-browser.mjs",
+    "test:browser": "npm run build && node scripts/ontology-explorer-browser.mjs && node scripts/data-table-browser.mjs && node scripts/editable-table-browser.mjs && node scripts/graph-workspace-browser.mjs && node scripts/relationship-graph-browser.mjs",
     "typecheck": "tsc --noEmit",
     "test": "npm run build && node --test"
   },

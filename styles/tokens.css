@@ -1192,7 +1192,421 @@
   }
 }
 
+.od-relationship-graph {
+  width: 100%;
+  min-width: 0;
+  position: relative;
+  display: grid;
+  gap: var(--od-space-md);
+}
+
+.od-relationship-graph-search {
+  min-width: 0;
+  display: flex;
+  align-items: end;
+  gap: var(--od-space-sm);
+}
+
+.od-relationship-graph-search-field {
+  width: min(32rem, 100%);
+  min-width: 0;
+  display: grid;
+  gap: 0.375rem;
+}
+
+.od-relationship-graph-search label {
+  color: var(--od-color-muted-strong);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.od-relationship-graph-search-control {
+  min-width: 0;
+  position: relative;
+  display: block;
+}
+
+.od-relationship-graph-search input {
+  width: 100%;
+  min-width: 0;
+  min-height: 2.75rem;
+  padding: 0.625rem 2.5rem 0.625rem 0.75rem;
+  border: 1px solid var(--od-color-border-strong);
+  border-radius: var(--od-radius-md);
+  color: var(--od-color-foreground);
+  background: var(--od-color-surface-raised);
+  font: inherit;
+}
+
+.od-relationship-graph-search input:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--od-color-focus) 32%, transparent);
+  outline-offset: 1px;
+  border-color: var(--od-color-focus);
+}
+
+.od-relationship-graph-search kbd {
+  position: absolute;
+  top: 50%;
+  right: 0.625rem;
+  padding: 0.125rem 0.375rem;
+  transform: translateY(-50%);
+  border: 1px solid var(--od-color-border);
+  border-radius: var(--od-radius-sm);
+  color: var(--od-color-muted);
+  background: var(--od-color-surface);
+  font-size: 0.6875rem;
+}
+
+.od-relationship-graph-search > button,
+.od-relationship-graph-empty button {
+  min-height: 2.75rem;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--od-color-border-strong);
+  border-radius: var(--od-radius-md);
+  color: var(--od-color-foreground);
+  background: var(--od-color-surface-raised);
+  font: inherit;
+  font-weight: 700;
+}
+
+.od-relationship-graph-viewport {
+  width: 100%;
+  min-width: 0;
+  height: clamp(32rem, 70dvh, 52rem);
+  position: relative;
+  overflow: auto;
+  overscroll-behavior: contain;
+  border: 1px solid #323c3e;
+  border-radius: var(--od-radius-lg);
+  background: #182023;
+  box-shadow: var(--od-shadow);
+  scrollbar-color: #536062 #182023;
+}
+
+.od-relationship-graph-board {
+  width: 100%;
+  min-width: 56rem;
+  min-height: 100%;
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(13rem, 1fr));
+  align-items: start;
+  gap: clamp(3rem, 6vw, 6rem);
+  padding: var(--od-space-md);
+  background-image:
+    linear-gradient(rgb(255 255 255 / 3%) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(255 255 255 / 3%) 1px, transparent 1px),
+    radial-gradient(circle at 50% 48%, rgb(155 180 94 / 8%), transparent 46%);
+  background-size:
+    1.5rem 1.5rem,
+    1.5rem 1.5rem,
+    100% 100%;
+}
+
+.od-relationship-graph-column {
+  min-width: 0;
+  position: relative;
+  z-index: 2;
+}
+
+.od-relationship-graph-column-header {
+  min-width: 0;
+  position: sticky;
+  top: 0;
+  z-index: 4;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--od-space-sm);
+  margin-bottom: var(--od-space-md);
+  padding: 0.625rem;
+  border: 1px solid #4c5859;
+  border-radius: var(--od-radius-md);
+  color: #f2f5f1;
+  background: rgb(38 48 51 / 97%);
+  box-shadow: 0 0.5rem 1.5rem rgb(5 9 11 / 24%);
+}
+
+.od-relationship-graph-column-header > div:first-child {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.od-relationship-graph-column-header h2 {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  margin: 0;
+  font-size: 0.875rem;
+  letter-spacing: -0.015em;
+}
+
+.od-relationship-graph-column-header > div:first-child > span {
+  flex: 0 0 auto;
+  padding: 0.125rem 0.375rem;
+  border-radius: 999px;
+  color: #cbd3d1;
+  background: #465153;
+  font-size: 0.6875rem;
+  font-weight: 800;
+}
+
+.od-relationship-graph-column-actions {
+  min-width: 0;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.375rem;
+}
+
+.od-relationship-graph-column-actions button,
+.od-relationship-graph-column-actions a {
+  max-width: 100%;
+}
+
+.od-relationship-graph-column-actions .od-button-secondary {
+  color: var(--od-color-foreground);
+}
+
+.od-relationship-graph-nodes {
+  display: grid;
+  gap: var(--od-space-md);
+}
+
+.od-relationship-graph-node {
+  width: 100%;
+  min-width: 0;
+  position: relative;
+  z-index: 2;
+  display: grid;
+  gap: 0.375rem;
+  padding: 0.75rem;
+  border: 1px solid #4b5858;
+  border-radius: var(--od-radius-md);
+  color: #f2f5f1;
+  background: #2a3336;
+  box-shadow: 0 0.625rem 1.5rem rgb(4 8 10 / 26%);
+  text-align: left;
+  transition:
+    opacity 120ms ease,
+    border-color 120ms ease,
+    background 120ms ease;
+}
+
+.od-relationship-graph-node:hover,
+.od-relationship-graph-node[data-active="true"] {
+  border-color: #91a09d;
+  background: #303b3d;
+}
+
+.od-relationship-graph-node:focus-visible {
+  outline: 3px solid var(--od-color-focus);
+  outline-offset: 3px;
+}
+
+.od-relationship-graph-node[data-selected="true"] {
+  border-color: var(--od-color-lime);
+  box-shadow:
+    0 0 0 3px rgb(215 243 106 / 13%),
+    0 0.75rem 1.625rem rgb(4 8 10 / 35%);
+}
+
+.od-relationship-graph-node[data-search-match="true"]::after {
+  content: "";
+  position: absolute;
+  inset: 0.1875rem;
+  pointer-events: none;
+  border: 1px dashed var(--od-color-amber);
+  border-radius: calc(var(--od-radius-md) - 0.1875rem);
+}
+
+.od-relationship-graph-node[data-dimmed="true"],
+.od-relationship-graph-connector[data-dimmed="true"] {
+  opacity: 0.28;
+}
+
+.od-relationship-graph-node-heading {
+  min-width: 0;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.od-relationship-graph-node-heading strong,
+.od-relationship-graph-node-detail,
+.od-relationship-graph-node-content {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.od-relationship-graph-node-heading strong {
+  font-size: 0.875rem;
+  line-height: 1.35;
+}
+
+.od-relationship-graph-node-detail,
+.od-relationship-graph-node-content {
+  display: block;
+  color: #b7c1bf;
+  font-size: 0.75rem;
+  line-height: 1.45;
+}
+
+.od-relationship-graph-node-state {
+  flex: 0 0 auto;
+  padding: 0.125rem 0.375rem;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  font-size: 0.625rem;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.od-relationship-graph-node[data-state="disabled"]
+  .od-relationship-graph-node-state,
+.od-relationship-graph-node[data-state="unavailable"]
+  .od-relationship-graph-node-state {
+  color: #d4c69d;
+}
+
+.od-relationship-graph-node[data-state="invalid"] {
+  border-style: dashed;
+  border-color: var(--od-color-coral);
+}
+
+.od-relationship-graph-node[data-state="invalid"]
+  .od-relationship-graph-node-state {
+  color: var(--od-color-coral);
+}
+
+.od-relationship-graph-column-empty {
+  padding: var(--od-space-md);
+  border: 1px dashed #536062;
+  border-radius: var(--od-radius-md);
+  color: #aab4b3;
+  background: rgb(42 51 54 / 66%);
+  font-size: 0.8125rem;
+  text-align: center;
+}
+
+.od-relationship-graph-connectors {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.od-relationship-graph-connector {
+  fill: none;
+  stroke: #788583;
+  stroke-width: 1.5px;
+  transition:
+    opacity 120ms ease,
+    stroke 120ms ease;
+}
+
+.od-relationship-graph-connector[data-selected="true"] {
+  stroke: var(--od-color-lime);
+  stroke-width: 2px;
+}
+
+.od-relationship-graph-connector[data-active="true"] {
+  stroke: var(--od-color-focus);
+  stroke-width: 2.5px;
+}
+
+.od-relationship-graph-connector[data-invalid="true"] {
+  stroke: var(--od-color-coral);
+  stroke-dasharray: 5 4;
+}
+
+.od-relationship-graph-empty,
+.od-relationship-graph-invalid {
+  min-width: min(100%, 18rem);
+  min-height: 18rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--od-space-sm);
+  padding: clamp(1.5rem, 6vw, 4rem);
+  color: #e5ebe7;
+  text-align: center;
+}
+
+.od-relationship-graph-invalid {
+  color: #ffd8d0;
+}
+
+.od-relationship-graph-empty > :first-child,
+.od-relationship-graph-invalid > :first-child {
+  margin-top: 0;
+}
+
+.od-relationship-graph-empty > :last-child,
+.od-relationship-graph-invalid > :last-child {
+  margin-bottom: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .od-relationship-graph-node,
+  .od-relationship-graph-connector {
+    transition: none;
+  }
+}
+
+@media (forced-colors: active) {
+  .od-relationship-graph-node[data-dimmed="true"],
+  .od-relationship-graph-connector[data-dimmed="true"] {
+    opacity: 0.55;
+  }
+}
+
 @media (max-width: 48rem) {
+  .od-relationship-graph-search {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .od-relationship-graph-search-field,
+  .od-relationship-graph-search > button {
+    width: 100%;
+  }
+
+  .od-relationship-graph-viewport {
+    height: max(34rem, calc(100dvh - 8rem));
+    border-right: 0;
+    border-left: 0;
+    border-radius: 0;
+  }
+
+  .od-relationship-graph-board {
+    min-width: 0;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 3rem;
+    padding: var(--od-page-gutter);
+  }
+
+  .od-relationship-graph-column-header {
+    position: relative;
+  }
+
+  .od-relationship-graph-column-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .od-relationship-graph-column-actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .od-relationship-graph-column-actions > * {
+    max-width: 100%;
+  }
   .od-explorer-workspace-heading,
   .od-data-explorer-heading,
   .od-change-timeline-heading,

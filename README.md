@@ -54,6 +54,14 @@ implicit-default, empty-chain, and unconfigured states. Hosts supply the
 effective ordered candidates, last-use text, observed requirements, actions,
 and all product behavior.
 
+`RelationshipGraph` gives host applications one responsive three-column
+relationship surface. Hosts name the columns and nodes, supply relationships,
+compose contextual header actions and an optional inspector, and own all
+record types and actions. The component supplies route search, decorative
+connectors, persistent selection, route emphasis, unrelated-item dimming, and
+the one-tab-stop arrow-key interaction. It stacks its columns on a phone and
+keeps dense content in a labelled local viewport.
+
 `OperationPlayground` gives host applications one controlled, provider-neutral
 surface for model, embedding, image, video, and audio operations. It supports
 an assignment or exact provider-model selection and shows output, the selected
