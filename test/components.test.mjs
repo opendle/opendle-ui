@@ -34,6 +34,7 @@ import {
   MobileNavigation,
   MediaLightbox,
   OperationPlayground,
+  PageSurface,
   PageHeading,
   Panel,
   PanelHeader,
@@ -306,6 +307,21 @@ test("application shell components keep caller-owned content in semantic slots",
   assert.match(markup, /aria-label="Mobile navigation"/);
 });
 
+test("page surfaces own one full-width responsive gutter mode", () => {
+  const markup = renderToStaticMarkup(
+    React.createElement(
+      PageSurface,
+      null,
+      React.createElement(PageSurface, { edgeToEdge: true }, "Graph"),
+    ),
+  );
+  assert.match(markup, /class="od-page-surface" data-edge-to-edge="false"/);
+  assert.match(
+    markup,
+    /class="od-page-surface" data-edge-to-edge="true">Graph/,
+  );
+});
+
 test("graph workspace components expose one labelled canvas and inspector", () => {
   const markup = renderToStaticMarkup(
     React.createElement(
@@ -325,6 +341,7 @@ test("graph workspace components expose one labelled canvas and inspector", () =
         GraphViewport,
         {
           "aria-label": "Service tree",
+          canvasAlignment: "center",
           canvasHeight: 480,
           canvasProps: { "aria-label": "Three services" },
           canvasWidth: 720,
@@ -358,16 +375,37 @@ test("graph workspace components expose one labelled canvas and inspector", () =
   );
   assert.match(markup, /class="od-graph-workspace"/);
   assert.match(markup, /aria-label="Service tree"/);
-  assert.match(markup, /class="od-graph-canvas" role="group"/);
+  assert.match(
+    markup,
+    /aria-label="Service tree"[^>]*data-canvas-alignment="center"[^>]*role="region"/,
+  );
+  assert.match(
+    markup,
+    /class="od-graph-canvas" data-alignment="center" role="group"/,
+  );
   assert.match(markup, /transform:translate\(48px, 96px\)/);
   assert.match(markup, /data-root="true"/);
   assert.match(markup, /data-dragging="true"/);
   assert.match(markup, /data-drop-target="true"/);
   assert.match(markup, /aria-pressed="true"/);
   assert.match(markup, /aria-label="Close inspector"/);
+  assert.match(markup, /data-graph-inspector-close="true"/);
+  assert.match(markup, /<dialog[^>]*open=""/);
+  assert.match(markup, /tabindex="-1"/);
   assert.match(markup, /aria-hidden="true"/);
   assert.match(markup, /aria-label="Move Platform under Shared"/);
   assert.match(markup, /role="button"/);
+});
+
+test("graph inspector preserves a caller-supplied accessible relationship", () => {
+  const markup = renderToStaticMarkup(
+    React.createElement(
+      GraphInspector,
+      { "aria-labelledby": "external-title", title: "Internal title" },
+      "Details",
+    ),
+  );
+  assert.match(markup, /<dialog[^>]*aria-labelledby="external-title"/);
 });
 
 test("tree helpers use stable vertical layouts by default", () => {

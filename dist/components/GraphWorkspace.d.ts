@@ -1,4 +1,4 @@
-import type { ButtonHTMLAttributes, HTMLAttributes, ReactNode, SVGAttributes } from "react";
+import type { ButtonHTMLAttributes, DialogHTMLAttributes, HTMLAttributes, RefObject, ReactNode, SVGAttributes } from "react";
 export interface GraphWorkspaceProps extends HTMLAttributes<HTMLElement> {
     readonly toolbar?: ReactNode;
     readonly inspector?: ReactNode;
@@ -13,13 +13,14 @@ export interface GraphToolbarProps extends HTMLAttributes<HTMLElement> {
 /** Floating graph controls. Each slot accepts host-owned controls and copy. */
 export declare function GraphToolbar({ leading, center, actions, className, ...props }: GraphToolbarProps): import("react").JSX.Element;
 export interface GraphViewportProps extends HTMLAttributes<HTMLDivElement> {
+    readonly canvasAlignment?: "start" | "center";
     readonly canvasWidth?: number | string;
     readonly canvasHeight?: number | string;
     readonly canvasClassName?: string;
     readonly canvasProps?: Omit<HTMLAttributes<HTMLDivElement>, "children">;
 }
 /** A scrollable viewport and a positioned canvas for nodes and edges. */
-export declare function GraphViewport({ canvasWidth, canvasHeight, canvasClassName, canvasProps, children, className, ...props }: GraphViewportProps): import("react").JSX.Element;
+export declare function GraphViewport({ canvasAlignment, canvasWidth, canvasHeight, canvasClassName, canvasProps, children, className, ...props }: GraphViewportProps): import("react").JSX.Element;
 export interface GraphEmptyStateProps extends Omit<HTMLAttributes<HTMLDivElement>, "title"> {
     readonly icon: ReactNode;
     readonly title: ReactNode;
@@ -67,16 +68,19 @@ export type GraphEdgeProps = GraphEdgeBaseProps & ({
 });
 /** One visual graph connection. Supply onSelect and an aria-label for an interactive edge. */
 export declare function GraphEdge({ path, label, labelX, labelY, selected, dashed, onSelect, className, onKeyDown, ...props }: GraphEdgeProps): import("react").JSX.Element;
-export interface GraphInspectorProps extends Omit<HTMLAttributes<HTMLElement>, "title"> {
+export interface GraphInspectorProps extends Omit<DialogHTMLAttributes<HTMLDialogElement>, "onClose" | "open" | "title"> {
+    readonly activationKey?: string | number;
     readonly title: ReactNode;
     readonly eyebrow?: ReactNode;
     readonly icon?: ReactNode;
     readonly actions?: ReactNode;
     readonly onClose?: () => void;
     readonly closeLabel?: string;
+    readonly initialFocusRef?: RefObject<HTMLElement | null>;
+    readonly returnFocusRef?: RefObject<HTMLElement | null>;
     readonly tone?: GraphNodeTone;
 }
-/** A responsive inspector which floats on wide screens and docks on small screens. */
-export declare function GraphInspector({ title, eyebrow, icon, actions, onClose, closeLabel, tone, children, className, ...props }: GraphInspectorProps): import("react").JSX.Element;
+/** A responsive inspector with initial focus, Escape close, and exact focus return. */
+export declare function GraphInspector({ activationKey, title, eyebrow, icon, actions, onClose, closeLabel, initialFocusRef, returnFocusRef: suppliedReturnFocusRef, tone, children, className, tabIndex, "aria-label": ariaLabel, "aria-labelledby": ariaLabelledBy, ...props }: GraphInspectorProps): import("react").JSX.Element;
 export {};
 //# sourceMappingURL=GraphWorkspace.d.ts.map

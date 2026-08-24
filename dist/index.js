@@ -96,6 +96,7 @@ export { ChainStep } from "./components/ChainStep.js";
 export { ConfirmationDialog, } from "./components/ConfirmationDialog.js";
 export { ContextItem, } from "./components/ContextItem.js";
 export { HealthBar } from "./components/HealthBar.js";
+export { PageSurface, } from "./components/PageSurface.js";
 export { GraphEdge, GraphEdges, GraphEmptyState, GraphInspector, GraphNode, GraphToolbar, GraphViewport, GraphWorkspace, } from "./components/GraphWorkspace.js";
 export { ServiceAssignmentGraph, } from "./components/ServiceAssignmentGraph.js";
 export { OperationPlayground, } from "./components/OperationPlayground.js";

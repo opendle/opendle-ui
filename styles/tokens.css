@@ -30,6 +30,7 @@
   --od-space-md: 1rem;
   --od-space-lg: 1.5rem;
   --od-space-xl: 2rem;
+  --od-page-gutter: clamp(1rem, 2.5vw, 2rem);
   --od-shadow: 0 18px 50px rgb(28 35 38 / 9%);
   --od-font-body: "Aptos", "Segoe UI", system-ui, sans-serif;
   --od-font-display: "Aptos Display", "Segoe UI", system-ui, sans-serif;
@@ -1393,6 +1394,19 @@ samp {
   font-family: var(--od-font-mono);
 }
 
+.od-page-surface {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  max-width: none;
+  padding-inline: var(--od-page-gutter);
+  overflow-wrap: anywhere;
+}
+
+.od-page-surface[data-edge-to-edge="true"] {
+  padding-inline: 0;
+}
+
 .od-icon {
   display: block;
   flex: 0 0 auto;
@@ -1478,6 +1492,10 @@ samp {
   scrollbar-color: #536062 #182023;
 }
 
+.od-graph-viewport[data-canvas-alignment="center"] {
+  display: flex;
+}
+
 .od-graph-canvas {
   min-width: 100%;
   min-height: 100%;
@@ -1492,6 +1510,13 @@ samp {
     1.5rem 1.5rem,
     1.5rem 1.5rem,
     100% 100%;
+}
+
+.od-graph-canvas[data-alignment="center"] {
+  min-height: 0;
+  min-width: 0;
+  flex: 0 0 auto;
+  margin: auto;
 }
 
 .od-graph-empty-state {
@@ -1728,9 +1753,11 @@ samp {
   position: absolute;
   top: 4.75rem;
   right: 0.875rem;
+  left: auto;
   z-index: 9;
   display: flex;
   flex-direction: column;
+  margin: 0;
   overflow: hidden;
   border: 1px solid var(--od-color-border);
   border-radius: 0.9375rem;

@@ -34,7 +34,13 @@ their navigation, routes, product copy, mock data, and service behavior here.
 
 Graph applications can compose `GraphWorkspace`, `GraphToolbar`,
 `GraphViewport`, `GraphNode`, `GraphEdges`, `GraphEdge`, `GraphInspector`, and
-`GraphEmptyState`. The `layoutTree`, `layoutLayeredDirectedGraph`, and
+`GraphEmptyState`. `PageSurface` gives pages one responsive gutter or one
+edge-to-edge mode. `GraphViewport` can center an intrinsic tree canvas while
+free-position canvases keep start alignment. `GraphInspector` manages initial
+focus, Escape close, and focus return to the exact opening control. A host can
+change its activation key or supply a return-focus ref when the selected record
+changes while the inspector stays mounted. The
+`layoutTree`, `layoutLayeredDirectedGraph`, and
 `treeEdgePath` helpers give host apps stable tree and multiple-parent graph
 layouts without a graph-library dependency. Layouts run from top to bottom by
 default. A host can request a left-to-right layout. The layered layout treats

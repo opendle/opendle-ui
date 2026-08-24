@@ -226,6 +226,10 @@ export {
 } from "./components/ContextItem.js";
 export { HealthBar, type HealthBarProps } from "./components/HealthBar.js";
 export {
+  PageSurface,
+  type PageSurfaceProps,
+} from "./components/PageSurface.js";
+export {
   GraphEdge,
   GraphEdges,
   GraphEmptyState,

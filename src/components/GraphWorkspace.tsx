@@ -1,12 +1,14 @@
 import type {
   ButtonHTMLAttributes,
   CSSProperties,
+  DialogHTMLAttributes,
   HTMLAttributes,
   KeyboardEvent,
+  RefObject,
   ReactNode,
   SVGAttributes,
 } from "react";
-import { useId } from "react";
+import { useId, useLayoutEffect, useRef } from "react";
 
 function classes(...values: (string | false | null | undefined)[]) {
   return values.filter(Boolean).join(" ");
@@ -62,6 +64,7 @@ export function GraphToolbar({
 }
 
 export interface GraphViewportProps extends HTMLAttributes<HTMLDivElement> {
+  readonly canvasAlignment?: "start" | "center";
   readonly canvasWidth?: number | string;
   readonly canvasHeight?: number | string;
   readonly canvasClassName?: string;
@@ -70,6 +73,7 @@ export interface GraphViewportProps extends HTMLAttributes<HTMLDivElement> {
 
 /** A scrollable viewport and a positioned canvas for nodes and edges. */
 export function GraphViewport({
+  canvasAlignment = "start",
   canvasWidth,
   canvasHeight,
   canvasClassName,
@@ -85,7 +89,12 @@ export function GraphViewport({
   };
 
   return (
-    <div {...props} className={classes("od-graph-viewport", className)}>
+    <div
+      {...props}
+      className={classes("od-graph-viewport", className)}
+      data-canvas-alignment={canvasAlignment}
+      role={props.role ?? "region"}
+    >
       <div
         {...canvasProps}
         className={classes(
@@ -93,6 +102,7 @@ export function GraphViewport({
           canvasClassName,
           canvasProps?.className,
         )}
+        data-alignment={canvasAlignment}
         role={canvasProps?.role ?? "group"}
         style={canvasStyle}
       >
@@ -306,38 +316,144 @@ export function GraphEdge({
 }
 
 export interface GraphInspectorProps extends Omit<
-  HTMLAttributes<HTMLElement>,
-  "title"
+  DialogHTMLAttributes<HTMLDialogElement>,
+  "onClose" | "open" | "title"
 > {
+  readonly activationKey?: string | number;
   readonly title: ReactNode;
   readonly eyebrow?: ReactNode;
   readonly icon?: ReactNode;
   readonly actions?: ReactNode;
   readonly onClose?: () => void;
   readonly closeLabel?: string;
+  readonly initialFocusRef?: RefObject<HTMLElement | null>;
+  readonly returnFocusRef?: RefObject<HTMLElement | null>;
   readonly tone?: GraphNodeTone;
 }
 
-/** A responsive inspector which floats on wide screens and docks on small screens. */
+function restoreInspectorFocus(target: HTMLElement | null) {
+  if (!target?.isConnected) return;
+  const apply = () => {
+    const active = document.activeElement;
+    if (
+      active instanceof HTMLElement &&
+      active.closest(".od-graph-inspector, dialog[open]")
+    )
+      return;
+    if (target.isConnected) target.focus({ preventScroll: true });
+  };
+  if (typeof requestAnimationFrame === "function") requestAnimationFrame(apply);
+  else apply();
+}
+
+/** A responsive inspector with initial focus, Escape close, and exact focus return. */
 export function GraphInspector({
+  activationKey,
   title,
   eyebrow,
   icon,
   actions,
   onClose,
   closeLabel = "Close inspector",
+  initialFocusRef,
+  returnFocusRef: suppliedReturnFocusRef,
   tone = "neutral",
   children,
   className,
+  tabIndex,
+  "aria-label": ariaLabel,
+  "aria-labelledby": ariaLabelledBy,
   ...props
 }: GraphInspectorProps) {
   const titleId = useId();
+  const inspectorRef = useRef<HTMLDialogElement>(null);
+  const capturedReturnFocusRef = useRef<HTMLElement | null>(null);
+
+  useLayoutEffect(() => {
+    const inspector = inspectorRef.current;
+    if (!inspector) return;
+    const suppliedReturnFocus = suppliedReturnFocusRef?.current;
+    if (suppliedReturnFocus?.isConnected) {
+      capturedReturnFocusRef.current = suppliedReturnFocus;
+    } else {
+      const active = document.activeElement;
+      if (active instanceof HTMLElement && !inspector.contains(active)) {
+        capturedReturnFocusRef.current = active;
+      }
+    }
+    const initialFocus =
+      initialFocusRef?.current ??
+      inspector.querySelector<HTMLElement>("[data-graph-inspector-close]") ??
+      inspector.querySelector<HTMLElement>(
+        "button:not(:disabled), input:not(:disabled), select:not(:disabled), textarea:not(:disabled), [href], [tabindex]:not([tabindex='-1'])",
+      ) ??
+      inspector;
+    initialFocus.focus({ preventScroll: true });
+    return () => {
+      const returnTarget =
+        suppliedReturnFocus ?? capturedReturnFocusRef.current;
+      const element = inspector;
+      const apply = () => {
+        if (!element.isConnected) restoreInspectorFocus(returnTarget);
+      };
+      if (typeof requestAnimationFrame === "function")
+        requestAnimationFrame(apply);
+      else apply();
+    };
+  }, [activationKey, initialFocusRef, suppliedReturnFocusRef]);
+
+  function closeInspector() {
+    const returnTarget =
+      suppliedReturnFocusRef?.current ?? capturedReturnFocusRef.current;
+    onClose?.();
+    if (returnTarget?.isConnected) returnTarget.focus({ preventScroll: true });
+    restoreInspectorFocus(returnTarget);
+  }
+
+  const handleInspectorEscapeRef = useRef<
+    (event: globalThis.KeyboardEvent) => void
+  >(() => undefined);
+
+  useLayoutEffect(() => {
+    handleInspectorEscapeRef.current = (event: globalThis.KeyboardEvent) => {
+      const inspector = inspectorRef.current;
+      if (
+        !inspector ||
+        onClose === undefined ||
+        event.defaultPrevented ||
+        event.key !== "Escape" ||
+        !(event.target instanceof Node) ||
+        !inspector.contains(event.target)
+      )
+        return;
+      event.preventDefault();
+      event.stopPropagation();
+      closeInspector();
+    };
+  });
+
+  useLayoutEffect(() => {
+    const handleKeyDown = (event: globalThis.KeyboardEvent) => {
+      handleInspectorEscapeRef.current(event);
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, []);
+
   return (
-    <aside
+    <dialog
       {...props}
-      aria-labelledby={props["aria-label"] ? undefined : titleId}
+      aria-label={ariaLabel}
+      aria-labelledby={
+        ariaLabel === undefined ? (ariaLabelledBy ?? titleId) : undefined
+      }
       className={classes("od-graph-inspector", className)}
       data-tone={tone}
+      open
+      ref={inspectorRef}
+      tabIndex={tabIndex ?? -1}
     >
       <header className="od-graph-inspector-header">
         {icon ? <span className="od-graph-inspector-icon">{icon}</span> : null}
@@ -351,7 +467,8 @@ export function GraphInspector({
           <button
             aria-label={closeLabel}
             className="od-graph-inspector-close"
-            onClick={onClose}
+            data-graph-inspector-close="true"
+            onClick={closeInspector}
             type="button"
           >
             <span aria-hidden="true">×</span>
@@ -362,6 +479,6 @@ export function GraphInspector({
       {actions ? (
         <footer className="od-graph-inspector-actions">{actions}</footer>
       ) : null}
-    </aside>
+    </dialog>
   );
 }
