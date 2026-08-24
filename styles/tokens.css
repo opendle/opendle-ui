@@ -237,6 +237,11 @@
   scrollbar-width: thin;
 }
 
+.od-data-table-desktop:focus-visible {
+  outline: 3px solid var(--od-color-focus);
+  outline-offset: 2px;
+}
+
 .od-data-table-table {
   width: 100%;
   border-spacing: 0;
@@ -414,6 +419,10 @@
 .od-data-table-card[aria-busy="true"] {
   border-color: var(--od-color-blue);
   background: var(--od-color-blue-soft);
+}
+
+.od-data-table-card[data-disabled="true"] {
+  color: var(--od-color-muted);
 }
 
 .od-data-table-card-heading {

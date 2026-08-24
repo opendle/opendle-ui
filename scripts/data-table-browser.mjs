@@ -58,7 +58,7 @@ const syncColumns = [{
 
 function Fixture() {
   const [rows, setRows] = useState(initialRows);
-  const [selected, setSelected] = useState(["record-1"]);
+  const [selected, setSelected] = useState(["off-page", "record-1"]);
   const [expanded, setExpanded] = useState([]);
   const [query, setQuery] = useState("");
   const [sort, setSort] = useState({ columnKey: "name", direction: "ascending" });
@@ -67,6 +67,8 @@ function Fixture() {
   const [hasMore, setHasMore] = useState(true);
   const [syncLoadCount, setSyncLoadCount] = useState(0);
   const [retryCount, setRetryCount] = useState(0);
+  const [failureCount, setFailureCount] = useState(0);
+  const [focusCaptureCount, setFocusCaptureCount] = useState(0);
 
   return (
     <>
@@ -75,6 +77,9 @@ function Fixture() {
       <output aria-label="Load count">{loadCount}</output>
       <output aria-label="Synchronous load count">{syncLoadCount}</output>
       <output aria-label="Retry count">{retryCount}</output>
+      <output aria-label="Failure count">{failureCount}</output>
+      <output aria-label="Selected rows">{selected.join(",")}</output>
+      <output aria-label="Focus capture count">{focusCaptureCount}</output>
       <DataTable
         actions={[
           {
@@ -90,6 +95,18 @@ function Fixture() {
             key: "remove",
             label: (row) => "Remove " + row.name,
             onAction: (row) => setRows((current) => current.filter((item) => item.id !== row.id)),
+          },
+          {
+            key: "fail",
+            label: (row) => "Fail " + row.name,
+            pendingLabel: (row) => "Failing " + row.name + "…",
+            onAction: () => {
+              setFailureCount((count) => count + 1);
+              if (failureCount === 0) throw new Error("Expected contained action failure");
+              return new Promise((resolve, reject) => {
+                setTimeout(() => reject(new Error("Expected contained action rejection")), 120);
+              });
+            },
           },
         ]}
         ariaLabel="Browser records"
@@ -117,6 +134,7 @@ function Fixture() {
           },
         }}
         minimumWidth="60rem"
+        onFocusCapture={() => setFocusCaptureCount((count) => count + 1)}
         rows={rows.filter((row) => row.name.toLowerCase().includes(query.toLowerCase()))}
         search={<label>Search records <input value={query} onChange={(event) => setQuery(event.target.value)} type="search" /></label>}
         selection={{ selectedRowIds: selected, onChange: setSelected }}
@@ -151,6 +169,108 @@ function Fixture() {
           },
         }}
       />
+      <FocusFallbackFixture />
+      <SingleSelectionFixture />
+      <div style={{ maxWidth: "100%", width: "30rem" }}>
+        <DataTable
+          ariaLabel="Container records"
+          columns={syncColumns}
+          getRowId={(row) => row.id}
+          getRowLabel={(row) => row.name}
+          rows={initialRows}
+        />
+      </div>
+      <UnmountFixtures />
+    </>
+  );
+}
+
+function SingleSelectionFixture() {
+  const [singleSelection, setSingleSelection] = useState(["record-1"]);
+  return (
+    <>
+      <output aria-label="Single selected row">{singleSelection.join(",")}</output>
+      <DataTable
+        ariaLabel="Single selection records"
+        columns={syncColumns}
+        getRowId={(row) => row.id}
+        getRowLabel={(row) => row.name}
+        rows={initialRows}
+        selection={{
+          mode: "single",
+          onChange: setSingleSelection,
+          selectedRowIds: singleSelection,
+        }}
+      />
+    </>
+  );
+}
+
+function FocusFallbackFixture() {
+  const [fallbackRows, setFallbackRows] = useState(initialRows);
+  const [disabled, setDisabled] = useState(false);
+  return (
+    <DataTable
+      actions={[{
+        key: "remove",
+        label: (row) => "Delete fallback " + row.name,
+        onAction: (row) => {
+          setFallbackRows((current) => current.filter((item) => item.id !== row.id));
+          setDisabled(true);
+        },
+      }]}
+      ariaLabel="Focus fallback records"
+      columns={syncColumns}
+      getRowId={(row) => row.id}
+      getRowLabel={(row) => row.name}
+      isRowDisabled={() => disabled}
+      rows={fallbackRows}
+    />
+  );
+}
+
+function UnmountFixtures() {
+  const [showAction, setShowAction] = useState(true);
+  const [showLoad, setShowLoad] = useState(true);
+  return (
+    <>
+      {showAction ? (
+        <DataTable
+          actions={[{
+            key: "unmount",
+            label: () => "Unmount during action",
+            onAction: () => {
+              setShowAction(false);
+              return new Promise((resolve, reject) => {
+                setTimeout(() => reject(new Error("Expected contained unmounted action rejection")), 40);
+              });
+            },
+          }]}
+          ariaLabel="Unmount action records"
+          columns={syncColumns}
+          getRowId={(row) => row.id}
+          getRowLabel={(row) => row.name}
+          rows={[initialRows[0]]}
+        />
+      ) : <output aria-label="Unmount action result">Action table removed</output>}
+      {showLoad ? (
+        <DataTable
+          ariaLabel="Unmount load records"
+          columns={syncColumns}
+          getRowId={(row) => row.id}
+          getRowLabel={(row) => row.name}
+          loadMore={{
+            hasMore: true,
+            onLoadMore: () => {
+              setShowLoad(false);
+              return new Promise((resolve, reject) => {
+                setTimeout(() => reject(new Error("Expected contained unmounted load rejection")), 40);
+              });
+            },
+          }}
+          rows={[initialRows[0]]}
+        />
+      ) : <output aria-label="Unmount load result">Load table removed</output>}
     </>
   );
 }
@@ -181,7 +301,7 @@ const css = await readFile(
   new URL("../styles/tokens.css", import.meta.url),
   "utf8",
 );
-const html = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Data table test</title><style>${css}*{box-sizing:border-box}body{margin:0;background:var(--od-color-background)}main{width:min(100%,45rem);padding:1rem;margin:0 auto}</style></head><body><main><h1>Data table browser check</h1><div id="root"></div></main></body></html>`;
+const html = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Data table test</title><style>${css}*{box-sizing:border-box}body{margin:0;background:var(--od-color-background)}main{width:min(100%,45rem);padding:1rem;margin:0 auto}#root>output{display:block;max-width:100%;overflow-wrap:anywhere}</style></head><body><main><h1>Data table browser check</h1><div id="root"></div></main></body></html>`;
 const systemChrome = "/usr/bin/google-chrome";
 const browser = await chromium.launch({
   executablePath: existsSync(systemChrome) ? systemChrome : undefined,
@@ -191,16 +311,12 @@ const browser = await chromium.launch({
 async function loadFixture(page) {
   const errors = [];
   page.on("console", (message) => {
-    if (
-      message.type() === "error" &&
-      !message.text().includes("Expected synchronous retry failure")
-    ) {
+    if (message.type() === "error") {
       errors.push(message.text());
     }
   });
   page.on("pageerror", (error) => {
-    if (!error.message.includes("Expected synchronous retry failure"))
-      errors.push(error.message);
+    errors.push(error.message);
   });
   await page.setContent(html);
   await page.addScriptTag({ content: browserScript });
@@ -316,11 +432,49 @@ try {
     "2",
   );
 
+  const failFirst = tableRegion.getByRole("button", {
+    name: "Fail First record",
+  });
+  await failFirst.click();
+  assert.equal(
+    await desktop.getByRole("status", { name: "Failure count" }).textContent(),
+    "1",
+  );
+  assert.equal(
+    await failFirst.isEnabled(),
+    true,
+    "A synchronous action throw must stay contained and release its lock.",
+  );
+  await failFirst.click();
+  assert.equal(
+    await tableRegion
+      .getByRole("button", { name: "Failing First record…" })
+      .isDisabled(),
+    true,
+    "A rejected row action must stay locked until it settles.",
+  );
+  await tableRegion
+    .getByRole("button", { name: "Fail First record" })
+    .waitFor();
+  assert.equal(
+    await desktop.getByRole("status", { name: "Failure count" }).textContent(),
+    "2",
+  );
+
   const sortButton = desktop.getByRole("button", {
     name: "Sort by Name descending",
   });
   await sortButton.focus();
   await sortButton.press("Enter");
+  assert.equal(
+    Number(
+      await desktop
+        .getByRole("status", { name: "Focus capture count" })
+        .textContent(),
+    ) > 0,
+    true,
+    "The shared focus tracker must preserve the host focus-capture handler.",
+  );
   assert.equal(
     await desktop.getByRole("status", { name: "Sort state" }).textContent(),
     "name:descending",
@@ -338,6 +492,11 @@ try {
   assert.equal(await firstSelection.isChecked(), true);
   await firstSelection.uncheck();
   assert.equal(await firstSelection.isChecked(), false);
+  assert.equal(
+    await desktop.getByRole("status", { name: "Selected rows" }).textContent(),
+    "off-page",
+    "A visible selection change must preserve controlled off-page selection.",
+  );
   await tableRegion
     .getByRole("checkbox", { name: "Select all visible rows" })
     .check();
@@ -347,6 +506,11 @@ try {
       .getByRole("checkbox", { name: "Select Second record" })
       .isChecked(),
     true,
+  );
+  assert.equal(
+    await desktop.getByRole("status", { name: "Selected rows" }).textContent(),
+    "off-page,record-1,record-2",
+    "Select all must preserve controlled off-page selection.",
   );
 
   const expandFirst = tableRegion.getByRole("button", {
@@ -429,6 +593,68 @@ try {
     true,
     "Removing the final row must return focus to the labelled table region.",
   );
+
+  const fallbackTable = desktop.getByRole("region", {
+    name: "Focus fallback records scrollable table",
+  });
+  const fallbackDelete = fallbackTable.getByRole("button", {
+    name: "Delete fallback First record",
+  });
+  await fallbackDelete.focus();
+  await fallbackDelete.click();
+  assert.equal(
+    await fallbackTable.evaluate(
+      (element) => element === document.activeElement,
+    ),
+    true,
+    "Focus must move to the table viewport when the nearest matching row control is disabled.",
+  );
+
+  const singleSelectionTable = desktop.getByRole("region", {
+    name: "Single selection records scrollable table",
+  });
+  await singleSelectionTable
+    .getByRole("radio", { name: "Select Second record" })
+    .check();
+  assert.equal(
+    await singleSelectionTable
+      .getByRole("radio", { name: "Select First record" })
+      .isChecked(),
+    false,
+  );
+  assert.equal(
+    await desktop
+      .getByRole("status", { name: "Single selected row" })
+      .textContent(),
+    "record-2",
+    "Single selection must replace the previous selected row.",
+  );
+
+  const containerRoot = desktop.getByRole("region", {
+    name: "Container records",
+    exact: true,
+  });
+  assert.equal(
+    await containerRoot
+      .getByRole("list", { name: "Container records cards" })
+      .isVisible(),
+    true,
+    "A narrow host container must use phone cards on a wide viewport.",
+  );
+  assert.equal(
+    await containerRoot
+      .locator(".od-data-table-desktop")
+      .evaluate((element) => getComputedStyle(element).display),
+    "none",
+  );
+
+  await desktop.getByRole("button", { name: "Unmount during action" }).click();
+  await desktop.getByRole("button", { name: "Load more rows" }).last().click();
+  await desktop
+    .getByRole("status", { name: "Unmount action result" })
+    .waitFor();
+  await desktop.getByRole("status", { name: "Unmount load result" }).waitFor();
+  await desktop.waitForTimeout(80);
   assert.deepEqual(desktopErrors, []);
 
   const phoneContext = await browser.newContext({

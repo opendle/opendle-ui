@@ -116,6 +116,9 @@ test("DataTable exposes disabled and pending row actions safely", () => {
     markup,
     /<button[^>]*aria-busy="true"[^>]*disabled=""[^>]*>Open Second record<\/button>/,
   );
+  assert.match(markup, /<li[^>]*data-disabled="true"/);
+  assert.match(markup, /First record is disabled\./);
+  assert.match(markup, /<legend[^>]*>Actions for First record<\/legend>/);
 });
 
 test("DataTable renders loading, empty, error, retry, and complete states", () => {
@@ -168,6 +171,17 @@ test("DataTable renders loading, empty, error, retry, and complete states", () =
   });
   assert.match(unavailable, /od-data-table-state-unavailable/);
   assert.match(unavailable, /This result is unavailable/);
+});
+
+test("DataTable does not expose inactive sorting semantics", () => {
+  const markup = renderDataTable({ sort: undefined, state: { kind: "ready" } });
+  assert.doesNotMatch(markup, /aria-sort=/);
+  assert.doesNotMatch(markup, /od-data-table-sort-control/);
+});
+
+test("DataTable uses a singular default live row count", () => {
+  const markup = renderDataTable({ rows: [rows[0]], state: { kind: "ready" } });
+  assert.match(markup, />1 row loaded\.<\/output>/);
 });
 
 test("DataTable rejects unsafe or ambiguous bounds", () => {

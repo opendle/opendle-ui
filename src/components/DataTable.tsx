@@ -124,7 +124,6 @@ export interface DataTableProps<T> extends Omit<
 }
 
 interface FocusSnapshot {
-  readonly rowId: string;
   readonly rowIndex: number;
   readonly control: string;
 }
@@ -150,6 +149,7 @@ export function DataTable<T>({
   loadMore,
   maxRows = DEFAULT_MAX_ROWS,
   minimumWidth = "40rem",
+  onFocusCapture,
   rows,
   search,
   selection,
@@ -171,15 +171,14 @@ export function DataTable<T>({
     rows,
   });
   const tableId = useId();
-  const rootRef = useRef<HTMLElement | null>(null);
-  const focusSnapshotRef = useRef<FocusSnapshot | null>(null);
+  const { captureFocus, rootRef } = useDataTableFocus(rowIds);
   const actionLocksRef = useRef(new Set<string>());
   const loadLockRef = useRef(false);
+  const mountedRef = useRef(true);
   const [localPendingActions, setLocalPendingActions] = useState<
     ReadonlySet<string>
   >(() => new Set());
   const [localLoadPending, setLocalLoadPending] = useState(false);
-  const rowSignature = JSON.stringify(rowIds);
   const selectedIds = new Set(selection?.selectedRowIds ?? []);
   const expandedIds = new Set(expansion?.expandedRowIds ?? []);
   const selectionMode = selection?.mode ?? "multiple";
@@ -209,25 +208,12 @@ export function DataTable<T>({
         }
       : loadMore;
 
-  useLayoutEffect(() => {
-    const root = rootRef.current;
-    const snapshot = focusSnapshotRef.current;
-    if (!root || !snapshot || typeof document === "undefined") return;
-    if (root.contains(document.activeElement)) return;
-    if (
-      document.activeElement !== null &&
-      document.activeElement !== document.body
-    ) {
-      return;
-    }
-    const currentRowIds = JSON.parse(rowSignature) as string[];
-    const replacementId =
-      currentRowIds[Math.min(snapshot.rowIndex, currentRowIds.length - 1)];
-    const target = replacementId
-      ? findVisibleControl(root, replacementId, snapshot.control)
-      : findVisibleFallback(root);
-    target?.focus();
-  }, [rowSignature]);
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
 
   const runAction = (
     action: DataTableAction<T>,
@@ -235,31 +221,40 @@ export function DataTable<T>({
     rowIndex: number,
     rowId: string,
   ) => {
-    const lockKey = `${rowId}\u0000${action.key}`;
+    const lockKey = actionLockKey(rowId, action.key);
     if (actionLocksRef.current.has(lockKey)) return;
     actionLocksRef.current.add(lockKey);
     setLocalPendingActions((current) => new Set(current).add(lockKey));
     let result: void | Promise<void>;
     try {
       result = action.onAction(row, rowIndex);
-    } catch (error) {
-      releaseActionLock(lockKey, actionLocksRef, setLocalPendingActions);
-      throw error;
-    }
-    if (isPromise(result)) {
-      void result.then(
-        () => {
-          releaseActionLock(lockKey, actionLocksRef, setLocalPendingActions);
-        },
-        () => {
-          releaseActionLock(lockKey, actionLocksRef, setLocalPendingActions);
-        },
+    } catch {
+      releaseActionLock(
+        lockKey,
+        actionLocksRef,
+        mountedRef,
+        setLocalPendingActions,
       );
-    } else {
-      queueMicrotask(() => {
-        releaseActionLock(lockKey, actionLocksRef, setLocalPendingActions);
-      });
+      return;
     }
+    void Promise.resolve(result).then(
+      () => {
+        releaseActionLock(
+          lockKey,
+          actionLocksRef,
+          mountedRef,
+          setLocalPendingActions,
+        );
+      },
+      () => {
+        releaseActionLock(
+          lockKey,
+          actionLocksRef,
+          mountedRef,
+          setLocalPendingActions,
+        );
+      },
+    );
   };
 
   const runLoadAction = (action: (() => void | Promise<void>) | undefined) => {
@@ -269,24 +264,18 @@ export function DataTable<T>({
     let result: void | Promise<void>;
     try {
       result = action();
-    } catch (error) {
-      releaseLoadLock(loadLockRef, setLocalLoadPending);
-      throw error;
+    } catch {
+      releaseLoadLock(loadLockRef, mountedRef, setLocalLoadPending);
+      return;
     }
-    if (isPromise(result)) {
-      void result.then(
-        () => {
-          releaseLoadLock(loadLockRef, setLocalLoadPending);
-        },
-        () => {
-          releaseLoadLock(loadLockRef, setLocalLoadPending);
-        },
-      );
-    } else {
-      queueMicrotask(() => {
-        releaseLoadLock(loadLockRef, setLocalLoadPending);
-      });
-    }
+    void Promise.resolve(result).then(
+      () => {
+        releaseLoadLock(loadLockRef, mountedRef, setLocalLoadPending);
+      },
+      () => {
+        releaseLoadLock(loadLockRef, mountedRef, setLocalLoadPending);
+      },
+    );
   };
 
   const renderContext = (row: T, rowIndex: number): DataTableCellContext<T> => {
@@ -347,19 +336,8 @@ export function DataTable<T>({
       ref={rootRef}
       tabIndex={props.tabIndex ?? -1}
       onFocusCapture={(event) => {
-        const target = event.target;
-        if (!(target instanceof HTMLElement)) return;
-        const rowElement = target.closest<HTMLElement>("[data-data-table-row]");
-        const controlElement = target.closest<HTMLElement>(
-          "[data-data-table-control]",
-        );
-        if (!rowElement || !controlElement) return;
-        const rowId = rowElement.dataset.dataTableRow;
-        const control = controlElement.dataset.dataTableControl;
-        const rowIndex = rowId ? rowIds.indexOf(rowId) : -1;
-        if (rowId && control && rowIndex >= 0) {
-          focusSnapshotRef.current = { rowId, rowIndex, control };
-        }
+        onFocusCapture?.(event);
+        captureFocus(event.target);
       }}
     >
       {search || filters ? (
@@ -422,10 +400,58 @@ export function DataTable<T>({
         runAction={runLoadAction}
       />
       <output aria-live="polite" className="od-visually-hidden">
-        {liveMessage ?? `${String(rows.length)} rows loaded.`}
+        {liveMessage ??
+          `${String(rows.length)} ${rows.length === 1 ? "row" : "rows"} loaded.`}
       </output>
     </section>
   );
+}
+
+function useDataTableFocus(rowIds: readonly string[]) {
+  const rootRef = useRef<HTMLElement | null>(null);
+  const focusSnapshotRef = useRef<FocusSnapshot | null>(null);
+  const rowSignature = JSON.stringify(rowIds);
+
+  useLayoutEffect(() => {
+    const root = rootRef.current;
+    const snapshot = focusSnapshotRef.current;
+    if (!root || !snapshot || typeof document === "undefined") return;
+    if (root.contains(document.activeElement)) return;
+    if (
+      document.activeElement !== null &&
+      document.activeElement !== document.body
+    ) {
+      return;
+    }
+    const currentRowIds = JSON.parse(rowSignature) as string[];
+    const replacementId =
+      currentRowIds[Math.min(snapshot.rowIndex, currentRowIds.length - 1)];
+    const target = replacementId
+      ? (findVisibleControl(root, replacementId, snapshot.control) ??
+        findVisibleFallback(root))
+      : findVisibleFallback(root);
+    target?.focus();
+  }, [rowSignature]);
+
+  const captureFocus = (target: EventTarget) => {
+    if (!(target instanceof HTMLElement)) return;
+    const rowElement = target.closest<HTMLElement>("[data-data-table-row]");
+    const controlElement = target.closest<HTMLElement>(
+      "[data-data-table-control]",
+    );
+    if (!rowElement || !controlElement) {
+      focusSnapshotRef.current = null;
+      return;
+    }
+    const rowId = rowElement.dataset.dataTableRow;
+    const control = controlElement.dataset.dataTableControl;
+    const rowIndex = rowId ? rowIds.indexOf(rowId) : -1;
+    if (control && rowIndex >= 0) {
+      focusSnapshotRef.current = { rowIndex, control };
+    }
+  };
+
+  return { captureFocus, rootRef };
 }
 
 function DataTableContent<T>({
@@ -501,10 +527,13 @@ function DataTableContent<T>({
           <span aria-hidden="true">→</span>
         </button>
       </div>
+      {/* A tab stop lets keyboard users scroll the labelled overflow viewport. */}
+      {/* react-doctor-disable-next-line react-doctor/no-noninteractive-tabindex */}
       <section
         aria-label={`${ariaLabel} scrollable table`}
         className="od-data-table-desktop"
         ref={scrollRef}
+        tabIndex={0}
       >
         <table
           aria-busy={tableBusy || undefined}
@@ -567,11 +596,11 @@ function DataTableContent<T>({
               {columns.map((column) => (
                 <th
                   aria-sort={
-                    sort?.columnKey === column.key
-                      ? sort.direction
-                      : column.sortable
-                        ? "none"
-                        : undefined
+                    column.sortable && sort
+                      ? sort.columnKey === column.key
+                        ? sort.direction
+                        : "none"
+                      : undefined
                   }
                   className={`od-data-table-align-${column.align ?? "start"}`}
                   key={column.key}
@@ -736,6 +765,7 @@ function TableRows<T>({
               label={actionsLabel}
               localPendingActions={localPendingActions}
               onAction={onAction}
+              rowLabel={rowLabel}
             />
           </td>
         ) : null}
@@ -772,15 +802,25 @@ function PhoneCard<T>({
   const rowDomId = String(context.rowIndex);
   const headingId = `${tableId}-card-${rowDomId}-heading`;
   const detailId = `${tableId}-card-${rowDomId}-detail`;
+  const disabledDescriptionId = `${tableId}-card-${rowDomId}-disabled`;
   return (
     <li
       aria-busy={context.pending || undefined}
       className="od-data-table-card"
       data-data-table-row={context.rowId}
+      data-disabled={context.disabled || undefined}
       data-expanded={context.expanded || undefined}
       data-selected={context.selected || undefined}
     >
-      <article aria-labelledby={headingId}>
+      <article
+        aria-describedby={context.disabled ? disabledDescriptionId : undefined}
+        aria-labelledby={headingId}
+      >
+        {context.disabled ? (
+          <span className="od-visually-hidden" id={disabledDescriptionId}>
+            {rowLabel} is disabled.
+          </span>
+        ) : null}
         <header className="od-data-table-card-heading">
           <strong className="od-data-table-card-title" id={headingId}>
             {rowLabel}
@@ -832,6 +872,7 @@ function PhoneCard<T>({
               label={actionsLabel}
               localPendingActions={localPendingActions}
               onAction={onAction}
+              rowLabel={rowLabel}
             />
           </footer>
         ) : null}
@@ -979,6 +1020,7 @@ function ActionControls<T>({
   label,
   localPendingActions,
   onAction,
+  rowLabel,
 }: {
   readonly actions: readonly DataTableAction<T>[];
   readonly context: DataTableCellContext<T>;
@@ -990,12 +1032,15 @@ function ActionControls<T>({
     rowIndex: number,
     rowId: string,
   ) => void;
+  readonly rowLabel: string;
 }) {
   return (
     <fieldset className="od-data-table-actions">
-      <legend className="od-visually-hidden">{label}</legend>
+      <legend className="od-visually-hidden">
+        {label} for {rowLabel}
+      </legend>
       {actions.map((action) => {
-        const lockKey = `${context.rowId}\u0000${action.key}`;
+        const lockKey = actionLockKey(context.rowId, action.key);
         const actionPending =
           context.pending ||
           Boolean(action.pending?.(context.row, context.rowIndex)) ||
@@ -1009,7 +1054,7 @@ function ActionControls<T>({
             ? (action.pendingLabel?.(context.row, context.rowIndex) ??
                 action.label(context.row, context.rowIndex))
             : action.label(context.row, context.rowIndex),
-          `Action ${action.key}`,
+          `Action ${action.key} for ${rowLabel}`,
         );
         return (
           <button
@@ -1244,29 +1289,27 @@ function labelOrFallback(value: string | undefined, fallback: string): string {
   return value?.trim() ? value : fallback;
 }
 
-function isPromise(value: unknown): value is PromiseLike<void> {
-  return (
-    (typeof value === "object" || typeof value === "function") &&
-    value !== null &&
-    "then" in value &&
-    typeof value.then === "function"
-  );
+function actionLockKey(rowId: string, actionKey: string): string {
+  return JSON.stringify([rowId, actionKey]);
 }
 
 function releaseLoadLock(
   lockRef: React.RefObject<boolean>,
+  mountedRef: React.RefObject<boolean>,
   setPending: React.Dispatch<React.SetStateAction<boolean>>,
 ) {
   lockRef.current = false;
-  setPending(false);
+  if (mountedRef.current) setPending(false);
 }
 
 function releaseActionLock(
   lockKey: string,
   lockRef: React.RefObject<Set<string>>,
+  mountedRef: React.RefObject<boolean>,
   setPending: React.Dispatch<React.SetStateAction<ReadonlySet<string>>>,
 ) {
   lockRef.current.delete(lockKey);
+  if (!mountedRef.current) return;
   setPending((current) => {
     const next = new Set(current);
     next.delete(lockKey);

@@ -104,5 +104,5 @@ export interface DataTableProps<T> extends Omit<HTMLAttributes<HTMLElement>, "ch
     readonly isRowPending?: (row: T, rowIndex: number) => boolean;
 }
 /** A host-neutral table with a semantic desktop view and accessible phone cards. */
-export declare function DataTable<T>({ actions, actionsLabel, ariaLabel, className, columns, density, expansion, filters, getRowId, getRowLabel, isRowDisabled, isRowPending, liveMessage, loadMore, maxRows, minimumWidth, rows, search, selection, sort, state, toolbarLabel, ...props }: DataTableProps<T>): import("react").JSX.Element;
+export declare function DataTable<T>({ actions, actionsLabel, ariaLabel, className, columns, density, expansion, filters, getRowId, getRowLabel, isRowDisabled, isRowPending, liveMessage, loadMore, maxRows, minimumWidth, onFocusCapture, rows, search, selection, sort, state, toolbarLabel, ...props }: DataTableProps<T>): import("react").JSX.Element;
 //# sourceMappingURL=DataTable.d.ts.map
