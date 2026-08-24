@@ -45,6 +45,15 @@ an assignment or exact provider-model selection and shows output, the selected
 route, latency, usage, cost, and corrective errors. The host owns all API
 calls, credentials, data access, routing, product copy, state, and mutations.
 
+Ontology clients can compose `ExplorerWorkspace`, `BoundedDataExplorer`,
+`SavedViewCanvas`, `ChangeTimeline`, `OntologyInheritanceTree`,
+`MetadataBagList`, `OntologyLabelList`, `ManagedFileList`, and
+`ExplorerState`. These components accept bounded current records, canvas
+positions, type relationships, metadata bags, labels, and file metadata. They
+do not load data, store credentials, make authorization decisions, accept
+executable queries, or own host routes. Host applications keep service keys in
+their backends and supply current authorized data and controlled actions.
+
 Typography uses the Xbot design as the source of truth: Aptos for body text,
 Aptos Display for headings, and Aptos Mono with system fallbacks for technical
 text. Use the `--od-*` tokens instead of adding a host-specific font system.

@@ -30,9 +30,11 @@ required_files=(
   "tsconfig.json"
   "tsconfig.build.json"
   "src/index.tsx"
+  "src/OntologyExplorerContract.ts"
   "dist/index.js"
   "dist/index.d.ts"
   "styles/tokens.css"
+  "scripts/ontology-explorer-browser.mjs"
   "scripts/build-consumer.mjs"
   "scripts/check-react-doctor-report.mjs"
   "scripts/dependency-age-gate.sh"
@@ -61,7 +63,8 @@ grep -Fq 'FSL-1.1-ALv2' README.md
 grep -Fq 'export const OPENDLE_UI_VERSION' src/index.tsx
 node --check scripts/build-consumer.mjs
 node --check scripts/check-react-doctor-report.mjs
-node --input-type=module -e "import('./dist/index.js').then((shared) => { for (const name of ['AccountMenu', 'ReviewPlanCard', 'WorkspaceSelector']) if (!(name in shared)) throw new Error('Missing shared export: ' + name); })"
+node --check scripts/ontology-explorer-browser.mjs
+node --input-type=module -e "import('./dist/index.js').then((shared) => { for (const name of ['AccountMenu', 'BoundedDataExplorer', 'ChangeTimeline', 'ExplorerWorkspace', 'ManagedFileList', 'MetadataBagList', 'OntologyInheritanceTree', 'ReviewPlanCard', 'SavedViewCanvas', 'WorkspaceSelector']) if (!(name in shared)) throw new Error('Missing shared export: ' + name); })"
 
 grep -qx "min-release-age=14" .npmrc
 grep -q 'OPENDLE_UI_DEPENDENCY_MIN_AGE_DAYS:-14' scripts/dependency-age-gate.sh
@@ -90,6 +93,7 @@ npm run format:check
 npm run lint
 npm run typecheck
 npm test
+npm run test:browser
 npm run security
 ./scripts/react-doctor-gate.sh
 

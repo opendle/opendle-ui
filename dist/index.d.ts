@@ -83,4 +83,12 @@ export { StatusDot, type StatusDotProps, type StatusTone, } from "./components/S
 export { StatusPill, type StatusPillProps } from "./components/StatusPill.js";
 export { Toast, type ToastProps } from "./components/Toast.js";
 export { WorkspaceSelector, type WorkspaceSelectorProps, } from "./components/WorkspaceSelector.js";
+export { BoundedDataExplorer, OntologyLabelList, type BoundedDataExplorerProps, type OntologyLabelListProps, } from "./components/BoundedDataExplorer.js";
+export { ChangeTimeline, type ChangeTimelineProps, type OntologyChangeItem, } from "./components/ChangeTimeline.js";
+export { ExplorerState, ExplorerWorkspace, type ExplorerNavigationItem, type ExplorerResourceState, type ExplorerStateProps, type ExplorerWorkspaceProps, } from "./components/ExplorerWorkspace.js";
+export { ManagedFileList, type FileTransferState, type ManagedFileItem, type ManagedFileListProps, } from "./components/ManagedFileList.js";
+export { MetadataBagList, type MetadataBagListProps, } from "./components/MetadataBagList.js";
+export { OntologyInheritanceTree, type OntologyInheritanceTreeProps, } from "./components/OntologyInheritanceTree.js";
+export { SavedViewCanvas, type SavedViewCanvasProps, } from "./components/SavedViewCanvas.js";
+export { ONTOLOGY_GRAPH_LIMIT, ONTOLOGY_LABEL_LIMIT, ONTOLOGY_OCCURRENCE_LIMIT, ONTOLOGY_PAGE_LIMIT, ONTOLOGY_PROPERTY_LIMIT, ONTOLOGY_TYPE_LIMIT, assertBoundedItems, assertFiniteNumber, assertIdentifier, assertUniqueIdentifiers, countOccurrences, formatOntologyFileSize, moveCanvasPosition, type OntologyCanvasPosition, type OntologyFileMetadata, type OntologyGraphLink, type OntologyGraphObject, type OntologyMetadataBag, type OntologyPropertyMap, type OntologyPropertyOccurrence, type OntologyRecordSummary, type OntologyTypeDefinition, } from "./OntologyExplorerContract.js";
 //# sourceMappingURL=index.d.ts.map
