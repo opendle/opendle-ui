@@ -47,6 +47,7 @@ function restoreFocus(trigger) {
 export function ConfirmationDialog({ cancelLabel = "Cancel", className, confirmLabel, description, impactLabel = "Enter the impact statement to continue", impactStatement, onCancel, onConfirm, open, pending = false, pendingLabel = "Working…", title, ...props }) {
     const titleId = useId();
     const descriptionId = useId();
+    const impactId = useId();
     const dialogRef = useRef(null);
     const actionsRef = useRef(null);
     const triggerRef = useRef(null);
@@ -55,6 +56,9 @@ export function ConfirmationDialog({ cancelLabel = "Cancel", className, confirmL
         if (!pending)
             onCancel();
     }, [onCancel, pending]);
+    if (impactStatement?.trim() === "") {
+        throw new TypeError("A confirmation impact statement must not be empty.");
+    }
     useLayoutEffect(() => {
         const dialog = dialogRef.current;
         if (!dialog)
@@ -96,12 +100,12 @@ export function ConfirmationDialog({ cancelLabel = "Cancel", className, confirmL
             .join(" "), onCancel: (event) => {
             event.preventDefault();
             requestCancel();
-        }, ref: dialogRef, children: open ? (_jsx(ConfirmationContent, { cancelLabel: cancelLabel, actionsRef: actionsRef, confirmLabel: confirmLabel, description: description, descriptionId: descriptionId, impactLabel: impactLabel, ...(impactStatement === undefined ? {} : { impactStatement }), onCancel: requestCancel, onConfirm: onConfirm, pending: pending, pendingLabel: pendingLabel, title: title, titleId: titleId })) : null }));
+        }, ref: dialogRef, children: open ? (_jsx(ConfirmationContent, { cancelLabel: cancelLabel, actionsRef: actionsRef, confirmLabel: confirmLabel, description: description, descriptionId: descriptionId, impactId: impactId, impactLabel: impactLabel, ...(impactStatement === undefined ? {} : { impactStatement }), onCancel: requestCancel, onConfirm: onConfirm, pending: pending, pendingLabel: pendingLabel, title: title, titleId: titleId })) : null }));
 }
-function ConfirmationContent({ cancelLabel, actionsRef, confirmLabel, description, descriptionId, impactLabel, impactStatement, onCancel, onConfirm, pending, pendingLabel, title, titleId, }) {
+function ConfirmationContent({ cancelLabel, actionsRef, confirmLabel, description, descriptionId, impactLabel, impactId, impactStatement, onCancel, onConfirm, pending, pendingLabel, title, titleId, }) {
     const [impact, setImpact] = useState("");
     const impactMatches = impactStatement === undefined || impact === impactStatement;
-    return (_jsxs(_Fragment, { children: [_jsxs("header", { className: "od-confirmation-dialog-heading", children: [_jsx("h2", { id: titleId, children: title }), _jsx("div", { id: descriptionId, children: description })] }), impactStatement === undefined ? null : (_jsxs("label", { className: "od-confirmation-dialog-impact", children: [_jsx("span", { children: impactLabel }), _jsx("strong", { children: impactStatement }), _jsx("input", { "aria-label": typeof impactLabel === "string"
+    return (_jsxs(_Fragment, { children: [_jsxs("header", { className: "od-confirmation-dialog-heading", children: [_jsx("h2", { id: titleId, children: title }), _jsx("div", { id: descriptionId, children: description })] }), impactStatement === undefined ? null : (_jsxs("label", { className: "od-confirmation-dialog-impact", children: [_jsx("span", { children: impactLabel }), _jsx("strong", { id: impactId, children: impactStatement }), _jsx("input", { "aria-describedby": impactId, "aria-label": typeof impactLabel === "string"
                             ? impactLabel
                             : "Confirmation impact statement", autoComplete: "off", disabled: pending, onChange: (event) => {
                             setImpact(event.target.value);

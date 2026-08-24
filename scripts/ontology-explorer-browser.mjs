@@ -336,6 +336,14 @@ try {
   });
   const impactInput = confirmation.getByRole("textbox");
   assert.equal(
+    await impactInput.evaluate((element) =>
+      document
+        .getElementById(element.getAttribute("aria-describedby"))
+        ?.textContent?.trim(),
+    ),
+    "delete record-1",
+  );
+  assert.equal(
     await confirmation
       .getByRole("button", { name: "Cancel" })
       .evaluate((element) => element === document.activeElement),

@@ -91,10 +91,25 @@ test("ConfirmationDialog labels a modal confirmation and its exact impact input"
   assert.match(markup, /delete service-a\/workspace-a with 12 records/);
   assert.match(
     markup,
-    /<input[^>]*aria-label="Enter the impact statement to continue"/,
+    /<input[^>]*aria-describedby="[^"]+"[^>]*aria-label="Enter the impact statement to continue"/,
   );
   assert.doesNotMatch(markup, /autofocus=/);
   assert.match(markup, /<button[^>]*disabled=""[^>]*>Delete<\/button>/);
+  assert.throws(
+    () =>
+      renderToStaticMarkup(
+        React.createElement(ConfirmationDialog, {
+          open: true,
+          title: "Unsafe confirmation",
+          description: "This statement is empty.",
+          impactStatement: " ",
+          confirmLabel: "Continue",
+          onCancel: () => undefined,
+          onConfirm: () => undefined,
+        }),
+      ),
+    /must not be empty/,
+  );
 });
 
 test("MediaLightbox accepts only a labelled host-owned image or PDF blob", () => {
@@ -161,6 +176,19 @@ test("MediaLightbox accepts only a labelled host-owned image or PDF blob", () =>
         }),
       ),
     /must have a name/,
+  );
+  assert.throws(
+    () =>
+      renderToStaticMarkup(
+        React.createElement(MediaLightbox, {
+          open: true,
+          title: "Unsupported",
+          source: "blob:unsupported",
+          kind: "video",
+          onClose: () => undefined,
+        }),
+      ),
+    /only image or PDF media/,
   );
 });
 

@@ -10,6 +10,7 @@ import { createRequire } from "node:module";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { execFileSync } from "node:child_process";
+import { randomUUID } from "node:crypto";
 
 import { syncConsumerDirectories } from "./consumer-sync.mjs";
 
@@ -94,13 +95,14 @@ function lockName(sourceRoot) {
 async function withBuildLock(sourceRoot, action) {
   const lock = lockName(sourceRoot);
   const ownerFile = join(lock, "owner");
+  const ownerIdentity = `${process.pid} ${randomUUID()}\n`;
   const staleAfter = 30 * 60 * 1000;
   mkdirSync(dirname(lock), { recursive: true });
   while (true) {
     try {
       mkdirSync(lock);
       try {
-        writeFileSync(ownerFile, `${process.pid}\n`, { flag: "wx" });
+        writeFileSync(ownerFile, ownerIdentity, { flag: "wx" });
       } catch (ownerError) {
         rmSync(lock, { recursive: true, force: true });
         throw ownerError;
@@ -109,10 +111,15 @@ async function withBuildLock(sourceRoot, action) {
     } catch (error) {
       if (error.code !== "EEXIST") throw error;
       let ownerIsActive = false;
+      let ownerWasRead = false;
       try {
-        const owner = Number.parseInt(readFileSync(ownerFile, "utf8"), 10);
+        const [ownerText] = readFileSync(ownerFile, "utf8")
+          .trim()
+          .split(/\s+/u);
+        const owner = Number(ownerText);
         ownerIsActive = Number.isSafeInteger(owner) && owner > 0;
         if (ownerIsActive) {
+          ownerWasRead = true;
           try {
             process.kill(owner, 0);
           } catch (ownerError) {
@@ -123,7 +130,8 @@ async function withBuildLock(sourceRoot, action) {
         // A new lock can exist briefly before its owner file is ready.
       }
       try {
-        if (!ownerIsActive && Date.now() - statSync(lock).mtimeMs > staleAfter)
+        const lockAge = Date.now() - statSync(lock).mtimeMs;
+        if ((ownerWasRead && !ownerIsActive) || lockAge > staleAfter)
           rmSync(lock, { recursive: true, force: true });
       } catch {
         // The lock can disappear between the owner and age checks.
@@ -134,7 +142,12 @@ async function withBuildLock(sourceRoot, action) {
   try {
     return await action();
   } finally {
-    rmSync(lock, { recursive: true, force: true });
+    try {
+      if (readFileSync(ownerFile, "utf8") === ownerIdentity)
+        rmSync(lock, { recursive: true, force: true });
+    } catch (error) {
+      if (error.code !== "ENOENT") throw error;
+    }
   }
 }
 

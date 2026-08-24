@@ -85,6 +85,7 @@ export function ConfirmationDialog({
 }: ConfirmationDialogProps) {
   const titleId = useId();
   const descriptionId = useId();
+  const impactId = useId();
   const dialogRef = useRef<HTMLDialogElement>(null);
   const actionsRef = useRef<HTMLElement>(null);
   const triggerRef = useRef<HTMLElement | null>(null);
@@ -92,6 +93,9 @@ export function ConfirmationDialog({
   const requestCancel = useCallback(() => {
     if (!pending) onCancel();
   }, [onCancel, pending]);
+  if (impactStatement?.trim() === "") {
+    throw new TypeError("A confirmation impact statement must not be empty.");
+  }
 
   useLayoutEffect(() => {
     const dialog = dialogRef.current;
@@ -152,6 +156,7 @@ export function ConfirmationDialog({
           confirmLabel={confirmLabel}
           description={description}
           descriptionId={descriptionId}
+          impactId={impactId}
           impactLabel={impactLabel}
           {...(impactStatement === undefined ? {} : { impactStatement })}
           onCancel={requestCancel}
@@ -173,6 +178,7 @@ interface ConfirmationContentProps {
   readonly description: ReactNode;
   readonly descriptionId: string;
   readonly impactLabel: ReactNode;
+  readonly impactId: string;
   readonly impactStatement?: string;
   readonly onCancel: () => void;
   readonly onConfirm: () => void;
@@ -189,6 +195,7 @@ function ConfirmationContent({
   description,
   descriptionId,
   impactLabel,
+  impactId,
   impactStatement,
   onCancel,
   onConfirm,
@@ -210,8 +217,9 @@ function ConfirmationContent({
       {impactStatement === undefined ? null : (
         <label className="od-confirmation-dialog-impact">
           <span>{impactLabel}</span>
-          <strong>{impactStatement}</strong>
+          <strong id={impactId}>{impactStatement}</strong>
           <input
+            aria-describedby={impactId}
             aria-label={
               typeof impactLabel === "string"
                 ? impactLabel

@@ -42,6 +42,12 @@ function restoreFocus(trigger: HTMLElement | null) {
   else apply();
 }
 
+function assertMediaKind(kind: unknown): asserts kind is "image" | "pdf" {
+  if (kind !== "image" && kind !== "pdf") {
+    throw new TypeError("MediaLightbox accepts only image or PDF media.");
+  }
+}
+
 /** A controlled modal preview for one host-owned image or PDF blob URL. */
 export function MediaLightbox({
   className,
@@ -109,6 +115,7 @@ export function MediaLightbox({
       dialog.removeEventListener("click", handleClick);
     };
   }, [requestClose]);
+  assertMediaKind(kind);
   if (!source.startsWith("blob:") || source.length === 5) {
     throw new TypeError("MediaLightbox accepts only a host-owned blob URL.");
   }

@@ -1,4 +1,5 @@
 import { strict as assert } from "node:assert";
+import { execFileSync } from "node:child_process";
 import {
   cpSync,
   linkSync,
@@ -9,10 +10,12 @@ import {
   rmSync,
   renameSync,
   symlinkSync,
+  utimesSync,
   writeFileSync,
 } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { fileURLToPath } from "node:url";
 import test from "node:test";
 
 import {
@@ -220,4 +223,50 @@ test("consumer sync restores both directories after each staged rename failure",
       [],
     );
   }
+});
+
+test("consumer build replaces an expired lock that names an active process", (testContext) => {
+  const { root, source } = fixture(testContext);
+  mkdirSync(join(source, "src"));
+  writeFileSync(join(source, "src", "index.tsx"), "export {};\n");
+  writeFileSync(
+    join(source, "package.json"),
+    JSON.stringify({ name: "@opendle/ui", type: "module" }),
+  );
+  const compiler = join(source, "node_modules", "typescript", "bin", "tsc");
+  mkdirSync(join(source, "node_modules", "typescript", "bin"), {
+    recursive: true,
+  });
+  writeFileSync(
+    compiler,
+    "// The test fixture already contains built files.\n",
+  );
+
+  const lock = join(source, "node_modules", ".cache", "opendle-ui-build.lock");
+  mkdirSync(lock, { recursive: true });
+  writeFileSync(join(lock, "owner"), `${process.pid} prior-owner\n`);
+  const expired = new Date(Date.now() - 31 * 60 * 1000);
+  utimesSync(lock, expired, expired);
+
+  const consumer = join(root, "consumer");
+  const installed = join(consumer, "node_modules", "@opendle", "ui");
+  mkdirSync(join(installed, "dist"), { recursive: true });
+  mkdirSync(join(installed, "styles"));
+  writeFileSync(join(consumer, "package.json"), '{"type":"module"}\n');
+  writeFileSync(
+    join(installed, "package.json"),
+    JSON.stringify({ name: "@opendle/ui", type: "module" }),
+  );
+  writeFileSync(join(installed, "dist", "index.js"), "export {};\n");
+  writeFileSync(join(installed, "styles", "tokens.css"), ":root {}\n");
+
+  const buildConsumer = fileURLToPath(
+    new URL("../scripts/build-consumer.mjs", import.meta.url),
+  );
+  execFileSync(process.execPath, [buildConsumer], {
+    cwd: consumer,
+    env: { ...process.env, OPENDLE_UI_PATH: source },
+    timeout: 5_000,
+  });
+  assert.throws(() => readFileSync(join(lock, "owner")), { code: "ENOENT" });
 });
