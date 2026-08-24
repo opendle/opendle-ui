@@ -346,6 +346,23 @@ function restoreInspectorFocus(target: HTMLElement | null) {
   else apply();
 }
 
+function focusInspector(
+  inspector: HTMLDialogElement,
+  initialFocusRef?: RefObject<HTMLElement | null>,
+) {
+  const suppliedInitialFocus = initialFocusRef?.current;
+  const initialFocus =
+    (suppliedInitialFocus && inspector.contains(suppliedInitialFocus)
+      ? suppliedInitialFocus
+      : null) ??
+    inspector.querySelector<HTMLElement>("[data-graph-inspector-close]") ??
+    inspector.querySelector<HTMLElement>(
+      "button:not(:disabled), input:not(:disabled), select:not(:disabled), textarea:not(:disabled), [href], [tabindex]:not([tabindex='-1'])",
+    ) ??
+    inspector;
+  initialFocus.focus({ preventScroll: true });
+}
+
 /** A responsive inspector with initial focus, Escape close, and exact focus return. */
 export function GraphInspector({
   activationKey,
@@ -368,10 +385,30 @@ export function GraphInspector({
   const titleId = useId();
   const inspectorRef = useRef<HTMLDialogElement>(null);
   const capturedReturnFocusRef = useRef<HTMLElement | null>(null);
+  const closeReturnFocusRef = useRef<HTMLElement | null>(null);
+  const latestSuppliedReturnFocusRef = useRef<HTMLElement | null>(null);
+
+  useLayoutEffect(() => {
+    const target = suppliedReturnFocusRef?.current;
+    if (!target?.isConnected) return;
+    const previousTarget = latestSuppliedReturnFocusRef.current;
+    latestSuppliedReturnFocusRef.current = target;
+    const inspector = inspectorRef.current;
+    if (
+      previousTarget === null ||
+      previousTarget === target ||
+      !inspector ||
+      inspector.contains(document.activeElement)
+    )
+      return;
+    capturedReturnFocusRef.current = target;
+    focusInspector(inspector, initialFocusRef);
+  });
 
   useLayoutEffect(() => {
     const inspector = inspectorRef.current;
     if (!inspector) return;
+    closeReturnFocusRef.current = null;
     const suppliedReturnFocus = suppliedReturnFocusRef?.current;
     if (suppliedReturnFocus?.isConnected) {
       capturedReturnFocusRef.current = suppliedReturnFocus;
@@ -381,17 +418,12 @@ export function GraphInspector({
         capturedReturnFocusRef.current = active;
       }
     }
-    const initialFocus =
-      initialFocusRef?.current ??
-      inspector.querySelector<HTMLElement>("[data-graph-inspector-close]") ??
-      inspector.querySelector<HTMLElement>(
-        "button:not(:disabled), input:not(:disabled), select:not(:disabled), textarea:not(:disabled), [href], [tabindex]:not([tabindex='-1'])",
-      ) ??
-      inspector;
-    initialFocus.focus({ preventScroll: true });
+    focusInspector(inspector, initialFocusRef);
     return () => {
       const returnTarget =
-        suppliedReturnFocus ?? capturedReturnFocusRef.current;
+        closeReturnFocusRef.current ??
+        latestSuppliedReturnFocusRef.current ??
+        capturedReturnFocusRef.current;
       const element = inspector;
       const apply = () => {
         if (!element.isConnected) restoreInspectorFocus(returnTarget);
@@ -405,6 +437,7 @@ export function GraphInspector({
   function closeInspector() {
     const returnTarget =
       suppliedReturnFocusRef?.current ?? capturedReturnFocusRef.current;
+    closeReturnFocusRef.current = returnTarget;
     onClose?.();
     if (returnTarget?.isConnected) returnTarget.focus({ preventScroll: true });
     restoreInspectorFocus(returnTarget);

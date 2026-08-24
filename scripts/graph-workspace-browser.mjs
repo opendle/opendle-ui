@@ -27,7 +27,8 @@ function Fixture() {
   const returnFocusRef = useRef(null);
   const panel = inspector === null ? null : (
     <GraphInspector
-      activationKey={inspector}
+      activationKey={inspector?.startsWith("ref-only") ? undefined : inspector}
+      initialFocusRef={inspector === "external-initial" ? returnFocusRef : undefined}
       key={inspector === "replacement" ? inspector : "active-inspector"}
       onClose={() => setInspector(null)}
       onKeyDown={(event) => {
@@ -74,6 +75,10 @@ function Fixture() {
                   returnFocusRef.current = event.currentTarget;
                   setInspector("guarded");
                 }}>Open guarded inspector</Button>
+                <Button type="button" onClick={(event) => {
+                  returnFocusRef.current = event.currentTarget;
+                  setInspector("external-initial");
+                }}>Open with external initial target</Button>
               </>
             } />
           }
@@ -93,6 +98,26 @@ function Fixture() {
               title="Service A"
               x={40}
               y={120}
+            />
+            <GraphNode
+              aria-label="Inspect ref-only service A"
+              onClick={(event) => {
+                returnFocusRef.current = event.currentTarget;
+                setInspector("ref-only-a");
+              }}
+              title="Ref-only A"
+              x={40}
+              y={220}
+            />
+            <GraphNode
+              aria-label="Inspect ref-only service B"
+              onClick={(event) => {
+                returnFocusRef.current = event.currentTarget;
+                setInspector("ref-only-b");
+              }}
+              title="Ref-only B"
+              x={280}
+              y={220}
             />
             <GraphNode
               aria-label="Inspect service B"
@@ -378,6 +403,12 @@ try {
     "Service details",
     false,
   );
+  await verifyInspector(
+    desktop,
+    desktop.getByRole("button", { name: "Open with external initial target" }),
+    "Service details",
+    false,
+  );
   const serviceA = desktop.getByRole("button", { name: "Inspect service A" });
   const serviceB = desktop.getByRole("button", { name: "Inspect service B" });
   await serviceA.click();
@@ -399,6 +430,34 @@ try {
     await activeElementIs(serviceB),
     true,
     "A mounted inspector must return focus to the second opening node.",
+  );
+
+  const refOnlyA = desktop.getByRole("button", {
+    name: "Inspect ref-only service A",
+  });
+  const refOnlyB = desktop.getByRole("button", {
+    name: "Inspect ref-only service B",
+  });
+  await refOnlyA.click();
+  await desktop.getByRole("dialog", { name: "Service details" }).waitFor();
+  await refOnlyB.click();
+  const refOnlyClose = desktop
+    .getByRole("dialog", { name: "Service details" })
+    .getByRole("button", { name: "Close inspector" });
+  assert.equal(
+    await activeElementIs(refOnlyClose),
+    true,
+    "A changed return-focus ref must move focus into the updated inspector.",
+  );
+  await desktop.keyboard.press("Escape");
+  await desktop
+    .getByRole("dialog", { name: "Service details" })
+    .waitFor({ state: "detached" });
+  await desktop.waitForTimeout(100);
+  assert.equal(
+    await activeElementIs(refOnlyB),
+    true,
+    "A changed return-focus ref must survive the inspector cleanup race.",
   );
 
   await serviceA.click();
