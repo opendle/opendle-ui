@@ -64,6 +64,484 @@
   --shadow: var(--od-shadow);
 }
 
+/* Host-controlled data table and responsive record cards. */
+.od-data-table {
+  display: grid;
+  min-width: 0;
+  gap: var(--od-space-md);
+  container-type: inline-size;
+  color: var(--od-color-foreground);
+  font-family: var(--od-font-body);
+}
+
+.od-data-table:focus-visible {
+  outline: 3px solid var(--od-color-focus);
+  outline-offset: 2px;
+}
+
+.od-data-table-toolbar {
+  display: flex;
+  min-width: 0;
+  padding: var(--od-space-sm);
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--od-space-sm);
+  border: 1px solid var(--od-color-border);
+  border-radius: var(--od-radius-md);
+  background: var(--od-color-surface);
+}
+
+.od-data-table-search {
+  min-width: min(100%, 14rem);
+  flex: 1 1 18rem;
+}
+
+.od-data-table-search > * {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.od-data-table-search :where(input, select, textarea) {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.od-data-table-filters {
+  display: flex;
+  min-width: 0;
+  flex: 1 1 auto;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--od-space-sm);
+}
+
+.od-data-table-state,
+.od-data-table-load-more {
+  display: flex;
+  min-width: 0;
+  padding: 0.75rem var(--od-space-md);
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--od-space-sm);
+  border: 1px solid var(--od-color-border);
+  border-radius: var(--od-radius-md);
+  color: var(--od-color-muted-strong);
+  background: var(--od-color-surface);
+  overflow-wrap: anywhere;
+}
+
+.od-data-table-state-loading::before {
+  width: 0.875rem;
+  height: 0.875rem;
+  flex: 0 0 auto;
+  border: 2px solid var(--od-color-border-strong);
+  border-top-color: var(--od-color-blue);
+  border-radius: 50%;
+  animation: od-state-spin 0.9s linear infinite;
+  content: "";
+}
+
+.od-data-table-state-error,
+.od-data-table-state-unavailable {
+  border-color: color-mix(
+    in srgb,
+    var(--od-color-coral) 55%,
+    var(--od-color-border)
+  );
+  color: var(--od-color-foreground);
+  background: var(--od-color-coral-soft);
+}
+
+.od-data-table-state-stale {
+  border-color: color-mix(
+    in srgb,
+    var(--od-color-amber) 65%,
+    var(--od-color-border)
+  );
+  color: var(--od-color-foreground);
+  background: var(--od-color-amber-soft);
+}
+
+.od-data-table-state button,
+.od-data-table-load-more button,
+.od-data-table-action,
+.od-data-table-sort-control,
+.od-data-table-expansion-control,
+.od-data-table-scroll-controls button {
+  min-height: 2.75rem;
+  border: 1px solid var(--od-color-border-strong);
+  border-radius: var(--od-radius-sm);
+  color: var(--od-color-foreground);
+  background: var(--od-color-surface-raised);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.od-data-table-state button,
+.od-data-table-load-more button,
+.od-data-table-action {
+  padding: 0.5rem 0.75rem;
+}
+
+.od-data-table-state button:hover:not(:disabled),
+.od-data-table-load-more button:hover:not(:disabled),
+.od-data-table-action:hover:not(:disabled),
+.od-data-table-sort-control:hover:not(:disabled),
+.od-data-table-expansion-control:hover:not(:disabled) {
+  border-color: var(--od-color-foreground);
+  background: var(--od-color-background);
+}
+
+.od-data-table-scroll-controls {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--od-space-xs);
+}
+
+.od-data-table-scroll-controls button {
+  width: 2.75rem;
+  padding: 0;
+}
+
+.od-data-table-state button:focus-visible,
+.od-data-table-load-more button:focus-visible,
+.od-data-table-action:focus-visible,
+.od-data-table-sort-control:focus-visible,
+.od-data-table-expansion-control:focus-visible,
+.od-data-table-selection-control:focus-visible,
+.od-data-table-scroll-controls button:focus-visible {
+  outline: 3px solid var(--od-color-focus);
+  outline-offset: 2px;
+}
+
+.od-data-table :disabled {
+  cursor: not-allowed;
+  opacity: 0.58;
+}
+
+.od-data-table-desktop {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  contain: inline-size paint;
+  overflow: auto hidden;
+  border: 1px solid var(--od-color-border);
+  border-radius: var(--od-radius-md);
+  background: var(--od-color-surface-raised);
+  scrollbar-width: thin;
+}
+
+.od-data-table-table {
+  width: 100%;
+  border-spacing: 0;
+  border-collapse: collapse;
+  table-layout: fixed;
+  text-align: left;
+}
+
+.od-data-table-table th,
+.od-data-table-table td {
+  min-width: 0;
+  padding: 0.75rem;
+  border-right: 1px solid var(--od-color-border);
+  border-bottom: 1px solid var(--od-color-border);
+  vertical-align: top;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.od-data-table-table th:last-child,
+.od-data-table-table td:last-child {
+  border-right: 0;
+}
+
+.od-data-table-table tbody:last-child tr:last-child > * {
+  border-bottom: 0;
+}
+
+.od-data-table-table thead th {
+  color: var(--od-color-muted-strong);
+  background: var(--od-color-background);
+  font-size: 0.75rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.od-data-table-table tbody tr[data-selected="true"] > * {
+  background: var(--od-color-lime-soft);
+}
+
+.od-data-table-table tbody tr[aria-busy="true"] > * {
+  background: var(--od-color-blue-soft);
+}
+
+.od-data-table-table tbody tr[aria-disabled="true"] > * {
+  color: var(--od-color-muted);
+}
+
+.od-data-table-selection-column,
+.od-data-table-expansion-column {
+  width: 3.5rem;
+}
+
+.od-data-table-actions-column {
+  width: 10rem;
+}
+
+.od-data-table-control-heading,
+.od-data-table-control-cell {
+  text-align: center;
+}
+
+.od-data-table-selection-control {
+  width: 1.25rem;
+  height: 1.25rem;
+  margin: 0;
+  accent-color: var(--od-color-focus);
+}
+
+.od-data-table-sort-control {
+  display: inline-flex;
+  width: 100%;
+  min-height: 2.75rem;
+  padding: 0.375rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--od-space-xs);
+  border-color: transparent;
+  text-align: inherit;
+  text-transform: inherit;
+  letter-spacing: inherit;
+  background: transparent;
+}
+
+.od-data-table-sort-indicator {
+  font-size: 1rem;
+}
+
+.od-data-table-expansion-control {
+  width: 2.75rem;
+  padding: 0;
+  font-size: 1.125rem;
+  line-height: 1;
+}
+
+.od-data-table-actions {
+  display: flex;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--od-space-xs);
+  border: 0;
+}
+
+.od-data-table-action {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+
+.od-data-table-actions-heading,
+.od-data-table-actions-cell {
+  text-align: end;
+}
+
+.od-data-table-detail-row > td {
+  padding: 0;
+  background: var(--od-color-background);
+}
+
+.od-data-table-detail {
+  min-width: 0;
+  padding: var(--od-space-md);
+  overflow-wrap: anywhere;
+}
+
+.od-data-table-detail > :first-child {
+  margin-top: 0;
+}
+
+.od-data-table-detail > :last-child {
+  margin-bottom: 0;
+}
+
+.od-data-table-align-start {
+  text-align: start;
+}
+
+.od-data-table-align-center {
+  text-align: center;
+}
+
+.od-data-table-align-end {
+  text-align: end;
+}
+
+.od-data-table-density-compact .od-data-table-table th,
+.od-data-table-density-compact .od-data-table-table td {
+  padding: 0.5rem;
+}
+
+.od-data-table-cards {
+  display: none;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.od-data-table-card {
+  min-width: 0;
+  border: 1px solid var(--od-color-border);
+  border-radius: var(--od-radius-md);
+  background: var(--od-color-surface-raised);
+  box-shadow: var(--od-shadow);
+  overflow: hidden;
+}
+
+.od-data-table-card[data-selected="true"] {
+  border-color: var(--od-color-lime-strong);
+  background: var(--od-color-lime-soft);
+}
+
+.od-data-table-card[aria-busy="true"] {
+  border-color: var(--od-color-blue);
+  background: var(--od-color-blue-soft);
+}
+
+.od-data-table-card-heading {
+  display: flex;
+  min-width: 0;
+  padding: 0.75rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--od-space-sm);
+  border-bottom: 1px solid var(--od-color-border);
+}
+
+.od-data-table-card-title {
+  display: block;
+  min-width: 0;
+  margin: 0;
+  overflow-wrap: anywhere;
+  font-family: var(--od-font-display);
+  font-size: 1rem;
+}
+
+.od-data-table-card-controls {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: var(--od-space-sm);
+}
+
+.od-data-table-card-values {
+  min-width: 0;
+  margin: 0;
+}
+
+.od-data-table-card-value {
+  display: grid;
+  min-width: 0;
+  padding: 0.75rem;
+  grid-template-columns: minmax(5.5rem, 0.35fr) minmax(0, 1fr);
+  gap: var(--od-space-sm);
+  border-bottom: 1px solid var(--od-color-border);
+}
+
+.od-data-table-card-value dt {
+  color: var(--od-color-muted-strong);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.od-data-table-card-value dd {
+  min-width: 0;
+  margin: 0;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.od-data-table-card-actions {
+  padding: 0.75rem;
+}
+
+.od-data-table-density-compact .od-data-table-card-heading,
+.od-data-table-density-compact .od-data-table-card-value,
+.od-data-table-density-compact .od-data-table-card-actions {
+  padding: 0.5rem;
+}
+
+@container (max-width: 42rem) {
+  .od-data-table-desktop {
+    display: none;
+  }
+
+  .od-data-table-scroll-controls {
+    display: none;
+  }
+
+  .od-data-table-cards {
+    display: grid;
+    gap: var(--od-space-sm);
+  }
+
+  .od-data-table-toolbar,
+  .od-data-table-state,
+  .od-data-table-load-more {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .od-data-table-filters {
+    width: 100%;
+    min-width: 0;
+    justify-content: flex-start;
+  }
+
+  .od-data-table-search {
+    width: 100%;
+    min-width: 0;
+  }
+}
+
+@media (max-width: 42rem) {
+  .od-data-table-desktop {
+    display: none;
+  }
+
+  .od-data-table-scroll-controls {
+    display: none;
+  }
+
+  .od-data-table-cards {
+    display: grid;
+    gap: var(--od-space-sm);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .od-data-table-state-loading::before {
+    animation: none;
+  }
+}
+
+@media (forced-colors: active) {
+  .od-data-table-card[data-selected="true"],
+  .od-data-table-table tbody tr[data-selected="true"] > * {
+    border-color: Highlight;
+  }
+}
+
 .od-visually-hidden {
   position: absolute;
   width: 1px;

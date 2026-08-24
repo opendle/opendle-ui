@@ -170,6 +170,20 @@ export {
   type ButtonVariant,
 } from "./components/Button.js";
 export {
+  DataTable,
+  type DataTableAction,
+  type DataTableCellContext,
+  type DataTableColumn,
+  type DataTableDensity,
+  type DataTableExpansion,
+  type DataTableLoadMore,
+  type DataTableProps,
+  type DataTableSelection,
+  type DataTableSort,
+  type DataTableSortDirection,
+  type DataTableState,
+} from "./components/DataTable.js";
+export {
   AccountMenu,
   type AccountMenuProps,
 } from "./components/AccountMenu.js";

@@ -20,9 +20,11 @@ application shells, grouped navigation, buttons, icon buttons, cards, page
 headings, context items, statistic cards, route steps, workspace and account
 selectors, navigation items, panels, attention rows, health bars, review-plan
 cards, agent sidebars, calendar boards, status indicators, and error
-boundaries. `ConfirmationDialog` supplies an accessible modal confirmation
-and an optional exact impact-statement check. Host apps keep the target,
-effect, impact text, and mutation behavior. `MediaLightbox` previews one
+boundaries. `DataTable` supplies a host-controlled, bounded table with
+responsive phone cards, sorting, selection, details, safe row actions, and
+incremental loading. `ConfirmationDialog` supplies an accessible modal
+confirmation and an optional exact impact-statement check. Host apps keep the
+target, effect, impact text, and mutation behavior. `MediaLightbox` previews one
 host-owned image or PDF blob URL. The host owns media-type policy, loading,
 URL revocation, and error handling. Host apps keep
 their navigation, routes, product copy, mock data, and service behavior here.
