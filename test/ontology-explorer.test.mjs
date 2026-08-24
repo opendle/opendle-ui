@@ -578,6 +578,15 @@ test("shared explorer CSS contains focus, touch, reflow, and motion controls", a
   );
   assert.match(css, /button:focus-visible/);
   assert.match(css, /min-height: 2\.75rem/);
+  assert.match(css, /\.od-button\s*\{[^}]*min-height: 2\.75rem;/s);
+  assert.match(
+    css,
+    /\.od-data-explorer-open span,[^}]*\.od-label-list-empty\s*\{[^}]*color: var\(--od-color-muted-strong\);/s,
+  );
+  assert.match(
+    css,
+    /@media \(max-width: 48rem\)[^]*\.od-media-lightbox\s*\{[^}]*width: 100vw;[^}]*height: 100dvh;/s,
+  );
   assert.match(css, /@media \(max-width: 48rem\)/);
   assert.match(css, /\.od-data-explorer-table td::before/);
   assert.match(

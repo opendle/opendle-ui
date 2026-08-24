@@ -1,9 +1,17 @@
-import { cpSync, existsSync, readFileSync } from "node:fs";
-import { mkdirSync, rmSync, statSync } from "node:fs";
+import {
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  rmSync,
+  statSync,
+  writeFileSync,
+} from "node:fs";
 import { createRequire } from "node:module";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { execFileSync } from "node:child_process";
+
+import { syncConsumerDirectories } from "./consumer-sync.mjs";
 
 const helperRoot = dirname(dirname(fileURLToPath(import.meta.url)));
 const consumerRoot = process.cwd();
@@ -12,8 +20,10 @@ const requiredExports = [
   "AgentSidebar",
   "AttentionRow",
   "CalendarBoard",
+  "ConfirmationDialog",
   "HealthBar",
   "MobileNavigation",
+  "MediaLightbox",
   "NavigationItem",
   "NavigationLink",
   "Panel",
@@ -83,19 +93,40 @@ function lockName(sourceRoot) {
 
 async function withBuildLock(sourceRoot, action) {
   const lock = lockName(sourceRoot);
-  const staleAfter = 5 * 60 * 1000;
+  const ownerFile = join(lock, "owner");
+  const staleAfter = 30 * 60 * 1000;
   mkdirSync(dirname(lock), { recursive: true });
   while (true) {
     try {
       mkdirSync(lock);
+      try {
+        writeFileSync(ownerFile, `${process.pid}\n`, { flag: "wx" });
+      } catch (ownerError) {
+        rmSync(lock, { recursive: true, force: true });
+        throw ownerError;
+      }
       break;
     } catch (error) {
       if (error.code !== "EEXIST") throw error;
+      let ownerIsActive = false;
       try {
-        if (Date.now() - statSync(lock).mtimeMs > staleAfter)
+        const owner = Number.parseInt(readFileSync(ownerFile, "utf8"), 10);
+        ownerIsActive = Number.isSafeInteger(owner) && owner > 0;
+        if (ownerIsActive) {
+          try {
+            process.kill(owner, 0);
+          } catch (ownerError) {
+            ownerIsActive = ownerError.code !== "ESRCH";
+          }
+        }
+      } catch {
+        // A new lock can exist briefly before its owner file is ready.
+      }
+      try {
+        if (!ownerIsActive && Date.now() - statSync(lock).mtimeMs > staleAfter)
           rmSync(lock, { recursive: true, force: true });
       } catch {
-        // The lock can disappear between the check and the read.
+        // The lock can disappear between the owner and age checks.
       }
       await new Promise((resolvePromise) => setTimeout(resolvePromise, 100));
     }
@@ -110,14 +141,7 @@ async function withBuildLock(sourceRoot, action) {
 function syncBuild(sourceRoot, installedRoot) {
   if (resolve(sourceRoot) === resolve(installedRoot)) return;
   try {
-    cpSync(join(sourceRoot, "dist"), join(installedRoot, "dist"), {
-      recursive: true,
-      force: true,
-    });
-    cpSync(join(sourceRoot, "styles"), join(installedRoot, "styles"), {
-      recursive: true,
-      force: true,
-    });
+    syncConsumerDirectories(sourceRoot, installedRoot);
   } catch (error) {
     if (error.code === "EACCES" || error.code === "EROFS") {
       console.warn(

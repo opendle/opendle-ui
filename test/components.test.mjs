@@ -16,6 +16,7 @@ import {
   Button,
   Card,
   CalendarBoard,
+  ConfirmationDialog,
   ContextItem,
   GraphEdge,
   GraphEdges,
@@ -31,6 +32,7 @@ import {
   NavigationItem,
   NavigationLink,
   MobileNavigation,
+  MediaLightbox,
   OperationPlayground,
   PageHeading,
   Panel,
@@ -68,6 +70,98 @@ test("StatusPill renders one status dot and its label", () => {
   assert.match(markup, /od-status-pill od-status-lime/);
   assert.match(markup, /od-status-dot od-status-lime/);
   assert.match(markup, />Healthy<\/span>/);
+});
+
+test("ConfirmationDialog labels a modal confirmation and its exact impact input", () => {
+  const markup = renderToStaticMarkup(
+    React.createElement(ConfirmationDialog, {
+      open: true,
+      title: "Delete workspace",
+      description: "All current records will be deleted.",
+      impactStatement: "delete service-a/workspace-a with 12 records",
+      confirmLabel: "Delete",
+      onCancel: () => undefined,
+      onConfirm: () => undefined,
+    }),
+  );
+  assert.match(markup, /<dialog/);
+  assert.match(markup, /aria-describedby=/);
+  assert.match(markup, /aria-labelledby=/);
+  assert.match(markup, /Delete workspace/);
+  assert.match(markup, /delete service-a\/workspace-a with 12 records/);
+  assert.match(
+    markup,
+    /<input[^>]*aria-label="Enter the impact statement to continue"/,
+  );
+  assert.doesNotMatch(markup, /autofocus=/);
+  assert.match(markup, /<button[^>]*disabled=""[^>]*>Delete<\/button>/);
+});
+
+test("MediaLightbox accepts only a labelled host-owned image or PDF blob", () => {
+  const image = renderToStaticMarkup(
+    React.createElement(MediaLightbox, {
+      open: true,
+      title: "Diagram",
+      source: "blob:diagram",
+      kind: "image",
+      imageAlt: "System diagram",
+      onClose: () => undefined,
+    }),
+  );
+  const pdf = renderToStaticMarkup(
+    React.createElement(MediaLightbox, {
+      open: true,
+      title: "Report",
+      source: "blob:report",
+      kind: "pdf",
+      onClose: () => undefined,
+    }),
+  );
+  assert.match(image, /<img[^>]*alt="System diagram"/);
+  assert.match(pdf, /<iframe[^>]*aria-label="Preview Report"/);
+  assert.match(pdf, /<iframe[^>]*sandbox=""/);
+  assert.doesNotMatch(
+    pdf,
+    /allow-(?:downloads|forms|modals|orientation-lock|pointer-lock|popups|presentation|same-origin|scripts|top-navigation)/,
+  );
+  assert.throws(
+    () =>
+      renderToStaticMarkup(
+        React.createElement(MediaLightbox, {
+          open: true,
+          title: "Remote",
+          source: "https:\/\/example.com\/file.pdf",
+          kind: "pdf",
+          onClose: () => undefined,
+        }),
+      ),
+    /blob URL/,
+  );
+  assert.doesNotMatch(
+    renderToStaticMarkup(
+      React.createElement(MediaLightbox, {
+        open: false,
+        title: "Closed report",
+        source: "blob:closed-report",
+        kind: "pdf",
+        onClose: () => undefined,
+      }),
+    ),
+    /<iframe|blob:closed-report/,
+  );
+  assert.throws(
+    () =>
+      renderToStaticMarkup(
+        React.createElement(MediaLightbox, {
+          open: true,
+          title: " ",
+          source: "blob:unnamed",
+          kind: "pdf",
+          onClose: () => undefined,
+        }),
+      ),
+    /must have a name/,
+  );
 });
 
 test("AutoGrowTextarea keeps the public textarea attributes", () => {

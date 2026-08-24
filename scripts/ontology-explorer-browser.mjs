@@ -9,15 +9,17 @@ import { build } from "esbuild";
 
 const repositoryRoot = fileURLToPath(new URL("..", import.meta.url));
 const fixtureSource = String.raw`
-import React, { StrictMode, useState } from "react";
+import React, { StrictMode, useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
 import {
   BoundedDataExplorer,
   Button,
   ChangeTimeline,
+  ConfirmationDialog,
   ExplorerState,
   ExplorerWorkspace,
   ManagedFileList,
+  MediaLightbox,
   MetadataBagList,
   OntologyInheritanceTree,
   SavedViewCanvas,
@@ -38,14 +40,32 @@ const graphLinks = [{
   direction: "a_to_b",
 }];
 const states = ["loading", "empty", "error", "stale", "offline", "recovering"];
+const previewSource = URL.createObjectURL(
+  new Blob(["%PDF-1.7"], { type: "application/pdf" }),
+);
+const updatedPreviewSource = URL.createObjectURL(
+  new Blob(["%PDF-1.7 updated"], { type: "application/pdf" }),
+);
 
 function BrowserFixture() {
   const [activeItem, setActiveItem] = useState("records");
   const [selected, setSelected] = useState("none");
+  const [confirmationOpen, setConfirmationOpen] = useState(false);
+  const [confirmationCount, setConfirmationCount] = useState(0);
+  const [confirmationPending, setConfirmationPending] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [activePreviewSource, setActivePreviewSource] = useState(previewSource);
   const [positions, setPositions] = useState([
     { objectKey: "record-1", x: 24, y: 60 },
     { objectKey: "record-2", x: 300, y: 180 },
   ]);
+  useEffect(() => {
+    globalThis.updatePreviewSource = () =>
+      setActivePreviewSource(updatedPreviewSource);
+    return () => {
+      delete globalThis.updatePreviewSource;
+    };
+  }, []);
   return (
     <ExplorerWorkspace
       activeItem={activeItem}
@@ -59,7 +79,42 @@ function BrowserFixture() {
       title="Ontology explorer"
     >
       <output aria-label="Last selection" data-selection={selected}>{selected}</output>
+      <output aria-label="Confirmation count">{confirmationCount}</output>
       <div className="browser-fixture-stack">
+        <Button onClick={() => setConfirmationOpen(true)}>Review deletion</Button>
+        <Button
+          onClick={() => {
+            setActivePreviewSource(previewSource);
+            setPreviewOpen(true);
+          }}
+        >Preview managed file</Button>
+        <ConfirmationDialog
+          confirmLabel="Delete record"
+          description={
+            <><span>Confirm the current record.</span><Button onClick={() => setConfirmationOpen(false)}>Change scope</Button></>
+          }
+          impactStatement="delete record-1"
+          onCancel={() => setConfirmationOpen(false)}
+          onConfirm={() => {
+            setConfirmationCount((count) => count + 1);
+            setConfirmationPending(true);
+            setTimeout(() => {
+              setConfirmationPending(false);
+              setConfirmationOpen(false);
+            }, 200);
+          }}
+          open={confirmationOpen}
+          pending={confirmationPending}
+          pendingLabel="Deleting record…"
+          title="Confirm record deletion"
+        />
+        <MediaLightbox
+          kind="pdf"
+          onClose={() => setPreviewOpen(false)}
+          open={previewOpen}
+          source={activePreviewSource}
+          title="current-file.pdf"
+        />
         <BoundedDataExplorer
           actions={<Button>Add record</Button>}
           description="One bounded page."
@@ -275,6 +330,124 @@ try {
     true,
   );
 
+  await desktop.getByRole("button", { name: "Review deletion" }).click();
+  const confirmation = desktop.getByRole("dialog", {
+    name: "Confirm record deletion",
+  });
+  const impactInput = confirmation.getByRole("textbox");
+  assert.equal(
+    await confirmation
+      .getByRole("button", { name: "Cancel" })
+      .evaluate((element) => element === document.activeElement),
+    true,
+  );
+  await impactInput.fill("delete record-1");
+  assert.equal(
+    await confirmation
+      .getByRole("button", { name: "Delete record" })
+      .isEnabled(),
+    true,
+  );
+  await confirmation.getByRole("button", { name: "Change scope" }).click();
+  await desktop.getByRole("button", { name: "Review deletion" }).click();
+  assert.equal(await impactInput.inputValue(), "");
+  assert.equal(
+    await confirmation
+      .getByRole("button", { name: "Delete record" })
+      .isDisabled(),
+    true,
+  );
+  await desktop.keyboard.press("Escape");
+  assert.equal(
+    await desktop
+      .getByRole("button", { name: "Review deletion" })
+      .evaluate((element) => element === document.activeElement),
+    true,
+  );
+  await desktop.getByRole("button", { name: "Review deletion" }).click();
+  await desktop.mouse.click(1, 1);
+  assert.equal(await confirmation.isVisible(), false);
+  assert.equal(
+    await desktop
+      .getByRole("button", { name: "Review deletion" })
+      .evaluate((element) => element === document.activeElement),
+    true,
+  );
+  await desktop.getByRole("button", { name: "Review deletion" }).click();
+  await impactInput.fill("delete record-1");
+  await confirmation
+    .getByRole("button", { name: "Delete record" })
+    .evaluate((button) => {
+      button.click();
+      button.click();
+    });
+  assert.equal(
+    await desktop
+      .getByRole("status", { name: "Confirmation count" })
+      .textContent(),
+    "1",
+  );
+  assert.equal(
+    await confirmation
+      .getByRole("button", { name: "Deleting record…" })
+      .isDisabled(),
+    true,
+  );
+  await desktop.keyboard.press("Escape");
+  assert.equal(await confirmation.isVisible(), true);
+  await desktop.mouse.click(1, 1);
+  assert.equal(await confirmation.isVisible(), true);
+  await confirmation.waitFor({ state: "hidden" });
+
+  const previewButton = desktop.getByRole("button", {
+    name: "Preview managed file",
+  });
+  await previewButton.click();
+  const preview = desktop.getByRole("dialog", { name: "current-file.pdf" });
+  assert.equal(await preview.isVisible(), true);
+  assert.equal(
+    await preview
+      .getByRole("button", { name: "Close preview" })
+      .evaluate((element) => element === document.activeElement),
+    true,
+  );
+  assert.equal(
+    await preview.getByTitle("current-file.pdf").getAttribute("sandbox"),
+    "",
+  );
+  assert.deepEqual(
+    (
+      await new AxeBuilder({ page: desktop })
+        .include(".od-media-lightbox")
+        .exclude(".od-media-lightbox iframe")
+        .analyze()
+    ).violations,
+    [],
+    "The open media preview shell must have no automated accessibility violations.",
+  );
+  const initialPreviewSource = await preview
+    .getByTitle("current-file.pdf")
+    .getAttribute("src");
+  await desktop.evaluate(() => globalThis.updatePreviewSource());
+  await desktop.waitForFunction(
+    (previousSource) =>
+      document
+        .querySelector('iframe[title="current-file.pdf"]')
+        ?.getAttribute("src") !== previousSource,
+    initialPreviewSource,
+  );
+  await desktop.mouse.click(1, 1);
+  assert.equal(await preview.isVisible(), false);
+  assert.equal(
+    await previewButton.evaluate(
+      (element) => element === document.activeElement,
+    ),
+    true,
+  );
+  await previewButton.click();
+  await desktop.keyboard.press("Escape");
+  assert.equal(await preview.isVisible(), false);
+
   await desktop.emulateMedia({ reducedMotion: "reduce" });
   assert.equal(
     await desktop
@@ -324,6 +497,29 @@ try {
     ["Record", "Kind", "Type", "Labels", "Properties"],
     "Phone cards must keep the real table headers in the accessibility tree.",
   );
+  await phone.getByRole("button", { name: "Review deletion" }).tap();
+  const phoneDialog = phone.getByRole("dialog", {
+    name: "Confirm record deletion",
+  });
+  assert.deepEqual(
+    await phoneDialog.evaluate((element) => {
+      const bounds = element.getBoundingClientRect();
+      return { width: bounds.width, height: bounds.height };
+    }),
+    { width: 390, height: 844 },
+  );
+  await phone.keyboard.press("Escape");
+  await phone.getByRole("button", { name: "Preview managed file" }).tap();
+  assert.deepEqual(
+    await phone
+      .getByRole("dialog", { name: "current-file.pdf" })
+      .evaluate((element) => {
+        const bounds = element.getBoundingClientRect();
+        return { width: bounds.width, height: bounds.height };
+      }),
+    { width: 390, height: 844 },
+  );
+  await phone.keyboard.press("Escape");
   assert.equal(
     await phone.evaluate(
       () =>

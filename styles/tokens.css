@@ -306,7 +306,7 @@
 .od-data-explorer-open span,
 .od-data-explorer-record span,
 .od-label-list-empty {
-  color: var(--od-color-muted);
+  color: var(--od-color-muted-strong);
   font-size: 0.75rem;
 }
 
@@ -2253,7 +2253,7 @@ samp {
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  min-height: 2.375rem;
+  min-height: 2.75rem;
   padding: 0 0.875rem;
   border: 1px solid transparent;
   border-radius: var(--od-radius-md);
@@ -2277,7 +2277,7 @@ samp {
 }
 
 .od-button-icon {
-  width: 2.375rem;
+  width: 2.75rem;
   padding: 0;
 }
 
@@ -2720,6 +2720,125 @@ samp {
   display: flex;
   flex-wrap: wrap;
   gap: var(--od-space-sm);
+}
+
+.od-confirmation-dialog {
+  width: min(34rem, calc(100vw - 2rem));
+  max-height: calc(100dvh - 2rem);
+  padding: 0;
+  overflow: auto;
+  border: 1px solid var(--od-color-border-strong);
+  border-radius: var(--od-radius-lg);
+  color: var(--od-color-foreground);
+  background: var(--od-color-surface-raised);
+  box-shadow: var(--od-shadow);
+}
+
+.od-confirmation-dialog::backdrop {
+  background: color-mix(in srgb, var(--od-color-sidebar) 74%, transparent);
+  backdrop-filter: blur(0.125rem);
+}
+
+.od-confirmation-dialog-heading,
+.od-confirmation-dialog-impact,
+.od-confirmation-dialog-actions {
+  padding: var(--od-space-lg);
+}
+
+.od-media-lightbox {
+  width: min(72rem, calc(100vw - 2rem));
+  height: min(52rem, calc(100dvh - 2rem));
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid var(--od-color-border-strong);
+  border-radius: var(--od-radius-lg);
+  color: var(--od-color-foreground);
+  background: var(--od-color-surface-raised);
+  box-shadow: var(--od-shadow);
+}
+
+.od-media-lightbox::backdrop {
+  background: color-mix(in srgb, var(--od-color-sidebar) 82%, transparent);
+}
+
+.od-media-lightbox-heading {
+  display: flex;
+  min-height: 3.75rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--od-space-md);
+  padding: var(--od-space-sm) var(--od-space-md);
+  border-bottom: 1px solid var(--od-color-border);
+}
+
+.od-media-lightbox-heading strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.od-media-lightbox img,
+.od-media-lightbox iframe {
+  display: block;
+  width: 100%;
+  height: calc(100% - 3.75rem);
+  border: 0;
+  background: var(--od-color-surface);
+  object-fit: contain;
+}
+
+.od-confirmation-dialog-heading h2,
+.od-confirmation-dialog-heading p {
+  margin: 0;
+}
+
+.od-confirmation-dialog-heading h2 {
+  font-size: 1.125rem;
+}
+
+.od-confirmation-dialog-heading > div {
+  margin-top: var(--od-space-sm);
+  color: var(--od-color-muted-strong);
+  font-size: 0.8125rem;
+  line-height: 1.55;
+}
+
+.od-confirmation-dialog-impact {
+  display: grid;
+  gap: var(--od-space-sm);
+  padding-block: 0;
+  color: var(--od-color-muted-strong);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.od-confirmation-dialog-impact strong {
+  overflow-wrap: anywhere;
+  color: var(--od-color-foreground);
+  font-family: var(--od-font-mono), monospace;
+}
+
+.od-confirmation-dialog-impact input {
+  width: 100%;
+  min-height: 2.625rem;
+  padding: 0.5625rem 0.6875rem;
+  border: 1px solid var(--od-color-border-strong);
+  border-radius: var(--od-radius-sm);
+  color: var(--od-color-foreground);
+  background: var(--od-color-surface);
+  font: inherit;
+}
+
+.od-confirmation-dialog-impact input:focus-visible {
+  outline: 0.1875rem solid var(--od-color-focus);
+  outline-offset: 0.125rem;
+}
+
+.od-confirmation-dialog-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--od-space-sm);
+  justify-content: flex-end;
 }
 
 .od-state-panel {
@@ -3410,6 +3529,45 @@ samp {
 }
 
 @media (max-width: 48rem) {
+  .od-confirmation-dialog,
+  .od-media-lightbox {
+    width: 100vw;
+    max-width: none;
+    height: 100dvh;
+    max-height: none;
+    margin: 0;
+    border: 0;
+    border-radius: 0;
+  }
+
+  .od-confirmation-dialog[open] {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .od-confirmation-dialog-heading {
+    padding-top: calc(var(--od-space-lg) + env(safe-area-inset-top));
+  }
+
+  .od-confirmation-dialog-actions {
+    margin-top: auto;
+    padding-bottom: calc(var(--od-space-lg) + env(safe-area-inset-bottom));
+  }
+
+  .od-media-lightbox[open] {
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr);
+  }
+
+  .od-media-lightbox-heading {
+    padding-top: calc(var(--od-space-sm) + env(safe-area-inset-top));
+  }
+
+  .od-media-lightbox img,
+  .od-media-lightbox iframe {
+    height: 100%;
+  }
+
   .od-playground {
     grid-template-columns: minmax(0, 1fr);
     border-right: 0;

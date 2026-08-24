@@ -192,6 +192,10 @@ export {
 export { Card, type CardProps } from "./components/Card.js";
 export { ChainStep, type ChainStepProps } from "./components/ChainStep.js";
 export {
+  ConfirmationDialog,
+  type ConfirmationDialogProps,
+} from "./components/ConfirmationDialog.js";
+export {
   ContextItem,
   type ContextItemProps,
 } from "./components/ContextItem.js";
@@ -275,6 +279,10 @@ export {
   type MobileNavigationItem,
   type MobileNavigationProps,
 } from "./components/MobileNavigation.js";
+export {
+  MediaLightbox,
+  type MediaLightboxProps,
+} from "./components/MediaLightbox.js";
 export {
   PageHeading,
   type PageHeadingProps,

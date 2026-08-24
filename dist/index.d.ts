@@ -61,6 +61,7 @@ export { AttentionRow, type AttentionRowProps, type AttentionTone, } from "./com
 export { CalendarBoard, type CalendarBoardProps, type CalendarEvent, type CalendarEventState, type CalendarMode, } from "./components/CalendarBoard.js";
 export { Card, type CardProps } from "./components/Card.js";
 export { ChainStep, type ChainStepProps } from "./components/ChainStep.js";
+export { ConfirmationDialog, type ConfirmationDialogProps, } from "./components/ConfirmationDialog.js";
 export { ContextItem, type ContextItemProps, } from "./components/ContextItem.js";
 export { HealthBar, type HealthBarProps } from "./components/HealthBar.js";
 export { GraphEdge, GraphEdges, GraphEmptyState, GraphInspector, GraphNode, GraphToolbar, GraphViewport, GraphWorkspace, type GraphEdgeProps, type GraphEdgesProps, type GraphEmptyStateProps, type GraphInspectorProps, type GraphNodeProps, type GraphNodeTone, type GraphToolbarProps, type GraphViewportProps, type GraphWorkspaceProps, } from "./components/GraphWorkspace.js";
@@ -71,6 +72,7 @@ export { IconButton, type IconButtonProps } from "./components/IconButton.js";
 export { NavigationItem, type NavigationItemProps, } from "./components/NavigationItem.js";
 export { NavigationLink, type NavigationLinkProps, } from "./components/NavigationLink.js";
 export { MobileNavigation, type MobileNavigationItem, type MobileNavigationProps, } from "./components/MobileNavigation.js";
+export { MediaLightbox, type MediaLightboxProps, } from "./components/MediaLightbox.js";
 export { PageHeading, type PageHeadingProps, } from "./components/PageHeading.js";
 export { Panel, PanelHeader, type PanelHeaderProps, type PanelProps, } from "./components/Panel.js";
 export { PlanCardShell, type PlanCardShellProps, } from "./components/PlanCardShell.js";
