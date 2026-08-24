@@ -1,4 +1,5 @@
 import { strict as assert } from "node:assert";
+import { readFileSync } from "node:fs";
 import test from "node:test";
 import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
@@ -205,5 +206,20 @@ test("EditableTable keeps scoped reorder controls inside each caller scope", () 
   assert.match(
     markup,
     /<button[^>]*disabled=""[^>]*>Move South one up<\/button>/,
+  );
+});
+
+test("EditableTable documents complete scoped reorder results", () => {
+  const declaration = readFileSync(
+    new URL("../dist/components/EditableTable.d.ts", import.meta.url),
+    "utf8",
+  );
+  assert.match(
+    declaration,
+    /Index in the complete caller scope, including rows that cannot move\./,
+  );
+  assert.match(
+    declaration,
+    /Complete caller scope after the move, including rows that cannot move\./,
   );
 });

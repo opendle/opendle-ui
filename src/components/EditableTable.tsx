@@ -76,9 +76,13 @@ export interface EditableTableDeleteConfirmation<TDraft> {
 
 export interface EditableTableReorderContext<TDraft> {
   readonly row: EditableTableRow<TDraft>;
+  /** Index in the complete caller scope, including rows that cannot move. */
   readonly fromIndex: number;
+  /** Index in the complete caller scope, including rows that cannot move. */
   readonly toIndex: number;
+  /** Complete caller scope after the move, including rows that cannot move. */
   readonly orderedRowIds: readonly string[];
+  /** Complete caller scope after the move, including rows that cannot move. */
   readonly orderedRows: readonly EditableTableRow<TDraft>[];
   readonly scope: string;
 }
@@ -187,12 +191,15 @@ export function EditableTable<TDraft>({
   const tableId = useId();
   const rootRef = useRef<HTMLElement | null>(null);
   const mountedRef = useRef(true);
-  const operationLocksRef = useRef(new Set<string>());
+  const operationLocksRef = useRef(new Map<string, symbol>());
   const suppressAutomaticSaveRef = useRef(new Set<string>());
   const suppressClearFrameRef = useRef<number | null>(null);
   // react-doctor-disable-next-line react-doctor/no-event-handler -- The row signature synchronizes focus after a controlled host replacement.
   const rowIds = rows.map((row) => row.id);
   const rowSignature = JSON.stringify(rowIds);
+  const rowCreateSignature = JSON.stringify(
+    rows.map((row) => [row.id, Boolean(row.isNew)]),
+  );
   const previousRowIdsRef = useRef(new Set(rowIds));
   const previousRowOrderRef = useRef(rowIds);
   const rowLifecycleVersionsRef = useRef(
@@ -203,7 +210,10 @@ export function EditableTable<TDraft>({
     readonly returnedRowId?: string;
     readonly previousRowIds: ReadonlySet<string>;
   } | null>(null);
-  const pendingDeletedFocusRef = useRef<number | null>(null);
+  const pendingDeletedFocusRef = useRef<{
+    readonly rowId: string;
+    readonly rowIndex: number;
+  } | null>(null);
   const [messages, setMessages] =
     useState<ReadonlyMap<string, InternalMessage>>(EMPTY_MESSAGES);
   const [pendingRowIds, setPendingRowIds] =
@@ -220,8 +230,14 @@ export function EditableTable<TDraft>({
     };
   }, []);
 
+  // react-doctor-disable-next-line react-doctor/no-cascading-set-state -- One controlled row removal invalidates messages, pending state, and an open dialog as one identity-boundary update.
   useEffect(() => {
     const activeRowIds = JSON.parse(rowSignature) as string[];
+    const activeCreateEntries = JSON.parse(rowCreateSignature) as [
+      string,
+      boolean,
+    ][];
+    const activeNewState = new Map(activeCreateEntries);
     const activeIds = new Set(activeRowIds);
     const previousRowIds = previousRowIdsRef.current;
 
@@ -231,22 +247,32 @@ export function EditableTable<TDraft>({
         previousRowId,
         (rowLifecycleVersionsRef.current.get(previousRowId) ?? 0) + 1,
       );
+      operationLocksRef.current.delete(previousRowId);
+      suppressAutomaticSaveRef.current.delete(previousRowId);
     }
 
-    /* eslint-disable react-hooks/set-state-in-effect -- A controlled row removal must invalidate messages before the same identifier can represent a later record. */
-    // react-doctor-disable-next-line react-doctor/no-chain-state-updates, react-doctor/no-derived-state -- A controlled row removal is an identity boundary; normalization prevents a later record from inheriting the absent row's messages.
+    /* eslint-disable react-hooks/set-state-in-effect -- A controlled row removal must invalidate local state before the same identifier can represent a later record. */
+    // react-doctor-disable-next-line react-doctor/no-chain-state-updates, react-doctor/no-derived-state -- A controlled row removal is an identity boundary; normalization prevents a later record from inheriting the absent row's messages or pending state.
     setMessages((current) => {
       if ([...current.keys()].every((rowId) => activeIds.has(rowId))) {
         return current;
       }
       return new Map([...current].filter(([rowId]) => activeIds.has(rowId)));
     });
+    // react-doctor-disable-next-line react-doctor/no-chain-state-updates, react-doctor/no-derived-state -- Pending row operations are local async state; an absent controlled identity must not transfer that state to a later record.
+    setPendingRowIds((current) => {
+      if ([...current].every((rowId) => activeIds.has(rowId))) return current;
+      return new Set([...current].filter((rowId) => activeIds.has(rowId)));
+    });
     /* eslint-enable react-hooks/set-state-in-effect */
 
     // react-doctor-disable-next-line react-doctor/no-event-handler -- Controlled row removal is the event that closes its stale dialog target and restores focus.
     if (deleteRowId !== null && !activeIds.has(deleteRowId)) {
       const removedIndex = previousRowOrderRef.current.indexOf(deleteRowId);
-      pendingDeletedFocusRef.current = Math.max(0, removedIndex);
+      pendingDeletedFocusRef.current = {
+        rowId: deleteRowId,
+        rowIndex: Math.max(0, removedIndex),
+      };
       // react-doctor-disable-next-line react-doctor/no-adjust-state-on-prop-change, react-doctor/no-derived-state -- The absent controlled target must close before a later record can reuse its identifier.
       setDeleteRowId((current) => (current === deleteRowId ? null : current));
     }
@@ -256,29 +282,42 @@ export function EditableTable<TDraft>({
       const newRowId =
         (created.returnedRowId && activeIds.has(created.returnedRowId)
           ? created.returnedRowId
-          : activeRowIds.find((rowId) => !created.previousRowIds.has(rowId))) ??
-        null;
+          : activeIds.has(created.sourceRowId) &&
+              activeNewState.get(created.sourceRowId) === false
+            ? created.sourceRowId
+            : activeRowIds.find(
+                (rowId) => !created.previousRowIds.has(rowId),
+              )) ?? null;
       if (newRowId && focusRowControl(rootRef.current, newRowId)) {
+        pendingCreatedFocusRef.current = null;
+      } else if (
+        !newRowId &&
+        created.returnedRowId === undefined &&
+        !activeIds.has(created.sourceRowId)
+      ) {
         pendingCreatedFocusRef.current = null;
       }
     }
 
-    const deletedIndex = pendingDeletedFocusRef.current;
-    if (deletedIndex !== null) {
-      if (focusNearestRowControl(rootRef.current, activeRowIds, deletedIndex)) {
-        pendingDeletedFocusRef.current = null;
-      }
-    }
     previousRowIdsRef.current = activeIds;
     previousRowOrderRef.current = activeRowIds;
-  }, [deleteRowId, rowSignature]);
+  }, [deleteRowId, rowCreateSignature, rowSignature]);
 
   useEffect(() => {
     if (deleteRowId !== null || pendingDeletedFocusRef.current === null) return;
-    const deletedIndex = pendingDeletedFocusRef.current;
+    const deleted = pendingDeletedFocusRef.current;
     const activeRowIds = JSON.parse(rowSignature) as string[];
     const frame = requestAnimationFrame(() => {
-      if (focusNearestRowControl(rootRef.current, activeRowIds, deletedIndex)) {
+      const remainingRowIds = activeRowIds.filter(
+        (rowId) => rowId !== deleted.rowId,
+      );
+      if (
+        focusNearestRowControl(
+          rootRef.current,
+          remainingRowIds,
+          deleted.rowIndex,
+        )
+      ) {
         pendingDeletedFocusRef.current = null;
       }
     });
@@ -330,7 +369,8 @@ export function EditableTable<TDraft>({
     if (isRowOperationLocked(row)) {
       return { lifecycleVersion, ok: false };
     }
-    operationLocksRef.current.add(row.id);
+    const operationToken = Symbol(row.id);
+    operationLocksRef.current.set(row.id, operationToken);
     setPendingRowIds((current) => new Set(current).add(row.id));
     setMessage(row.id, null);
     try {
@@ -347,13 +387,15 @@ export function EditableTable<TDraft>({
       }
       return { lifecycleVersion, ok: false };
     } finally {
-      operationLocksRef.current.delete(row.id);
-      if (mountedRef.current) {
-        setPendingRowIds((current) => {
-          const next = new Set(current);
-          next.delete(row.id);
-          return next;
-        });
+      if (operationLocksRef.current.get(row.id) === operationToken) {
+        operationLocksRef.current.delete(row.id);
+        if (mountedRef.current) {
+          setPendingRowIds((current) => {
+            const next = new Set(current);
+            next.delete(row.id);
+            return next;
+          });
+        }
       }
     }
   };
@@ -371,28 +413,38 @@ export function EditableTable<TDraft>({
     if (row.isNew) {
       if (!onCreate) return;
       const previousRowIds = new Set(previousRowIdsRef.current);
-      pendingCreatedFocusRef.current = {
+      const pendingCreate = {
         previousRowIds,
         sourceRowId: row.id,
       };
+      pendingCreatedFocusRef.current = pendingCreate;
+      // react-doctor-disable-next-line react-doctor/async-defer-await -- The continuation must inspect mount and request identity after this asynchronous create settles.
       const result = await runRowOperation(
         row,
         () => onCreate(row.id, row.draft),
         "The row could not be created. Correct the values or try again.",
       );
+      if (!mountedRef.current) return;
+      if (pendingCreatedFocusRef.current !== pendingCreate) return;
       if (result.ok) {
+        const returnedRowId =
+          typeof result.value === "string" ? result.value : undefined;
+        if (
+          returnedRowId === undefined &&
+          !isCurrentRowLifecycle(row.id, result.lifecycleVersion)
+        ) {
+          pendingCreatedFocusRef.current = null;
+          return;
+        }
         pendingCreatedFocusRef.current = {
           previousRowIds,
           sourceRowId: row.id,
-          ...(typeof result.value === "string"
-            ? { returnedRowId: result.value }
-            : {}),
+          ...(returnedRowId === undefined ? {} : { returnedRowId }),
         };
         const currentRows = JSON.parse(rowSignature) as string[];
         const createdId =
-          (typeof result.value === "string" &&
-          currentRows.includes(result.value)
-            ? result.value
+          (returnedRowId !== undefined && currentRows.includes(returnedRowId)
+            ? returnedRowId
             : currentRows.find((rowId) => !previousRowIds.has(rowId))) ?? null;
         if (createdId && focusRowControl(rootRef.current, createdId)) {
           pendingCreatedFocusRef.current = null;
@@ -427,20 +479,23 @@ export function EditableTable<TDraft>({
     const rowIndex = rows.findIndex((row) => row.id === deleteRowId);
     const row = rowIndex >= 0 ? rows[rowIndex] : undefined;
     if (!row || !onDelete || isRowOperationLocked(row)) return;
-    pendingDeletedFocusRef.current = rowIndex;
+    pendingDeletedFocusRef.current = { rowId: row.id, rowIndex };
+    // react-doctor-disable-next-line react-doctor/async-defer-await -- The continuation must inspect mount and row lifecycle after this asynchronous delete settles.
     const result = await runRowOperation(
       row,
       () => onDelete(row.id, row),
       "The row could not be deleted. The row is unchanged.",
     );
+    if (!mountedRef.current) return;
+    const currentLifecycle = isCurrentRowLifecycle(
+      row.id,
+      result.lifecycleVersion,
+    );
     if (result.ok) {
-      setDeleteRowId(null);
-      if (!isCurrentRowLifecycle(row.id, result.lifecycleVersion)) return;
-      const currentRows = JSON.parse(rowSignature) as string[];
-      if (focusNearestRowControl(rootRef.current, currentRows, rowIndex)) {
-        pendingDeletedFocusRef.current = null;
+      if (currentLifecycle) {
+        setDeleteRowId((current) => (current === row.id ? null : current));
       }
-    } else {
+    } else if (currentLifecycle) {
       pendingDeletedFocusRef.current = null;
     }
   };
@@ -890,9 +945,17 @@ function handleCellKeyDown(
     !event.metaKey &&
     !event.ctrlKey &&
     !event.altKey &&
-    options.save &&
-    !(event.target instanceof HTMLTextAreaElement)
+    options.save
   ) {
+    const target = event.target;
+    if (
+      target instanceof HTMLElement &&
+      target.closest(
+        "button, a, [role='button'], [role='link'], [role='combobox'], [data-editable-table-enter-save='false']",
+      )
+    ) {
+      return;
+    }
     event.preventDefault();
     options.save();
     return;
@@ -926,19 +989,32 @@ function makeReorder<TDraft>(
     const candidateScope = reorder.getScope?.(candidate, index);
     return (
       !candidate.isNew &&
-      !candidate.locked &&
-      !candidate.saving &&
-      !candidate.deleting &&
-      !reorder.isLocked?.(candidate, index) &&
       candidateScope !== null &&
       (candidateScope ?? "") === scope
     );
   });
+  const movableRows = scopedRows.filter((candidate) => {
+    const candidateIndex = rows.findIndex((item) => item.id === candidate.id);
+    return (
+      candidateIndex >= 0 &&
+      !candidate.locked &&
+      !candidate.saving &&
+      !candidate.deleting &&
+      !reorder.isLocked?.(candidate, candidateIndex)
+    );
+  });
+  const movableFromIndex = movableRows.findIndex(
+    (candidate) => candidate.id === row.id,
+  );
+  const target = movableRows[movableFromIndex + direction];
+  if (movableFromIndex < 0 || !target) return null;
   const fromIndex = scopedRows.findIndex(
     (candidate) => candidate.id === row.id,
   );
-  const toIndex = fromIndex + direction;
-  if (fromIndex < 0 || toIndex < 0 || toIndex >= scopedRows.length) return null;
+  const toIndex = scopedRows.findIndex(
+    (candidate) => candidate.id === target.id,
+  );
+  if (fromIndex < 0 || toIndex < 0) return null;
   const orderedRows = [...scopedRows];
   const [moved] = orderedRows.splice(fromIndex, 1);
   if (!moved) return null;

@@ -9,7 +9,7 @@ import { build } from "esbuild";
 
 const repositoryRoot = fileURLToPath(new URL("..", import.meta.url));
 const fixtureSource = String.raw`
-import React, { StrictMode, useState } from "react";
+import React, { StrictMode, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { EditableTable } from "./dist/index.js";
 
@@ -70,6 +70,7 @@ function ExplicitFixture() {
   const [deleteCount, setDeleteCount] = useState(0);
   const [failedDeleteOnce, setFailedDeleteOnce] = useState(false);
   const [reorderCount, setReorderCount] = useState(0);
+  const [lastReorderIds, setLastReorderIds] = useState("");
   const [createRow, setCreateRow] = useState({
     id: "create-route",
     label: "New route",
@@ -94,6 +95,7 @@ function ExplicitFixture() {
       <output aria-label="Create count">{createCount}</output>
       <output aria-label="Delete count">{deleteCount}</output>
       <output aria-label="Reorder count">{reorderCount}</output>
+      <output aria-label="Last reorder identifiers">{lastReorderIds}</output>
       <button
         type="button"
         onClick={async () => {
@@ -119,6 +121,14 @@ function ExplicitFixture() {
       >
         Restore external target
       </button>
+      <button
+        type="button"
+        onClick={() => setRows((current) => current.some((row) => row.id === "route-unrelated")
+          ? current
+          : [...current, record("route-unrelated", "Unrelated route", "South")])}
+      >
+        Add unrelated route
+      </button>
       <EditableTable
         ariaLabel="Explicit routes"
         columns={columns}
@@ -141,7 +151,6 @@ function ExplicitFixture() {
           await new Promise((resolve) => setTimeout(resolve, 80));
           setRows((current) => [...current, record("route-created", draft.name, draft.provider)]);
           setCreateRow((row) => ({ ...row, draft: { name: "", provider: "North" }, dirty: false }));
-          return "route-created";
         }}
         onDelete={async (rowId) => {
           setDeleteCount((count) => count + 1);
@@ -167,6 +176,7 @@ function ExplicitFixture() {
           getScope: (row) => row.draft.provider,
           onReorder: async ({ orderedRowIds }) => {
             setReorderCount((count) => count + 1);
+            setLastReorderIds(orderedRowIds.join(","));
             await new Promise((resolve) => setTimeout(resolve, 80));
             setRows((current) => {
               const byId = new Map(current.map((row) => [row.id, row]));
@@ -268,8 +278,162 @@ function FailureFixture() {
   );
 }
 
+function KeyboardFixture() {
+  const [saveCount, setSaveCount] = useState(0);
+  const [buttonCount, setButtonCount] = useState(0);
+  const row = {
+    id: "keyboard-1",
+    label: "Keyboard route",
+    draft: { note: "Line one" },
+    editing: true,
+    dirty: true,
+  };
+  const keyboardColumns = [
+    {
+      key: "note",
+      header: "Note",
+      renderRead: ({ row }) => row.draft.note,
+      renderEdit: ({ row }) => (
+        <textarea aria-label="Keyboard note" value={row.draft.note} onChange={() => undefined} />
+      ),
+    },
+    {
+      key: "picker",
+      header: "Picker",
+      renderRead: () => "Closed",
+      renderEdit: () => (
+        <button type="button" onClick={() => setButtonCount((count) => count + 1)}>
+          Open picker
+        </button>
+      ),
+    },
+  ];
+  return (
+    <section aria-label="Keyboard fixture">
+      <output aria-label="Keyboard save count">{saveCount}</output>
+      <output aria-label="Keyboard button count">{buttonCount}</output>
+      <EditableTable
+        ariaLabel="Keyboard routes"
+        columns={keyboardColumns}
+        onDraftChange={() => undefined}
+        onSave={() => setSaveCount((count) => count + 1)}
+        rows={[row]}
+        saveMode="explicit"
+      />
+    </section>
+  );
+}
+
+function ReusedIdentifierFixture() {
+  const [rows, setRows] = useState([
+    record("race-1", "Original race"),
+    record("race-2", "Race neighbor"),
+  ]);
+  const oldDeleteResolveRef = useRef(null);
+  return (
+    <section aria-label="Reused identifier fixture">
+      <button
+        type="button"
+        onClick={() => setRows((current) => current.filter((row) => row.id !== "race-1"))}
+      >
+        Remove race target
+      </button>
+      <button
+        type="button"
+        onClick={() => setRows((current) => current.some((row) => row.id === "race-1")
+          ? current
+          : [record("race-1", "Reused race"), ...current])}
+      >
+        Reuse race identifier
+      </button>
+      <button type="button" onClick={() => oldDeleteResolveRef.current?.()}>
+        Resolve old delete
+      </button>
+      <EditableTable
+        ariaLabel="Reuse race routes"
+        columns={columns}
+        onDelete={(_, row) => {
+          if (row.label !== "Original race") return;
+          return new Promise((resolve) => {
+            oldDeleteResolveRef.current = resolve;
+          });
+        }}
+        onDraftChange={() => undefined}
+        onEdit={() => undefined}
+        rows={rows}
+      />
+    </section>
+  );
+}
+
+function DelayedDeleteFixture() {
+  const [rows, setRows] = useState([
+    record("delayed-1", "Delayed target"),
+    record("delayed-2", "Delayed neighbor"),
+  ]);
+  return (
+    <EditableTable
+      ariaLabel="Delayed delete routes"
+      columns={columns}
+      onDelete={(rowId) => {
+        setTimeout(() => {
+          setRows((current) => current.filter((row) => row.id !== rowId));
+        }, 500);
+      }}
+      onDraftChange={() => undefined}
+      onEdit={() => undefined}
+      rows={rows}
+    />
+  );
+}
+
+function AbandonedCreateFixture() {
+  const [rows, setRows] = useState([{
+    id: "abandoned-create",
+    label: "Abandoned create",
+    draft: { name: "Draft create", provider: "North" },
+    editing: true,
+    dirty: true,
+    isNew: true,
+  }]);
+  const createResolveRef = useRef(null);
+  return (
+    <section aria-label="Abandoned create fixture">
+      <button
+        type="button"
+        onClick={() => setRows((current) => current.filter((row) => row.id !== "abandoned-create"))}
+      >
+        Remove abandoned create
+      </button>
+      <button type="button" onClick={() => createResolveRef.current?.()}>
+        Resolve abandoned create
+      </button>
+      <button
+        type="button"
+        onClick={() => setRows((current) => [
+          ...current,
+          record("abandoned-unrelated", "Abandoned unrelated"),
+        ])}
+      >
+        Add abandoned unrelated
+      </button>
+      <EditableTable
+        ariaLabel="Abandoned create routes"
+        columns={columns}
+        onCreate={() => new Promise((resolve) => {
+          createResolveRef.current = resolve;
+        })}
+        onDraftChange={() => undefined}
+        onEdit={() => undefined}
+        rows={rows}
+        saveMode="explicit"
+      />
+    </section>
+  );
+}
+
 function Fixture() {
-  return <><ExplicitFixture /><AutomaticFixture /><BatchFixture /><FailureFixture /></>;
+  return <><ExplicitFixture /><AutomaticFixture /><BatchFixture /><FailureFixture /><KeyboardFixture /><ReusedIdentifierFixture /><DelayedDeleteFixture /><AbandonedCreateFixture /></>;
 }
 
 createRoot(document.getElementById("root")).render(<StrictMode><Fixture /></StrictMode>);
@@ -426,6 +590,17 @@ try {
     true,
     "Async create replacement must focus the created row.",
   );
+  await desktop
+    .getByRole("button", { name: "Add unrelated route" })
+    .evaluate((button) => button.click());
+  await explicitTable
+    .getByRole("button", { name: "Edit Unrelated route" })
+    .waitFor();
+  assert.equal(
+    await createdEdit.evaluate((element) => element === document.activeElement),
+    true,
+    "A completed create must not re-arm focus for an unrelated later row.",
+  );
 
   await explicitTable
     .getByRole("button", { name: "Edit Server primary route" })
@@ -452,6 +627,7 @@ try {
   const backupEditAfterExternalRemoval = explicitTable.getByRole("button", {
     name: "Edit Backup route",
   });
+  await desktop.waitForTimeout(20);
   assert.equal(
     await backupEditAfterExternalRemoval.evaluate(
       (element) => element === document.activeElement,
@@ -530,6 +706,13 @@ try {
     await desktop.getByRole("status", { name: "Reorder count" }).textContent(),
     "1",
     "Same-tick reorder must run once.",
+  );
+  assert.equal(
+    await desktop
+      .getByRole("status", { name: "Last reorder identifiers" })
+      .textContent(),
+    "route-created,route-1,route-3",
+    "A scoped reorder must include locked rows in the complete persisted order.",
   );
 
   const automatic = desktop.getByRole("region", {
@@ -675,6 +858,141 @@ try {
       .getByRole("button", { name: "Save Failure route" })
       .isDisabled(),
     true,
+  );
+
+  const keyboard = desktop.getByRole("region", {
+    name: "Keyboard fixture",
+  });
+  await keyboard.getByRole("button", { name: "Open picker" }).press("Enter");
+  assert.equal(
+    await keyboard
+      .getByRole("status", { name: "Keyboard button count" })
+      .textContent(),
+    "1",
+  );
+  assert.equal(
+    await keyboard
+      .getByRole("status", { name: "Keyboard save count" })
+      .textContent(),
+    "0",
+    "Enter on an interactive child must not also save its row.",
+  );
+  const keyboardNote = keyboard.getByRole("textbox", { name: "Keyboard note" });
+  await keyboardNote.press("Shift+Enter");
+  assert.equal(
+    await keyboard
+      .getByRole("status", { name: "Keyboard save count" })
+      .textContent(),
+    "0",
+    "Shift+Enter in a multiline field must stay local.",
+  );
+  await keyboardNote.press("Enter");
+  assert.equal(
+    await keyboard
+      .getByRole("status", { name: "Keyboard save count" })
+      .textContent(),
+    "1",
+    "Enter in a multiline field must save the explicit row.",
+  );
+
+  const reused = desktop.getByRole("region", {
+    name: "Reused identifier fixture",
+  });
+  await reused.getByRole("button", { name: "Delete Original race" }).click();
+  const oldRaceDialog = desktop.getByRole("dialog", {
+    name: "Delete Original race?",
+  });
+  await oldRaceDialog
+    .getByRole("button", { name: "Delete Original race" })
+    .click();
+  await reused
+    .getByRole("button", { name: "Remove race target" })
+    .evaluate((button) => button.click());
+  await oldRaceDialog.waitFor({ state: "hidden" });
+  await reused.getByRole("button", { name: "Reuse race identifier" }).click();
+  const reusedDelete = reused.getByRole("button", {
+    name: "Delete Reused race",
+  });
+  assert.equal(
+    await reusedDelete.isDisabled(),
+    false,
+    "A removed row operation must not lock a later record that reuses its identifier.",
+  );
+  await reusedDelete.click();
+  const reusedDialog = desktop.getByRole("dialog", {
+    name: "Delete Reused race?",
+  });
+  await reused
+    .getByRole("button", { name: "Resolve old delete" })
+    .evaluate((button) => button.click());
+  await desktop.waitForTimeout(20);
+  assert.equal(
+    await reusedDialog.isVisible(),
+    true,
+    "A stale delete completion must not close the dialog for a reused identifier.",
+  );
+  await reusedDialog.getByRole("button", { name: "Cancel" }).click();
+
+  const abandoned = desktop.getByRole("region", {
+    name: "Abandoned create fixture",
+  });
+  await abandoned
+    .getByRole("textbox", { name: "Name for Abandoned create" })
+    .press("Enter");
+  await abandoned
+    .getByRole("button", { name: "Remove abandoned create" })
+    .evaluate((button) => button.click());
+  await abandoned
+    .getByRole("button", { name: "Resolve abandoned create" })
+    .evaluate((button) => button.click());
+  await desktop.waitForTimeout(20);
+  await abandoned
+    .getByRole("button", { name: "Add abandoned unrelated" })
+    .evaluate((button) => button.click());
+  const abandonedUnrelated = abandoned.getByRole("button", {
+    name: "Edit Abandoned unrelated",
+  });
+  await abandonedUnrelated.waitFor();
+  assert.equal(
+    await abandonedUnrelated.evaluate(
+      (element) => element === document.activeElement,
+    ),
+    false,
+    "A removed create source without a returned target must not claim an unrelated later row.",
+  );
+
+  const delayed = desktop.getByRole("region", {
+    name: "Delayed delete routes",
+    exact: true,
+  });
+  await delayed.getByRole("button", { name: "Delete Delayed target" }).click();
+  const delayedDialog = desktop.getByRole("dialog", {
+    name: "Delete Delayed target?",
+  });
+  await delayedDialog
+    .getByRole("button", { name: "Delete Delayed target" })
+    .click();
+  await delayedDialog.waitFor({ state: "hidden" });
+  await desktop.waitForTimeout(50);
+  const delayedNeighbor = delayed.getByRole("button", {
+    name: "Edit Delayed neighbor",
+  });
+  assert.equal(
+    await delayedNeighbor.evaluate(
+      (element) => element === document.activeElement,
+    ),
+    true,
+    "Delete success must focus the nearest remaining control before a delayed host removal.",
+  );
+  await delayed
+    .getByRole("button", { name: "Edit Delayed target" })
+    .waitFor({ state: "detached" });
+  assert.equal(
+    await delayedNeighbor.evaluate(
+      (element) => element === document.activeElement,
+    ),
+    true,
+    "A delayed controlled removal must keep focus on the nearest row.",
   );
 
   assert.deepEqual(

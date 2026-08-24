@@ -53,9 +53,13 @@ export interface EditableTableDeleteConfirmation<TDraft> {
 }
 export interface EditableTableReorderContext<TDraft> {
     readonly row: EditableTableRow<TDraft>;
+    /** Index in the complete caller scope, including rows that cannot move. */
     readonly fromIndex: number;
+    /** Index in the complete caller scope, including rows that cannot move. */
     readonly toIndex: number;
+    /** Complete caller scope after the move, including rows that cannot move. */
     readonly orderedRowIds: readonly string[];
+    /** Complete caller scope after the move, including rows that cannot move. */
     readonly orderedRows: readonly EditableTableRow<TDraft>[];
     readonly scope: string;
 }
