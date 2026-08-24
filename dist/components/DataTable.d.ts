@@ -9,6 +9,8 @@ export interface DataTableCellContext<T> {
     readonly expanded: boolean;
     readonly disabled: boolean;
     readonly pending: boolean;
+    /** Identifies the simultaneous responsive presentation when DataTable renders it. */
+    readonly presentation?: "desktop" | "phone";
 }
 export interface DataTableColumn<T> {
     readonly key: string;

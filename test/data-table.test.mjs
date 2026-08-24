@@ -1,4 +1,5 @@
 import { strict as assert } from "node:assert";
+import { readFileSync } from "node:fs";
 import test from "node:test";
 import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
@@ -234,4 +235,32 @@ test("DataTable gives collision-prone row identifiers unique DOM relationships",
   assert.equal(detailIds.length, 4);
   assert.equal(new Set(detailIds).size, 4);
   assert.deepEqual(new Set(controlledIds), new Set(detailIds));
+});
+
+test("DataTable identifies its simultaneous desktop and phone cell presentations", () => {
+  const markup = renderDataTable({
+    actions: [],
+    columns: [
+      {
+        key: "presentation",
+        header: "Presentation",
+        render: ({ presentation, row }) => `${presentation}:${row.name}`,
+      },
+    ],
+    expansion: undefined,
+    selection: undefined,
+    state: { kind: "ready" },
+  });
+  assert.match(markup, /desktop:First record/);
+  assert.match(markup, /phone:First record/);
+  assert.equal((markup.match(/desktop:/g) ?? []).length, rows.length);
+  assert.equal((markup.match(/phone:/g) ?? []).length, rows.length);
+});
+
+test("DataTable keeps legacy cell-context object construction compatible", () => {
+  const declaration = readFileSync(
+    new URL("../dist/components/DataTable.d.ts", import.meta.url),
+    "utf8",
+  );
+  assert.match(declaration, /readonly presentation\?: "desktop" \| "phone";/);
 });

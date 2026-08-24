@@ -551,6 +551,163 @@
   }
 }
 
+/* Controlled inline editing built on the shared data table. */
+.od-editable-table {
+  display: grid;
+  min-width: 0;
+  gap: var(--od-space-md);
+  color: var(--od-color-foreground);
+  font-family: var(--od-font-body);
+}
+
+.od-editable-table-cell {
+  display: grid;
+  min-width: 0;
+  gap: var(--od-space-xs);
+  overflow-wrap: anywhere;
+}
+
+.od-editable-table-cell :where(input, select, textarea) {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  min-height: 2.75rem;
+  padding: 0.5rem 0.625rem;
+  border: 1px solid var(--od-color-border-strong);
+  border-radius: var(--od-radius-sm);
+  color: var(--od-color-foreground);
+  background: var(--od-color-surface-raised);
+  font: inherit;
+}
+
+.od-editable-table-cell textarea {
+  min-height: 5.5rem;
+  resize: vertical;
+}
+
+.od-editable-table-cell :where(input, select, textarea):focus-visible,
+.od-editable-table-read-control:focus-visible,
+.od-editable-table-batch-actions button:focus-visible {
+  outline: 3px solid var(--od-color-focus);
+  outline-offset: 2px;
+}
+
+.od-editable-table-cell :where(input, select, textarea)[aria-invalid="true"] {
+  border-color: var(--od-color-coral);
+  background: var(--od-color-coral-soft);
+}
+
+.od-editable-table-read-control {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  color: inherit;
+  background: transparent;
+  font: inherit;
+  text-align: inherit;
+  overflow-wrap: anywhere;
+  cursor: pointer;
+}
+
+.od-editable-table-read-control:hover {
+  color: var(--od-color-focus);
+}
+
+.od-editable-table-messages {
+  display: grid;
+  min-width: 0;
+  gap: 0.1875rem;
+  margin-top: var(--od-space-xs);
+}
+
+.od-editable-table-messages > p {
+  margin: 0;
+  color: var(--od-color-muted-strong);
+  font-size: 0.75rem;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.od-editable-table-messages > .od-editable-table-validation,
+.od-editable-table-messages > .od-editable-table-error {
+  color: color-mix(in srgb, var(--od-color-coral) 72%, black);
+}
+
+.od-editable-table-messages > .od-editable-table-stale {
+  color: color-mix(in srgb, var(--od-color-amber) 65%, black);
+}
+
+.od-editable-table-dialog-error {
+  margin: var(--od-space-sm) 0 0;
+  color: color-mix(in srgb, var(--od-color-coral) 72%, black);
+  font-weight: 700;
+}
+
+.od-editable-table-batch-actions {
+  display: flex;
+  min-width: 0;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--od-space-sm);
+  padding: var(--od-space-sm);
+  border: 1px solid var(--od-color-border);
+  border-radius: var(--od-radius-md);
+  background: var(--od-color-surface);
+}
+
+.od-editable-table-batch-actions button {
+  min-height: 2.75rem;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--od-color-border-strong);
+  border-radius: var(--od-radius-sm);
+  color: var(--od-color-foreground);
+  background: var(--od-color-surface-raised);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.od-editable-table-batch-actions button:last-child:not(:disabled) {
+  border-color: var(--od-color-lime-strong);
+  background: var(--od-color-lime);
+}
+
+.od-editable-table-batch-actions button:disabled {
+  cursor: not-allowed;
+  opacity: 0.58;
+}
+
+@container (max-width: 42rem) {
+  .od-editable-table-batch-actions {
+    align-items: stretch;
+    flex-direction: column-reverse;
+  }
+
+  .od-editable-table-batch-actions button {
+    width: 100%;
+  }
+}
+
+@media (max-width: 42rem) {
+  .od-editable-table-batch-actions {
+    align-items: stretch;
+    flex-direction: column-reverse;
+  }
+
+  .od-editable-table-batch-actions button {
+    width: 100%;
+  }
+}
+
+@media (forced-colors: active) {
+  .od-editable-table-cell :where(input, select, textarea)[aria-invalid="true"] {
+    border-color: Mark;
+  }
+}
+
 .od-visually-hidden {
   position: absolute;
   width: 1px;

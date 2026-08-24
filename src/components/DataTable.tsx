@@ -20,6 +20,8 @@ export interface DataTableCellContext<T> {
   readonly expanded: boolean;
   readonly disabled: boolean;
   readonly pending: boolean;
+  /** Identifies the simultaneous responsive presentation when DataTable renders it. */
+  readonly presentation?: "desktop" | "phone";
 }
 
 export interface DataTableColumn<T> {
@@ -278,7 +280,11 @@ export function DataTable<T>({
     );
   };
 
-  const renderContext = (row: T, rowIndex: number): DataTableCellContext<T> => {
+  const renderContext = (
+    row: T,
+    rowIndex: number,
+    presentation: NonNullable<DataTableCellContext<T>["presentation"]>,
+  ): DataTableCellContext<T> => {
     const rowId = rowIds[rowIndex] ?? "";
     return {
       row,
@@ -288,6 +294,7 @@ export function DataTable<T>({
       expanded: expandedIds.has(rowId),
       disabled: isRowDisabled(row, rowIndex),
       pending: isRowPending(row, rowIndex),
+      presentation,
     };
   };
 
@@ -493,7 +500,11 @@ function DataTableContent<T>({
   ) => void;
   readonly onExpand: (rowId: string, expanded: boolean) => void;
   readonly onSelect: (row: T, rowIndex: number, selected: boolean) => void;
-  readonly renderContext: (row: T, rowIndex: number) => DataTableCellContext<T>;
+  readonly renderContext: (
+    row: T,
+    rowIndex: number,
+    presentation: NonNullable<DataTableCellContext<T>["presentation"]>,
+  ) => DataTableCellContext<T>;
   readonly rowLabels: readonly string[];
   readonly rows: readonly T[];
   readonly selectedEligibleCount: number;
@@ -622,7 +633,7 @@ function DataTableContent<T>({
           </thead>
           <tbody>
             {rows.map((row, rowIndex) => {
-              const context = renderContext(row, rowIndex);
+              const context = renderContext(row, rowIndex, "desktop");
               return (
                 <TableRows
                   actions={actions}
@@ -650,7 +661,7 @@ function DataTableContent<T>({
 
       <ul aria-label={`${ariaLabel} cards`} className="od-data-table-cards">
         {rows.map((row, rowIndex) => {
-          const context = renderContext(row, rowIndex);
+          const context = renderContext(row, rowIndex, "phone");
           return (
             <PhoneCard
               actions={actions}

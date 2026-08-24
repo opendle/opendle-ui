@@ -184,6 +184,17 @@ export {
   type DataTableState,
 } from "./components/DataTable.js";
 export {
+  EditableTable,
+  type EditableTableCellContext,
+  type EditableTableColumn,
+  type EditableTableDeleteConfirmation,
+  type EditableTableProps,
+  type EditableTableReorder,
+  type EditableTableReorderContext,
+  type EditableTableRow,
+  type EditableTableSaveMode,
+} from "./components/EditableTable.js";
+export {
   AccountMenu,
   type AccountMenuProps,
 } from "./components/AccountMenu.js";

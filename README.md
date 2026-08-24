@@ -22,7 +22,10 @@ selectors, navigation items, panels, attention rows, health bars, review-plan
 cards, agent sidebars, calendar boards, status indicators, and error
 boundaries. `DataTable` supplies a host-controlled, bounded table with
 responsive phone cards, sorting, selection, details, safe row actions, and
-incremental loading. `ConfirmationDialog` supplies an accessible modal
+incremental loading. `EditableTable` builds controlled read, edit, create,
+validation, save, delete, and scoped reorder behavior on `DataTable`. Host
+apps keep drafts, records, API calls, permissions, and product copy outside
+the package. `ConfirmationDialog` supplies an accessible modal
 confirmation and an optional exact impact-statement check. Host apps keep the
 target, effect, impact text, and mutation behavior. `MediaLightbox` previews one
 host-owned image or PDF blob URL. The host owns media-type policy, loading,

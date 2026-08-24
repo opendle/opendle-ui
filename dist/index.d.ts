@@ -56,6 +56,7 @@ export { AutoGrowTextarea, type AutoGrowTextareaProps, } from "./components/Auto
 export { ApplicationNavigation, ApplicationNavigationGroup, ApplicationShell, ApplicationSidebar, ApplicationTopbar, type ApplicationNavigationGroupProps, type ApplicationNavigationProps, type ApplicationShellProps, type ApplicationSidebarProps, type ApplicationTopbarProps, } from "./components/ApplicationShell.js";
 export { Button, type ButtonProps, type ButtonVariant, } from "./components/Button.js";
 export { DataTable, type DataTableAction, type DataTableCellContext, type DataTableColumn, type DataTableDensity, type DataTableExpansion, type DataTableLoadMore, type DataTableProps, type DataTableSelection, type DataTableSort, type DataTableSortDirection, type DataTableState, } from "./components/DataTable.js";
+export { EditableTable, type EditableTableCellContext, type EditableTableColumn, type EditableTableDeleteConfirmation, type EditableTableProps, type EditableTableReorder, type EditableTableReorderContext, type EditableTableRow, type EditableTableSaveMode, } from "./components/EditableTable.js";
 export { AccountMenu, type AccountMenuProps, } from "./components/AccountMenu.js";
 export { AgentSidebar, type AgentSidebarProps, } from "./components/AgentSidebar.js";
 export { AttentionRow, type AttentionRowProps, type AttentionTone, } from "./components/AttentionRow.js";

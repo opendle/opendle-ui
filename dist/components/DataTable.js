@@ -90,7 +90,7 @@ export function DataTable({ actions = EMPTY_ACTIONS, actionsLabel = "Actions", a
             releaseLoadLock(loadLockRef, mountedRef, setLocalLoadPending);
         });
     };
-    const renderContext = (row, rowIndex) => {
+    const renderContext = (row, rowIndex, presentation) => {
         const rowId = rowIds[rowIndex] ?? "";
         return {
             row,
@@ -100,6 +100,7 @@ export function DataTable({ actions = EMPTY_ACTIONS, actionsLabel = "Actions", a
             expanded: expandedIds.has(rowId),
             disabled: isRowDisabled(row, rowIndex),
             pending: isRowPending(row, rowIndex),
+            presentation,
         };
     };
     const setSelection = (row, rowIndex, selected) => {
@@ -210,10 +211,10 @@ function DataTableContent({ actions, actionsLabel, ariaLabel, columns, eligibleR
                                                 ? sort.direction
                                                 : "none"
                                             : undefined, className: `od-data-table-align-${column.align ?? "start"}`, scope: "col", children: column.sortable && sort ? (_jsx(SortControl, { column: column, sort: sort })) : (column.header) }, column.key))), actions.length > 0 ? (_jsx("th", { className: "od-data-table-actions-heading", scope: "col", children: actionsLabel })) : null] }) }), _jsx("tbody", { children: rows.map((row, rowIndex) => {
-                                const context = renderContext(row, rowIndex);
+                                const context = renderContext(row, rowIndex, "desktop");
                                 return (_jsx(TableRows, { actions: actions, actionsLabel: actionsLabel, columns: columns, context: context, expansion: expansion, localPendingActions: localPendingActions, onAction: onAction, onExpand: onExpand, onSelect: onSelect, rowLabel: rowLabels[rowIndex] ?? "", selection: selection, selectionName: `${tableId}-desktop-selection`, selectionMode: selectionMode, tableId: tableId, totalColumnCount: totalColumnCount }, context.rowId));
                             }) })] }) }), _jsx("ul", { "aria-label": `${ariaLabel} cards`, className: "od-data-table-cards", children: rows.map((row, rowIndex) => {
-                    const context = renderContext(row, rowIndex);
+                    const context = renderContext(row, rowIndex, "phone");
                     return (_jsx(PhoneCard, { actions: actions, actionsLabel: actionsLabel, columns: columns, context: context, expansion: expansion, localPendingActions: localPendingActions, onAction: onAction, onExpand: onExpand, onSelect: onSelect, rowLabel: rowLabels[rowIndex] ?? "", selection: selection, selectionName: `${tableId}-card-selection`, selectionMode: selectionMode, tableId: tableId }, context.rowId));
                 }) })] }));
 }
