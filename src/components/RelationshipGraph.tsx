@@ -155,8 +155,11 @@ function editableTarget(target: EventTarget | null) {
 }
 
 function assertRelationshipGraphColumns(
-  columns: RelationshipGraphProps["columns"],
+  columns: readonly RelationshipGraphColumn[],
 ) {
+  if (columns.length !== 3) {
+    throw new Error("A relationship graph must have exactly three columns.");
+  }
   const identifiers = new Set<string>();
   for (const column of columns) {
     if (!column.id.trim()) {
@@ -168,6 +171,63 @@ function assertRelationshipGraphColumns(
       );
     }
     identifiers.add(column.id);
+    if (!column.label.trim()) {
+      throw new Error(
+        `Relationship graph column ${column.id} must have a label.`,
+      );
+    }
+    for (const node of column.nodes) {
+      const state = node.state ?? "default";
+      if (!Object.hasOwn(nodeStateLabels, state)) {
+        throw new Error(
+          `Relationship graph node ${node.id} has an invalid state.`,
+        );
+      }
+      if (!node.label.trim()) {
+        throw new Error(
+          `Relationship graph node ${node.id} must have a label.`,
+        );
+      }
+      if (node.stateLabel !== undefined && !node.stateLabel.trim()) {
+        throw new Error(
+          `Relationship graph node ${node.id} must have a non-empty state label.`,
+        );
+      }
+    }
+  }
+}
+
+function assertRelationshipGraphLabels(
+  ariaLabel: string,
+  searchLabel: string,
+  clearSearchLabel: string,
+  relationships: readonly RelationshipGraphRelationship[],
+) {
+  if (!ariaLabel.trim()) {
+    throw new Error("A relationship graph must have an accessible name.");
+  }
+  if (!searchLabel.trim()) {
+    throw new Error("Relationship graph search must have an accessible name.");
+  }
+  if (!clearSearchLabel.trim()) {
+    throw new Error(
+      "The relationship graph clear-search action must have an accessible name.",
+    );
+  }
+  for (const relationship of relationships) {
+    if (relationship.label !== undefined && !relationship.label.trim()) {
+      throw new Error(
+        `Relationship graph relationship ${relationship.id} must have a non-empty label.`,
+      );
+    }
+    if (
+      relationship.invalidLabel !== undefined &&
+      !relationship.invalidLabel.trim()
+    ) {
+      throw new Error(
+        `Relationship graph relationship ${relationship.id} must have a non-empty invalid label.`,
+      );
+    }
   }
 }
 
@@ -255,18 +315,29 @@ export function RelationshipGraph({
       })),
     [relationships],
   );
-  assertRelationshipGraphColumns(columns);
-  assertRelationshipGraphModel(modelNodes, modelRelationships);
-
-  const nodesById = useMemo(
-    () =>
-      new Map(
-        columns.flatMap((column) =>
-          column.nodes.map((node) => [node.id, { column, node }] as const),
-        ),
+  const nodesById = useMemo(() => {
+    assertRelationshipGraphColumns(columns);
+    assertRelationshipGraphModel(modelNodes, modelRelationships);
+    assertRelationshipGraphLabels(
+      ariaLabel,
+      searchLabel,
+      clearSearchLabel,
+      relationships,
+    );
+    return new Map(
+      columns.flatMap((column) =>
+        column.nodes.map((node) => [node.id, { column, node }] as const),
       ),
-    [columns],
-  );
+    );
+  }, [
+    ariaLabel,
+    clearSearchLabel,
+    columns,
+    modelNodes,
+    modelRelationships,
+    relationships,
+    searchLabel,
+  ]);
   const searchResult = useMemo(
     () => relationshipGraphSearch(query, modelNodes, modelRelationships),
     [modelNodes, modelRelationships, query],
@@ -275,11 +346,19 @@ export function RelationshipGraph({
     () => modelNodes.filter((node) => searchResult.visibleNodeIds.has(node.id)),
     [modelNodes, searchResult.visibleNodeIds],
   );
+  const visibleNodeIds = searchResult.visibleNodeIds;
   const selectedVisibleId =
-    selectedId !== null && searchResult.visibleNodeIds.has(selectedId)
-      ? selectedId
+    selectedId !== null && visibleNodeIds.has(selectedId) ? selectedId : null;
+  const visibleFocusedNodeId =
+    focusedNodeId !== null && visibleNodeIds.has(focusedNodeId)
+      ? focusedNodeId
       : null;
-  const activeNodeId = hoveredNodeId ?? focusedNodeId ?? selectedVisibleId;
+  const visibleHoveredNodeId =
+    hoveredNodeId !== null && visibleNodeIds.has(hoveredNodeId)
+      ? hoveredNodeId
+      : null;
+  const activeNodeId =
+    visibleHoveredNodeId ?? visibleFocusedNodeId ?? selectedVisibleId;
   const activePath = useMemo(
     () => relationshipGraphPath(activeNodeId, modelNodes, modelRelationships),
     [activeNodeId, modelNodes, modelRelationships],
@@ -294,7 +373,39 @@ export function RelationshipGraph({
   const graphIsEmpty = modelNodes.length === 0;
   const noSearchResults =
     !graphIsEmpty && query.trim().length > 0 && visibleModelNodes.length === 0;
-  const visibleKey = visibleModelNodes.map((node) => node.id).join("\u0000");
+  const visibleKey = useMemo(
+    () => visibleModelNodes.map((node) => node.id).join("\u0000"),
+    [visibleModelNodes],
+  );
+  const relationshipsById = useMemo(
+    () => new Map(relationships.map((item) => [item.id, item] as const)),
+    [relationships],
+  );
+  const connectedLabelsById = useMemo(() => {
+    const labels = new Map<string, string[]>();
+    const add = (id: string, label: string) => {
+      const values = labels.get(id);
+      if (values) values.push(label);
+      else labels.set(id, [label]);
+    };
+    for (const relationship of relationships) {
+      const source = nodesById.get(relationship.sourceId);
+      const target = nodesById.get(relationship.targetId);
+      if (!source || !target) continue;
+      const relationshipLabel = relationship.invalid
+        ? (relationship.invalidLabel ?? "invalid relationship")
+        : (relationship.label ?? "relationship");
+      add(
+        relationship.sourceId,
+        `${target.node.label} by ${relationshipLabel}`,
+      );
+      add(
+        relationship.targetId,
+        `${source.node.label} by ${relationshipLabel}`,
+      );
+    }
+    return labels;
+  }, [nodesById, relationships]);
 
   useEffect(() => {
     onSelectionChangeRef.current = onSelectionChange;
@@ -359,6 +470,32 @@ export function RelationshipGraph({
   }, [nodesById, selectedId, selectedNodeId, visibleModelNodes]);
 
   useLayoutEffect(() => {
+    const focusIsHidden =
+      focusedNodeId !== null && !visibleNodeIds.has(focusedNodeId);
+    const hoverIsHidden =
+      hoveredNodeId !== null && !visibleNodeIds.has(hoveredNodeId);
+    if (!focusIsHidden && !hoverIsHidden) return;
+    updateState({
+      focusedNodeId: focusIsHidden ? null : focusedNodeId,
+      hoveredNodeId: hoverIsHidden ? null : hoveredNodeId,
+    });
+    if (!focusIsHidden) return;
+    const firstNode = nodeRefs.current.get(visibleModelNodes[0]?.id ?? "");
+    const emptyAction = rootRef.current?.querySelector<HTMLElement>(
+      ".od-relationship-graph-empty button, .od-relationship-graph-empty [href], .od-relationship-graph-invalid button, .od-relationship-graph-invalid [href]",
+    );
+    (firstNode ?? emptyAction ?? searchInputRef.current)?.focus({
+      preventScroll: true,
+    });
+  }, [
+    focusedNodeId,
+    hoveredNodeId,
+    visibleKey,
+    visibleModelNodes,
+    visibleNodeIds,
+  ]);
+
+  useLayoutEffect(() => {
     const board = boardRef.current;
     if (
       !board ||
@@ -421,6 +558,11 @@ export function RelationshipGraph({
     };
     const observer = new ResizeObserver(requestMeasure);
     observer.observe(board);
+    for (const header of board.querySelectorAll(
+      ".od-relationship-graph-column-header",
+    )) {
+      observer.observe(header);
+    }
     for (const node of nodeRefs.current.values()) observer.observe(node);
     requestMeasure();
     return () => {
@@ -465,6 +607,7 @@ export function RelationshipGraph({
     );
     if (targetId === null) return;
     event.preventDefault();
+    updateState({ hoveredNodeId: null });
     const target = nodeRefs.current.get(targetId);
     target?.focus({ preventScroll: true });
     target?.scrollIntoView({ block: "nearest", inline: "nearest" });
@@ -518,11 +661,11 @@ export function RelationshipGraph({
             {invalidState}
           </div>
         ) : graphIsEmpty ? (
-          <output className="od-relationship-graph-empty">
+          <div aria-live="polite" className="od-relationship-graph-empty">
             {emptyState ?? "No items are available."}
-          </output>
+          </div>
         ) : noSearchResults ? (
-          <output className="od-relationship-graph-empty">
+          <div aria-live="polite" className="od-relationship-graph-empty">
             <strong>{noResultsTitle}</strong>
             <div>{noResultsDescription}</div>
             <button
@@ -533,7 +676,7 @@ export function RelationshipGraph({
             >
               {clearSearchLabel}
             </button>
-          </output>
+          </div>
         ) : (
           <div className="od-relationship-graph-board" ref={boardRef}>
             <svg
@@ -543,9 +686,7 @@ export function RelationshipGraph({
               width="100%"
             >
               {edgeLayouts.map((layout) => {
-                const relationship = relationships.find(
-                  (item) => item.id === layout.id,
-                );
+                const relationship = relationshipsById.get(layout.id);
                 if (
                   !relationship ||
                   !searchResult.visibleNodeIds.has(relationship.sourceId) ||
@@ -604,27 +745,8 @@ export function RelationshipGraph({
                       </div>
                     ) : null}
                     {visibleNodes.map((node) => {
-                      const connectedLabels = relationships.flatMap(
-                        (relationship) => {
-                          const relationshipLabel = relationship.invalid
-                            ? (relationship.invalidLabel ??
-                              "invalid relationship")
-                            : (relationship.label ?? "relationship");
-                          if (relationship.sourceId === node.id) {
-                            const target = nodesById.get(relationship.targetId);
-                            return target
-                              ? [`${target.node.label} by ${relationshipLabel}`]
-                              : [];
-                          }
-                          if (relationship.targetId === node.id) {
-                            const source = nodesById.get(relationship.sourceId);
-                            return source
-                              ? [`${source.node.label} by ${relationshipLabel}`]
-                              : [];
-                          }
-                          return [];
-                        },
-                      );
+                      const connectedLabels =
+                        connectedLabelsById.get(node.id) ?? [];
                       const state = node.state ?? "default";
                       const stateLabel =
                         node.stateLabel ?? nodeStateLabels[state];
@@ -701,7 +823,7 @@ export function RelationshipGraph({
           </div>
         )}
       </section>
-      {inspector}
+      {selectedId !== null && nodesById.has(selectedId) ? inspector : null}
     </section>
   );
 }

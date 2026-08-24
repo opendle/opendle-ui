@@ -53,6 +53,7 @@ const relationships = [
 function Fixture() {
   const [selectedId, setSelectedId] = useState(null);
   const [inspectorNode, setInspectorNode] = useState(null);
+  const [query, setQuery] = useState("");
   const [showAlpha, setShowAlpha] = useState(true);
   const returnFocusRef = useRef(null);
   const visibleColumns = columns.map((column) => ({
@@ -78,6 +79,7 @@ function Fixture() {
       <p>Host-owned inspector content for {inspectorNode.label}.</p>
     </GraphInspector>
   ) : null;
+  window.setRelationshipGraphQuery = setQuery;
   return (
     <main>
       <h1>Relationship graph browser check</h1>
@@ -93,14 +95,38 @@ function Fixture() {
           setInspectorNode(node);
         }}
         onSelectionChange={setSelectedId}
+        onSearchQueryChange={setQuery}
         relationships={visibleRelationships}
+        searchQuery={query}
         selectedNodeId={selectedId}
       />
     </main>
   );
 }
 
-createRoot(document.getElementById("root")).render(<StrictMode><Fixture /></StrictMode>);
+const secondColumns = [
+  { id: "second-sources", label: "Second sources", nodes: [{ id: "second-source", label: "Second source" }] },
+  { id: "second-records", label: "Second records", nodes: [{ id: "second-record", label: "Second record" }] },
+  { id: "second-targets", label: "Second targets", nodes: [{ id: "second-target", label: "Second target" }] },
+];
+const secondRelationships = [
+  { id: "second-source-record", sourceId: "second-source", targetId: "second-record" },
+  { id: "second-record-target", sourceId: "second-record", targetId: "second-target" },
+];
+
+function MultipleGraphsFixture() {
+  return (
+    <main>
+      <h1>Multiple relationship graphs</h1>
+      <RelationshipGraph aria-label="First relationship graph" columns={columns} relationships={relationships} searchLabel="Search first graph" />
+      <RelationshipGraph aria-label="Second relationship graph" columns={secondColumns} relationships={secondRelationships} searchLabel="Search second graph" />
+    </main>
+  );
+}
+
+const fixtureRoot = createRoot(document.getElementById("root"));
+fixtureRoot.render(<StrictMode><Fixture /></StrictMode>);
+window.showMultipleRelationshipGraphs = () => fixtureRoot.render(<StrictMode><MultipleGraphsFixture /></StrictMode>);
 `;
 
 const bundle = await build({
@@ -269,6 +295,35 @@ try {
     "true",
   );
 
+  await node(desktop, "source-a").hover();
+  await node(desktop, "record-b").focus();
+  await desktop.keyboard.press("End");
+  assert.equal(
+    await node(desktop, "record-b").getAttribute("data-active"),
+    "true",
+    "Keyboard navigation must take priority over a stale pointer position.",
+  );
+  assert.equal(
+    await node(desktop, "source-a").getAttribute("data-active"),
+    "false",
+    "A hovered route must stop when keyboard focus moves to another route.",
+  );
+  await desktop.mouse.move(2, 2);
+
+  await node(desktop, "record-a").focus();
+  await desktop.evaluate(() => window.setRelationshipGraphQuery("beta"));
+  await desktop.waitForFunction(
+    () => document.activeElement?.getAttribute("data-node-id") === "source-b",
+  );
+  assert.equal(
+    await desktop
+      .locator(".od-relationship-graph-node[data-dimmed='true']")
+      .count(),
+    0,
+    "A filtered focus target must not leave a stale dimmed route.",
+  );
+  await desktop.evaluate(() => window.setRelationshipGraphQuery(""));
+
   await desktop.locator("body").click({ position: { x: 1, y: 1 } });
   await desktop.keyboard.press("/");
   const search = desktop.getByRole("searchbox", { name: "Search graph" });
@@ -294,7 +349,10 @@ try {
     (element) => element.scrollWidth <= element.clientWidth,
   );
   assert.equal(longLabelFits, true, "A long label must wrap inside its node.");
+  await node(desktop, "record-a").click();
+  await inspector.waitFor();
   await desktop.getByRole("button", { name: "Remove selected record" }).click();
+  await inspector.waitFor({ state: "detached" });
   await node(desktop, "record-a").waitFor({ state: "detached" });
   await desktop.waitForFunction(
     () => document.activeElement?.getAttribute("data-node-id") === "source-a",
@@ -313,6 +371,30 @@ try {
     (await new AxeBuilder({ page: desktop }).analyze()).violations,
     [],
     "The desktop relationship graph must have no automated accessibility violations.",
+  );
+
+  await desktop.evaluate(() => window.showMultipleRelationshipGraphs());
+  const secondGraph = desktop.getByRole("region", {
+    name: "Second relationship graph viewport",
+  });
+  await secondGraph.waitFor();
+  await desktop.evaluate(() => document.activeElement?.blur());
+  await desktop.keyboard.press("/");
+  assert.equal(
+    await activeElementIs(
+      desktop.getByRole("searchbox", { name: "Search first graph" }),
+    ),
+    true,
+    "The first graph must own the shortcut when no graph contains focus.",
+  );
+  await secondGraph.locator("[data-node-id='second-source']").focus();
+  await desktop.keyboard.press("/");
+  assert.equal(
+    await activeElementIs(
+      desktop.getByRole("searchbox", { name: "Search second graph" }),
+    ),
+    true,
+    "The focused graph must own the shortcut when several graphs exist.",
   );
   assert.deepEqual(desktopErrors, []);
 

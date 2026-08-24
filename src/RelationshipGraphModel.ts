@@ -26,6 +26,11 @@ export function assertRelationshipGraphModel(
   relationships: readonly RelationshipGraphModelRelationship[],
 ) {
   const nodesById = new Map<string, RelationshipGraphModelNode>();
+  const ordersByColumn = [
+    new Set<number>(),
+    new Set<number>(),
+    new Set<number>(),
+  ];
   for (const node of nodes) {
     if (!node.id.trim())
       throw new Error("A relationship graph node must have an identifier.");
@@ -34,11 +39,27 @@ export function assertRelationshipGraphModel(
         `Relationship graph node identifiers must be unique: ${node.id}.`,
       );
     }
-    if (node.columnIndex < 0 || node.columnIndex > 2) {
+    if (
+      !Number.isInteger(node.columnIndex) ||
+      node.columnIndex < 0 ||
+      node.columnIndex > 2
+    ) {
       throw new Error(
         `Relationship graph node ${node.id} has an invalid column.`,
       );
     }
+    if (!Number.isInteger(node.order) || node.order < 0) {
+      throw new Error(
+        `Relationship graph node ${node.id} has an invalid order.`,
+      );
+    }
+    const columnOrders = ordersByColumn[node.columnIndex];
+    if (columnOrders?.has(node.order)) {
+      throw new Error(
+        `Relationship graph node orders must be unique in each column: ${String(node.order)}.`,
+      );
+    }
+    columnOrders?.add(node.order);
     nodesById.set(node.id, node);
   }
 
@@ -139,12 +160,24 @@ export function relationshipGraphSearch(
       )
       .map((node) => node.id),
   );
-  const visibleNodeIds = new Set<string>();
-  for (const id of directMatchIds) {
-    for (const pathId of relationshipGraphPath(id, nodes, relationships)
-      .nodeIds) {
-      visibleNodeIds.add(pathId);
+  const visibleNodeIds = new Set<string>(directMatchIds);
+  let leftFrontier = new Set(directMatchIds);
+  let rightFrontier = new Set(directMatchIds);
+  for (let distance = 0; distance < 2; distance += 1) {
+    const nextLeft = new Set<string>();
+    const nextRight = new Set<string>();
+    for (const relationship of relationships) {
+      if (leftFrontier.has(relationship.targetId)) {
+        visibleNodeIds.add(relationship.sourceId);
+        nextLeft.add(relationship.sourceId);
+      }
+      if (rightFrontier.has(relationship.sourceId)) {
+        visibleNodeIds.add(relationship.targetId);
+        nextRight.add(relationship.targetId);
+      }
     }
+    leftFrontier = nextLeft;
+    rightFrontier = nextRight;
   }
   return { directMatchIds, visibleNodeIds };
 }
@@ -196,9 +229,12 @@ export function relationshipGraphKeyboardTarget(
   const candidates = targetColumn.filter((node) => connectedIds.has(node.id));
   if (candidates.length === 0) return current.id;
   const currentPosition = normalizedIndex(currentIndex, currentColumn.length);
+  const targetIndexes = new Map(
+    targetColumn.map((node, index) => [node.id, index] as const),
+  );
   candidates.sort((left, right) => {
-    const leftIndex = targetColumn.findIndex((node) => node.id === left.id);
-    const rightIndex = targetColumn.findIndex((node) => node.id === right.id);
+    const leftIndex = targetIndexes.get(left.id) ?? 0;
+    const rightIndex = targetIndexes.get(right.id) ?? 0;
     const distance =
       Math.abs(
         normalizedIndex(leftIndex, targetColumn.length) - currentPosition,

@@ -130,6 +130,22 @@ test("relationship graph rejects ambiguous identifiers and invalid column links"
   );
   assert.throws(
     () =>
+      assertRelationshipGraphModel(
+        [{ ...nodes[0], columnIndex: Number.NaN }],
+        [],
+      ),
+    /invalid column/,
+  );
+  assert.throws(
+    () =>
+      assertRelationshipGraphModel(
+        [nodes[0], { ...nodes[1], order: nodes[0].order }],
+        [],
+      ),
+    /orders must be unique/,
+  );
+  assert.throws(
+    () =>
       renderToStaticMarkup(
         React.createElement(RelationshipGraph, {
           "aria-label": "Duplicate columns",
@@ -142,6 +158,46 @@ test("relationship graph rejects ambiguous identifiers and invalid column links"
         }),
       ),
     /column identifiers must be unique/,
+  );
+  assert.throws(
+    () =>
+      renderToStaticMarkup(
+        React.createElement(RelationshipGraph, {
+          "aria-label": "Wrong column count",
+          columns: graphColumns().slice(0, 2),
+          relationships: [],
+        }),
+      ),
+    /exactly three columns/,
+  );
+  assert.throws(
+    () =>
+      renderToStaticMarkup(
+        React.createElement(RelationshipGraph, {
+          "aria-label": " ",
+          columns: graphColumns(),
+          relationships: [],
+        }),
+      ),
+    /accessible name/,
+  );
+  assert.throws(
+    () =>
+      renderToStaticMarkup(
+        React.createElement(RelationshipGraph, {
+          "aria-label": "Invalid state",
+          columns: graphColumns().map((column, index) =>
+            index === 0
+              ? {
+                  ...column,
+                  nodes: [{ ...column.nodes[0], state: "unknown" }],
+                }
+              : column,
+          ),
+          relationships: [],
+        }),
+      ),
+    /invalid state/,
   );
 });
 
@@ -234,7 +290,7 @@ test("relationship graph shows caller-owned empty and invalid states", () => {
       ],
     }),
   );
-  assert.match(emptyMarkup, /<output/);
+  assert.match(emptyMarkup, /aria-live="polite"/);
   assert.match(emptyMarkup, /Create the first record/);
   assert.match(invalidMarkup, /role="alert"/);
   assert.match(invalidMarkup, /Correct the graph data/);
