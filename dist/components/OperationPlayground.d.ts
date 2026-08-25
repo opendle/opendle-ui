@@ -6,13 +6,38 @@ export interface PlaygroundSelection {
     readonly kind: PlaygroundSelectionKind;
     readonly id: string;
 }
-export interface PlaygroundValue {
+export interface PlaygroundRequestValue {
     readonly operation: PlaygroundOperation;
-    readonly selection: PlaygroundSelection;
     readonly input: string;
     readonly systemPrompt: string;
     readonly temperature: number | null;
     readonly outputLimit: number | null;
+}
+export interface PlaygroundValue extends PlaygroundRequestValue {
+    readonly selection: PlaygroundSelection;
+}
+export type PlaygroundControl = "input-images" | "system-prompt" | "temperature" | "output-limit";
+export interface PlaygroundTargetOperation {
+    readonly operation: PlaygroundOperation;
+    /** The exact controls that the selected target supports for this operation. */
+    readonly controls: readonly PlaygroundControl[];
+}
+export type PlaygroundFixedTargetState = {
+    readonly status: "available";
+} | {
+    readonly status: "unavailable";
+    readonly message: ReactNode;
+};
+export interface PlaygroundFixedTarget {
+    readonly selection: PlaygroundSelection;
+    readonly label: string;
+    readonly detail?: string;
+    readonly context?: {
+        readonly label: string;
+        readonly value: string;
+    };
+    readonly operations: readonly PlaygroundTargetOperation[];
+    readonly state?: PlaygroundFixedTargetState;
 }
 export interface PlaygroundTargetOption {
     readonly id: string;
@@ -103,33 +128,48 @@ export type PlaygroundRunState = {
     readonly status: "error";
     readonly error: PlaygroundCorrectiveError;
 };
-export interface OperationPlaygroundProps {
+interface OperationPlaygroundCommonProps {
     /** A page-unique prefix for labels and controls. */
     readonly id: string;
     readonly title: ReactNode;
     readonly description?: ReactNode;
     readonly headingLevel?: "h2" | "h3";
     readonly className?: string;
-    readonly value: PlaygroundValue;
-    readonly availableOperations?: readonly PlaygroundOperation[];
-    readonly assignmentOptions: readonly PlaygroundTargetOption[];
-    readonly providerModelOptions: readonly PlaygroundTargetOption[];
     readonly inputImages?: readonly PlaygroundInputImage[];
     readonly runState: PlaygroundRunState;
     readonly disabled?: boolean;
     readonly runLabel?: ReactNode;
     readonly resetLabel?: ReactNode;
-    readonly onValueChange: (value: PlaygroundValue) => void;
-    readonly onRun: (value: PlaygroundValue) => void;
     readonly onReset?: () => void;
     /** The host receives and owns all selected file data. */
     readonly onAddInputImages?: (files: readonly File[]) => void;
     readonly onRemoveInputImage?: (imageId: string) => void;
 }
+export interface SelectableOperationPlaygroundProps extends OperationPlaygroundCommonProps {
+    readonly fixedTarget?: undefined;
+    readonly value: PlaygroundValue;
+    readonly availableOperations?: readonly PlaygroundOperation[];
+    readonly assignmentOptions: readonly PlaygroundTargetOption[];
+    readonly providerModelOptions: readonly PlaygroundTargetOption[];
+    readonly onValueChange: (value: PlaygroundValue) => void;
+    readonly onRun: (value: PlaygroundValue) => void;
+}
+export interface FixedOperationPlaygroundProps extends OperationPlaygroundCommonProps {
+    readonly fixedTarget: PlaygroundFixedTarget;
+    readonly value: PlaygroundRequestValue;
+    readonly availableOperations?: never;
+    readonly assignmentOptions?: never;
+    readonly providerModelOptions?: never;
+    readonly changeTargetLabel?: ReactNode;
+    readonly onChangeTarget?: () => void;
+    readonly onValueChange: (value: PlaygroundRequestValue) => void;
+    readonly onRun: (value: PlaygroundRequestValue, target: PlaygroundSelection) => void;
+}
+export type OperationPlaygroundProps = SelectableOperationPlaygroundProps | FixedOperationPlaygroundProps;
 /**
  * A controlled playground for provider-neutral model, embedding, and media operations.
  * Hosts own calls, credentials, data access, routing, state, and mutations.
  */
-export declare function OperationPlayground({ assignmentOptions, availableOperations, className, description, disabled, headingLevel, id, inputImages, onAddInputImages, onRemoveInputImage, onReset, onRun, onValueChange, providerModelOptions, resetLabel, runLabel, runState, title, value, }: OperationPlaygroundProps): import("react").JSX.Element;
+export declare function OperationPlayground(props: OperationPlaygroundProps): import("react").JSX.Element;
 export {};
 //# sourceMappingURL=OperationPlayground.d.ts.map

@@ -51,7 +51,7 @@ export function DataTable({ actions = EMPTY_ACTIONS, actionsLabel = "Actions", a
             mountedRef.current = false;
         };
     }, []);
-    const runAction = (action, row, rowIndex, rowId) => {
+    const runAction = (action, row, rowIndex, rowId, trigger) => {
         const lockKey = actionLockKey(rowId, action.key);
         if (actionLocksRef.current.has(lockKey))
             return;
@@ -59,7 +59,7 @@ export function DataTable({ actions = EMPTY_ACTIONS, actionsLabel = "Actions", a
         setLocalPendingActions((current) => new Set(current).add(lockKey));
         let result;
         try {
-            result = action.onAction(row, rowIndex);
+            result = action.onAction(row, rowIndex, { trigger });
         }
         catch {
             releaseActionLock(lockKey, actionLocksRef, mountedRef, setLocalPendingActions);
@@ -276,8 +276,8 @@ function ActionControls({ actions, context, label, localPendingActions, onAction
                     ? (action.pendingLabel?.(context.row, context.rowIndex) ??
                         action.label(context.row, context.rowIndex))
                     : action.label(context.row, context.rowIndex), `Action ${action.key} for ${rowLabel}`);
-                return (_jsx("button", { "aria-busy": actionPending || undefined, className: "od-data-table-action", "data-data-table-control": `action:${action.key}`, disabled: disabled, onClick: () => {
-                        onAction(action, context.row, context.rowIndex, context.rowId);
+                return (_jsx("button", { "aria-busy": actionPending || undefined, className: "od-data-table-action", "data-data-table-control": `action:${action.key}`, disabled: disabled, onClick: (event) => {
+                        onAction(action, context.row, context.rowIndex, context.rowId, event.currentTarget);
                     }, type: "button", children: labelText }, action.key));
             })] }));
 }

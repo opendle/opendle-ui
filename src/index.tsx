@@ -172,6 +172,7 @@ export {
 export {
   DataTable,
   type DataTableAction,
+  type DataTableActionContext,
   type DataTableCellContext,
   type DataTableColumn,
   type DataTableDensity,
@@ -221,6 +222,11 @@ export {
   type ConfirmationDialogProps,
 } from "./components/ConfirmationDialog.js";
 export {
+  Dialog,
+  type DialogProps,
+  type DialogSize,
+} from "./components/Dialog.js";
+export {
   ContextItem,
   type ContextItemProps,
 } from "./components/ContextItem.js";
@@ -268,24 +274,31 @@ export {
 } from "./components/RelationshipGraph.js";
 export {
   OperationPlayground,
+  type FixedOperationPlaygroundProps,
   type OperationPlaygroundProps,
+  type PlaygroundControl,
   type PlaygroundCorrectiveError,
   type PlaygroundCost,
   type PlaygroundEmbeddingOutput,
+  type PlaygroundFixedTarget,
+  type PlaygroundFixedTargetState,
   type PlaygroundInputImage,
   type PlaygroundMediaCaptions,
   type PlaygroundMediaOutput,
   type PlaygroundOperation,
   type PlaygroundOutput,
   type PlaygroundResult,
+  type PlaygroundRequestValue,
   type PlaygroundRunState,
   type PlaygroundSelectedRoute,
   type PlaygroundSelection,
   type PlaygroundSelectionKind,
   type PlaygroundTargetOption,
+  type PlaygroundTargetOperation,
   type PlaygroundTextOutput,
   type PlaygroundUsageItem,
   type PlaygroundValue,
+  type SelectableOperationPlaygroundProps,
 } from "./components/OperationPlayground.js";
 export {
   layoutLayeredDirectedGraph,

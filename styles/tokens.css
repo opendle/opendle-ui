@@ -2785,6 +2785,79 @@ samp {
   line-height: 1.35;
 }
 
+.od-playground-fixed-target {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: var(--od-space-sm) var(--od-space-md);
+  padding: var(--od-space-md);
+  border: 1px solid var(--od-color-border);
+  border-radius: var(--od-radius-md);
+  background: var(--od-color-surface);
+}
+
+.od-playground-fixed-target > div > span,
+.od-playground-fixed-target > div > strong,
+.od-playground-fixed-target > div > small {
+  display: block;
+}
+
+.od-playground-fixed-target > div > span,
+.od-playground-fixed-target dt {
+  color: var(--od-color-muted);
+  font-size: 0.625rem;
+  font-weight: 750;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.od-playground-fixed-target > div > strong {
+  margin-top: 0.1875rem;
+  overflow-wrap: anywhere;
+  font-size: 0.875rem;
+}
+
+.od-playground-fixed-target > div > small {
+  margin-top: 0.1875rem;
+  color: var(--od-color-muted-strong);
+  font-size: 0.6875rem;
+}
+
+.od-playground-fixed-target dl {
+  grid-column: 1 / -1;
+  margin: 0;
+}
+
+.od-playground-fixed-target dt,
+.od-playground-fixed-target dd {
+  margin: 0;
+}
+
+.od-playground-fixed-target dd {
+  margin-top: 0.1875rem;
+  overflow-wrap: anywhere;
+  font-size: 0.75rem;
+}
+
+.od-playground-target-unavailable {
+  display: grid;
+  grid-column: 1 / -1;
+  gap: 0.1875rem;
+  margin: 0;
+  padding: var(--od-space-sm);
+  border: 1px solid
+    color-mix(in srgb, var(--od-color-coral) 55%, var(--od-color-border));
+  border-radius: var(--od-radius-sm);
+  color: var(--od-color-foreground);
+  background: var(--od-color-coral-soft);
+  font-size: 0.75rem;
+  line-height: 1.45;
+}
+
+.od-playground-target-unavailable span {
+  color: var(--od-color-muted-strong);
+}
+
 .od-playground-optional-controls {
   border: 1px solid var(--od-color-border);
   border-radius: var(--od-radius-md);
@@ -3807,11 +3880,13 @@ samp {
   gap: var(--od-space-sm);
 }
 
-.od-confirmation-dialog {
-  width: min(34rem, calc(100vw - 2rem));
+.od-dialog {
+  --od-dialog-width: 52rem;
+
+  width: min(var(--od-dialog-width), calc(100vw - 2rem));
   max-height: calc(100dvh - 2rem);
   padding: 0;
-  overflow: auto;
+  overflow: hidden;
   border: 1px solid var(--od-color-border-strong);
   border-radius: var(--od-radius-lg);
   color: var(--od-color-foreground);
@@ -3819,15 +3894,89 @@ samp {
   box-shadow: var(--od-shadow);
 }
 
-.od-confirmation-dialog::backdrop {
+.od-dialog[data-size="narrow"] {
+  --od-dialog-width: 34rem;
+}
+
+.od-dialog[data-size="wide"] {
+  --od-dialog-width: 72rem;
+}
+
+.od-dialog[open] {
+  display: flex;
+  flex-direction: column;
+}
+
+.od-dialog::backdrop {
   background: color-mix(in srgb, var(--od-color-sidebar) 74%, transparent);
   backdrop-filter: blur(0.125rem);
 }
 
-.od-confirmation-dialog-heading,
-.od-confirmation-dialog-impact,
-.od-confirmation-dialog-actions {
+.od-dialog-header {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--od-space-md);
   padding: var(--od-space-lg);
+  border-bottom: 1px solid var(--od-color-border);
+}
+
+.od-dialog-header > div {
+  min-width: 0;
+}
+
+.od-dialog-header h2,
+.od-dialog-header h3,
+.od-dialog-header p {
+  margin: 0;
+}
+
+.od-dialog-header h2,
+.od-dialog-header h3 {
+  font-size: 1.125rem;
+}
+
+.od-dialog-description {
+  margin-top: var(--od-space-sm);
+  color: var(--od-color-muted-strong);
+  font-size: 0.8125rem;
+  line-height: 1.55;
+}
+
+.od-dialog-eyebrow {
+  margin-bottom: 0.3125rem !important;
+  color: var(--od-color-muted);
+  font-size: 0.625rem;
+  font-weight: 750;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.od-dialog-header > .od-button {
+  min-width: 2.625rem;
+  flex: 0 0 auto;
+  padding: 0.375rem;
+  font-size: 1.25rem;
+  line-height: 1;
+}
+
+.od-dialog-body {
+  min-height: 0;
+  flex: 1 1 auto;
+  padding: var(--od-space-lg);
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+
+.od-dialog-actions {
+  display: flex;
+  flex: 0 0 auto;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--od-space-sm);
+  padding: var(--od-space-md) var(--od-space-lg);
+  border-top: 1px solid var(--od-color-border);
 }
 
 .od-media-lightbox {
@@ -3872,26 +4021,9 @@ samp {
   object-fit: contain;
 }
 
-.od-confirmation-dialog-heading h2,
-.od-confirmation-dialog-heading p {
-  margin: 0;
-}
-
-.od-confirmation-dialog-heading h2 {
-  font-size: 1.125rem;
-}
-
-.od-confirmation-dialog-heading > div {
-  margin-top: var(--od-space-sm);
-  color: var(--od-color-muted-strong);
-  font-size: 0.8125rem;
-  line-height: 1.55;
-}
-
 .od-confirmation-dialog-impact {
   display: grid;
   gap: var(--od-space-sm);
-  padding-block: 0;
   color: var(--od-color-muted-strong);
   font-size: 0.75rem;
   font-weight: 700;
@@ -3917,13 +4049,6 @@ samp {
 .od-confirmation-dialog-impact input:focus-visible {
   outline: 0.1875rem solid var(--od-color-focus);
   outline-offset: 0.125rem;
-}
-
-.od-confirmation-dialog-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--od-space-sm);
-  justify-content: flex-end;
 }
 
 .od-state-panel {
@@ -4614,7 +4739,7 @@ samp {
 }
 
 @media (max-width: 48rem) {
-  .od-confirmation-dialog,
+  .od-dialog,
   .od-media-lightbox {
     width: 100vw;
     max-width: none;
@@ -4625,17 +4750,11 @@ samp {
     border-radius: 0;
   }
 
-  .od-confirmation-dialog[open] {
-    display: flex;
-    flex-direction: column;
-  }
-
-  .od-confirmation-dialog-heading {
+  .od-dialog-header {
     padding-top: calc(var(--od-space-lg) + env(safe-area-inset-top));
   }
 
-  .od-confirmation-dialog-actions {
-    margin-top: auto;
+  .od-dialog-actions {
     padding-bottom: calc(var(--od-space-lg) + env(safe-area-inset-bottom));
   }
 
@@ -4681,10 +4800,15 @@ samp {
   }
 
   .od-playground-route-kind,
+  .od-playground-fixed-target,
   .od-playground-number-fields,
   .od-playground-route-metrics,
   .od-playground-usage dl {
     grid-template-columns: minmax(0, 1fr);
+  }
+
+  .od-playground-fixed-target > .od-button {
+    width: 100%;
   }
 
   .od-playground-actions {

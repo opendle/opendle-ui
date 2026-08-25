@@ -68,7 +68,16 @@ export interface DataTableAction<T> {
   readonly pendingLabel?: (row: T, rowIndex: number) => string;
   readonly disabled?: (row: T, rowIndex: number) => boolean;
   readonly pending?: (row: T, rowIndex: number) => boolean;
-  readonly onAction: (row: T, rowIndex: number) => void | Promise<void>;
+  readonly onAction: (
+    row: T,
+    rowIndex: number,
+    context: DataTableActionContext,
+  ) => void | Promise<void>;
+}
+
+export interface DataTableActionContext {
+  /** The exact visible action button that requested the operation. */
+  readonly trigger: HTMLButtonElement;
 }
 
 export type DataTableState =
@@ -222,6 +231,7 @@ export function DataTable<T>({
     row: T,
     rowIndex: number,
     rowId: string,
+    trigger: HTMLButtonElement,
   ) => {
     const lockKey = actionLockKey(rowId, action.key);
     if (actionLocksRef.current.has(lockKey)) return;
@@ -229,7 +239,7 @@ export function DataTable<T>({
     setLocalPendingActions((current) => new Set(current).add(lockKey));
     let result: void | Promise<void>;
     try {
-      result = action.onAction(row, rowIndex);
+      result = action.onAction(row, rowIndex, { trigger });
     } catch {
       releaseActionLock(
         lockKey,
@@ -497,6 +507,7 @@ function DataTableContent<T>({
     row: T,
     rowIndex: number,
     rowId: string,
+    trigger: HTMLButtonElement,
   ) => void;
   readonly onExpand: (rowId: string, expanded: boolean) => void;
   readonly onSelect: (row: T, rowIndex: number, selected: boolean) => void;
@@ -715,6 +726,7 @@ function TableRows<T>({
     row: T,
     rowIndex: number,
     rowId: string,
+    trigger: HTMLButtonElement,
   ) => void;
   readonly onExpand: (rowId: string, expanded: boolean) => void;
   readonly onSelect: (row: T, rowIndex: number, selected: boolean) => void;
@@ -1042,6 +1054,7 @@ function ActionControls<T>({
     row: T,
     rowIndex: number,
     rowId: string,
+    trigger: HTMLButtonElement,
   ) => void;
   readonly rowLabel: string;
 }) {
@@ -1074,8 +1087,14 @@ function ActionControls<T>({
             data-data-table-control={`action:${action.key}`}
             disabled={disabled}
             key={action.key}
-            onClick={() => {
-              onAction(action, context.row, context.rowIndex, context.rowId);
+            onClick={(event) => {
+              onAction(
+                action,
+                context.row,
+                context.rowIndex,
+                context.rowId,
+                event.currentTarget,
+              );
             }}
             type="button"
           >

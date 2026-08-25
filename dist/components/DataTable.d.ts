@@ -46,7 +46,11 @@ export interface DataTableAction<T> {
     readonly pendingLabel?: (row: T, rowIndex: number) => string;
     readonly disabled?: (row: T, rowIndex: number) => boolean;
     readonly pending?: (row: T, rowIndex: number) => boolean;
-    readonly onAction: (row: T, rowIndex: number) => void | Promise<void>;
+    readonly onAction: (row: T, rowIndex: number, context: DataTableActionContext) => void | Promise<void>;
+}
+export interface DataTableActionContext {
+    /** The exact visible action button that requested the operation. */
+    readonly trigger: HTMLButtonElement;
 }
 export type DataTableState = {
     readonly kind: "ready";

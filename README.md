@@ -25,11 +25,12 @@ responsive phone cards, sorting, selection, details, safe row actions, and
 incremental loading. `EditableTable` builds controlled read, edit, create,
 validation, save, delete, and scoped reorder behavior on `DataTable`. Host
 apps keep drafts, records, API calls, permissions, and product copy outside
-the package. `ConfirmationDialog` supplies an accessible modal
-confirmation and an optional exact impact-statement check. Host apps keep the
-target, effect, impact text, and mutation behavior. `MediaLightbox` previews one
-host-owned image or PDF blob URL. The host owns media-type policy, loading,
-URL revocation, and error handling. Host apps keep
+the package. `Dialog` supplies a controlled native modal with focus return,
+fixed framing, local body scrolling, three desktop sizes, and a full phone
+sheet. `ConfirmationDialog` composes it for an optional exact impact-statement
+check. Host apps keep the target, effect, impact text, and mutation behavior.
+`MediaLightbox` previews one host-owned image or PDF blob URL. The host owns
+media-type policy, loading, URL revocation, and error handling. Host apps keep
 their navigation, routes, product copy, mock data, and service behavior here.
 
 Graph applications can compose `GraphWorkspace`, `GraphToolbar`,
@@ -67,9 +68,13 @@ change callback reports that the node is unavailable.
 
 `OperationPlayground` gives host applications one controlled, provider-neutral
 surface for model, embedding, image, video, and audio operations. It supports
-an assignment or exact provider-model selection and shows output, the selected
-route, latency, usage, cost, and corrective errors. The host owns all API
-calls, credentials, data access, routing, product copy, state, and mutations.
+selectable and fixed-target modes. A fixed target identifies one assignment or
+one exact provider-model and declares the exact control list for each supported
+operation. It can stay visible when it becomes unavailable. The component
+shows output, the selected route, latency, usage, cost, and corrective errors.
+The host owns all API
+calls, credentials, authorization, data access, routing, product copy, state,
+and mutations.
 
 Ontology clients can compose `ExplorerWorkspace`, `BoundedDataExplorer`,
 `SavedViewCanvas`, `ChangeTimeline`, `OntologyInheritanceTree`,

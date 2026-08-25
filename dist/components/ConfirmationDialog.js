@@ -1,115 +1,25 @@
 import { jsx as _jsx, jsxs as _jsxs, Fragment as _Fragment } from "react/jsx-runtime";
-import { useCallback, useId, useLayoutEffect, useRef, useState, } from "react";
+import { useId, useRef, useState, } from "react";
 import { Button } from "./Button.js";
-function isBackdropClick(dialog, event) {
-    if (event.target !== dialog)
-        return false;
-    const bounds = dialog.getBoundingClientRect();
-    return (event.clientX < bounds.left ||
-        event.clientX > bounds.right ||
-        event.clientY < bounds.top ||
-        event.clientY > bounds.bottom);
-}
-function openModal(dialog) {
-    if (dialog.open)
-        return;
-    if (typeof dialog.showModal === "function") {
-        dialog.showModal();
-        return;
-    }
-    dialog.setAttribute("open", "");
-}
-function closeModal(dialog) {
-    if (!dialog?.open)
-        return;
-    if (typeof dialog.close === "function") {
-        dialog.close();
-        return;
-    }
-    dialog.removeAttribute("open");
-}
-function restoreFocus(trigger) {
-    if (!trigger?.isConnected)
-        return;
-    const apply = () => {
-        const active = document.activeElement;
-        if (active instanceof HTMLElement && active.closest("dialog[open]"))
-            return;
-        if (trigger.isConnected)
-            trigger.focus({ preventScroll: true });
-    };
-    if (typeof requestAnimationFrame === "function")
-        requestAnimationFrame(apply);
-    else
-        apply();
-}
+import { Dialog } from "./Dialog.js";
 /** A modal confirmation with an optional exact impact-statement check. */
-export function ConfirmationDialog({ cancelLabel = "Cancel", className, confirmLabel, description, impactLabel = "Enter the impact statement to continue", impactStatement, onCancel, onConfirm, open, pending = false, pendingLabel = "Working…", title, ...props }) {
-    const titleId = useId();
-    const descriptionId = useId();
-    const impactId = useId();
-    const dialogRef = useRef(null);
-    const actionsRef = useRef(null);
-    const triggerRef = useRef(null);
-    const wasOpenRef = useRef(false);
-    const requestCancel = useCallback(() => {
-        if (!pending)
-            onCancel();
-    }, [onCancel, pending]);
-    if (impactStatement?.trim() === "") {
+export function ConfirmationDialog(props) {
+    if (props.impactStatement?.trim() === "") {
         throw new TypeError("A confirmation impact statement must not be empty.");
     }
-    useLayoutEffect(() => {
-        const dialog = dialogRef.current;
-        if (!dialog)
-            return;
-        if (open) {
-            if (!wasOpenRef.current) {
-                const active = document.activeElement;
-                triggerRef.current = active instanceof HTMLElement ? active : null;
-            }
-            openModal(dialog);
-            if (!wasOpenRef.current)
-                actionsRef.current?.querySelector("button")?.focus();
-        }
-        else if (wasOpenRef.current) {
-            closeModal(dialog);
-            restoreFocus(triggerRef.current);
-        }
-        wasOpenRef.current = open;
-    }, [open]);
-    useLayoutEffect(() => () => {
-        closeModal(dialogRef.current);
-        restoreFocus(triggerRef.current);
-    }, []);
-    useLayoutEffect(() => {
-        const dialog = dialogRef.current;
-        if (!dialog)
-            return;
-        const handleClick = (event) => {
-            if (isBackdropClick(dialog, event))
-                requestCancel();
-        };
-        dialog.addEventListener("click", handleClick);
-        return () => {
-            dialog.removeEventListener("click", handleClick);
-        };
-    }, [requestCancel]);
-    return (_jsx("dialog", { ...props, "aria-describedby": descriptionId, "aria-labelledby": titleId, className: ["od-confirmation-dialog", className]
-            .filter(Boolean)
-            .join(" "), onCancel: (event) => {
-            event.preventDefault();
-            requestCancel();
-        }, ref: dialogRef, children: open ? (_jsx(ConfirmationContent, { cancelLabel: cancelLabel, actionsRef: actionsRef, confirmLabel: confirmLabel, description: description, descriptionId: descriptionId, impactId: impactId, impactLabel: impactLabel, ...(impactStatement === undefined ? {} : { impactStatement }), onCancel: requestCancel, onConfirm: onConfirm, pending: pending, pendingLabel: pendingLabel, title: title, titleId: titleId })) : null }));
+    return _jsx(ConfirmationState, { ...props }, props.open ? "open" : "closed");
 }
-function ConfirmationContent({ cancelLabel, actionsRef, confirmLabel, description, descriptionId, impactLabel, impactId, impactStatement, onCancel, onConfirm, pending, pendingLabel, title, titleId, }) {
+function ConfirmationState({ cancelLabel = "Cancel", className, confirmLabel, description, impactLabel = "Enter the impact statement to continue", impactStatement, onCancel, onConfirm, open, pending = false, pendingLabel = "Working…", returnFocusRef, title, ...props }) {
+    const impactId = useId();
     const [impact, setImpact] = useState("");
     const impactMatches = impactStatement === undefined || impact === impactStatement;
-    return (_jsxs(_Fragment, { children: [_jsxs("header", { className: "od-confirmation-dialog-heading", children: [_jsx("h2", { id: titleId, children: title }), _jsx("div", { id: descriptionId, children: description })] }), impactStatement === undefined ? null : (_jsxs("label", { className: "od-confirmation-dialog-impact", children: [_jsx("span", { children: impactLabel }), _jsx("strong", { id: impactId, children: impactStatement }), _jsx("input", { "aria-describedby": impactId, "aria-label": typeof impactLabel === "string"
-                            ? impactLabel
-                            : "Confirmation impact statement", autoComplete: "off", disabled: pending, onChange: (event) => {
-                            setImpact(event.target.value);
-                        }, value: impact })] })), _jsxs("footer", { className: "od-confirmation-dialog-actions", ref: actionsRef, children: [_jsx(Button, { disabled: pending, onClick: onCancel, type: "button", variant: "quiet", children: cancelLabel }), _jsx(ConfirmationButton, { confirmLabel: confirmLabel, impactMatches: impactMatches, onConfirm: onConfirm, pending: pending, pendingLabel: pendingLabel }, pending ? "pending" : "ready")] })] }));
+    return (_jsx(Dialog, { ...props, actions: _jsxs(_Fragment, { children: [_jsx(Button, { "data-dialog-initial-focus": "true", disabled: pending, onClick: onCancel, type: "button", variant: "quiet", children: cancelLabel }), _jsx(ConfirmationButton, { confirmLabel: confirmLabel, impactMatches: impactMatches, onConfirm: onConfirm, pending: pending, pendingLabel: pendingLabel }, pending ? "pending" : "ready")] }), actionsClassName: "od-confirmation-dialog-actions", bodyClassName: "od-confirmation-dialog-body", className: ["od-confirmation-dialog", className]
+            .filter(Boolean)
+            .join(" "), closeDisabled: pending, description: description, headerClassName: "od-confirmation-dialog-heading", onClose: onCancel, open: open, ...(returnFocusRef === undefined ? {} : { returnFocusRef }), showCloseButton: false, size: "narrow", title: title, children: impactStatement === undefined ? null : (_jsxs("label", { className: "od-confirmation-dialog-impact", children: [_jsx("span", { children: impactLabel }), _jsx("strong", { id: impactId, children: impactStatement }), _jsx("input", { "aria-describedby": impactId, "aria-label": typeof impactLabel === "string"
+                        ? impactLabel
+                        : "Confirmation impact statement", autoComplete: "off", disabled: pending, onChange: (event) => {
+                        setImpact(event.target.value);
+                    }, value: impact })] })) }));
 }
 function ConfirmationButton({ confirmLabel, impactMatches, onConfirm, pending, pendingLabel, }) {
     const submittedRef = useRef(false);

@@ -16,6 +16,16 @@ const allOperations = [
   "audio",
 ] as const;
 
+const operationNames = new Set<string>(allOperations);
+const selectionKinds = new Set<string>(["assignment", "provider-model"]);
+const controlNames = new Set<string>([
+  "input-images",
+  "system-prompt",
+  "temperature",
+  "output-limit",
+]);
+const fixedTargetStateNames = new Set<string>(["available", "unavailable"]);
+
 const operationLabels: Record<PlaygroundOperation, string> = {
   model: "Model",
   embedding: "Embedding",
@@ -39,13 +49,41 @@ export interface PlaygroundSelection {
   readonly id: string;
 }
 
-export interface PlaygroundValue {
+export interface PlaygroundRequestValue {
   readonly operation: PlaygroundOperation;
-  readonly selection: PlaygroundSelection;
   readonly input: string;
   readonly systemPrompt: string;
   readonly temperature: number | null;
   readonly outputLimit: number | null;
+}
+
+export interface PlaygroundValue extends PlaygroundRequestValue {
+  readonly selection: PlaygroundSelection;
+}
+
+export type PlaygroundControl =
+  "input-images" | "system-prompt" | "temperature" | "output-limit";
+
+export interface PlaygroundTargetOperation {
+  readonly operation: PlaygroundOperation;
+  /** The exact controls that the selected target supports for this operation. */
+  readonly controls: readonly PlaygroundControl[];
+}
+
+export type PlaygroundFixedTargetState =
+  | { readonly status: "available" }
+  | { readonly status: "unavailable"; readonly message: ReactNode };
+
+export interface PlaygroundFixedTarget {
+  readonly selection: PlaygroundSelection;
+  readonly label: string;
+  readonly detail?: string;
+  readonly context?: {
+    readonly label: string;
+    readonly value: string;
+  };
+  readonly operations: readonly PlaygroundTargetOperation[];
+  readonly state?: PlaygroundFixedTargetState;
 }
 
 export interface PlaygroundTargetOption {
@@ -145,29 +183,51 @@ export type PlaygroundRunState =
   | { readonly status: "success"; readonly result: PlaygroundResult }
   | { readonly status: "error"; readonly error: PlaygroundCorrectiveError };
 
-export interface OperationPlaygroundProps {
+interface OperationPlaygroundCommonProps {
   /** A page-unique prefix for labels and controls. */
   readonly id: string;
   readonly title: ReactNode;
   readonly description?: ReactNode;
   readonly headingLevel?: "h2" | "h3";
   readonly className?: string;
-  readonly value: PlaygroundValue;
-  readonly availableOperations?: readonly PlaygroundOperation[];
-  readonly assignmentOptions: readonly PlaygroundTargetOption[];
-  readonly providerModelOptions: readonly PlaygroundTargetOption[];
   readonly inputImages?: readonly PlaygroundInputImage[];
   readonly runState: PlaygroundRunState;
   readonly disabled?: boolean;
   readonly runLabel?: ReactNode;
   readonly resetLabel?: ReactNode;
-  readonly onValueChange: (value: PlaygroundValue) => void;
-  readonly onRun: (value: PlaygroundValue) => void;
   readonly onReset?: () => void;
   /** The host receives and owns all selected file data. */
   readonly onAddInputImages?: (files: readonly File[]) => void;
   readonly onRemoveInputImage?: (imageId: string) => void;
 }
+
+export interface SelectableOperationPlaygroundProps extends OperationPlaygroundCommonProps {
+  readonly fixedTarget?: undefined;
+  readonly value: PlaygroundValue;
+  readonly availableOperations?: readonly PlaygroundOperation[];
+  readonly assignmentOptions: readonly PlaygroundTargetOption[];
+  readonly providerModelOptions: readonly PlaygroundTargetOption[];
+  readonly onValueChange: (value: PlaygroundValue) => void;
+  readonly onRun: (value: PlaygroundValue) => void;
+}
+
+export interface FixedOperationPlaygroundProps extends OperationPlaygroundCommonProps {
+  readonly fixedTarget: PlaygroundFixedTarget;
+  readonly value: PlaygroundRequestValue;
+  readonly availableOperations?: never;
+  readonly assignmentOptions?: never;
+  readonly providerModelOptions?: never;
+  readonly changeTargetLabel?: ReactNode;
+  readonly onChangeTarget?: () => void;
+  readonly onValueChange: (value: PlaygroundRequestValue) => void;
+  readonly onRun: (
+    value: PlaygroundRequestValue,
+    target: PlaygroundSelection,
+  ) => void;
+}
+
+export type OperationPlaygroundProps =
+  SelectableOperationPlaygroundProps | FixedOperationPlaygroundProps;
 
 function validateIdentities(
   name: string,
@@ -188,6 +248,78 @@ function validateOperations(operations: readonly PlaygroundOperation[]): void {
   }
   if (new Set(operations).size !== operations.length) {
     throw new Error("Available playground operations must be unique.");
+  }
+  for (const operation of operations) {
+    if (!operationNames.has(operation)) {
+      throw new Error(`Unknown playground operation: ${operation}`);
+    }
+  }
+}
+
+function selectableControls(
+  operation: PlaygroundOperation,
+): readonly PlaygroundControl[] {
+  if (operation === "model") {
+    return ["input-images", "system-prompt", "temperature", "output-limit"];
+  }
+  return operation === "image" || operation === "video" ? ["input-images"] : [];
+}
+
+function validateFixedTarget(target: PlaygroundFixedTarget): void {
+  if (!selectionKinds.has(target.selection.kind)) {
+    throw new Error(
+      `Unknown fixed playground target kind: ${target.selection.kind}`,
+    );
+  }
+  if (target.selection.id.trim() === "") {
+    throw new Error("A fixed playground target id must not be empty.");
+  }
+  if (target.label.trim() === "") {
+    throw new Error("A fixed playground target label must not be empty.");
+  }
+  const operations = target.operations.map((item) => item.operation);
+  validateOperations(operations);
+  if (
+    target.state !== undefined &&
+    !fixedTargetStateNames.has(target.state.status)
+  ) {
+    throw new Error(
+      `Unknown fixed playground target state: ${target.state.status}`,
+    );
+  }
+  for (const item of target.operations) {
+    if (!Array.isArray(item.controls)) {
+      throw new Error(
+        `Fixed playground controls must be declared for ${item.operation}.`,
+      );
+    }
+    const controls: readonly unknown[] = item.controls;
+    const controlSet = new Set(controls);
+    if (controlSet.size !== controls.length) {
+      throw new Error(
+        `Fixed playground controls must be unique for ${item.operation}.`,
+      );
+    }
+    for (const control of controls) {
+      if (typeof control !== "string" || !controlNames.has(control)) {
+        throw new Error(`Unknown fixed playground control: ${String(control)}`);
+      }
+    }
+    if (
+      item.operation !== "model" &&
+      (controlSet.has("system-prompt") ||
+        controlSet.has("temperature") ||
+        controlSet.has("output-limit"))
+    ) {
+      throw new Error(
+        `Model controls are not valid for the ${item.operation} operation.`,
+      );
+    }
+    if (!includesImageInput(item.operation) && controlSet.has("input-images")) {
+      throw new Error(
+        `Input images are not valid for the ${item.operation} operation.`,
+      );
+    }
   }
 }
 
@@ -400,6 +532,59 @@ function SelectionControls({
   );
 }
 
+function FixedTargetSummary({
+  changeTargetLabel,
+  disabled,
+  onChangeTarget,
+  target,
+}: {
+  readonly changeTargetLabel: ReactNode;
+  readonly disabled: boolean;
+  readonly onChangeTarget: (() => void) | undefined;
+  readonly target: PlaygroundFixedTarget;
+}) {
+  const kindLabel =
+    target.selection.kind === "assignment"
+      ? "Assignment"
+      : "Exact provider-model";
+  return (
+    <section
+      className="od-playground-fixed-target"
+      aria-label={`${kindLabel} target: ${target.label}`}
+    >
+      <div>
+        <span>{kindLabel}</span>
+        <strong>{target.label}</strong>
+        {target.detail === undefined ? null : <small>{target.detail}</small>}
+      </div>
+      {target.context === undefined ? null : (
+        <dl>
+          <div>
+            <dt>{target.context.label}</dt>
+            <dd>{target.context.value}</dd>
+          </div>
+        </dl>
+      )}
+      {onChangeTarget === undefined ? null : (
+        <Button
+          disabled={disabled}
+          onClick={onChangeTarget}
+          type="button"
+          variant="quiet"
+        >
+          {changeTargetLabel}
+        </Button>
+      )}
+      {target.state?.status !== "unavailable" ? null : (
+        <p className="od-playground-target-unavailable" role="status">
+          <strong>Target unavailable</strong>
+          <span>{target.state.message}</span>
+        </p>
+      )}
+    </section>
+  );
+}
+
 function ImageInputControls({
   disabled,
   id,
@@ -469,10 +654,10 @@ function ImageInputControls({
 }
 
 function PlaygroundForm({
-  assignmentOptions,
   availableOperations,
   busy,
-  disabled,
+  controlsDisabled,
+  controlsForOperation,
   headingLevel,
   id,
   images,
@@ -481,46 +666,53 @@ function PlaygroundForm({
   onReset,
   onRun,
   onValueChange,
-  providerModelOptions,
   resetLabel,
+  routeControls,
+  runDisabled,
   runLabel,
+  showOperationSelect,
+  targetSummary,
   value,
 }: {
-  readonly assignmentOptions: readonly PlaygroundTargetOption[];
   readonly availableOperations: readonly PlaygroundOperation[];
   readonly busy: boolean;
-  readonly disabled: boolean;
+  readonly controlsDisabled: boolean;
+  readonly controlsForOperation: (
+    operation: PlaygroundOperation,
+  ) => readonly PlaygroundControl[];
   readonly headingLevel: "h3" | "h4";
   readonly id: string;
   readonly images: readonly PlaygroundInputImage[];
   readonly onAddInputImages: ((files: readonly File[]) => void) | undefined;
   readonly onRemoveInputImage: ((imageId: string) => void) | undefined;
   readonly onReset: (() => void) | undefined;
-  readonly onRun: (value: PlaygroundValue) => void;
-  readonly onValueChange: (value: PlaygroundValue) => void;
-  readonly providerModelOptions: readonly PlaygroundTargetOption[];
+  readonly onRun: (value: PlaygroundRequestValue) => void;
+  readonly onValueChange: (value: PlaygroundRequestValue) => void;
   readonly resetLabel: ReactNode;
+  readonly routeControls?: ReactNode;
+  readonly runDisabled: boolean;
   readonly runLabel: ReactNode;
-  readonly value: PlaygroundValue;
+  readonly showOperationSelect: boolean;
+  readonly targetSummary?: ReactNode;
+  readonly value: PlaygroundRequestValue;
 }) {
   const Heading = headingLevel as ElementType;
   const effectiveOperation = availableOperations.includes(value.operation)
     ? value.operation
     : null;
-  const options = targetOptions(
-    value.selection.kind,
-    assignmentOptions,
-    providerModelOptions,
-  );
-  const selectionIsValid = optionExists(options, value.selection.id);
   const input =
     effectiveOperation === null ? null : inputCopy(effectiveOperation);
+  const activeControls =
+    effectiveOperation === null ? [] : controlsForOperation(effectiveOperation);
+  const showModelControls = activeControls.some((control) =>
+    ["system-prompt", "temperature", "output-limit"].includes(control),
+  );
 
   function submit(event: SyntheticEvent<HTMLFormElement>): void {
     event.preventDefault();
     if (
       effectiveOperation === null ||
-      !selectionIsValid ||
+      runDisabled ||
       value.input.trim() === ""
     ) {
       return;
@@ -531,49 +723,45 @@ function PlaygroundForm({
   return (
     <form
       aria-busy={busy}
-      aria-labelledby={`${id}-controls-title`}
+      aria-labelledby={`${id}-title ${id}-controls-title`}
       className="od-playground-form"
       onSubmit={submit}
     >
       <Heading id={`${id}-controls-title`}>Request</Heading>
-      <label className="od-playground-field" htmlFor={`${id}-operation`}>
-        <span>Operation</span>
-        <select
-          disabled={disabled}
-          id={`${id}-operation`}
-          onChange={(event) => {
-            onValueChange({
-              ...value,
-              operation: event.currentTarget.value as PlaygroundOperation,
-            });
-          }}
-          required
-          value={effectiveOperation ?? ""}
-        >
-          {effectiveOperation === null ? (
-            <option value="">Select an operation</option>
-          ) : null}
-          {availableOperations.map((operation) => (
-            <option key={operation} value={operation}>
-              {operationLabels[operation]}
-            </option>
-          ))}
-        </select>
-      </label>
-      <SelectionControls
-        assignmentOptions={assignmentOptions}
-        disabled={disabled}
-        id={id}
-        onValueChange={onValueChange}
-        providerModelOptions={providerModelOptions}
-        value={value}
-      />
+      {targetSummary}
+      {!showOperationSelect ? null : (
+        <label className="od-playground-field" htmlFor={`${id}-operation`}>
+          <span>Operation</span>
+          <select
+            disabled={controlsDisabled}
+            id={`${id}-operation`}
+            onChange={(event) => {
+              onValueChange({
+                ...value,
+                operation: event.currentTarget.value as PlaygroundOperation,
+              });
+            }}
+            required
+            value={effectiveOperation ?? ""}
+          >
+            {effectiveOperation === null ? (
+              <option value="">Select an operation</option>
+            ) : null}
+            {availableOperations.map((operation) => (
+              <option key={operation} value={operation}>
+                {operationLabels[operation]}
+              </option>
+            ))}
+          </select>
+        </label>
+      )}
+      {routeControls}
       {input === null ? null : (
         <label className="od-playground-field" htmlFor={`${id}-input`}>
           <span>{input.label}</span>
           <AutoGrowTextarea
             aria-describedby={`${id}-input-help`}
-            disabled={disabled}
+            disabled={controlsDisabled}
             id={`${id}-input`}
             maxHeight={360}
             onChange={(event) => {
@@ -586,81 +774,90 @@ function PlaygroundForm({
           <small id={`${id}-input-help`}>{input.help}</small>
         </label>
       )}
-      {effectiveOperation === "model" ? (
+      {showModelControls ? (
         <details className="od-playground-optional-controls">
           <summary>Model controls</summary>
           <div>
-            <label
-              className="od-playground-field"
-              htmlFor={`${id}-system-prompt`}
-            >
-              <span>System prompt</span>
-              <AutoGrowTextarea
-                disabled={disabled}
-                id={`${id}-system-prompt`}
-                maxHeight={240}
-                onChange={(event) => {
-                  onValueChange({
-                    ...value,
-                    systemPrompt: event.currentTarget.value,
-                  });
-                }}
-                rows={3}
-                value={value.systemPrompt}
-              />
-            </label>
-            <div className="od-playground-number-fields">
+            {activeControls.includes("system-prompt") ? (
               <label
                 className="od-playground-field"
-                htmlFor={`${id}-temperature`}
+                htmlFor={`${id}-system-prompt`}
               >
-                <span>Temperature</span>
-                <input
-                  aria-label="Temperature"
-                  disabled={disabled}
-                  id={`${id}-temperature`}
-                  max={2}
-                  min={0}
+                <span>System prompt</span>
+                <AutoGrowTextarea
+                  disabled={controlsDisabled}
+                  id={`${id}-system-prompt`}
+                  maxHeight={240}
                   onChange={(event) => {
                     onValueChange({
                       ...value,
-                      temperature: optionalNumber(event),
+                      systemPrompt: event.currentTarget.value,
                     });
                   }}
-                  step={0.1}
-                  type="number"
-                  value={value.temperature ?? ""}
+                  rows={3}
+                  value={value.systemPrompt}
                 />
               </label>
-              <label
-                className="od-playground-field"
-                htmlFor={`${id}-output-limit`}
-              >
-                <span>Output limit</span>
-                <input
-                  aria-label="Output limit"
-                  disabled={disabled}
-                  id={`${id}-output-limit`}
-                  max={1000000}
-                  min={1}
-                  onChange={(event) => {
-                    onValueChange({
-                      ...value,
-                      outputLimit: optionalNumber(event),
-                    });
-                  }}
-                  step={1}
-                  type="number"
-                  value={value.outputLimit ?? ""}
-                />
-              </label>
-            </div>
+            ) : null}
+            {activeControls.includes("temperature") ||
+            activeControls.includes("output-limit") ? (
+              <div className="od-playground-number-fields">
+                {activeControls.includes("temperature") ? (
+                  <label
+                    className="od-playground-field"
+                    htmlFor={`${id}-temperature`}
+                  >
+                    <span>Temperature</span>
+                    <input
+                      aria-label="Temperature"
+                      disabled={controlsDisabled}
+                      id={`${id}-temperature`}
+                      max={2}
+                      min={0}
+                      onChange={(event) => {
+                        onValueChange({
+                          ...value,
+                          temperature: optionalNumber(event),
+                        });
+                      }}
+                      step={0.1}
+                      type="number"
+                      value={value.temperature ?? ""}
+                    />
+                  </label>
+                ) : null}
+                {activeControls.includes("output-limit") ? (
+                  <label
+                    className="od-playground-field"
+                    htmlFor={`${id}-output-limit`}
+                  >
+                    <span>Output limit</span>
+                    <input
+                      aria-label="Output limit"
+                      disabled={controlsDisabled}
+                      id={`${id}-output-limit`}
+                      max={1000000}
+                      min={1}
+                      onChange={(event) => {
+                        onValueChange({
+                          ...value,
+                          outputLimit: optionalNumber(event),
+                        });
+                      }}
+                      step={1}
+                      type="number"
+                      value={value.outputLimit ?? ""}
+                    />
+                  </label>
+                ) : null}
+              </div>
+            ) : null}
           </div>
         </details>
       ) : null}
-      {effectiveOperation !== null && includesImageInput(effectiveOperation) ? (
+      {activeControls.includes("input-images") ? (
         <ImageInputControls
-          disabled={disabled}
+          disabled={controlsDisabled}
           id={id}
           images={images}
           onAdd={onAddInputImages}
@@ -669,15 +866,18 @@ function PlaygroundForm({
       ) : null}
       <footer className="od-playground-actions">
         {onReset === undefined ? null : (
-          <Button disabled={disabled} onClick={onReset} variant="secondary">
+          <Button
+            disabled={controlsDisabled}
+            onClick={onReset}
+            variant="secondary"
+          >
             {resetLabel}
           </Button>
         )}
         <Button
           disabled={
-            disabled ||
+            runDisabled ||
             effectiveOperation === null ||
-            !selectionIsValid ||
             value.input.trim() === ""
           }
           type="submit"
@@ -920,30 +1120,22 @@ function PlaygroundResultState({
  * A controlled playground for provider-neutral model, embedding, and media operations.
  * Hosts own calls, credentials, data access, routing, state, and mutations.
  */
-export function OperationPlayground({
-  assignmentOptions,
-  availableOperations = allOperations,
-  className,
-  description,
-  disabled = false,
-  headingLevel = "h2",
-  id,
-  inputImages = noInputImages,
-  onAddInputImages,
-  onRemoveInputImage,
-  onReset,
-  onRun,
-  onValueChange,
-  providerModelOptions,
-  resetLabel = "Reset",
-  runLabel = "Run operation",
-  runState,
-  title,
-  value,
-}: OperationPlaygroundProps) {
-  validateOperations(availableOperations);
-  validateIdentities("Assignment option", assignmentOptions);
-  validateIdentities("Provider-model option", providerModelOptions);
+export function OperationPlayground(props: OperationPlaygroundProps) {
+  const {
+    className,
+    description,
+    disabled = false,
+    headingLevel = "h2",
+    id,
+    inputImages = noInputImages,
+    onAddInputImages,
+    onRemoveInputImage,
+    onReset,
+    resetLabel = "Reset",
+    runLabel = "Run operation",
+    runState,
+    title,
+  } = props;
   validateIdentities("Input image", inputImages);
   if (runState.status === "success") {
     validateIdentities("Usage item", runState.result.usage);
@@ -953,8 +1145,81 @@ export function OperationPlayground({
   const sectionHeadingLevel = headingLevel === "h2" ? "h3" : "h4";
   const SectionHeading = sectionHeadingLevel as ElementType;
   const loading = runState.status === "loading";
-  const selectedOperation = availableOperations.includes(value.operation)
-    ? value.operation
+  const controlsDisabled = disabled || loading;
+  let availableOperations: readonly PlaygroundOperation[];
+  let controlsForOperation: (
+    operation: PlaygroundOperation,
+  ) => readonly PlaygroundControl[];
+  let requestValue: PlaygroundRequestValue;
+  let routeControls: ReactNode;
+  let targetSummary: ReactNode;
+  let runDisabled: boolean;
+  let showOperationSelect: boolean;
+  let onRequestValueChange: (value: PlaygroundRequestValue) => void;
+  let onRequestRun: (value: PlaygroundRequestValue) => void;
+
+  if (props.fixedTarget === undefined) {
+    availableOperations = props.availableOperations ?? allOperations;
+    validateOperations(availableOperations);
+    validateIdentities("Assignment option", props.assignmentOptions);
+    validateIdentities("Provider-model option", props.providerModelOptions);
+    const options = targetOptions(
+      props.value.selection.kind,
+      props.assignmentOptions,
+      props.providerModelOptions,
+    );
+    requestValue = props.value;
+    controlsForOperation = selectableControls;
+    routeControls = (
+      <SelectionControls
+        assignmentOptions={props.assignmentOptions}
+        disabled={controlsDisabled}
+        id={id}
+        onValueChange={props.onValueChange}
+        providerModelOptions={props.providerModelOptions}
+        value={props.value}
+      />
+    );
+    targetSummary = undefined;
+    runDisabled =
+      controlsDisabled || !optionExists(options, props.value.selection.id);
+    showOperationSelect = true;
+    onRequestValueChange = (value) => {
+      props.onValueChange({ ...props.value, ...value });
+    };
+    onRequestRun = () => {
+      props.onRun(props.value);
+    };
+  } else {
+    validateFixedTarget(props.fixedTarget);
+    availableOperations = props.fixedTarget.operations.map(
+      (item) => item.operation,
+    );
+    requestValue = props.value;
+    controlsForOperation = (operation) =>
+      props.fixedTarget.operations.find((item) => item.operation === operation)
+        ?.controls ?? [];
+    routeControls = undefined;
+    targetSummary = (
+      <FixedTargetSummary
+        changeTargetLabel={props.changeTargetLabel ?? "Change target"}
+        disabled={controlsDisabled}
+        onChangeTarget={props.onChangeTarget}
+        target={props.fixedTarget}
+      />
+    );
+    runDisabled =
+      controlsDisabled || props.fixedTarget.state?.status === "unavailable";
+    showOperationSelect =
+      availableOperations.length > 1 ||
+      !availableOperations.includes(props.value.operation);
+    onRequestValueChange = props.onValueChange;
+    onRequestRun = (value) => {
+      props.onRun(value, props.fixedTarget.selection);
+    };
+  }
+  const selectedOperation = availableOperations.includes(requestValue.operation)
+    ? requestValue.operation
     : null;
 
   return (
@@ -962,6 +1227,9 @@ export function OperationPlayground({
       aria-labelledby={`${id}-title`}
       className={classes("od-playground", className)}
       data-operation={selectedOperation ?? undefined}
+      data-target-mode={
+        props.fixedTarget === undefined ? "selectable" : "fixed"
+      }
     >
       <header className="od-playground-heading">
         <div>
@@ -975,25 +1243,28 @@ export function OperationPlayground({
         </span>
       </header>
       <PlaygroundForm
-        assignmentOptions={assignmentOptions}
         availableOperations={availableOperations}
         busy={loading}
-        disabled={disabled || loading}
+        controlsDisabled={controlsDisabled}
+        controlsForOperation={controlsForOperation}
         headingLevel={sectionHeadingLevel}
         id={id}
         images={inputImages}
         onAddInputImages={onAddInputImages}
         onRemoveInputImage={onRemoveInputImage}
         onReset={onReset}
-        onRun={onRun}
-        onValueChange={onValueChange}
-        providerModelOptions={providerModelOptions}
+        onRun={onRequestRun}
+        onValueChange={onRequestValueChange}
         resetLabel={resetLabel}
+        routeControls={routeControls}
+        runDisabled={runDisabled}
         runLabel={loading ? "Running…" : runLabel}
-        value={value}
+        showOperationSelect={showOperationSelect}
+        targetSummary={targetSummary}
+        value={requestValue}
       />
       <section
-        aria-labelledby={`${id}-output-title`}
+        aria-labelledby={`${id}-title ${id}-output-title`}
         className="od-playground-output"
       >
         <SectionHeading id={`${id}-output-title`}>Output</SectionHeading>

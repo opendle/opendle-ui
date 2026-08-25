@@ -26,6 +26,16 @@ export function EditableTable({ ariaLabel, cancelLabel = "Cancel", className, co
     const [messages, setMessages] = useState(EMPTY_MESSAGES);
     const [pendingRowIds, setPendingRowIds] = useState(EMPTY_PENDING);
     const [deleteRowId, setDeleteRowId] = useState(null);
+    const deleteReturnFocusRef = useRef(null);
+    const requestDelete = (rowId, trigger) => {
+        const active = document.activeElement;
+        deleteReturnFocusRef.current =
+            trigger ??
+                (active instanceof HTMLElement && rootRef.current?.contains(active)
+                    ? active
+                    : null);
+        setDeleteRowId(rowId);
+    };
     useEffect(() => {
         mountedRef.current = true;
         return () => {
@@ -332,7 +342,7 @@ export function EditableTable({ ariaLabel, cancelLabel = "Cancel", className, co
                             ? {
                                 deleteRow: () => {
                                     suppressAutomaticSave(row.id);
-                                    setDeleteRowId(row.id);
+                                    requestDelete(row.id);
                                 },
                             }
                             : {}),
@@ -388,8 +398,8 @@ export function EditableTable({ ariaLabel, cancelLabel = "Cancel", className, co
                     key: "delete",
                     label: (row) => `${deleteLabel} ${row.label}`,
                     disabled: (row) => Boolean(row.isNew),
-                    onAction: (row) => {
-                        setDeleteRowId(row.id);
+                    onAction: (row, _rowIndex, context) => {
+                        requestDelete(row.id, context.trigger);
                     },
                 },
             ]
@@ -502,7 +512,7 @@ export function EditableTable({ ariaLabel, cancelLabel = "Cancel", className, co
                     }
                 }, onConfirm: () => {
                     void confirmDelete();
-                }, open: Boolean(deleteRow), pending: Boolean(deleteRow && pendingRowIds.has(deleteRow.id)), pendingLabel: confirmation?.pendingLabel ?? "Deleting…", title: confirmation?.title ?? "Delete row?" })] }));
+                }, open: Boolean(deleteRow), pending: Boolean(deleteRow && pendingRowIds.has(deleteRow.id)), pendingLabel: confirmation?.pendingLabel ?? "Deleting…", returnFocusRef: deleteReturnFocusRef, title: confirmation?.title ?? "Delete row?" })] }));
 }
 function EditableRowMessages({ error, errorId, messageId, stale, validation, validationId, }) {
     if (!error && !validation && !stale)

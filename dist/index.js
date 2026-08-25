@@ -94,6 +94,7 @@ export { CalendarBoard, } from "./components/CalendarBoard.js";
 export { Card } from "./components/Card.js";
 export { ChainStep } from "./components/ChainStep.js";
 export { ConfirmationDialog, } from "./components/ConfirmationDialog.js";
+export { Dialog, } from "./components/Dialog.js";
 export { ContextItem, } from "./components/ContextItem.js";
 export { HealthBar } from "./components/HealthBar.js";
 export { PageSurface, } from "./components/PageSurface.js";

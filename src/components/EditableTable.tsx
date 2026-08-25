@@ -12,6 +12,7 @@ import {
 import { ConfirmationDialog } from "./ConfirmationDialog.js";
 import {
   DataTable,
+  type DataTableActionContext,
   type DataTableColumn,
   type DataTableDensity,
   type DataTableLoadMore,
@@ -219,6 +220,17 @@ export function EditableTable<TDraft>({
   const [pendingRowIds, setPendingRowIds] =
     useState<ReadonlySet<string>>(EMPTY_PENDING);
   const [deleteRowId, setDeleteRowId] = useState<string | null>(null);
+  const deleteReturnFocusRef = useRef<HTMLElement | null>(null);
+
+  const requestDelete = (rowId: string, trigger?: HTMLElement) => {
+    const active = document.activeElement;
+    deleteReturnFocusRef.current =
+      trigger ??
+      (active instanceof HTMLElement && rootRef.current?.contains(active)
+        ? active
+        : null);
+    setDeleteRowId(rowId);
+  };
 
   useEffect(() => {
     mountedRef.current = true;
@@ -591,7 +603,7 @@ export function EditableTable<TDraft>({
                   ? {
                       deleteRow: () => {
                         suppressAutomaticSave(row.id);
-                        setDeleteRowId(row.id);
+                        requestDelete(row.id);
                       },
                     }
                   : {}),
@@ -680,8 +692,12 @@ export function EditableTable<TDraft>({
             label: (row: EditableTableRow<TDraft>) =>
               `${deleteLabel} ${row.label}`,
             disabled: (row: EditableTableRow<TDraft>) => Boolean(row.isNew),
-            onAction: (row: EditableTableRow<TDraft>) => {
-              setDeleteRowId(row.id);
+            onAction: (
+              row: EditableTableRow<TDraft>,
+              _rowIndex: number,
+              context: DataTableActionContext,
+            ) => {
+              requestDelete(row.id, context.trigger);
             },
           },
         ]
@@ -879,6 +895,7 @@ export function EditableTable<TDraft>({
         open={Boolean(deleteRow)}
         pending={Boolean(deleteRow && pendingRowIds.has(deleteRow.id))}
         pendingLabel={confirmation?.pendingLabel ?? "Deleting…"}
+        returnFocusRef={deleteReturnFocusRef}
         title={confirmation?.title ?? "Delete row?"}
       />
     </section>
