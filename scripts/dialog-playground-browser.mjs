@@ -45,6 +45,7 @@ function Fixture() {
   const inspectorTriggerRef = useRef(null);
   return <main>
     <StatusPill tone="red">Failed</StatusPill>
+    <StatusPill tone="amber">Cooldown</StatusPill>
     <GraphInspector
       onClose={() => setInspectorCloseCount((value) => value + 1)}
       open
@@ -217,6 +218,20 @@ try {
     contrastRatio(redStatusColors.foreground, redStatusColors.background) >=
       4.5,
     "The red status label must meet WCAG AA text contrast.",
+  );
+  const amberStatusColors = await desktop
+    .getByText("Cooldown", { exact: true })
+    .evaluate((element) => {
+      const styles = getComputedStyle(element);
+      return {
+        background: styles.backgroundColor,
+        foreground: styles.color,
+      };
+    });
+  assert.ok(
+    contrastRatio(amberStatusColors.foreground, amberStatusColors.background) >=
+      4.5,
+    "The amber status label must meet WCAG AA text contrast.",
   );
   const dialog = desktop.getByRole("dialog", { name: "General dialog" });
   const deleteOpener = desktop.getByRole("button", {
