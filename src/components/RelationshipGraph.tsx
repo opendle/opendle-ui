@@ -20,6 +20,10 @@ function classes(...values: (string | false | null | undefined)[]) {
   return values.filter(Boolean).join(" ");
 }
 
+function hasInspectorContent(value: ReactNode) {
+  return value !== null && value !== undefined && typeof value !== "boolean";
+}
+
 export type RelationshipGraphNodeState =
   "default" | "disabled" | "invalid" | "unavailable";
 
@@ -412,17 +416,15 @@ export function RelationshipGraph({
   }, [nodesById, relationships]);
   const selectedNodeInspector =
     selectedId !== null && nodesById.has(selectedId) ? inspector : null;
-  if (
-    auxiliaryInspector !== null &&
-    auxiliaryInspector !== undefined &&
-    selectedNodeInspector !== null &&
-    selectedNodeInspector !== undefined
-  ) {
+  const hasAuxiliaryInspector = hasInspectorContent(auxiliaryInspector);
+  if (hasAuxiliaryInspector && hasInspectorContent(selectedNodeInspector)) {
     throw new Error(
       "A relationship graph can show one auxiliary or selected-node inspector, not both.",
     );
   }
-  const activeInspector = auxiliaryInspector ?? selectedNodeInspector;
+  const activeInspector = hasAuxiliaryInspector
+    ? auxiliaryInspector
+    : selectedNodeInspector;
 
   useEffect(() => {
     onSelectionChangeRef.current = onSelectionChange;

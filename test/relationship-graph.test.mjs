@@ -368,6 +368,41 @@ test("relationship graph supports one auxiliary inspector without a selection", 
   );
 });
 
+test("relationship graph ignores empty Boolean inspector nodes", () => {
+  const selectedInspector = React.createElement(
+    GraphInspector,
+    { title: "Selected record" },
+    "Selected details",
+  );
+  const auxiliaryInspector = React.createElement(
+    GraphInspector,
+    { title: "Create record" },
+    "Create form",
+  );
+  const selectedMarkup = renderToStaticMarkup(
+    React.createElement(RelationshipGraph, {
+      "aria-label": "False auxiliary inspector graph",
+      auxiliaryInspector: false,
+      columns: graphColumns(),
+      inspector: selectedInspector,
+      relationships: [],
+      selectedNodeId: "record-a",
+    }),
+  );
+  const auxiliaryMarkup = renderToStaticMarkup(
+    React.createElement(RelationshipGraph, {
+      "aria-label": "False selected inspector graph",
+      auxiliaryInspector,
+      columns: graphColumns(),
+      inspector: false,
+      relationships: [],
+      selectedNodeId: "record-a",
+    }),
+  );
+  assert.match(selectedMarkup, />Selected record<\/h2>/);
+  assert.match(auxiliaryMarkup, />Create record<\/h2>/);
+});
+
 test("relationship graph keeps legacy selected-node inspector safety", () => {
   const inspector = React.createElement(
     GraphInspector,
