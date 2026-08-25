@@ -1,6 +1,6 @@
 {
   "name": "@opendle/ui",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Shared React design system and frontend primitives for OpenDLE projects.",
   "type": "module",
   "files": [
@@ -44,7 +44,7 @@
     "prepare": "npm run build",
     "react-doctor": "react-doctor . --json --json-compact --full --fail-on none",
     "security": "npm audit --audit-level=high",
-    "test:browser": "npm run build && node scripts/ontology-explorer-browser.mjs && node scripts/data-table-browser.mjs && node scripts/editable-table-browser.mjs && node scripts/graph-workspace-browser.mjs && node scripts/relationship-graph-browser.mjs && node scripts/dialog-playground-browser.mjs",
+    "test:browser": "npm run build && node scripts/form-controls-browser.mjs && node scripts/ontology-explorer-browser.mjs && node scripts/data-table-browser.mjs && node scripts/editable-table-browser.mjs && node scripts/graph-workspace-browser.mjs && node scripts/relationship-graph-browser.mjs && node scripts/dialog-playground-browser.mjs",
     "typecheck": "tsc --noEmit",
     "test": "npm run build && node --test"
   },

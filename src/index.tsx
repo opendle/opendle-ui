@@ -1,7 +1,7 @@
 import type { SVGAttributes } from "react";
 
 /** Public package version. Keep this value aligned with package.json. */
-export const OPENDLE_UI_VERSION = "0.1.0" as const;
+export const OPENDLE_UI_VERSION = "0.2.0" as const;
 
 export type IconName =
   | "activity"
@@ -117,11 +117,14 @@ export const designTokens = {
     sidebar: "--od-color-sidebar",
     sidebarMuted: "--od-color-sidebar-muted",
     lime: "--od-color-lime",
+    limeStrong: "--od-color-lime-strong",
     coral: "--od-color-coral",
+    coralStrong: "--od-color-coral-strong",
     blue: "--od-color-blue",
     purple: "--od-color-purple",
     focus: "--od-color-focus",
     amber: "--od-color-amber",
+    amberStrong: "--od-color-amber-strong",
     limeSoft: "--od-color-lime-soft",
     blueSoft: "--od-color-blue-soft",
     purpleSoft: "--od-color-purple-soft",
@@ -140,6 +143,7 @@ export const designTokens = {
     md: "--od-space-md",
     lg: "--od-space-lg",
     xl: "--od-space-xl",
+    pageGutter: "--od-page-gutter",
   },
   font: {
     body: "--od-font-body",
@@ -152,6 +156,43 @@ export {
   AutoGrowTextarea,
   type AutoGrowTextareaProps,
 } from "./components/AutoGrowTextarea.js";
+export {
+  AdvancedFieldsDisclosure,
+  FieldError,
+  FieldHelp,
+  FormActions,
+  FormField,
+  FormSection,
+  type AdvancedFieldsDisclosureProps,
+  type FieldErrorProps,
+  type FieldHelpProps,
+  type FieldRequirement,
+  type FormActionsAlignment,
+  type FormActionsProps,
+  type FormFieldOrientation,
+  type FormFieldProps,
+  type FormSectionColumns,
+  type FormSectionProps,
+} from "./components/Form.js";
+export { DateTime, type DateTimeProps } from "./components/DateTime.js";
+export {
+  FileDropZone,
+  type FileDropZoneProps,
+} from "./components/FileDropZone.js";
+export {
+  InlineAlert,
+  type InlineAlertProps,
+  type InlineAlertTone,
+} from "./components/InlineAlert.js";
+export {
+  SearchableSelect,
+  type SearchableSelectOption,
+  type SearchableSelectProps,
+} from "./components/SearchableSelect.js";
+export {
+  SecretRevealPanel,
+  type SecretRevealPanelProps,
+} from "./components/SecretRevealPanel.js";
 export {
   ApplicationNavigation,
   ApplicationNavigationGroup,
@@ -254,15 +295,6 @@ export {
   type GraphViewportProps,
   type GraphWorkspaceProps,
 } from "./components/GraphWorkspace.js";
-export {
-  ServiceAssignmentGraph,
-  type ServiceAssignmentCandidate,
-  type ServiceAssignmentGraphProps,
-  type ServiceAssignmentItem,
-  type ServiceAssignmentLastUse,
-  type ServiceAssignmentSource,
-  type ServiceAssignmentSourceKind,
-} from "./components/ServiceAssignmentGraph.js";
 export {
   RelationshipGraph,
   type RelationshipGraphColumn,

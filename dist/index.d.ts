@@ -1,6 +1,6 @@
 import type { SVGAttributes } from "react";
 /** Public package version. Keep this value aligned with package.json. */
-export declare const OPENDLE_UI_VERSION: "0.1.0";
+export declare const OPENDLE_UI_VERSION: "0.2.0";
 export type IconName = "activity" | "arrow-up" | "audit" | "book" | "chevron" | "clock" | "cloud" | "database" | "eye" | "file" | "filter" | "grid" | "health" | "key" | "layers" | "list" | "lock" | "logout" | "menu" | "more" | "moon" | "plus" | "refresh" | "search" | "server" | "settings" | "shield" | "spark" | "users" | "warning" | "workspace";
 export interface IconProps extends SVGAttributes<SVGSVGElement> {
     readonly name: IconName;
@@ -22,11 +22,14 @@ export declare const designTokens: {
         readonly sidebar: "--od-color-sidebar";
         readonly sidebarMuted: "--od-color-sidebar-muted";
         readonly lime: "--od-color-lime";
+        readonly limeStrong: "--od-color-lime-strong";
         readonly coral: "--od-color-coral";
+        readonly coralStrong: "--od-color-coral-strong";
         readonly blue: "--od-color-blue";
         readonly purple: "--od-color-purple";
         readonly focus: "--od-color-focus";
         readonly amber: "--od-color-amber";
+        readonly amberStrong: "--od-color-amber-strong";
         readonly limeSoft: "--od-color-lime-soft";
         readonly blueSoft: "--od-color-blue-soft";
         readonly purpleSoft: "--od-color-purple-soft";
@@ -45,6 +48,7 @@ export declare const designTokens: {
         readonly md: "--od-space-md";
         readonly lg: "--od-space-lg";
         readonly xl: "--od-space-xl";
+        readonly pageGutter: "--od-page-gutter";
     };
     readonly font: {
         readonly body: "--od-font-body";
@@ -53,6 +57,12 @@ export declare const designTokens: {
     };
 };
 export { AutoGrowTextarea, type AutoGrowTextareaProps, } from "./components/AutoGrowTextarea.js";
+export { AdvancedFieldsDisclosure, FieldError, FieldHelp, FormActions, FormField, FormSection, type AdvancedFieldsDisclosureProps, type FieldErrorProps, type FieldHelpProps, type FieldRequirement, type FormActionsAlignment, type FormActionsProps, type FormFieldOrientation, type FormFieldProps, type FormSectionColumns, type FormSectionProps, } from "./components/Form.js";
+export { DateTime, type DateTimeProps } from "./components/DateTime.js";
+export { FileDropZone, type FileDropZoneProps, } from "./components/FileDropZone.js";
+export { InlineAlert, type InlineAlertProps, type InlineAlertTone, } from "./components/InlineAlert.js";
+export { SearchableSelect, type SearchableSelectOption, type SearchableSelectProps, } from "./components/SearchableSelect.js";
+export { SecretRevealPanel, type SecretRevealPanelProps, } from "./components/SecretRevealPanel.js";
 export { ApplicationNavigation, ApplicationNavigationGroup, ApplicationShell, ApplicationSidebar, ApplicationTopbar, type ApplicationNavigationGroupProps, type ApplicationNavigationProps, type ApplicationShellProps, type ApplicationSidebarProps, type ApplicationTopbarProps, } from "./components/ApplicationShell.js";
 export { Button, type ButtonProps, type ButtonVariant, } from "./components/Button.js";
 export { DataTable, type DataTableAction, type DataTableActionContext, type DataTableCellContext, type DataTableColumn, type DataTableDensity, type DataTableExpansion, type DataTableLoadMore, type DataTableProps, type DataTableSelection, type DataTableSort, type DataTableSortDirection, type DataTableState, } from "./components/DataTable.js";
@@ -69,7 +79,6 @@ export { ContextItem, type ContextItemProps, } from "./components/ContextItem.js
 export { HealthBar, type HealthBarProps } from "./components/HealthBar.js";
 export { PageSurface, type PageSurfaceProps, } from "./components/PageSurface.js";
 export { GraphEdge, GraphEdges, GraphEmptyState, GraphInspector, GraphNode, GraphToolbar, GraphViewport, GraphWorkspace, type GraphEdgeProps, type GraphEdgesProps, type GraphEmptyStateProps, type GraphInspectorProps, type GraphNodeProps, type GraphNodeTone, type GraphToolbarProps, type GraphViewportProps, type GraphWorkspaceProps, } from "./components/GraphWorkspace.js";
-export { ServiceAssignmentGraph, type ServiceAssignmentCandidate, type ServiceAssignmentGraphProps, type ServiceAssignmentItem, type ServiceAssignmentLastUse, type ServiceAssignmentSource, type ServiceAssignmentSourceKind, } from "./components/ServiceAssignmentGraph.js";
 export { RelationshipGraph, type RelationshipGraphColumn, type RelationshipGraphNode, type RelationshipGraphNodeContext, type RelationshipGraphNodeState, type RelationshipGraphProps, type RelationshipGraphRelationship, } from "./components/RelationshipGraph.js";
 export { OperationPlayground, type FixedOperationPlaygroundProps, type OperationPlaygroundProps, type PlaygroundControl, type PlaygroundCorrectiveError, type PlaygroundCost, type PlaygroundEmbeddingOutput, type PlaygroundFixedTarget, type PlaygroundFixedTargetState, type PlaygroundInputImage, type PlaygroundMediaCaptions, type PlaygroundMediaOutput, type PlaygroundOperation, type PlaygroundOutput, type PlaygroundResult, type PlaygroundRequestValue, type PlaygroundRunState, type PlaygroundSelectedRoute, type PlaygroundSelection, type PlaygroundSelectionKind, type PlaygroundTargetOption, type PlaygroundTargetOperation, type PlaygroundTextOutput, type PlaygroundUsageItem, type PlaygroundValue, type SelectableOperationPlaygroundProps, } from "./components/OperationPlayground.js";
 export { layoutLayeredDirectedGraph, layoutTree, treeEdgePath, type LayeredGraphLayoutEdge, type LayeredGraphLayoutItem, type LayeredGraphLayoutNode, type LayeredGraphLayoutOptions, type LayeredGraphLayoutResult, type TreeEdgePathOptions, type TreeLayoutEdge, type TreeLayoutItem, type TreeLayoutNode, type TreeLayoutOptions, type TreeLayoutResult, } from "./GraphLayout.js";

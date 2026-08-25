@@ -49,12 +49,6 @@ items with no known parent as roots and rejects duplicate identifiers and
 cycles. Host apps still own graph data, selection, editing, drag behavior, and
 persistence.
 
-`ServiceAssignmentGraph` gives service-scoped assignment views one controlled
-graph, side inspector, and accessible list. It shows direct, inherited,
-implicit-default, empty-chain, and unconfigured states. Hosts supply the
-effective ordered candidates, last-use text, observed requirements, actions,
-and all product behavior.
-
 `RelationshipGraph` gives host applications one responsive three-column
 relationship surface. Hosts name the columns and nodes, supply relationships,
 compose contextual header actions and an optional inspector, and own all
@@ -88,6 +82,56 @@ positions, type relationships, metadata bags, labels, and file metadata. They
 do not load data, store credentials, make authorization decisions, accept
 executable queries, or own host routes. Host applications keep service keys in
 their backends and supply current authorized data and controlled actions.
+
+## Forms and input
+
+`FormField`, `FieldHelp`, and `FieldError` connect a label, help text, an error,
+and one control. `FormSection`, `FormActions`, and
+`AdvancedFieldsDisclosure` supply responsive form structure. The host owns the
+form state, validation rules, submission, and product text.
+
+`SearchableSelect` supplies a controlled, filterable combobox. Each option has
+a stable value and label. An option can also have a description, search text,
+or a disabled state. The component supports arrow keys, Home, End, Enter, and
+Escape. The host owns the current value and receives each committed option.
+
+`InlineAlert` supplies a compact message for one form or action.
+`SecretRevealPanel` supplies the show-once layout and copy interaction. The
+host must keep the secret in memory, clear it at the correct time, and block an
+unsafe route change. `FileDropZone` sends selected or dropped files to the
+host. The host must check file type, size, and authorization. `DateTime`
+supplies a valid `time` element, locale formatting, and a safe fallback for an
+invalid value.
+
+```tsx
+<FormSection legend="Provider" columns={2}>
+  <FormField
+    label="Display name"
+    help="Use a name that administrators can identify."
+    requirement="required"
+  >
+    <input name="display_name" required />
+  </FormField>
+  <SearchableSelect
+    label="Model"
+    name="model"
+    options={models}
+    value={model}
+    onChange={(value) => setModel(value)}
+    required
+  />
+</FormSection>
+```
+
+The `designTokens` object maps `color.limeStrong`, `color.coralStrong`,
+`color.amberStrong`, and `space.pageGutter` to the matching CSS custom
+properties.
+
+`ServiceAssignmentGraph` and its private keyboard helper were removed. A
+search of the sibling repositories found no production consumer. Use
+`RelationshipGraph` for a shared relationship view. Keep a product-specific
+configuration graph in its host. This removal is the breaking change in
+OpenDLE UI 0.2.0.
 
 Typography uses the Xbot design as the source of truth: Aptos for body text,
 Aptos Display for headings, and Aptos Mono with system fallbacks for technical

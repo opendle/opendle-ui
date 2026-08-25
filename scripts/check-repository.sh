@@ -35,6 +35,7 @@ required_files=(
   "dist/index.d.ts"
   "styles/tokens.css"
   "scripts/ontology-explorer-browser.mjs"
+  "scripts/form-controls-browser.mjs"
   "scripts/dialog-playground-browser.mjs"
   "scripts/build-consumer.mjs"
   "scripts/check-react-doctor-report.mjs"
@@ -65,8 +66,9 @@ grep -Fq 'export const OPENDLE_UI_VERSION' src/index.tsx
 node --check scripts/build-consumer.mjs
 node --check scripts/check-react-doctor-report.mjs
 node --check scripts/ontology-explorer-browser.mjs
+node --check scripts/form-controls-browser.mjs
 node --check scripts/dialog-playground-browser.mjs
-node --input-type=module -e "import('./dist/index.js').then((shared) => { for (const name of ['AccountMenu', 'BoundedDataExplorer', 'ChangeTimeline', 'Dialog', 'ExplorerWorkspace', 'ManagedFileList', 'MetadataBagList', 'OntologyInheritanceTree', 'OperationPlayground', 'ReviewPlanCard', 'SavedViewCanvas', 'WorkspaceSelector']) if (!(name in shared)) throw new Error('Missing shared export: ' + name); })"
+node --input-type=module -e "import('./dist/index.js').then((shared) => { for (const name of ['AccountMenu', 'AdvancedFieldsDisclosure', 'BoundedDataExplorer', 'ChangeTimeline', 'DateTime', 'Dialog', 'ExplorerWorkspace', 'FileDropZone', 'FormActions', 'FormField', 'FormSection', 'InlineAlert', 'ManagedFileList', 'MetadataBagList', 'OntologyInheritanceTree', 'OperationPlayground', 'ReviewPlanCard', 'SavedViewCanvas', 'SearchableSelect', 'SecretRevealPanel', 'WorkspaceSelector']) if (!(name in shared)) throw new Error('Missing shared export: ' + name); })"
 
 grep -qx "min-release-age=14" .npmrc
 grep -q 'OPENDLE_UI_DEPENDENCY_MIN_AGE_DAYS:-14' scripts/dependency-age-gate.sh
