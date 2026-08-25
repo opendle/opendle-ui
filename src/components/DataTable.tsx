@@ -68,10 +68,11 @@ export interface DataTableAction<T> {
   readonly pendingLabel?: (row: T, rowIndex: number) => string;
   readonly disabled?: (row: T, rowIndex: number) => boolean;
   readonly pending?: (row: T, rowIndex: number) => boolean;
+  /** DataTable always supplies the exact trigger. This parameter stays optional for legacy direct calls. */
   readonly onAction: (
     row: T,
     rowIndex: number,
-    context: DataTableActionContext,
+    context?: DataTableActionContext,
   ) => void | Promise<void>;
 }
 

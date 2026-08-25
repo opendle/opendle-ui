@@ -40,18 +40,16 @@ function Fixture() {
   const [providerUnavailable, setProviderUnavailable] = useState(false);
   const [confirmationOpen, setConfirmationOpen] = useState(false);
   const [inspectorCloseCount, setInspectorCloseCount] = useState(0);
+  const [inspectorTriggerVersion, setInspectorTriggerVersion] = useState(0);
   const initialFocusRef = useRef(null);
   const inspectorTriggerRef = useRef(null);
   return <main>
     <GraphInspector
       onClose={() => setInspectorCloseCount((value) => value + 1)}
-      onKeyDownCapture={(event) => {
-        if (event.key === "Escape") event.stopPropagation();
-      }}
       open
       title="Assignment inspector"
     >
-      <Button ref={inspectorTriggerRef} onClick={() => setDialog("wide")}>Open wide dialog</Button>
+      <Button key={inspectorTriggerVersion} ref={inspectorTriggerRef} onClick={() => setDialog("wide")}>Open wide dialog</Button>
       <Button onClick={() => setConfirmationOpen(true)}>Delete exact assignment</Button>
       <ConfirmationDialog
         confirmLabel="Delete assignment"
@@ -90,6 +88,8 @@ function Fixture() {
       <details><summary>Extra options</summary><input aria-label="Extra value" /></details>
       {Array.from({length: 32}, (_, index) => <p key={index}>Scrollable dialog row {index + 1}</p>)}
       {pending ? <Button onClick={() => setPending(false)}>Finish pending work</Button> : null}
+      {pending ? <form method="dialog"><Button type="submit">Try native close</Button></form> : null}
+      {dialog === "wide" ? <Button onClick={() => setInspectorTriggerVersion((value) => value + 1)}>Replace opening action</Button> : null}
     </Dialog>
     <output aria-label="Last exact run">{lastRun}</output>
     <output aria-label="Target changes">{changes}</output>
@@ -302,8 +302,18 @@ try {
       frameBefore,
       "Only the dialog body can scroll.",
     );
+    if (name === "Open wide dialog") {
+      await dialog
+        .getByRole("button", { name: "Replace opening action" })
+        .click();
+    }
     await desktop.keyboard.press("Escape");
     assert.equal(await dialog.isVisible(), false);
+    await desktop.waitForFunction(
+      (expectedName) =>
+        document.activeElement?.textContent?.trim() === expectedName,
+      name,
+    );
     assert.equal(
       await opener.evaluate((element) => element === document.activeElement),
       true,
@@ -317,6 +327,8 @@ try {
   await desktop.keyboard.press("Escape");
   assert.equal(await dialog.isVisible(), true);
   await desktop.mouse.click(1, 1);
+  assert.equal(await dialog.isVisible(), true);
+  await dialog.getByRole("button", { name: "Try native close" }).click();
   assert.equal(await dialog.isVisible(), true);
   assert.equal(
     await dialog.getByRole("button", { name: "Close dialog" }).isDisabled(),

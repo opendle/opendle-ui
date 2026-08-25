@@ -399,7 +399,7 @@ export function EditableTable({ ariaLabel, cancelLabel = "Cancel", className, co
                     label: (row) => `${deleteLabel} ${row.label}`,
                     disabled: (row) => Boolean(row.isNew),
                     onAction: (row, _rowIndex, context) => {
-                        requestDelete(row.id, context.trigger);
+                        requestDelete(row.id, context?.trigger);
                     },
                 },
             ]

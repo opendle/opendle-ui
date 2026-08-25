@@ -695,9 +695,9 @@ export function EditableTable<TDraft>({
             onAction: (
               row: EditableTableRow<TDraft>,
               _rowIndex: number,
-              context: DataTableActionContext,
+              context?: DataTableActionContext,
             ) => {
-              requestDelete(row.id, context.trigger);
+              requestDelete(row.id, context?.trigger);
             },
           },
         ]

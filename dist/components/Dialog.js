@@ -32,11 +32,20 @@ function closeModal(dialog) {
     }
     dialog.removeAttribute("open");
 }
+function canReceiveReturnFocus(target, dialog) {
+    return Boolean(target?.isConnected &&
+        !target.matches(":disabled") &&
+        target.closest("[inert]") === null &&
+        !dialog?.contains(target));
+}
+function isReturnFocusCandidate(target, dialog) {
+    return Boolean(target?.isConnected && !dialog.contains(target));
+}
 function restoreFocus(target) {
-    if (!target?.isConnected)
+    if (!canReceiveReturnFocus(target))
         return;
     const apply = () => {
-        if (!target.isConnected)
+        if (!canReceiveReturnFocus(target))
             return;
         const active = document.activeElement;
         const activeDialog = active instanceof HTMLElement
@@ -92,6 +101,7 @@ export function Dialog({ actions, actionsClassName, "aria-describedby": supplied
     const descriptionId = useId();
     const dialogRef = useRef(null);
     const triggerRef = useRef(null);
+    const latestReturnFocusTargetRef = useRef(null);
     const wasOpenRef = useRef(false);
     const Heading = headingLevel;
     const requestClose = useCallback(() => {
@@ -105,6 +115,17 @@ export function Dialog({ actions, actionsClassName, "aria-describedby": supplied
         .filter(Boolean)
         .join(" ");
     useLayoutEffect(() => {
+        if (!open)
+            return;
+        if (!wasOpenRef.current)
+            latestReturnFocusTargetRef.current = null;
+        const target = returnFocusRef?.current;
+        const dialog = dialogRef.current;
+        if (dialog && isReturnFocusCandidate(target, dialog)) {
+            latestReturnFocusTargetRef.current = target;
+        }
+    });
+    useLayoutEffect(() => {
         const dialog = dialogRef.current;
         if (dialog === null)
             return;
@@ -113,12 +134,12 @@ export function Dialog({ actions, actionsClassName, "aria-describedby": supplied
             if (!wasOpenRef.current) {
                 const suppliedTarget = returnFocusRef?.current;
                 const active = document.activeElement;
-                triggerRef.current =
-                    suppliedTarget?.isConnected === true
-                        ? suppliedTarget
-                        : active instanceof HTMLElement && !dialog.contains(active)
-                            ? active
-                            : null;
+                triggerRef.current = isReturnFocusCandidate(suppliedTarget, dialog)
+                    ? suppliedTarget
+                    : active instanceof HTMLElement &&
+                        canReceiveReturnFocus(active, dialog)
+                        ? active
+                        : null;
             }
             openModal(dialog);
             if (!wasOpenRef.current || needsModalOpen)
@@ -126,13 +147,20 @@ export function Dialog({ actions, actionsClassName, "aria-describedby": supplied
         }
         else if (wasOpenRef.current) {
             closeModal(dialog);
-            restoreFocus(triggerRef.current);
+            const latestTarget = latestReturnFocusTargetRef.current;
+            restoreFocus(canReceiveReturnFocus(latestTarget, dialog)
+                ? latestTarget
+                : triggerRef.current);
         }
         wasOpenRef.current = open;
     }, [initialFocusRef, open, returnFocusRef]);
     useLayoutEffect(() => () => {
-        closeModal(dialogRef.current);
-        restoreFocus(triggerRef.current);
+        const dialog = dialogRef.current;
+        closeModal(dialog);
+        const latestTarget = latestReturnFocusTargetRef.current;
+        restoreFocus(canReceiveReturnFocus(latestTarget, dialog ?? undefined)
+            ? latestTarget
+            : triggerRef.current);
     }, []);
     useLayoutEffect(() => {
         const dialog = dialogRef.current;
@@ -145,16 +173,35 @@ export function Dialog({ actions, actionsClassName, "aria-describedby": supplied
         const handleKeyDown = (event) => {
             containTabFocus(dialog, event);
         };
+        const handleSubmit = (event) => {
+            if (!(event.target instanceof HTMLFormElement))
+                return;
+            const submitterMethod = event.submitter instanceof HTMLButtonElement ||
+                event.submitter instanceof HTMLInputElement
+                ? event.submitter.getAttribute("formmethod")
+                : null;
+            const method = submitterMethod ?? event.target.getAttribute("method");
+            if (method?.toLowerCase() !== "dialog")
+                return;
+            event.preventDefault();
+            requestClose();
+        };
         dialog.addEventListener("click", handleClick);
         dialog.addEventListener("keydown", handleKeyDown);
+        dialog.addEventListener("submit", handleSubmit);
         return () => {
             dialog.removeEventListener("click", handleClick);
             dialog.removeEventListener("keydown", handleKeyDown);
+            dialog.removeEventListener("submit", handleSubmit);
         };
     }, [requestClose]);
-    return (_jsx("dialog", { ...props, "aria-describedby": describedBy || undefined, "aria-label": ariaLabel, "aria-labelledby": ariaLabel === undefined ? (suppliedLabelledBy ?? titleId) : undefined, className: classes("od-dialog", className), "data-size": size, onCancel: (event) => {
-            event.preventDefault();
-            requestClose();
-        }, ref: dialogRef, tabIndex: props.tabIndex ?? -1, children: open ? (_jsxs(_Fragment, { children: [_jsxs("header", { className: classes("od-dialog-header", headerClassName), children: [_jsxs("div", { children: [eyebrow === undefined ? null : (_jsx("p", { className: "od-dialog-eyebrow", children: eyebrow })), _jsx(Heading, { id: titleId, children: title }), description === undefined ? null : (_jsx("div", { className: "od-dialog-description", id: descriptionId, children: description }))] }), !showCloseButton ? null : (_jsx(Button, { "aria-label": closeLabel, "data-dialog-close": "true", disabled: closeDisabled, onClick: requestClose, type: "button", variant: "quiet", children: _jsx("span", { "aria-hidden": "true", children: "\u00D7" }) }))] }), _jsx("div", { className: classes("od-dialog-body", bodyClassName), children: children }), actions === undefined ? null : (_jsx("footer", { className: classes("od-dialog-actions", actionsClassName), children: actions }))] })) : null }));
+    return (_jsx(_Fragment, { children: _jsx("dialog", { ...props, "aria-describedby": describedBy || undefined, "aria-label": ariaLabel, "aria-labelledby": ariaLabel === undefined ? (suppliedLabelledBy ?? titleId) : undefined, className: classes("od-dialog", className), "data-size": size, onCancel: (event) => {
+                event.preventDefault();
+                requestClose();
+            }, onKeyDown: (event) => {
+                props.onKeyDown?.(event);
+                if (event.key === "Escape")
+                    event.stopPropagation();
+            }, ref: dialogRef, tabIndex: props.tabIndex ?? -1, children: open ? (_jsxs(_Fragment, { children: [_jsxs("header", { className: classes("od-dialog-header", headerClassName), children: [_jsxs("div", { children: [eyebrow === undefined ? null : (_jsx("p", { className: "od-dialog-eyebrow", children: eyebrow })), _jsx(Heading, { id: titleId, children: title }), description === undefined ? null : (_jsx("div", { className: "od-dialog-description", id: descriptionId, children: description }))] }), !showCloseButton ? null : (_jsx(Button, { "aria-label": closeLabel, "data-dialog-close": "true", disabled: closeDisabled, onClick: requestClose, type: "button", variant: "quiet", children: _jsx("span", { "aria-hidden": "true", children: "\u00D7" }) }))] }), _jsx("div", { className: classes("od-dialog-body", bodyClassName), children: children }), actions === undefined ? null : (_jsx("footer", { className: classes("od-dialog-actions", actionsClassName), children: actions }))] })) : null }) }));
 }
 //# sourceMappingURL=Dialog.js.map
