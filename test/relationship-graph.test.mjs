@@ -2,7 +2,7 @@ import { strict as assert } from "node:assert";
 import test from "node:test";
 import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
-import { Button, RelationshipGraph } from "../dist/index.js";
+import { Button, GraphInspector, RelationshipGraph } from "../dist/index.js";
 import {
   assertRelationshipGraphModel,
   relationshipGraphKeyboardTarget,
@@ -292,6 +292,106 @@ test("relationship graph shows caller-owned empty and invalid states", () => {
   );
   assert.match(emptyMarkup, /aria-live="polite"/);
   assert.match(emptyMarkup, /Create the first record/);
+  assert.equal((emptyMarkup.match(/<h2/g) ?? []).length, 3);
+  assert.match(emptyMarkup, />Create source<\/button>/);
   assert.match(invalidMarkup, /role="alert"/);
   assert.match(invalidMarkup, /Correct the graph data/);
+});
+
+test("relationship graph keeps all column actions in empty and no-result states", () => {
+  const emptyColumns = ["Sources", "Records", "Targets"].map((label) => ({
+    id: label.toLowerCase(),
+    label,
+    actions: React.createElement(Button, null, `Create ${label}`),
+    nodes: [],
+  }));
+  const emptyMarkup = renderToStaticMarkup(
+    React.createElement(RelationshipGraph, {
+      "aria-label": "Empty action graph",
+      columns: emptyColumns,
+      relationships: [],
+    }),
+  );
+  const noResultMarkup = renderToStaticMarkup(
+    React.createElement(RelationshipGraph, {
+      "aria-label": "No-result action graph",
+      columns: graphColumns(),
+      defaultSearchQuery: "missing",
+      relationships: [],
+    }),
+  );
+  assert.equal((emptyMarkup.match(/<h2/g) ?? []).length, 3);
+  assert.equal(
+    (emptyMarkup.match(/>Create [A-Z][a-z]*<\/button>/g) ?? []).length,
+    3,
+  );
+  assert.equal((noResultMarkup.match(/<h2/g) ?? []).length, 3);
+  assert.match(noResultMarkup, />Create source<\/button>/);
+  assert.match(noResultMarkup, />Clear search<\/button>/);
+});
+
+test("relationship graph supports one auxiliary inspector without a selection", () => {
+  const auxiliaryInspector = React.createElement(
+    GraphInspector,
+    { title: "Create record" },
+    "Create form",
+  );
+  const markup = renderToStaticMarkup(
+    React.createElement(RelationshipGraph, {
+      "aria-label": "Create graph",
+      auxiliaryInspector,
+      columns: graphColumns(),
+      relationships: [],
+      selectedNodeId: null,
+    }),
+  );
+  assert.match(markup, /<dialog[^>]*open=""/);
+  assert.match(markup, />Create record<\/h2>/);
+
+  assert.throws(
+    () =>
+      renderToStaticMarkup(
+        React.createElement(RelationshipGraph, {
+          "aria-label": "Conflicting inspector graph",
+          auxiliaryInspector,
+          columns: graphColumns(),
+          inspector: React.createElement(
+            GraphInspector,
+            { title: "Selected record" },
+            "Details",
+          ),
+          relationships: [],
+          selectedNodeId: "record-a",
+        }),
+      ),
+    /one auxiliary or selected-node inspector/,
+  );
+});
+
+test("relationship graph keeps legacy selected-node inspector safety", () => {
+  const inspector = React.createElement(
+    GraphInspector,
+    { title: "Selected record" },
+    "Details",
+  );
+  const selectedMarkup = renderToStaticMarkup(
+    React.createElement(RelationshipGraph, {
+      "aria-label": "Selected graph",
+      columns: graphColumns(),
+      inspector,
+      relationships: [],
+      selectedNodeId: "record-a",
+    }),
+  );
+  const missingMarkup = renderToStaticMarkup(
+    React.createElement(RelationshipGraph, {
+      "aria-label": "Missing selection graph",
+      columns: graphColumns(),
+      inspector,
+      relationships: [],
+      selectedNodeId: "missing",
+    }),
+  );
+  assert.match(selectedMarkup, /<dialog/);
+  assert.doesNotMatch(missingMarkup, /<dialog/);
 });

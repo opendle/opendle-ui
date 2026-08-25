@@ -14,11 +14,10 @@ import { createRoot } from "react-dom/client";
 import { Button, GraphInspector, RelationshipGraph } from "./dist/index.js";
 
 const longLabel = "Record Alpha with a deliberately long label that must wrap inside its local node without increasing the page width";
-const columns = [
+const baseColumns = [
   {
     id: "sources",
     label: "Sources",
-    actions: <Button type="button">Create source</Button>,
     nodes: [
       { id: "source-a", label: "Source A", detail: "Cloud source" },
       { id: "source-b", label: "Source B", detail: "Local source" },
@@ -27,7 +26,6 @@ const columns = [
   {
     id: "records",
     label: "Records",
-    actions: <Button type="button" variant="secondary">Create record</Button>,
     nodes: [
       { id: "record-a", label: longLabel, searchText: ["alpha"] },
       { id: "record-b", label: "Record Beta", state: "disabled" },
@@ -36,7 +34,6 @@ const columns = [
   {
     id: "targets",
     label: "Targets",
-    actions: <Button type="button" variant="secondary">Create target</Button>,
     nodes: [
       { id: "target-a", label: "Target One", state: "invalid", stateLabel: "Route invalid" },
       { id: "target-b", label: "Target Two" },
@@ -50,49 +47,95 @@ const relationships = [
   { id: "record-b-target-b", sourceId: "record-b", targetId: "target-b", label: "target route" },
 ];
 
-function Fixture() {
+function Fixture({ empty = false }) {
   const [selectedId, setSelectedId] = useState(null);
-  const [inspectorNode, setInspectorNode] = useState(null);
+  const [inspectorState, setInspectorState] = useState(null);
   const [query, setQuery] = useState("");
   const [showAlpha, setShowAlpha] = useState(true);
   const returnFocusRef = useRef(null);
-  const visibleColumns = columns.map((column) => ({
-    ...column,
-    nodes: showAlpha
-      ? column.nodes
-      : column.nodes.filter((node) => node.id !== "record-a"),
-  }));
-  const visibleRelationships = showAlpha
+  function openCreate(label, trigger) {
+    returnFocusRef.current = trigger;
+    setSelectedId(null);
+    setInspectorState({ kind: "create", id: label.toLowerCase().replace(" ", "-"), label });
+  }
+  const visibleColumns = baseColumns.map((column) => {
+    const itemLabel =
+      column.id === "records"
+        ? "mapping"
+        : column.label.slice(0, -1).toLowerCase();
+    return {
+      ...column,
+      actions: (
+        <Button
+          type="button"
+          variant="secondary"
+          onClick={(event) =>
+            openCreate("Create " + itemLabel, event.currentTarget)
+          }
+        >
+          Create {itemLabel}
+        </Button>
+      ),
+      nodes: empty
+        ? []
+        : showAlpha
+          ? column.nodes
+          : column.nodes.filter((node) => node.id !== "record-a"),
+    };
+  });
+  const visibleRelationships = empty
+    ? []
+    : showAlpha
     ? relationships
     : relationships.filter(
         (relationship) =>
           relationship.sourceId !== "record-a" &&
           relationship.targetId !== "record-a",
       );
-  const inspector = inspectorNode ? (
+  const inspector = inspectorState?.kind === "node" ? (
     <GraphInspector
-      activationKey={inspectorNode.id}
-      onClose={() => setInspectorNode(null)}
+      activationKey={inspectorState.node.id}
+      onClose={() => setInspectorState(null)}
       returnFocusRef={returnFocusRef}
-      title={inspectorNode.label}
+      title={inspectorState.node.label}
     >
-      <p>Host-owned inspector content for {inspectorNode.label}.</p>
+      <p>Host-owned inspector content for {inspectorState.node.label}.</p>
+    </GraphInspector>
+  ) : null;
+  const auxiliaryInspector = inspectorState?.kind === "create" ? (
+    <GraphInspector
+      activationKey={inspectorState.id}
+      onClose={() => setInspectorState(null)}
+      returnFocusRef={returnFocusRef}
+      title={inspectorState.label}
+    >
+      <p>Host-owned create form with no selected graph node.</p>
+      {Array.from({ length: 18 }, (_, index) => (
+        <label key={index}>
+          Field {index + 1}
+          <input defaultValue={"Value " + String(index + 1)} />
+        </label>
+      ))}
     </GraphInspector>
   ) : null;
   window.setRelationshipGraphQuery = setQuery;
   return (
     <main>
       <h1>Relationship graph browser check</h1>
-      <Button type="button" variant="secondary" onClick={() => setShowAlpha(false)}>
-        Remove selected record
-      </Button>
+      {empty ? null : (
+        <Button type="button" variant="secondary" onClick={() => setShowAlpha(false)}>
+          Remove selected record
+        </Button>
+      )}
       <RelationshipGraph
         aria-label="Example relationship graph"
+        auxiliaryInspector={auxiliaryInspector}
         columns={visibleColumns}
+        emptyState="Create the first relationship record."
         inspector={inspector}
         onNodeActivate={({ node, trigger }) => {
           returnFocusRef.current = trigger;
-          setInspectorNode(node);
+          setInspectorState({ kind: "node", node });
         }}
         onSelectionChange={setSelectedId}
         onSearchQueryChange={setQuery}
@@ -118,7 +161,7 @@ function MultipleGraphsFixture() {
   return (
     <main>
       <h1>Multiple relationship graphs</h1>
-      <RelationshipGraph aria-label="First relationship graph" columns={columns} relationships={relationships} searchLabel="Search first graph" />
+      <RelationshipGraph aria-label="First relationship graph" columns={baseColumns} relationships={relationships} searchLabel="Search first graph" />
       <RelationshipGraph aria-label="Second relationship graph" columns={secondColumns} relationships={secondRelationships} searchLabel="Search second graph" />
     </main>
   );
@@ -127,6 +170,7 @@ function MultipleGraphsFixture() {
 const fixtureRoot = createRoot(document.getElementById("root"));
 fixtureRoot.render(<StrictMode><Fixture /></StrictMode>);
 window.showMultipleRelationshipGraphs = () => fixtureRoot.render(<StrictMode><MultipleGraphsFixture /></StrictMode>);
+window.showEmptyRelationshipGraph = () => fixtureRoot.render(<StrictMode><Fixture empty /></StrictMode>);
 `;
 
 const bundle = await build({
@@ -239,6 +283,90 @@ try {
     true,
   );
 
+  const graphViewport = desktop.getByRole("region", {
+    name: "Example relationship graph viewport",
+  });
+  const viewportWidthBeforeInspector = await graphViewport.evaluate(
+    (element) => element.getBoundingClientRect().width,
+  );
+  const createMapping = desktop.getByRole("button", {
+    name: "Create mapping",
+  });
+  await createMapping.click();
+  const createInspector = desktop.getByRole("dialog", {
+    name: "Create mapping",
+  });
+  await createInspector.waitFor();
+  assert.equal(
+    await activeElementIs(
+      createInspector.getByRole("button", { name: "Close inspector" }),
+    ),
+    true,
+    "An auxiliary inspector must receive initial focus.",
+  );
+  assert.equal(
+    await desktop
+      .locator(".od-relationship-graph-node[aria-pressed='true']")
+      .count(),
+    0,
+    "An auxiliary inspector must not require a selected node.",
+  );
+  const desktopInspectorGeometry = await createInspector.evaluate((element) => {
+    const graph = element.closest(".od-relationship-graph");
+    const inspectorBounds = element.getBoundingClientRect();
+    const graphBounds = graph?.getBoundingClientRect();
+    return {
+      graphRight: graphBounds?.right ?? 0,
+      inspectorLeft: inspectorBounds.left,
+      inspectorRight: inspectorBounds.right,
+    };
+  });
+  assert.equal(
+    desktopInspectorGeometry.inspectorLeft > 1280 / 2 &&
+      Math.abs(
+        desktopInspectorGeometry.graphRight -
+          desktopInspectorGeometry.inspectorRight,
+      ) < 24,
+    true,
+    "A desktop relationship inspector must use the right-side slot.",
+  );
+  assert.equal(
+    await graphViewport.evaluate(
+      (element) => element.getBoundingClientRect().width,
+    ),
+    viewportWidthBeforeInspector,
+    "An inspector must not change the graph width.",
+  );
+  await desktop.keyboard.press("Escape");
+  await createInspector.waitFor({ state: "detached" });
+  assert.equal(
+    await activeElementIs(createMapping),
+    true,
+    "Escape must return focus to the exact create action.",
+  );
+
+  await createMapping.click();
+  await createInspector.waitFor();
+  await node(desktop, "record-b").click();
+  const replacementInspector = desktop.getByRole("dialog", {
+    name: "Record Beta",
+  });
+  await replacementInspector.waitFor();
+  assert.equal(
+    await activeElementIs(
+      replacementInspector.getByRole("button", { name: "Close inspector" }),
+    ),
+    true,
+    "A create-to-detail replacement must keep focus in the inspector slot.",
+  );
+  await desktop.keyboard.press("Escape");
+  await replacementInspector.waitFor({ state: "detached" });
+  assert.equal(
+    await activeElementIs(node(desktop, "record-b")),
+    true,
+    "A replacement inspector must return focus to the exact node trigger.",
+  );
+
   await node(desktop, "source-a").hover();
   assert.equal(
     await desktop
@@ -338,6 +466,19 @@ try {
     await desktop.locator(".od-relationship-graph-connector").count(),
     2,
   );
+  await search.fill("missing");
+  assert.equal(
+    await desktop.locator(".od-relationship-graph-column").count(),
+    3,
+    "A no-result state must keep all three columns.",
+  );
+  assert.equal(
+    await desktop
+      .locator(".od-relationship-graph-column-actions button")
+      .count(),
+    3,
+    "A no-result state must keep all supplied column actions.",
+  );
   await desktop.getByRole("button", { name: "Clear search" }).first().click();
   assert.equal(await desktop.locator(".od-relationship-graph-node").count(), 6);
   assert.equal(
@@ -371,6 +512,37 @@ try {
     (await new AxeBuilder({ page: desktop }).analyze()).violations,
     [],
     "The desktop relationship graph must have no automated accessibility violations.",
+  );
+
+  await desktop.evaluate(() => window.showEmptyRelationshipGraph());
+  await desktop.getByText("Create the first relationship record.").waitFor();
+  assert.equal(
+    await desktop.locator(".od-relationship-graph-column").count(),
+    3,
+    "An empty graph must keep all three columns.",
+  );
+  assert.equal(
+    await desktop
+      .locator(".od-relationship-graph-column-actions button")
+      .count(),
+    3,
+    "An empty graph must keep all supplied column actions.",
+  );
+  assert.equal(await desktop.locator(".od-relationship-graph-node").count(), 0);
+  const emptyCreateMapping = desktop.getByRole("button", {
+    name: "Create mapping",
+  });
+  await emptyCreateMapping.click();
+  const emptyCreateInspector = desktop.getByRole("dialog", {
+    name: "Create mapping",
+  });
+  await emptyCreateInspector.waitFor();
+  await desktop.keyboard.press("Escape");
+  await emptyCreateInspector.waitFor({ state: "detached" });
+  assert.equal(
+    await activeElementIs(emptyCreateMapping),
+    true,
+    "An empty-graph inspector must return focus to its exact create action.",
   );
 
   await desktop.evaluate(() => window.showMultipleRelationshipGraphs());
@@ -443,11 +615,75 @@ try {
     true,
     "Phone columns must use one aligned width.",
   );
+  const phoneCreateMapping = phone.getByRole("button", {
+    name: "Create mapping",
+  });
+  await phoneCreateMapping.click();
+  const phoneInspector = phone.getByRole("dialog", { name: "Create mapping" });
+  await phoneInspector.waitFor();
+  const phoneInspectorGeometry = await phoneInspector.evaluate((element) => {
+    const bounds = element.getBoundingClientRect();
+    const content = element.querySelector(".od-graph-inspector-content");
+    return {
+      bottom: bounds.bottom,
+      innerHeight: window.innerHeight,
+      position: getComputedStyle(element).position,
+      top: bounds.top,
+      contentClientHeight: content?.clientHeight ?? 0,
+      contentScrollHeight: content?.scrollHeight ?? 0,
+    };
+  });
+  assert.equal(
+    phoneInspectorGeometry.position,
+    "fixed",
+    "A phone inspector must use viewport geometry.",
+  );
+  assert.equal(
+    phoneInspectorGeometry.top >= 0 &&
+      phoneInspectorGeometry.bottom <= phoneInspectorGeometry.innerHeight,
+    true,
+    `A phone inspector must stay wholly in the viewport: ${JSON.stringify(phoneInspectorGeometry)}`,
+  );
+  assert.equal(
+    phoneInspectorGeometry.contentScrollHeight >
+      phoneInspectorGeometry.contentClientHeight,
+    true,
+    "A long phone inspector must scroll its content locally.",
+  );
+  await assertNoPageOverflow(
+    phone,
+    "An open phone inspector must not cause page overflow",
+  );
+  await phone.keyboard.press("Escape");
+  await phoneInspector.waitFor({ state: "detached" });
+  assert.equal(
+    await activeElementIs(phoneCreateMapping),
+    true,
+    "A phone inspector must return focus to the exact create action.",
+  );
   await assertNoPageOverflow(phone, "The phone page must not overflow");
   await phone.evaluate(() => {
     document.documentElement.style.fontSize = "200%";
   });
   await assertNoPageOverflow(phone, "The phone page must reflow at 200% text");
+  await phoneCreateMapping.click();
+  await phoneInspector.waitFor();
+  const zoomedInspectorGeometry = await phoneInspector.evaluate((element) => {
+    const bounds = element.getBoundingClientRect();
+    return {
+      bottom: bounds.bottom,
+      innerHeight: window.innerHeight,
+      top: bounds.top,
+    };
+  });
+  assert.equal(
+    zoomedInspectorGeometry.top >= 0 &&
+      zoomedInspectorGeometry.bottom <= zoomedInspectorGeometry.innerHeight,
+    true,
+    `A phone inspector must stay visible at 200% text: ${JSON.stringify(zoomedInspectorGeometry)}`,
+  );
+  await phone.keyboard.press("Escape");
+  await phoneInspector.waitFor({ state: "detached" });
   assert.equal(
     await phone
       .getByRole("region", { name: "Example relationship graph viewport" })

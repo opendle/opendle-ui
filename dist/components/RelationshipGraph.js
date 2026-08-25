@@ -97,7 +97,7 @@ function assertRelationshipGraphLabels(ariaLabel, searchLabel, clearSearchLabel,
 }
 /** A host-neutral, responsive relationship graph with three named columns. */
 // react-doctor-disable-next-line react-doctor/no-giant-component -- This coordinator keeps measurement, controlled selection, search, and one keyboard model synchronized. Render-only behavior stays in the host-neutral data model.
-export function RelationshipGraph({ columns, relationships, selectedNodeId, defaultSelectedNodeId = null, onSelectionChange, onNodeActivate, inspector, searchLabel = "Search graph", searchPlaceholder = "Search all columns", searchQuery, defaultSearchQuery = "", onSearchQueryChange, emptyState, invalidState, noResultsTitle = "No matching items", noResultsDescription = "Change the search or restore the complete graph.", clearSearchLabel = "Clear search", className, "aria-label": ariaLabel, ...props }) {
+export function RelationshipGraph({ columns, relationships, selectedNodeId, defaultSelectedNodeId = null, onSelectionChange, onNodeActivate, auxiliaryInspector, inspector, searchLabel = "Search graph", searchPlaceholder = "Search all columns", searchQuery, defaultSearchQuery = "", onSearchQueryChange, emptyState, invalidState, noResultsTitle = "No matching items", noResultsDescription = "Change the search or restore the complete graph.", clearSearchLabel = "Clear search", className, "aria-label": ariaLabel, ...props }) {
     const [state, updateState] = useReducer(updateRelationshipGraphState, {
         announcement: "",
         edgeLayouts: [],
@@ -183,6 +183,14 @@ export function RelationshipGraph({ columns, relationships, selectedNodeId, defa
         }
         return labels;
     }, [nodesById, relationships]);
+    const selectedNodeInspector = selectedId !== null && nodesById.has(selectedId) ? inspector : null;
+    if (auxiliaryInspector !== null &&
+        auxiliaryInspector !== undefined &&
+        selectedNodeInspector !== null &&
+        selectedNodeInspector !== undefined) {
+        throw new Error("A relationship graph can show one auxiliary or selected-node inspector, not both.");
+    }
+    const activeInspector = auxiliaryInspector ?? selectedNodeInspector;
     useEffect(() => {
         onSelectionChangeRef.current = onSelectionChange;
     }, [onSelectionChange]);
@@ -229,7 +237,7 @@ export function RelationshipGraph({ columns, relationships, selectedNodeId, defa
                 announcement: `${previous?.node.label ?? "The selected item"} is unavailable.`,
             });
             const firstNode = nodeRefs.current.get(visibleModelNodes[0]?.id ?? "");
-            const emptyAction = rootRef.current?.querySelector(".od-relationship-graph-empty button");
+            const emptyAction = rootRef.current?.querySelector(".od-relationship-graph-empty button, .od-relationship-graph-empty [href], .od-relationship-graph-column-actions button, .od-relationship-graph-column-actions [href]");
             (firstNode ?? emptyAction ?? searchInputRef.current)?.focus({
                 preventScroll: true,
             });
@@ -251,7 +259,7 @@ export function RelationshipGraph({ columns, relationships, selectedNodeId, defa
         if (!focusIsHidden)
             return;
         const firstNode = nodeRefs.current.get(visibleModelNodes[0]?.id ?? "");
-        const emptyAction = rootRef.current?.querySelector(".od-relationship-graph-empty button, .od-relationship-graph-empty [href], .od-relationship-graph-invalid button, .od-relationship-graph-invalid [href]");
+        const emptyAction = rootRef.current?.querySelector(".od-relationship-graph-empty button, .od-relationship-graph-empty [href], .od-relationship-graph-invalid button, .od-relationship-graph-invalid [href], .od-relationship-graph-column-actions button, .od-relationship-graph-column-actions [href]");
         (firstNode ?? emptyAction ?? searchInputRef.current)?.focus({
             preventScroll: true,
         });
@@ -370,9 +378,9 @@ export function RelationshipGraph({ columns, relationships, selectedNodeId, defa
                                             changeQuery(event.currentTarget.value);
                                         }, placeholder: searchPlaceholder, ref: searchInputRef, type: "search", value: query }), _jsx("kbd", { "aria-hidden": "true", children: "/" })] })] }), query ? (_jsx("button", { onClick: () => {
                             changeQuery("");
-                        }, type: "button", children: clearSearchLabel })) : null] }), _jsx("section", { "aria-label": `${ariaLabel} viewport`, className: "od-relationship-graph-viewport", children: invalidState !== undefined ? (_jsx("div", { className: "od-relationship-graph-invalid", role: "alert", children: invalidState })) : graphIsEmpty ? (_jsx("div", { "aria-live": "polite", className: "od-relationship-graph-empty", children: emptyState ?? "No items are available." })) : noSearchResults ? (_jsxs("div", { "aria-live": "polite", className: "od-relationship-graph-empty", children: [_jsx("strong", { children: noResultsTitle }), _jsx("div", { children: noResultsDescription }), _jsx("button", { onClick: () => {
-                                changeQuery("");
-                            }, type: "button", children: clearSearchLabel })] })) : (_jsxs("div", { className: "od-relationship-graph-board", ref: boardRef, children: [_jsx("svg", { "aria-hidden": "true", className: "od-relationship-graph-connectors", height: "100%", width: "100%", children: edgeLayouts.map((layout) => {
+                        }, type: "button", children: clearSearchLabel })) : null] }), _jsx("section", { "aria-label": `${ariaLabel} viewport`, className: "od-relationship-graph-viewport", children: invalidState !== undefined ? (_jsx("div", { className: "od-relationship-graph-invalid", role: "alert", children: invalidState })) : (_jsxs("div", { className: "od-relationship-graph-board", ref: boardRef, children: [graphIsEmpty ? (_jsx("div", { "aria-live": "polite", className: "od-relationship-graph-empty", children: emptyState ?? "No items are available." })) : noSearchResults ? (_jsxs("div", { "aria-live": "polite", className: "od-relationship-graph-empty", children: [_jsx("strong", { children: noResultsTitle }), _jsx("div", { children: noResultsDescription }), _jsx("button", { onClick: () => {
+                                        changeQuery("");
+                                    }, type: "button", children: clearSearchLabel })] })) : null, _jsx("svg", { "aria-hidden": "true", className: "od-relationship-graph-connectors", height: "100%", width: "100%", children: edgeLayouts.map((layout) => {
                                 const relationship = relationshipsById.get(layout.id);
                                 if (!relationship ||
                                     !searchResult.visibleNodeIds.has(relationship.sourceId) ||
@@ -408,6 +416,6 @@ export function RelationshipGraph({ columns, relationships, selectedNodeId, defa
                                                             nodeRefs.current.delete(node.id);
                                                     }, tabIndex: preferredTabStop === node.id ? 0 : -1, type: "button", children: [_jsxs("span", { className: "od-relationship-graph-node-heading", children: [_jsx("strong", { children: node.label }), state !== "default" ? (_jsx("span", { className: "od-relationship-graph-node-state", children: stateLabel })) : null] }), node.detail ? (_jsx("span", { className: "od-relationship-graph-node-detail", children: node.detail })) : null, node.content ? (_jsx("span", { className: "od-relationship-graph-node-content", children: node.content })) : null] }, node.id));
                                             })] })] }, column.id));
-                        })] })) }), selectedId !== null && nodesById.has(selectedId) ? inspector : null] }));
+                        })] })) }), activeInspector] }));
 }
 //# sourceMappingURL=RelationshipGraph.js.map

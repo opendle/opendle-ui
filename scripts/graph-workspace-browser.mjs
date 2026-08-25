@@ -221,18 +221,24 @@ async function verifyInspector(page, opener, title, phone) {
   const inspectorBounds = await inspector.boundingBox();
   assert.ok(workspaceBounds && inspectorBounds);
   if (phone) {
+    const viewport = page.viewportSize();
+    assert.ok(viewport);
     assert.equal(
       Math.abs(
-        workspaceBounds.y +
-          workspaceBounds.height -
-          (inspectorBounds.y + inspectorBounds.height) -
-          12,
+        viewport.height - (inspectorBounds.y + inspectorBounds.height) - 12,
       ) < 3,
       true,
-      `${title} must use the shared bottom slot on a phone: ${JSON.stringify({ inspectorBounds, workspaceBounds })}`,
+      `${title} must use the viewport-bottom slot on a phone: ${JSON.stringify({ inspectorBounds, viewport })}`,
     );
     assert.equal(
-      inspectorBounds.x > workspaceBounds.x,
+      inspectorBounds.y >= 0 &&
+        inspectorBounds.y + inspectorBounds.height <= viewport.height,
+      true,
+      `${title} must stay wholly in the phone viewport.`,
+    );
+    assert.equal(
+      inspectorBounds.x >= 12 &&
+        inspectorBounds.x + inspectorBounds.width <= viewport.width - 12,
       true,
       `${title} must keep the phone inset.`,
     );

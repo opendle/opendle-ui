@@ -62,9 +62,13 @@ record types and actions. The component supplies route search, decorative
 connectors, persistent selection, route emphasis, unrelated-item dimming, and
 the one-tab-stop arrow-key interaction. It stacks its columns on a phone and
 keeps dense content in a labelled local viewport.
-The optional inspector stays mounted only while its selected node remains in
-the current graph. A host must clear its inspector state when the selection
-change callback reports that the node is unavailable.
+Column headers and supplied actions stay available when the graph is empty or
+a search has no results. The optional selected-node inspector stays mounted
+only while its selected node remains in the current graph. A host must clear
+its inspector state when the selection change callback reports that the node
+is unavailable. A host can supply one auxiliary inspector for a create form or
+other action that does not have a selected node. It must not supply this
+inspector together with an active selected-node inspector.
 
 `OperationPlayground` gives host applications one controlled, provider-neutral
 surface for model, embedding, image, video, and audio operations. It supports

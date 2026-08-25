@@ -42,6 +42,9 @@ export interface RelationshipGraphProps extends Omit<HTMLAttributes<HTMLElement>
     readonly defaultSelectedNodeId?: string | null;
     readonly onSelectionChange?: (nodeId: string | null) => void;
     readonly onNodeActivate?: (context: RelationshipGraphNodeContext) => void;
+    /** One host-controlled inspector that is not attached to a graph node, such as a create form. */
+    readonly auxiliaryInspector?: ReactNode;
+    /** The selected-node inspector. It is removed when the selected node is not in the graph. */
     readonly inspector?: ReactNode;
     readonly searchLabel?: string;
     readonly searchPlaceholder?: string;
@@ -55,5 +58,5 @@ export interface RelationshipGraphProps extends Omit<HTMLAttributes<HTMLElement>
     readonly clearSearchLabel?: string;
 }
 /** A host-neutral, responsive relationship graph with three named columns. */
-export declare function RelationshipGraph({ columns, relationships, selectedNodeId, defaultSelectedNodeId, onSelectionChange, onNodeActivate, inspector, searchLabel, searchPlaceholder, searchQuery, defaultSearchQuery, onSearchQueryChange, emptyState, invalidState, noResultsTitle, noResultsDescription, clearSearchLabel, className, "aria-label": ariaLabel, ...props }: RelationshipGraphProps): import("react").JSX.Element;
+export declare function RelationshipGraph({ columns, relationships, selectedNodeId, defaultSelectedNodeId, onSelectionChange, onNodeActivate, auxiliaryInspector, inspector, searchLabel, searchPlaceholder, searchQuery, defaultSearchQuery, onSearchQueryChange, emptyState, invalidState, noResultsTitle, noResultsDescription, clearSearchLabel, className, "aria-label": ariaLabel, ...props }: RelationshipGraphProps): import("react").JSX.Element;
 //# sourceMappingURL=RelationshipGraph.d.ts.map

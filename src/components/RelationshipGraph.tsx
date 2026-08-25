@@ -72,6 +72,9 @@ export interface RelationshipGraphProps extends Omit<
   readonly defaultSelectedNodeId?: string | null;
   readonly onSelectionChange?: (nodeId: string | null) => void;
   readonly onNodeActivate?: (context: RelationshipGraphNodeContext) => void;
+  /** One host-controlled inspector that is not attached to a graph node, such as a create form. */
+  readonly auxiliaryInspector?: ReactNode;
+  /** The selected-node inspector. It is removed when the selected node is not in the graph. */
   readonly inspector?: ReactNode;
   readonly searchLabel?: string;
   readonly searchPlaceholder?: string;
@@ -240,6 +243,7 @@ export function RelationshipGraph({
   defaultSelectedNodeId = null,
   onSelectionChange,
   onNodeActivate,
+  auxiliaryInspector,
   inspector,
   searchLabel = "Search graph",
   searchPlaceholder = "Search all columns",
@@ -406,6 +410,19 @@ export function RelationshipGraph({
     }
     return labels;
   }, [nodesById, relationships]);
+  const selectedNodeInspector =
+    selectedId !== null && nodesById.has(selectedId) ? inspector : null;
+  if (
+    auxiliaryInspector !== null &&
+    auxiliaryInspector !== undefined &&
+    selectedNodeInspector !== null &&
+    selectedNodeInspector !== undefined
+  ) {
+    throw new Error(
+      "A relationship graph can show one auxiliary or selected-node inspector, not both.",
+    );
+  }
+  const activeInspector = auxiliaryInspector ?? selectedNodeInspector;
 
   useEffect(() => {
     onSelectionChangeRef.current = onSelectionChange;
@@ -456,8 +473,8 @@ export function RelationshipGraph({
         announcement: `${previous?.node.label ?? "The selected item"} is unavailable.`,
       });
       const firstNode = nodeRefs.current.get(visibleModelNodes[0]?.id ?? "");
-      const emptyAction = rootRef.current?.querySelector<HTMLButtonElement>(
-        ".od-relationship-graph-empty button",
+      const emptyAction = rootRef.current?.querySelector<HTMLElement>(
+        ".od-relationship-graph-empty button, .od-relationship-graph-empty [href], .od-relationship-graph-column-actions button, .od-relationship-graph-column-actions [href]",
       );
       (firstNode ?? emptyAction ?? searchInputRef.current)?.focus({
         preventScroll: true,
@@ -482,7 +499,7 @@ export function RelationshipGraph({
     if (!focusIsHidden) return;
     const firstNode = nodeRefs.current.get(visibleModelNodes[0]?.id ?? "");
     const emptyAction = rootRef.current?.querySelector<HTMLElement>(
-      ".od-relationship-graph-empty button, .od-relationship-graph-empty [href], .od-relationship-graph-invalid button, .od-relationship-graph-invalid [href]",
+      ".od-relationship-graph-empty button, .od-relationship-graph-empty [href], .od-relationship-graph-invalid button, .od-relationship-graph-invalid [href], .od-relationship-graph-column-actions button, .od-relationship-graph-column-actions [href]",
     );
     (firstNode ?? emptyAction ?? searchInputRef.current)?.focus({
       preventScroll: true,
@@ -660,25 +677,26 @@ export function RelationshipGraph({
           <div className="od-relationship-graph-invalid" role="alert">
             {invalidState}
           </div>
-        ) : graphIsEmpty ? (
-          <div aria-live="polite" className="od-relationship-graph-empty">
-            {emptyState ?? "No items are available."}
-          </div>
-        ) : noSearchResults ? (
-          <div aria-live="polite" className="od-relationship-graph-empty">
-            <strong>{noResultsTitle}</strong>
-            <div>{noResultsDescription}</div>
-            <button
-              onClick={() => {
-                changeQuery("");
-              }}
-              type="button"
-            >
-              {clearSearchLabel}
-            </button>
-          </div>
         ) : (
           <div className="od-relationship-graph-board" ref={boardRef}>
+            {graphIsEmpty ? (
+              <div aria-live="polite" className="od-relationship-graph-empty">
+                {emptyState ?? "No items are available."}
+              </div>
+            ) : noSearchResults ? (
+              <div aria-live="polite" className="od-relationship-graph-empty">
+                <strong>{noResultsTitle}</strong>
+                <div>{noResultsDescription}</div>
+                <button
+                  onClick={() => {
+                    changeQuery("");
+                  }}
+                  type="button"
+                >
+                  {clearSearchLabel}
+                </button>
+              </div>
+            ) : null}
             <svg
               aria-hidden="true"
               className="od-relationship-graph-connectors"
@@ -823,7 +841,7 @@ export function RelationshipGraph({
           </div>
         )}
       </section>
-      {selectedId !== null && nodesById.has(selectedId) ? inspector : null}
+      {activeInspector}
     </section>
   );
 }
