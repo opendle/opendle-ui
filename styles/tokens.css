@@ -12,6 +12,7 @@
   --od-color-lime: #d7f36a;
   --od-color-lime-strong: #b9dc3f;
   --od-color-coral: #ff7b66;
+  --od-color-coral-strong: #9f493c;
   --od-color-blue: #8bbef5;
   --od-color-purple: #8e76cf;
   --od-color-focus: #4669f2;
@@ -55,6 +56,7 @@
   --lime-strong: var(--od-color-lime-strong);
   --lime-soft: var(--od-color-lime-soft);
   --coral: var(--od-color-coral);
+  --coral-strong: var(--od-color-coral-strong);
   --blue: var(--od-color-blue);
   --blue-soft: var(--od-color-blue-soft);
   --purple: var(--od-color-purple);
@@ -3559,7 +3561,7 @@ samp {
   background: var(--od-color-lime-soft);
 }
 .od-status-red {
-  color: #b66b5d;
+  color: var(--od-color-coral-strong);
   background: var(--od-color-coral-soft);
 }
 .od-status-slate {
@@ -4156,7 +4158,7 @@ samp {
   background: var(--od-color-lime-soft);
 }
 .od-attention-row[data-tone="red"] .od-attention-icon {
-  color: #b66b5d;
+  color: var(--od-color-coral-strong);
   background: var(--od-color-coral-soft);
 }
 

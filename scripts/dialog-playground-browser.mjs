@@ -11,7 +11,7 @@ const repositoryRoot = fileURLToPath(new URL("..", import.meta.url));
 const fixtureSource = String.raw`
 import React, { StrictMode, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
-import { Button, ConfirmationDialog, Dialog, EditableTable, GraphInspector, OperationPlayground } from "./dist/index.js";
+import { Button, ConfirmationDialog, Dialog, EditableTable, GraphInspector, OperationPlayground, StatusPill } from "./dist/index.js";
 
 const emptyState = { status: "empty" };
 const errorState = { status: "error", error: {
@@ -44,6 +44,7 @@ function Fixture() {
   const initialFocusRef = useRef(null);
   const inspectorTriggerRef = useRef(null);
   return <main>
+    <StatusPill tone="red">Failed</StatusPill>
     <GraphInspector
       onClose={() => setInspectorCloseCount((value) => value + 1)}
       open
@@ -160,6 +161,31 @@ const browser = await chromium.launch({
   headless: true,
 });
 
+function relativeLuminance(color) {
+  const channels = color
+    .match(/[\d.]+/g)
+    ?.slice(0, 3)
+    .map((value) => Number(value) / 255);
+  assert.equal(
+    channels?.length,
+    3,
+    `Expected an RGB color, received ${color}.`,
+  );
+  const [red, green, blue] = channels.map((channel) =>
+    channel <= 0.04045 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4,
+  );
+  return 0.2126 * red + 0.7152 * green + 0.0722 * blue;
+}
+
+function contrastRatio(foreground, background) {
+  const foregroundLuminance = relativeLuminance(foreground);
+  const backgroundLuminance = relativeLuminance(background);
+  return (
+    (Math.max(foregroundLuminance, backgroundLuminance) + 0.05) /
+    (Math.min(foregroundLuminance, backgroundLuminance) + 0.05)
+  );
+}
+
 async function loadFixture(page) {
   const errors = [];
   page.on("console", (message) => {
@@ -178,6 +204,20 @@ try {
   });
   const desktop = await desktopContext.newPage();
   const desktopErrors = await loadFixture(desktop);
+  const redStatusColors = await desktop
+    .getByText("Failed", { exact: true })
+    .evaluate((element) => {
+      const styles = getComputedStyle(element);
+      return {
+        background: styles.backgroundColor,
+        foreground: styles.color,
+      };
+    });
+  assert.ok(
+    contrastRatio(redStatusColors.foreground, redStatusColors.background) >=
+      4.5,
+    "The red status label must meet WCAG AA text contrast.",
+  );
   const dialog = desktop.getByRole("dialog", { name: "General dialog" });
   const deleteOpener = desktop.getByRole("button", {
     name: "Delete exact assignment",
