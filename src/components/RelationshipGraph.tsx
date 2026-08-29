@@ -28,11 +28,13 @@ export type RelationshipGraphNodeState =
   | "default"
   | "disabled"
   | "empty"
+  | "enabled"
   | "error"
   | "inherited"
   | "invalid"
   | "loading"
   | "partial"
+  | "ready"
   | "unavailable";
 
 export interface RelationshipGraphNode {
@@ -166,11 +168,13 @@ const nodeStateLabels: Record<RelationshipGraphNodeState, string> = {
   default: "Available",
   disabled: "Disabled",
   empty: "Empty",
+  enabled: "Enabled",
   error: "Error",
   inherited: "Inherited",
   invalid: "Invalid",
   loading: "Loading",
   partial: "Partial",
+  ready: "Ready",
   unavailable: "Unavailable",
 };
 
@@ -320,7 +324,7 @@ function RelationshipGraphNodeControl({
     >
       <span className="od-relationship-graph-node-heading">
         <strong>{node.label}</strong>
-        {state !== "default" ? (
+        {state !== "default" || node.stateLabel !== undefined ? (
           <span className="od-relationship-graph-node-state">{stateLabel}</span>
         ) : null}
       </span>
@@ -376,7 +380,7 @@ function RelationshipGraphGroupSummary({
     >
       <span className="od-relationship-graph-node-heading">
         <strong>{group.label}</strong>
-        {state !== "default" ? (
+        {state !== "default" || group.stateLabel !== undefined ? (
           <span className="od-relationship-graph-node-state">{stateLabel}</span>
         ) : null}
       </span>

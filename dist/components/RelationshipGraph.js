@@ -29,11 +29,13 @@ const nodeStateLabels = {
     default: "Available",
     disabled: "Disabled",
     empty: "Empty",
+    enabled: "Enabled",
     error: "Error",
     inherited: "Inherited",
     invalid: "Invalid",
     loading: "Loading",
     partial: "Partial",
+    ready: "Ready",
     unavailable: "Unavailable",
 };
 function isRelationshipGraphGroup(item) {
@@ -92,14 +94,14 @@ function RelationshipGraphNodeControl({ activeNodeId, activeNodeIds, column, con
             onHoverChange(null);
         }, ref: (element) => {
             onRegister(node.id, element);
-        }, tabIndex: preferredTabStop === node.id ? 0 : -1, type: "button", children: [_jsxs("span", { className: "od-relationship-graph-node-heading", children: [_jsx("strong", { children: node.label }), state !== "default" ? (_jsx("span", { className: "od-relationship-graph-node-state", children: stateLabel })) : null] }), searchContext ? (_jsx("span", { className: "od-relationship-graph-node-context", children: searchContextLabel })) : null, node.detail ? (_jsx("span", { className: "od-relationship-graph-node-detail", children: node.detail })) : null, node.content ? (_jsx("span", { className: "od-relationship-graph-node-content", children: node.content })) : null, connectedRelationships.length > 0 ? (_jsx("span", { className: "od-relationship-graph-node-relationships", children: connectedRelationships.map(({ id, label }) => (_jsx("span", { children: label }, id))) })) : null] }));
+        }, tabIndex: preferredTabStop === node.id ? 0 : -1, type: "button", children: [_jsxs("span", { className: "od-relationship-graph-node-heading", children: [_jsx("strong", { children: node.label }), state !== "default" || node.stateLabel !== undefined ? (_jsx("span", { className: "od-relationship-graph-node-state", children: stateLabel })) : null] }), searchContext ? (_jsx("span", { className: "od-relationship-graph-node-context", children: searchContextLabel })) : null, node.detail ? (_jsx("span", { className: "od-relationship-graph-node-detail", children: node.detail })) : null, node.content ? (_jsx("span", { className: "od-relationship-graph-node-content", children: node.content })) : null, connectedRelationships.length > 0 ? (_jsx("span", { className: "od-relationship-graph-node-relationships", children: connectedRelationships.map(({ id, label }) => (_jsx("span", { children: label }, id))) })) : null] }));
 }
 function RelationshipGraphGroupSummary({ directMatchIds, group, searchContextLabel, searchIsActive, }) {
     const state = group.state ?? "default";
     const stateLabel = group.stateLabel ?? nodeStateLabels[state];
     const directSearchMatch = directMatchIds.has(group.id);
     const searchContext = searchIsActive && !directSearchMatch;
-    return (_jsxs("div", { className: "od-relationship-graph-node od-relationship-graph-group-summary", "data-group-header-id": group.id, "data-node-kind": "group", "data-search-context": searchContext, "data-search-match": directSearchMatch, "data-state": state, children: [_jsxs("span", { className: "od-relationship-graph-node-heading", children: [_jsx("strong", { children: group.label }), state !== "default" ? (_jsx("span", { className: "od-relationship-graph-node-state", children: stateLabel })) : null] }), searchContext ? (_jsx("span", { className: "od-relationship-graph-node-context", children: searchContextLabel })) : null, group.detail ? (_jsx("span", { className: "od-relationship-graph-node-detail", children: group.detail })) : null, group.content ? (_jsx("span", { className: "od-relationship-graph-node-content", children: group.content })) : null] }));
+    return (_jsxs("div", { className: "od-relationship-graph-node od-relationship-graph-group-summary", "data-group-header-id": group.id, "data-node-kind": "group", "data-search-context": searchContext, "data-search-match": directSearchMatch, "data-state": state, children: [_jsxs("span", { className: "od-relationship-graph-node-heading", children: [_jsx("strong", { children: group.label }), state !== "default" || group.stateLabel !== undefined ? (_jsx("span", { className: "od-relationship-graph-node-state", children: stateLabel })) : null] }), searchContext ? (_jsx("span", { className: "od-relationship-graph-node-context", children: searchContextLabel })) : null, group.detail ? (_jsx("span", { className: "od-relationship-graph-node-detail", children: group.detail })) : null, group.content ? (_jsx("span", { className: "od-relationship-graph-node-content", children: group.content })) : null] }));
 }
 function editableTarget(target) {
     return (target instanceof HTMLInputElement ||

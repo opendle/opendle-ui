@@ -458,7 +458,20 @@ function compoundColumns() {
     {
       id: "sources",
       label: "Sources",
-      nodes: [{ id: "source", label: "Source", state: "error" }],
+      nodes: [
+        { id: "source", label: "Source", state: "error" },
+        { id: "source-ready", label: "Ready source", state: "ready" },
+        {
+          id: "source-enabled",
+          label: "Enabled source",
+          state: "enabled",
+        },
+        {
+          id: "source-custom",
+          label: "Custom source",
+          stateLabel: "Host-defined state",
+        },
+      ],
     },
     {
       id: "records",
@@ -547,6 +560,8 @@ test("relationship graph renders semantic compound groups and nested row control
     }),
   );
   for (const stateLabel of [
+    "Ready",
+    "Enabled",
     "Error",
     "Inherited",
     "Partial",
@@ -557,6 +572,7 @@ test("relationship graph renders semantic compound groups and nested row control
   ]) {
     assert.match(allStatesMarkup, new RegExp(`>${stateLabel}<`));
   }
+  assert.match(allStatesMarkup, />Host-defined state</);
 });
 
 test("relationship graph keeps a non-actionable group header out of selection and keyboard order", () => {

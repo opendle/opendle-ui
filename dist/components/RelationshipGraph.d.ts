@@ -1,5 +1,5 @@
 import type { HTMLAttributes, ReactNode } from "react";
-export type RelationshipGraphNodeState = "default" | "disabled" | "empty" | "error" | "inherited" | "invalid" | "loading" | "partial" | "unavailable";
+export type RelationshipGraphNodeState = "default" | "disabled" | "empty" | "enabled" | "error" | "inherited" | "invalid" | "loading" | "partial" | "ready" | "unavailable";
 export interface RelationshipGraphNode {
     readonly id: string;
     readonly label: string;
