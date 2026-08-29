@@ -1,7 +1,11 @@
+export type RelationshipGraphModelNodeKind = "group" | "node" | "row";
 export interface RelationshipGraphModelNode {
     readonly id: string;
     readonly columnIndex: number;
     readonly order: number;
+    readonly actionable?: boolean;
+    readonly parentId?: string;
+    readonly kind?: RelationshipGraphModelNodeKind;
     readonly searchValue: string;
 }
 export interface RelationshipGraphModelRelationship {

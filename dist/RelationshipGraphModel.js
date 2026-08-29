@@ -30,6 +30,33 @@ export function assertRelationshipGraphModel(nodes, relationships) {
         columnOrders?.add(node.order);
         nodesById.set(node.id, node);
     }
+    for (const node of nodes) {
+        const kind = node.kind ?? "node";
+        if (kind !== "group" && kind !== "node" && kind !== "row") {
+            throw new Error(`Relationship graph node ${node.id} has an invalid kind.`);
+        }
+        if (kind === "group" && node.parentId !== undefined) {
+            throw new Error(`Relationship graph group ${node.id} must not have a parent.`);
+        }
+        if (kind === "row" && node.parentId === undefined) {
+            throw new Error(`Relationship graph row ${node.id} must name its parent group.`);
+        }
+        if (kind !== "row" && node.parentId !== undefined) {
+            throw new Error(`Relationship graph node ${node.id} must not have a parent group.`);
+        }
+        if (node.actionable !== undefined && typeof node.actionable !== "boolean") {
+            throw new Error(`Relationship graph node ${node.id} has an invalid actionable state.`);
+        }
+        if (node.parentId === undefined)
+            continue;
+        const parent = nodesById.get(node.parentId);
+        if (parent?.kind !== "group") {
+            throw new Error(`Relationship graph row ${node.id} refers to an unknown group.`);
+        }
+        if (parent.columnIndex !== node.columnIndex) {
+            throw new Error(`Relationship graph row ${node.id} must use its parent group's column.`);
+        }
+    }
     const relationshipIds = new Set();
     for (const relationship of relationships) {
         if (!relationship.id.trim()) {
@@ -47,6 +74,9 @@ export function assertRelationshipGraphModel(nodes, relationships) {
         if (target.columnIndex - source.columnIndex !== 1) {
             throw new Error(`Relationship graph relationship ${relationship.id} must connect adjacent columns from left to right.`);
         }
+        if (source.actionable === false || target.actionable === false) {
+            throw new Error(`Relationship graph relationship ${relationship.id} must use actionable endpoints.`);
+        }
     }
 }
 /** Return the complete left and right route through one graph node. */
@@ -54,10 +84,25 @@ export function relationshipGraphPath(activeId, nodes, relationships) {
     const active = activeId === null ? undefined : nodes.find((node) => node.id === activeId);
     if (!active)
         return { nodeIds: new Set(), relationshipIds: new Set() };
+    const childrenByParent = new Map();
+    for (const node of nodes) {
+        if (node.parentId === undefined)
+            continue;
+        const children = childrenByParent.get(node.parentId);
+        if (children)
+            children.push(node.id);
+        else
+            childrenByParent.set(node.parentId, [node.id]);
+    }
     const nodeIds = new Set([active.id]);
     const relationshipIds = new Set();
-    let leftFrontier = new Set([active.id]);
-    let rightFrontier = new Set([active.id]);
+    const activeSeeds = active.kind === "group"
+        ? (childrenByParent.get(active.id) ?? [active.id])
+        : [active.id];
+    for (const seed of activeSeeds)
+        nodeIds.add(seed);
+    let leftFrontier = new Set(activeSeeds);
+    let rightFrontier = new Set(activeSeeds);
     for (let columnIndex = active.columnIndex; columnIndex > 0; columnIndex -= 1) {
         const next = new Set();
         for (const relationship of relationships) {
@@ -80,6 +125,11 @@ export function relationshipGraphPath(activeId, nodes, relationships) {
         }
         rightFrontier = next;
     }
+    for (const node of nodes) {
+        if (node.parentId !== undefined && nodeIds.has(node.id)) {
+            nodeIds.add(node.parentId);
+        }
+    }
     return { nodeIds, relationshipIds };
 }
 /** Keep direct search matches and the records that explain their routes. */
@@ -95,8 +145,25 @@ export function relationshipGraphSearch(query, nodes, relationships) {
         .filter((node) => normalizeSearch(node.searchValue).includes(normalizedQuery))
         .map((node) => node.id));
     const visibleNodeIds = new Set(directMatchIds);
-    let leftFrontier = new Set(directMatchIds);
-    let rightFrontier = new Set(directMatchIds);
+    const childrenByParent = new Map();
+    for (const node of nodes) {
+        if (node.parentId === undefined)
+            continue;
+        const children = childrenByParent.get(node.parentId);
+        if (children)
+            children.push(node.id);
+        else
+            childrenByParent.set(node.parentId, [node.id]);
+    }
+    const searchSeeds = new Set(directMatchIds);
+    for (const id of directMatchIds) {
+        for (const childId of childrenByParent.get(id) ?? []) {
+            visibleNodeIds.add(childId);
+            searchSeeds.add(childId);
+        }
+    }
+    let leftFrontier = new Set(searchSeeds);
+    let rightFrontier = new Set(searchSeeds);
     for (let distance = 0; distance < 2; distance += 1) {
         const nextLeft = new Set();
         const nextRight = new Set();
@@ -113,6 +180,11 @@ export function relationshipGraphSearch(query, nodes, relationships) {
         leftFrontier = nextLeft;
         rightFrontier = nextRight;
     }
+    for (const node of nodes) {
+        if (node.parentId !== undefined && visibleNodeIds.has(node.id)) {
+            visibleNodeIds.add(node.parentId);
+        }
+    }
     return { directMatchIds, visibleNodeIds };
 }
 function normalizedIndex(index, columnSize) {
@@ -120,10 +192,11 @@ function normalizedIndex(index, columnSize) {
 }
 /** Return the next node for the three-column keyboard contract. */
 export function relationshipGraphKeyboardTarget(currentId, key, visibleNodes, relationships) {
-    const current = visibleNodes.find((node) => node.id === currentId);
+    const actionableNodes = visibleNodes.filter((node) => node.actionable !== false);
+    const current = actionableNodes.find((node) => node.id === currentId);
     if (!current)
         return null;
-    const currentColumn = visibleNodes
+    const currentColumn = actionableNodes
         .filter((node) => node.columnIndex === current.columnIndex)
         .sort((left, right) => left.order - right.order);
     const currentIndex = currentColumn.findIndex((node) => node.id === currentId);
@@ -151,7 +224,7 @@ export function relationshipGraphKeyboardTarget(currentId, key, visibleNodes, re
             connectedIds.add(relationship.targetId);
         }
     }
-    const targetColumn = visibleNodes
+    const targetColumn = actionableNodes
         .filter((node) => node.columnIndex === targetColumnIndex)
         .sort((left, right) => left.order - right.order);
     const candidates = targetColumn.filter((node) => connectedIds.has(node.id));

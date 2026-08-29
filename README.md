@@ -54,8 +54,21 @@ relationship surface. Hosts name the columns and nodes, supply relationships,
 compose contextual header actions and an optional inspector, and own all
 record types and actions. The component supplies route search, decorative
 connectors, persistent selection, route emphasis, unrelated-item dimming, and
-the one-tab-stop arrow-key interaction. It stacks its columns on a phone and
-keeps dense content in a labelled local viewport.
+the one-tab-stop arrow-key interaction. A column can contain peer nodes or
+labelled compound groups. Each compound group keeps its header content and
+nested row controls in one semantic group. Relationships can use a nested row
+as an exact endpoint, and one row can connect to several controls in the next
+column. Search keeps a matching group, its applicable rows, and connected
+context. The component stacks its columns and keeps each group intact on a
+phone. It keeps dense content in a labelled local viewport.
+Set `RelationshipGraphGroup.headerActionable` to `false` when a group header
+only names its nested rows. The group stays in search results and keeps its
+state and content. It is not a relationship endpoint, selection target, or
+keyboard target. Set `RelationshipGraphColumn.partialResult` to a labelled,
+host-supplied action when a column has more results to load. A partial
+no-result search focuses the first such action in column order. Use
+`partialNoResultsTitle` and `partialNoResultsDescription` for the partial
+search message. A complete no-result search focuses the clear-search action.
 Column headers and supplied actions stay available when the graph is empty or
 a search has no results. The optional selected-node inspector stays mounted
 only while its selected node remains in the current graph. A host must clear

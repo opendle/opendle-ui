@@ -109,6 +109,166 @@ test("relationship keyboard navigation stays in columns and follows connections"
   );
 });
 
+const compoundNodes = [
+  { id: "source", columnIndex: 0, order: 0, searchValue: "Source" },
+  {
+    id: "record-group",
+    columnIndex: 1,
+    kind: "group",
+    order: 0,
+    searchValue: "Record collection",
+  },
+  {
+    id: "shared-row",
+    columnIndex: 1,
+    kind: "row",
+    order: 1,
+    parentId: "record-group",
+    searchValue: "Shared row",
+  },
+  {
+    id: "second-row",
+    columnIndex: 1,
+    kind: "row",
+    order: 2,
+    parentId: "record-group",
+    searchValue: "Second row",
+  },
+  {
+    id: "target-group",
+    columnIndex: 2,
+    kind: "group",
+    order: 0,
+    searchValue: "Target collection",
+  },
+  {
+    id: "first-rung",
+    columnIndex: 2,
+    kind: "row",
+    order: 1,
+    parentId: "target-group",
+    searchValue: "First rung",
+  },
+  {
+    id: "second-rung",
+    columnIndex: 2,
+    kind: "row",
+    order: 2,
+    parentId: "target-group",
+    searchValue: "Second rung",
+  },
+];
+
+const compoundRelationships = [
+  { id: "source-row", sourceId: "source", targetId: "shared-row" },
+  { id: "row-first", sourceId: "shared-row", targetId: "first-rung" },
+  { id: "row-second", sourceId: "shared-row", targetId: "second-rung" },
+];
+
+test("compound search keeps group context and every route for a group match", () => {
+  const groupResult = relationshipGraphSearch(
+    "record collection",
+    compoundNodes,
+    compoundRelationships,
+  );
+  assert.deepEqual([...groupResult.directMatchIds], ["record-group"]);
+  assert.deepEqual([...groupResult.visibleNodeIds].sort(), [
+    "first-rung",
+    "record-group",
+    "second-row",
+    "second-rung",
+    "shared-row",
+    "source",
+    "target-group",
+  ]);
+
+  const rowResult = relationshipGraphSearch(
+    "shared row",
+    compoundNodes,
+    compoundRelationships,
+  );
+  assert.deepEqual([...rowResult.directMatchIds], ["shared-row"]);
+  assert.equal(rowResult.visibleNodeIds.has("record-group"), true);
+  assert.equal(rowResult.visibleNodeIds.has("second-row"), false);
+  assert.equal(rowResult.visibleNodeIds.has("target-group"), true);
+});
+
+test("compound paths and keyboard targets use exact nested controls", () => {
+  const path = relationshipGraphPath(
+    "shared-row",
+    compoundNodes,
+    compoundRelationships,
+  );
+  assert.deepEqual([...path.nodeIds].sort(), [
+    "first-rung",
+    "record-group",
+    "second-rung",
+    "shared-row",
+    "source",
+    "target-group",
+  ]);
+  assert.equal(
+    relationshipGraphKeyboardTarget(
+      "shared-row",
+      "ArrowUp",
+      compoundNodes,
+      compoundRelationships,
+    ),
+    "record-group",
+  );
+  assert.equal(
+    relationshipGraphKeyboardTarget(
+      "shared-row",
+      "ArrowRight",
+      compoundNodes,
+      compoundRelationships,
+    ),
+    "first-rung",
+  );
+  assert.equal(
+    relationshipGraphKeyboardTarget(
+      "second-rung",
+      "ArrowLeft",
+      compoundNodes,
+      compoundRelationships,
+    ),
+    "shared-row",
+  );
+});
+
+test("keyboard targets skip a non-actionable compound group header", () => {
+  const nonActionableNodes = compoundNodes.map((node) =>
+    node.id === "record-group" ? { ...node, actionable: false } : node,
+  );
+  assert.equal(
+    relationshipGraphKeyboardTarget(
+      "shared-row",
+      "ArrowUp",
+      nonActionableNodes,
+      compoundRelationships,
+    ),
+    "shared-row",
+  );
+  assert.equal(
+    relationshipGraphKeyboardTarget(
+      "second-row",
+      "Home",
+      nonActionableNodes,
+      compoundRelationships,
+    ),
+    "shared-row",
+  );
+  assert.equal(
+    relationshipGraphKeyboardTarget(
+      "record-group",
+      "ArrowDown",
+      nonActionableNodes,
+      compoundRelationships,
+    ),
+    null,
+  );
+});
+
 test("relationship graph rejects ambiguous identifiers and invalid column links", () => {
   assert.throws(
     () => assertRelationshipGraphModel([...nodes, nodes[0]], relationships),
@@ -143,6 +303,70 @@ test("relationship graph rejects ambiguous identifiers and invalid column links"
         [],
       ),
     /orders must be unique/,
+  );
+  assert.throws(
+    () =>
+      assertRelationshipGraphModel(
+        [
+          {
+            id: "orphan-row",
+            columnIndex: 1,
+            kind: "row",
+            order: 0,
+            searchValue: "Orphan",
+          },
+        ],
+        [],
+      ),
+    /must name its parent group/,
+  );
+  assert.throws(
+    () =>
+      assertRelationshipGraphModel(
+        [
+          {
+            id: "group",
+            columnIndex: 1,
+            kind: "group",
+            order: 0,
+            searchValue: "Group",
+          },
+          {
+            id: "peer-with-parent",
+            columnIndex: 1,
+            kind: "node",
+            order: 1,
+            parentId: "group",
+            searchValue: "Peer",
+          },
+        ],
+        [],
+      ),
+    /must not have a parent group/,
+  );
+  assert.throws(
+    () =>
+      assertRelationshipGraphModel(
+        [
+          nodes[0],
+          {
+            id: "label-only-group",
+            actionable: false,
+            columnIndex: 1,
+            kind: "group",
+            order: 0,
+            searchValue: "Label-only group",
+          },
+        ],
+        [
+          {
+            id: "invalid-group-endpoint",
+            sourceId: "source-a",
+            targetId: "label-only-group",
+          },
+        ],
+      ),
+    /must use actionable endpoints/,
   );
   assert.throws(
     () =>
@@ -228,6 +452,155 @@ function graphColumns() {
     },
   ];
 }
+
+function compoundColumns() {
+  return [
+    {
+      id: "sources",
+      label: "Sources",
+      nodes: [{ id: "source", label: "Source", state: "error" }],
+    },
+    {
+      id: "records",
+      label: "Records",
+      nodes: [
+        {
+          id: "record-group",
+          label: "Record collection",
+          rowsLabel: "Record rows",
+          state: "inherited",
+          rows: [
+            { id: "shared-row", label: "Shared row", state: "partial" },
+            { id: "second-row", label: "Second row", state: "loading" },
+          ],
+        },
+      ],
+    },
+    {
+      id: "targets",
+      label: "Targets",
+      nodes: [
+        {
+          id: "target-group",
+          label: "Target collection",
+          rowsLabel: "Ordered rows",
+          state: "empty",
+          rows: [
+            { id: "first-rung", label: "First rung", state: "unavailable" },
+            { id: "second-rung", label: "Second rung", state: "disabled" },
+          ],
+        },
+      ],
+    },
+  ];
+}
+
+test("relationship graph renders semantic compound groups and nested row controls", () => {
+  const markup = renderToStaticMarkup(
+    React.createElement(RelationshipGraph, {
+      "aria-label": "Compound relationships",
+      columns: compoundColumns(),
+      defaultSearchQuery: "shared row",
+      relationships: [
+        {
+          id: "source-row",
+          sourceId: "source",
+          targetId: "shared-row",
+          accessibleLabel: "Source supplies the shared row",
+        },
+        {
+          id: "row-first",
+          sourceId: "shared-row",
+          targetId: "first-rung",
+          accessibleLabel: "Shared row is first",
+        },
+        {
+          id: "row-second",
+          sourceId: "shared-row",
+          targetId: "second-rung",
+          accessibleLabel: "Shared row is second",
+        },
+      ],
+    }),
+  );
+  assert.match(
+    markup,
+    /<fieldset[^>]*class="od-relationship-graph-group"[^>]*>.*?<legend[^>]*>Record collection<\/legend>/s,
+  );
+  assert.match(markup, />Record rows</);
+  assert.match(markup, /data-node-kind="group"/);
+  assert.match(markup, /data-node-kind="row"/);
+  assert.match(markup, /data-group-id="record-group"/);
+  assert.match(markup, /data-expanded="true"/);
+  assert.match(markup, /data-search-match="true"/);
+  assert.match(markup, /data-search-context="true"/);
+  assert.match(markup, />Context</);
+  assert.match(markup, />Partial</);
+  assert.equal((markup.match(/tabindex="0"/g) ?? []).length, 1);
+  assert.doesNotMatch(markup, /provider|model|assignment/i);
+
+  const allStatesMarkup = renderToStaticMarkup(
+    React.createElement(RelationshipGraph, {
+      "aria-label": "Compound states",
+      columns: compoundColumns(),
+      relationships: [],
+    }),
+  );
+  for (const stateLabel of [
+    "Error",
+    "Inherited",
+    "Partial",
+    "Loading",
+    "Empty",
+    "Unavailable",
+    "Disabled",
+  ]) {
+    assert.match(allStatesMarkup, new RegExp(`>${stateLabel}<`));
+  }
+});
+
+test("relationship graph keeps a non-actionable group header out of selection and keyboard order", () => {
+  const columns = compoundColumns().map((column) =>
+    column.id === "records"
+      ? {
+          ...column,
+          nodes: column.nodes.map((item) => ({
+            ...item,
+            headerActionable: false,
+          })),
+        }
+      : column,
+  );
+  const markup = renderToStaticMarkup(
+    React.createElement(RelationshipGraph, {
+      "aria-label": "Label-only compound relationships",
+      columns,
+      defaultSearchQuery: "record collection",
+      inspector: React.createElement(
+        GraphInspector,
+        { title: "Group inspector" },
+        "This inspector must stay closed.",
+      ),
+      relationships: compoundRelationships,
+      selectedNodeId: "record-group",
+    }),
+  );
+  assert.match(
+    markup,
+    /<fieldset[^>]*class="od-relationship-graph-group"[^>]*>.*?<legend[^>]*>Record collection<\/legend>/s,
+  );
+  assert.match(
+    markup,
+    /<div[^>]*data-group-header-id="record-group"[^>]*data-node-kind="group"[^>]*data-search-context="false"[^>]*data-search-match="true"/,
+  );
+  assert.doesNotMatch(markup, /<button[^>]*data-node-id="record-group"/);
+  assert.match(
+    markup,
+    /data-group-id="record-group"[^>]*data-node-id="shared-row"[^>]*data-search-context="true"/,
+  );
+  assert.equal((markup.match(/tabindex="0"/g) ?? []).length, 1);
+  assert.doesNotMatch(markup, /<dialog/);
+});
 
 test("relationship graph renders named columns, button nodes, states, and contextual actions", () => {
   const markup = renderToStaticMarkup(
@@ -328,6 +701,35 @@ test("relationship graph keeps all column actions in empty and no-result states"
   assert.equal((noResultMarkup.match(/<h2/g) ?? []).length, 3);
   assert.match(noResultMarkup, />Create source<\/button>/);
   assert.match(noResultMarkup, />Clear search<\/button>/);
+});
+
+test("relationship graph marks host-supplied partial-result actions and messages", () => {
+  const columns = graphColumns().map((column) =>
+    column.id === "records"
+      ? {
+          ...column,
+          partialResult: {
+            action: React.createElement(Button, null, "Load more records"),
+            label: "Partial records",
+          },
+        }
+      : column,
+  );
+  const markup = renderToStaticMarkup(
+    React.createElement(RelationshipGraph, {
+      "aria-label": "Partial result graph",
+      columns,
+      defaultSearchQuery: "missing",
+      partialNoResultsDescription: "Load more records or change search.",
+      partialNoResultsTitle: "No matching loaded records",
+      relationships: [],
+    }),
+  );
+  assert.match(markup, /data-partial-result="true"/);
+  assert.match(markup, />Partial records</);
+  assert.match(markup, />Load more records<\/button>/);
+  assert.match(markup, />No matching loaded records</);
+  assert.match(markup, />Load more records or change search\.</);
 });
 
 test("relationship graph supports one auxiliary inspector without a selection", () => {

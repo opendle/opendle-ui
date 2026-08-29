@@ -27,30 +27,48 @@ const baseColumns = [
     id: "records",
     label: "Records",
     nodes: [
-      { id: "record-a", label: longLabel, searchText: ["alpha"] },
-      { id: "record-b", label: "Record Beta", state: "disabled" },
+      {
+        id: "record-group",
+        label: "Record collection",
+        rowsLabel: "Record rows",
+        searchText: ["collection"],
+        rows: [
+          { id: "record-a", label: longLabel, searchText: ["alpha"] },
+          { id: "record-b", label: "Record Beta", state: "disabled" },
+        ],
+      },
     ],
   },
   {
     id: "targets",
     label: "Targets",
     nodes: [
-      { id: "target-a", label: "Target One", state: "invalid", stateLabel: "Route invalid" },
-      { id: "target-b", label: "Target Two" },
+      {
+        id: "target-group",
+        label: "Target collection",
+        rowsLabel: "Ordered rows",
+        rows: [
+          { id: "target-a", label: "Target One", state: "invalid", stateLabel: "Route invalid" },
+          { id: "target-b", label: "Target Two" },
+          { id: "target-c", label: "Target Three" },
+        ],
+      },
     ],
   },
 ];
 const relationships = [
-  { id: "source-a-record-a", sourceId: "source-a", targetId: "record-a", label: "source link" },
-  { id: "source-b-record-b", sourceId: "source-b", targetId: "record-b", label: "source link" },
-  { id: "record-a-target-a", sourceId: "record-a", targetId: "target-a", invalid: true, invalidLabel: "invalid route" },
-  { id: "record-b-target-b", sourceId: "record-b", targetId: "target-b", label: "target route" },
+  { id: "source-a-record-a", sourceId: "source-a", targetId: "record-a", label: "source link", accessibleLabel: "Source A supplies Record Alpha" },
+  { id: "source-b-record-b", sourceId: "source-b", targetId: "record-b", label: "source link", accessibleLabel: "Source B supplies Record Beta" },
+  { id: "record-a-target-a", sourceId: "record-a", targetId: "target-a", invalid: true, invalidLabel: "invalid route", accessibleLabel: "Record Alpha is the first target route" },
+  { id: "record-a-target-b", sourceId: "record-a", targetId: "target-b", label: "target route", accessibleLabel: "Record Alpha is the second target route" },
+  { id: "record-b-target-c", sourceId: "record-b", targetId: "target-c", label: "target route", accessibleLabel: "Record Beta is the third target route" },
 ];
 
 function Fixture({ empty = false }) {
   const [selectedId, setSelectedId] = useState(null);
   const [inspectorState, setInspectorState] = useState(null);
   const [query, setQuery] = useState("");
+  const [partialLoaded, setPartialLoaded] = useState(true);
   const [showAlpha, setShowAlpha] = useState(true);
   const returnFocusRef = useRef(null);
   function openCreate(label, trigger) {
@@ -76,11 +94,25 @@ function Fixture({ empty = false }) {
           Create {itemLabel}
         </Button>
       ),
+      partialResult:
+        !empty && partialLoaded && column.id === "records"
+          ? {
+              action: <Button type="button" variant="secondary">Load more records</Button>,
+              label: "Partial records",
+            }
+          : undefined,
       nodes: empty
         ? []
         : showAlpha
           ? column.nodes
-          : column.nodes.filter((node) => node.id !== "record-a"),
+          : column.nodes.map((node) =>
+              "rows" in node
+                ? {
+                    ...node,
+                    rows: node.rows.filter((row) => row.id !== "record-a"),
+                  }
+                : node,
+            ),
     };
   });
   const visibleRelationships = empty
@@ -119,6 +151,7 @@ function Fixture({ empty = false }) {
     </GraphInspector>
   ) : null;
   window.setRelationshipGraphQuery = setQuery;
+  window.setRelationshipGraphPartial = setPartialLoaded;
   return (
     <main>
       <h1>Relationship graph browser check</h1>
@@ -139,6 +172,8 @@ function Fixture({ empty = false }) {
         }}
         onSelectionChange={setSelectedId}
         onSearchQueryChange={setQuery}
+        partialNoResultsDescription="Load more records or change search."
+        partialNoResultsTitle="No matching loaded records"
         relationships={visibleRelationships}
         searchQuery={query}
         selectedNodeId={selectedId}
@@ -167,10 +202,66 @@ function MultipleGraphsFixture() {
   );
 }
 
+const nonActionableColumns = [
+  {
+    id: "referenced-sources",
+    label: "Referenced sources",
+    nodes: [{ id: "referenced-source", label: "Referenced source" }],
+  },
+  {
+    id: "referenced-records",
+    label: "Referenced records",
+    nodes: [
+      {
+        id: "unavailable-records",
+        label: "Unavailable referenced records",
+        headerActionable: false,
+        rowsLabel: "Referenced rows",
+        state: "unavailable",
+        detail: "The host cannot act on this group header.",
+        rows: [
+          { id: "referenced-row-a", label: "Referenced row A" },
+          { id: "referenced-row-b", label: "Referenced row B" },
+        ],
+      },
+    ],
+  },
+  {
+    id: "referenced-targets",
+    label: "Referenced targets",
+    nodes: [
+      { id: "referenced-target-a", label: "Referenced target A" },
+      { id: "referenced-target-b", label: "Referenced target B" },
+    ],
+  },
+];
+const nonActionableRelationships = [
+  { id: "referenced-source-row-a", sourceId: "referenced-source", targetId: "referenced-row-a" },
+  { id: "referenced-row-a-target-a", sourceId: "referenced-row-a", targetId: "referenced-target-a" },
+  { id: "referenced-row-b-target-b", sourceId: "referenced-row-b", targetId: "referenced-target-b" },
+];
+
+function NonActionableGroupFixture() {
+  const [query, setQuery] = useState("");
+  return (
+    <main>
+      <h1>Non-actionable relationship group</h1>
+      <RelationshipGraph
+        aria-label="Non-actionable relationship graph"
+        columns={nonActionableColumns}
+        onSearchQueryChange={setQuery}
+        relationships={nonActionableRelationships}
+        searchQuery={query}
+      />
+    </main>
+  );
+}
+
 const fixtureRoot = createRoot(document.getElementById("root"));
 fixtureRoot.render(<StrictMode><Fixture /></StrictMode>);
 window.showMultipleRelationshipGraphs = () => fixtureRoot.render(<StrictMode><MultipleGraphsFixture /></StrictMode>);
 window.showEmptyRelationshipGraph = () => fixtureRoot.render(<StrictMode><Fixture empty /></StrictMode>);
+window.showNonActionableRelationshipGraph = () => fixtureRoot.render(<StrictMode><NonActionableGroupFixture /></StrictMode>);
 `;
 
 const bundle = await build({
@@ -211,6 +302,17 @@ function activeElementIs(locator) {
   return locator.evaluate((element) => element === document.activeElement);
 }
 
+function waitForInspectorFocusCleanup(page) {
+  return page.evaluate(
+    () =>
+      new Promise((resolve) => {
+        requestAnimationFrame(() => {
+          requestAnimationFrame(resolve);
+        });
+      }),
+  );
+}
+
 async function loadFixture(page) {
   const errors = [];
   page.on("console", (message) => {
@@ -225,7 +327,7 @@ async function loadFixture(page) {
   await page.waitForFunction(
     () =>
       document.querySelectorAll(".od-relationship-graph-connector").length ===
-      4,
+      5,
   );
   return errors;
 }
@@ -244,7 +346,7 @@ async function assertNoPageOverflow(page, message) {
 
 try {
   const desktopContext = await browser.newContext({
-    viewport: { width: 1280, height: 900 },
+    viewport: { width: 1440, height: 900 },
   });
   const desktop = await desktopContext.newPage();
   const desktopErrors = await loadFixture(desktop);
@@ -252,7 +354,7 @@ try {
     await desktop.locator(".od-relationship-graph-column").count(),
     3,
   );
-  assert.equal(await desktop.locator(".od-relationship-graph-node").count(), 6);
+  assert.equal(await desktop.locator(".od-relationship-graph-node").count(), 9);
   assert.equal(
     await desktop.locator(".od-relationship-graph-node[tabindex='0']").count(),
     1,
@@ -269,7 +371,49 @@ try {
   );
   assert.match(
     await node(desktop, "record-a").getAttribute("aria-label"),
-    /invalid route/,
+    /first target route/,
+  );
+  assert.equal(
+    await desktop
+      .locator(
+        ".od-relationship-graph-group[data-group-id='record-group'] [data-node-id='record-a']",
+      )
+      .count(),
+    1,
+    "A nested row must stay in its labelled compound group.",
+  );
+
+  const exactConnectorGeometry = await desktop
+    .locator("[data-relationship-id='record-a-target-b']")
+    .evaluate((connector) => {
+      const board = connector.closest(".od-relationship-graph-board");
+      const target = board?.querySelector("[data-node-id='target-b']");
+      const boardBounds = board?.getBoundingClientRect();
+      const targetBounds = target?.getBoundingClientRect();
+      const coordinates = connector
+        .getAttribute("d")
+        ?.trim()
+        .split(/[ ,]/u)
+        .filter(Boolean)
+        .slice(-2)
+        .map(Number);
+      return {
+        expectedX: (targetBounds?.left ?? 0) - (boardBounds?.left ?? 0),
+        expectedY:
+          (targetBounds?.top ?? 0) +
+          (targetBounds?.height ?? 0) / 2 -
+          (boardBounds?.top ?? 0),
+        targetId: connector.getAttribute("data-target-node-id"),
+        x: coordinates?.[0] ?? Number.NaN,
+        y: coordinates?.[1] ?? Number.NaN,
+      };
+    });
+  assert.equal(exactConnectorGeometry.targetId, "target-b");
+  assert.equal(
+    Math.abs(exactConnectorGeometry.x - exactConnectorGeometry.expectedX) < 1 &&
+      Math.abs(exactConnectorGeometry.y - exactConnectorGeometry.expectedY) < 1,
+    true,
+    `A connector must end at its exact nested row: ${JSON.stringify(exactConnectorGeometry)}`,
   );
 
   const columnPositions = await desktop
@@ -281,6 +425,22 @@ try {
     columnPositions[0] < columnPositions[1] &&
       columnPositions[1] < columnPositions[2],
     true,
+  );
+  const readableColumns = await desktop
+    .locator(".od-relationship-graph-column")
+    .evaluateAll((elements) =>
+      elements.every((element) => {
+        const heading = element.querySelector("h2");
+        return (
+          element.getBoundingClientRect().width >= 240 &&
+          (heading?.scrollWidth ?? 0) <= (heading?.clientWidth ?? 0)
+        );
+      }),
+    );
+  assert.equal(
+    readableColumns,
+    true,
+    "Wide columns and their headings must stay readable without clipping.",
   );
 
   const graphViewport = desktop.getByRole("region", {
@@ -322,7 +482,7 @@ try {
     };
   });
   assert.equal(
-    desktopInspectorGeometry.inspectorLeft > 1280 / 2 &&
+    desktopInspectorGeometry.inspectorLeft > 1440 / 2 &&
       Math.abs(
         desktopInspectorGeometry.graphRight -
           desktopInspectorGeometry.inspectorRight,
@@ -372,7 +532,7 @@ try {
     await desktop
       .locator(".od-relationship-graph-node[data-active='true']")
       .count(),
-    3,
+    6,
   );
   assert.equal(
     await desktop
@@ -384,7 +544,7 @@ try {
     await desktop
       .locator(".od-relationship-graph-connector[data-active='true']")
       .count(),
-    2,
+    3,
   );
   await desktop.mouse.move(2, 2);
 
@@ -393,22 +553,46 @@ try {
     await desktop
       .locator(".od-relationship-graph-node[data-active='true']")
       .count(),
-    3,
+    6,
   );
   await desktop.keyboard.press("ArrowDown");
   assert.equal(await activeElementIs(node(desktop, "source-b")), true);
   await desktop.keyboard.press("ArrowRight");
   assert.equal(await activeElementIs(node(desktop, "record-b")), true);
   await desktop.keyboard.press("ArrowRight");
-  assert.equal(await activeElementIs(node(desktop, "target-b")), true);
+  assert.equal(await activeElementIs(node(desktop, "target-c")), true);
   await desktop.keyboard.press("ArrowLeft");
   assert.equal(await activeElementIs(node(desktop, "record-b")), true);
   await desktop.keyboard.press("Home");
+  assert.equal(await activeElementIs(node(desktop, "record-group")), true);
+  await desktop.keyboard.press("ArrowRight");
+  assert.equal(
+    await activeElementIs(node(desktop, "record-group")),
+    true,
+    "A direction with no exact relationship must keep focus in place.",
+  );
+  await desktop.keyboard.press("ArrowDown");
+  assert.equal(await activeElementIs(node(desktop, "record-a")), true);
+  await desktop.keyboard.press("Enter");
+  const enterInspector = desktop.getByRole("dialog", { name: /Record Alpha/ });
+  await enterInspector.waitFor();
+  await desktop.keyboard.press("Escape");
+  await enterInspector.waitFor({ state: "detached" });
+  await waitForInspectorFocusCleanup(desktop);
   assert.equal(await activeElementIs(node(desktop, "record-a")), true);
   await desktop.keyboard.press("End");
-  assert.equal(await activeElementIs(node(desktop, "record-b")), true);
+  assert.equal(
+    await activeElementIs(node(desktop, "record-b")),
+    true,
+    `End must focus Record Beta, but focus is on ${await desktop.evaluate(
+      () =>
+        document.activeElement?.getAttribute("data-node-id") ??
+        document.activeElement?.textContent,
+    )}.`,
+  );
 
-  await node(desktop, "record-a").click();
+  await node(desktop, "record-a").focus();
+  await desktop.keyboard.press("Space");
   const inspector = desktop.getByRole("dialog", { name: /Record Alpha/ });
   await inspector.waitFor();
   assert.equal(
@@ -441,7 +625,7 @@ try {
   await node(desktop, "record-a").focus();
   await desktop.evaluate(() => window.setRelationshipGraphQuery("beta"));
   await desktop.waitForFunction(
-    () => document.activeElement?.getAttribute("data-node-id") === "source-b",
+    () => document.activeElement?.getAttribute("data-node-id") === "record-b",
   );
   assert.equal(
     await desktop
@@ -457,7 +641,7 @@ try {
   const search = desktop.getByRole("searchbox", { name: "Search graph" });
   assert.equal(await activeElementIs(search), true);
   await search.fill("beta");
-  assert.equal(await desktop.locator(".od-relationship-graph-node").count(), 3);
+  assert.equal(await desktop.locator(".od-relationship-graph-node").count(), 5);
   assert.equal(
     await node(desktop, "record-b").getAttribute("data-search-match"),
     "true",
@@ -466,7 +650,41 @@ try {
     await desktop.locator(".od-relationship-graph-connector").count(),
     2,
   );
+  assert.equal(
+    await desktop
+      .locator(".od-relationship-graph-node[data-search-context='true']")
+      .count(),
+    4,
+    "A direct nested-row match must keep its group and relationship context.",
+  );
+  await search.fill("record collection");
+  assert.equal(await desktop.locator(".od-relationship-graph-node").count(), 9);
+  assert.equal(
+    await node(desktop, "record-group").getAttribute("data-search-match"),
+    "true",
+  );
+  assert.equal(
+    await node(desktop, "record-a").getAttribute("data-search-context"),
+    "true",
+  );
   await search.fill("missing");
+  await desktop.waitForFunction(
+    () => document.activeElement?.textContent === "Load more records",
+  );
+  assert.match(
+    await desktop.locator("output.od-visually-hidden").textContent(),
+    /No matching loaded records/,
+    "A partial no-match must announce that only loaded records were searched.",
+  );
+  await desktop.evaluate(() => window.setRelationshipGraphPartial(false));
+  await desktop.waitForFunction(
+    () => document.activeElement?.textContent === "Clear search",
+  );
+  assert.match(
+    await desktop.locator("output.od-visually-hidden").textContent(),
+    /No matching items/,
+    "A complete no-match must use the complete-result announcement.",
+  );
   assert.equal(
     await desktop.locator(".od-relationship-graph-column").count(),
     3,
@@ -480,10 +698,15 @@ try {
     "A no-result state must keep all supplied column actions.",
   );
   await desktop.getByRole("button", { name: "Clear search" }).first().click();
-  assert.equal(await desktop.locator(".od-relationship-graph-node").count(), 6);
+  assert.equal(await desktop.locator(".od-relationship-graph-node").count(), 9);
   assert.equal(
     await node(desktop, "record-a").getAttribute("aria-pressed"),
     "true",
+  );
+  assert.equal(
+    await activeElementIs(node(desktop, "record-a")),
+    true,
+    "Clearing search must restore focus to the prior selected control.",
   );
 
   const longLabelFits = await node(desktop, "record-a").evaluate(
@@ -499,7 +722,7 @@ try {
     () => document.activeElement?.getAttribute("data-node-id") === "source-a",
   );
   assert.match(
-    await desktop.locator(".od-visually-hidden").textContent(),
+    await desktop.locator("output.od-visually-hidden").textContent(),
     /Record Alpha.*unavailable/,
   );
   assert.equal(
@@ -512,6 +735,70 @@ try {
     (await new AxeBuilder({ page: desktop }).analyze()).violations,
     [],
     "The desktop relationship graph must have no automated accessibility violations.",
+  );
+
+  await desktop.evaluate(() => window.showNonActionableRelationshipGraph());
+  const nonActionableGraph = desktop.getByRole("region", {
+    name: "Non-actionable relationship graph viewport",
+  });
+  await nonActionableGraph.waitFor();
+  const labelledGroup = desktop.getByRole("group", {
+    exact: true,
+    name: "Unavailable referenced records",
+  });
+  assert.equal(await labelledGroup.count(), 1);
+  const groupSummary = desktop.locator(
+    '[data-group-header-id="unavailable-records"]',
+  );
+  assert.equal(
+    await groupSummary.evaluate((element) => element.tagName),
+    "DIV",
+  );
+  assert.equal(await groupSummary.getAttribute("tabindex"), null);
+  assert.equal(
+    await desktop
+      .getByRole("button", {
+        exact: true,
+        name: "Unavailable referenced records",
+      })
+      .count(),
+    0,
+    "A label-only group header must not be a button.",
+  );
+  assert.equal(
+    await nonActionableGraph
+      .locator('.od-relationship-graph-node[tabindex="0"]')
+      .count(),
+    1,
+    "The label-only group must keep one graph tab stop.",
+  );
+  await node(desktop, "referenced-row-b").focus();
+  await desktop.keyboard.press("Home");
+  assert.equal(await activeElementIs(node(desktop, "referenced-row-a")), true);
+  await desktop.keyboard.press("ArrowUp");
+  assert.equal(await activeElementIs(node(desktop, "referenced-row-a")), true);
+  await desktop.keyboard.press("ArrowDown");
+  assert.equal(await activeElementIs(node(desktop, "referenced-row-b")), true);
+  const nonActionableSearch = desktop.getByRole("searchbox", {
+    name: "Search graph",
+  });
+  await nonActionableSearch.fill("unavailable referenced records");
+  assert.equal(await groupSummary.getAttribute("data-search-match"), "true");
+  assert.equal(
+    await labelledGroup
+      .locator(
+        '[data-group-id="unavailable-records"][data-search-context="true"]',
+      )
+      .count(),
+    2,
+    "A group-label match must keep its nested actionable rows as context.",
+  );
+  assert.equal(await groupSummary.getAttribute("data-state"), "unavailable");
+  assert.match(await groupSummary.textContent(), /Unavailable/);
+  assert.deepEqual(
+    (await new AxeBuilder({ page: desktop }).analyze()).violations,
+    [],
+    "The non-actionable group fixture must have no accessibility violations.",
   );
 
   await desktop.evaluate(() => window.showEmptyRelationshipGraph());
@@ -614,6 +901,29 @@ try {
     Math.abs(phoneColumnPositions[0].left - phoneColumnPositions[1].left) < 1,
     true,
     "Phone columns must use one aligned width.",
+  );
+  assert.equal(
+    await phone
+      .locator(
+        ".od-relationship-graph-group[data-group-id='record-group'] [data-node-id='record-a']",
+      )
+      .count(),
+    1,
+    "Phone stacking must keep nested rows in their compound group.",
+  );
+  const phoneRelationshipText = node(phone, "record-a").locator(
+    ".od-relationship-graph-node-relationships",
+  );
+  assert.equal(
+    await phoneRelationshipText.evaluate(
+      (element) => getComputedStyle(element).display !== "none",
+    ),
+    true,
+    "A phone row must show its complete relationship text.",
+  );
+  assert.match(
+    await phoneRelationshipText.textContent(),
+    /Source A supplies Record Alpha.*first target route.*second target route/s,
   );
   const phoneCreateMapping = phone.getByRole("button", {
     name: "Create mapping",

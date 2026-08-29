@@ -298,9 +298,12 @@ export {
 export {
   RelationshipGraph,
   type RelationshipGraphColumn,
+  type RelationshipGraphColumnItem,
+  type RelationshipGraphGroup,
   type RelationshipGraphNode,
   type RelationshipGraphNodeContext,
   type RelationshipGraphNodeState,
+  type RelationshipGraphPartialResult,
   type RelationshipGraphProps,
   type RelationshipGraphRelationship,
 } from "./components/RelationshipGraph.js";

@@ -1376,9 +1376,75 @@
   color: var(--od-color-foreground);
 }
 
+.od-relationship-graph-partial-result {
+  min-width: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.375rem;
+}
+
+.od-relationship-graph-partial-result-label {
+  padding: 0.125rem 0.375rem;
+  border: 1px solid #788583;
+  border-radius: 999px;
+  color: #d9dfdc;
+  font-size: 0.625rem;
+  font-weight: 800;
+}
+
 .od-relationship-graph-nodes {
   display: grid;
   gap: var(--od-space-md);
+}
+
+.od-relationship-graph-group {
+  width: 100%;
+  min-width: 0;
+  position: relative;
+  z-index: 2;
+  display: grid;
+  gap: 0;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid #596565;
+  border-radius: var(--od-radius-lg);
+  background: #20292c;
+  box-shadow: 0 0.75rem 1.75rem rgb(4 8 10 / 30%);
+}
+
+.od-relationship-graph-group > .od-relationship-graph-node {
+  border: 0;
+  border-bottom: 1px solid #596565;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.od-relationship-graph-group-body {
+  min-width: 0;
+  display: grid;
+  gap: 0.5rem;
+  padding: 0.625rem;
+}
+
+.od-relationship-graph-group-heading {
+  color: #cbd3d1;
+  font-size: 0.6875rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.od-relationship-graph-rows {
+  width: 100%;
+  min-width: 0;
+  display: grid;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0;
+  border: 0;
 }
 
 .od-relationship-graph-node {
@@ -1407,6 +1473,11 @@
   background: #303b3d;
 }
 
+.od-relationship-graph-group-summary:hover {
+  border-bottom-color: #596565;
+  background: #2a3336;
+}
+
 .od-relationship-graph-node:focus-visible {
   outline: 3px solid var(--od-color-focus);
   outline-offset: 3px;
@@ -1428,7 +1499,24 @@
   border-radius: calc(var(--od-radius-md) - 0.1875rem);
 }
 
-.od-relationship-graph-node[data-dimmed="true"],
+.od-relationship-graph-node-context {
+  width: max-content;
+  max-width: 100%;
+  padding: 0.125rem 0.375rem;
+  border: 1px solid #788583;
+  border-radius: 999px;
+  color: #d9dfdc;
+  font-size: 0.625rem;
+  font-weight: 800;
+}
+
+.od-relationship-graph-node[data-dimmed="true"] {
+  border-color: #3f4a4b;
+  color: #cbd3d1;
+  background: #242d30;
+  box-shadow: none;
+}
+
 .od-relationship-graph-connector[data-dimmed="true"] {
   opacity: 0.28;
 }
@@ -1445,6 +1533,21 @@
 .od-relationship-graph-node-detail,
 .od-relationship-graph-node-content {
   min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.od-relationship-graph-node-relationships {
+  display: none;
+  gap: 0.375rem;
+  padding-top: 0.25rem;
+  border-top: 1px solid #465153;
+  color: #d9dfdc;
+  font-size: 0.6875rem;
+  line-height: 1.45;
+}
+
+.od-relationship-graph-node-relationships > span {
+  display: block;
   overflow-wrap: anywhere;
 }
 
@@ -1496,6 +1599,21 @@
   background: rgb(42 51 54 / 66%);
   font-size: 0.8125rem;
   text-align: center;
+}
+
+.od-relationship-graph-group-empty {
+  padding: 0.75rem;
+  border: 1px dashed #536062;
+  border-radius: var(--od-radius-sm);
+  color: #aab4b3;
+  font-size: 0.75rem;
+  text-align: center;
+}
+
+.od-relationship-graph-group-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem;
 }
 
 .od-relationship-graph-connectors {
@@ -1566,7 +1684,6 @@
 }
 
 @media (forced-colors: active) {
-  .od-relationship-graph-node[data-dimmed="true"],
   .od-relationship-graph-connector[data-dimmed="true"] {
     opacity: 0.55;
   }
@@ -1597,6 +1714,10 @@
     padding: var(--od-page-gutter);
   }
 
+  .od-relationship-graph-connectors {
+    display: none;
+  }
+
   .od-relationship-graph-column-header {
     position: relative;
   }
@@ -1613,6 +1734,10 @@
 
   .od-relationship-graph-column-actions > * {
     max-width: 100%;
+  }
+
+  .od-relationship-graph-node-relationships {
+    display: grid;
   }
   .od-explorer-workspace-heading,
   .od-data-explorer-heading,
