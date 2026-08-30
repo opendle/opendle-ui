@@ -14,14 +14,20 @@ import { createRoot } from "react-dom/client";
 import {
   AdvancedFieldsDisclosure,
   Button,
+  CheckboxControl,
   DateTime,
   FileDropZone,
   FormActions,
   FormField,
   FormSection,
   InlineAlert,
+  NumberControl,
   SearchableSelect,
+  SelectControl,
   SecretRevealPanel,
+  SwitchControl,
+  TextareaControl,
+  TextControl,
 } from "./dist/index.js";
 
 const options = [
@@ -36,6 +42,12 @@ function Fixture() {
   const [fileEvents, setFileEvents] = useState(0);
   const [copied, setCopied] = useState("");
   const [secret, setSecret] = useState("router-secret-value");
+  const [textValue, setTextValue] = useState("Initial text");
+  const [numberValue, setNumberValue] = useState(2);
+  const [selectValue, setSelectValue] = useState("alpha");
+  const [textareaValue, setTextareaValue] = useState("Initial details");
+  const [checkboxValue, setCheckboxValue] = useState(false);
+  const [switchValue, setSwitchValue] = useState(false);
   return <main>
     <h1>Shared form controls</h1>
     <FormSection
@@ -82,6 +94,74 @@ function Fixture() {
         title="Drop files here"
       />
     </FormSection>
+    <FormSection columns={2} legend="Controlled fields">
+      <TextControl
+        error="Review the text."
+        help="Enter shared text."
+        label="Shared text"
+        onChange={(event) => setTextValue(event.currentTarget.value)}
+        required
+        value={textValue}
+      />
+      <NumberControl
+        error="Review the number."
+        help="Enter a shared number."
+        label="Shared number"
+        min={0}
+        onChange={(event) => setNumberValue(Number(event.currentTarget.value))}
+        required
+        value={numberValue}
+      />
+      <SelectControl
+        error="Review the choice."
+        help="Select one shared choice."
+        label="Shared choice"
+        onChange={(event) => setSelectValue(event.currentTarget.value)}
+        required
+        value={selectValue}
+      >
+        <option value="alpha">Alpha</option>
+        <option value="gamma">Gamma</option>
+      </SelectControl>
+      <TextareaControl
+        error="Review the details."
+        help="Enter shared details."
+        label="Shared details"
+        onChange={(event) => setTextareaValue(event.currentTarget.value)}
+        required
+        value={textareaValue}
+      />
+      <CheckboxControl
+        checked={checkboxValue}
+        error="Review the checkbox."
+        help="Select the shared checkbox."
+        label="Shared checkbox"
+        onChange={(event) => setCheckboxValue(event.currentTarget.checked)}
+        required
+      />
+      <SwitchControl
+        checked={switchValue}
+        error="Review the switch."
+        help="Enable the shared switch."
+        label="Shared switch"
+        onChange={(event) => setSwitchValue(event.currentTarget.checked)}
+        required
+      />
+      <TextControl disabled label="Disabled text" onChange={() => undefined} value="Text" />
+      <NumberControl disabled label="Disabled number" onChange={() => undefined} value={1} />
+      <SelectControl disabled label="Disabled choice" onChange={() => undefined} value="alpha">
+        <option value="alpha">Alpha</option>
+      </SelectControl>
+      <TextareaControl disabled label="Disabled details" onChange={() => undefined} value="Details" />
+      <CheckboxControl checked disabled label="Disabled checkbox" onChange={() => undefined} />
+      <SwitchControl checked disabled label="Disabled switch" onChange={() => undefined} />
+    </FormSection>
+    <output aria-label="Shared text value">{textValue}</output>
+    <output aria-label="Shared number value">{numberValue}</output>
+    <output aria-label="Shared choice value">{selectValue}</output>
+    <output aria-label="Shared details value">{textareaValue}</output>
+    <output aria-label="Shared checkbox value">{String(checkboxValue)}</output>
+    <output aria-label="Shared switch value">{String(switchValue)}</output>
     <output aria-label="Selected model">{model}</output>
     <output aria-label="Selected files">{files.join(", ")}</output>
     <output aria-label="File selection events">{fileEvents}</output>
@@ -170,6 +250,94 @@ try {
     1,
     "The visual requirement must not change the control accessible name.",
   );
+
+  const sharedControls = [
+    desktop.getByRole("textbox", { name: "Shared text" }),
+    desktop.getByRole("spinbutton", { name: "Shared number" }),
+    desktop.getByRole("combobox", { name: "Shared choice" }),
+    desktop.getByRole("textbox", { name: "Shared details" }),
+    desktop.getByRole("checkbox", { name: "Shared checkbox" }),
+    desktop.getByRole("switch", { name: "Shared switch" }),
+  ];
+  for (const control of sharedControls) {
+    const describedBy = (await control.getAttribute("aria-describedby")) ?? "";
+    const descriptionIds = describedBy.split(" ").filter(Boolean);
+    assert.equal(descriptionIds.length, 2);
+    assert.equal(await control.getAttribute("aria-invalid"), "true");
+    assert.notEqual(await control.getAttribute("required"), null);
+    for (const descriptionId of descriptionIds) {
+      assert.equal(
+        await desktop.locator(`[id=${JSON.stringify(descriptionId)}]`).count(),
+        1,
+      );
+    }
+    await control.focus();
+    assert.equal(
+      await control.evaluate(
+        (element) => getComputedStyle(element).outlineStyle !== "none",
+      ),
+      true,
+      "Each shared control must have a visible focus outline.",
+    );
+  }
+
+  await sharedControls[0].fill("Changed text");
+  await sharedControls[1].fill("8");
+  await sharedControls[2].selectOption("gamma");
+  await sharedControls[3].fill("Changed details");
+  await sharedControls[4].focus();
+  await desktop.keyboard.press("Space");
+  await sharedControls[5].focus();
+  await desktop.keyboard.press("Space");
+  assert.equal(
+    await desktop
+      .getByRole("status", { name: "Shared text value" })
+      .textContent(),
+    "Changed text",
+  );
+  assert.equal(
+    await desktop
+      .getByRole("status", { name: "Shared number value" })
+      .textContent(),
+    "8",
+  );
+  assert.equal(
+    await desktop
+      .getByRole("status", { name: "Shared choice value" })
+      .textContent(),
+    "gamma",
+  );
+  assert.equal(
+    await desktop
+      .getByRole("status", { name: "Shared details value" })
+      .textContent(),
+    "Changed details",
+  );
+  assert.equal(
+    await desktop
+      .getByRole("status", { name: "Shared checkbox value" })
+      .textContent(),
+    "true",
+  );
+  assert.equal(
+    await desktop
+      .getByRole("status", { name: "Shared switch value" })
+      .textContent(),
+    "true",
+  );
+  assert.equal(await sharedControls[4].isChecked(), true);
+  assert.equal(await sharedControls[5].getAttribute("aria-checked"), "true");
+
+  for (const name of [
+    "Disabled text",
+    "Disabled number",
+    "Disabled choice",
+    "Disabled details",
+    "Disabled checkbox",
+    "Disabled switch",
+  ]) {
+    assert.equal(await desktop.getByLabel(name).isDisabled(), true);
+  }
 
   const combobox = desktop.getByRole("combobox", { name: "Model" });
   await combobox.focus();
@@ -312,10 +480,13 @@ try {
   });
   const phone = await phoneContext.newPage();
   const phoneErrors = await loadFixture(phone);
-  const sectionWidth = await phone
-    .locator(".od-form-section")
-    .evaluate((section) => section.getBoundingClientRect().width);
-  const fieldWidths = await phone
+  const phoneControlledSection = phone.getByRole("group", {
+    name: "Controlled fields",
+  });
+  const sectionWidth = await phoneControlledSection.evaluate(
+    (section) => section.getBoundingClientRect().width,
+  );
+  const fieldWidths = await phoneControlledSection
     .locator(".od-form-section-fields > *")
     .evaluateAll((fields) =>
       fields.map((field) => field.getBoundingClientRect().width),

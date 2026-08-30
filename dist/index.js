@@ -88,6 +88,7 @@ export const designTokens = {
 };
 export { AutoGrowTextarea, } from "./components/AutoGrowTextarea.js";
 export { AdvancedFieldsDisclosure, FieldError, FieldHelp, FormActions, FormField, FormSection, } from "./components/Form.js";
+export { CheckboxControl, NumberControl, SelectControl, SwitchControl, TextareaControl, TextControl, } from "./components/FormControls.js";
 export { DateTime } from "./components/DateTime.js";
 export { FileDropZone, } from "./components/FileDropZone.js";
 export { InlineAlert, } from "./components/InlineAlert.js";

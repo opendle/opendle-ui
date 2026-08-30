@@ -174,6 +174,20 @@ export {
   type FormSectionColumns,
   type FormSectionProps,
 } from "./components/Form.js";
+export {
+  CheckboxControl,
+  NumberControl,
+  SelectControl,
+  SwitchControl,
+  TextareaControl,
+  TextControl,
+  type CheckboxControlProps,
+  type NumberControlProps,
+  type SelectControlProps,
+  type SwitchControlProps,
+  type TextareaControlProps,
+  type TextControlProps,
+} from "./components/FormControls.js";
 export { DateTime, type DateTimeProps } from "./components/DateTime.js";
 export {
   FileDropZone,

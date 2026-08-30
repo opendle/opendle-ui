@@ -7,6 +7,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import {
   AdvancedFieldsDisclosure,
   Button,
+  CheckboxControl,
   DateTime,
   FieldError,
   FieldHelp,
@@ -15,8 +16,13 @@ import {
   FormField,
   FormSection,
   InlineAlert,
+  NumberControl,
   SearchableSelect,
+  SelectControl,
   SecretRevealPanel,
+  SwitchControl,
+  TextareaControl,
+  TextControl,
   designTokens,
 } from "../dist/index.js";
 
@@ -51,6 +57,117 @@ test("FormField connects its label, help, error, and control", () => {
   assert.match(markup, /<input[^>]*aria-invalid="true"/);
   assert.match(markup, /class="od-field-help"/);
   assert.match(markup, /class="od-field-error" role="alert"/);
+});
+
+test("controlled form controls keep common field states and native semantics", () => {
+  const commonProps = {
+    "aria-describedby": "host-description",
+    disabled: true,
+    error: "Correct this value.",
+    help: "Use the shared control.",
+    onChange: () => undefined,
+    required: true,
+  };
+  const controls = [
+    {
+      Component: TextControl,
+      control: /<input(?=[^>]*type="text")/,
+      id: "shared-text",
+      props: { value: "Current text" },
+    },
+    {
+      Component: NumberControl,
+      control: /<input(?=[^>]*type="number")/,
+      id: "shared-number",
+      props: { value: 4 },
+    },
+    {
+      Component: SelectControl,
+      children: [
+        React.createElement("option", { key: "a", value: "a" }, "Alpha"),
+        React.createElement("option", { key: "b", value: "b" }, "Beta"),
+      ],
+      control: /<select/,
+      id: "shared-select",
+      props: { value: "b" },
+    },
+    {
+      Component: TextareaControl,
+      control: /<textarea/,
+      id: "shared-textarea",
+      props: { value: "Current description" },
+    },
+    {
+      Component: CheckboxControl,
+      control: /<input(?=[^>]*type="checkbox")/,
+      id: "shared-checkbox",
+      props: { checked: true },
+    },
+    {
+      Component: SwitchControl,
+      control: /<input(?=[^>]*role="switch")(?=[^>]*type="checkbox")/,
+      id: "shared-switch",
+      props: { checked: true },
+    },
+  ];
+
+  for (const { Component, children, control, id, props } of controls) {
+    const markup = renderToStaticMarkup(
+      React.createElement(
+        Component,
+        {
+          ...commonProps,
+          ...props,
+          className: `${id}-field`,
+          controlClassName: `${id}-input`,
+          id,
+          label: id,
+        },
+        children,
+      ),
+    );
+    assert.match(markup, new RegExp(`<label[^>]*for="${id}"`));
+    assert.match(markup, new RegExp(`${id}-field`));
+    assert.match(markup, new RegExp(`${id}-input`));
+    assert.match(markup, control);
+    assert.match(
+      markup,
+      new RegExp(
+        `<(?:input|select|textarea)(?=[^>]*id="${id}")(?=[^>]*aria-describedby="host-description [^"]+ [^"]+")(?=[^>]*aria-invalid="true")(?=[^>]*disabled="")(?=[^>]*required="")[^>]*>`,
+      ),
+    );
+    assert.match(markup, /class="od-field-help"/);
+    assert.match(markup, /class="od-field-error" role="alert"/);
+    assert.match(markup, />required<\/span>/);
+  }
+
+  const checkboxMarkup = renderToStaticMarkup(
+    React.createElement(CheckboxControl, {
+      checked: true,
+      label: "Selected checkbox",
+      onChange: () => undefined,
+    }),
+  );
+  const switchMarkup = renderToStaticMarkup(
+    React.createElement(SwitchControl, {
+      checked: true,
+      label: "Enabled switch",
+      onChange: () => undefined,
+    }),
+  );
+  assert.match(checkboxMarkup, /<input[^>]*checked=""/);
+  assert.match(switchMarkup, /<input[^>]*aria-checked="true"/);
+  assert.match(switchMarkup, /<input[^>]*checked=""/);
+
+  const requirementMarkup = renderToStaticMarkup(
+    React.createElement(TextControl, {
+      label: "Required shorthand",
+      onChange: () => undefined,
+      requirement: "required",
+      value: "",
+    }),
+  );
+  assert.match(requirementMarkup, /<input[^>]*required=""/);
 });
 
 test("form compositions use semantic sections, actions, and disclosure", () => {

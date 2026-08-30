@@ -4338,6 +4338,18 @@ samp {
   border-color: var(--od-color-coral-strong);
 }
 
+.od-form-field-control > :where(input, select, textarea):disabled {
+  cursor: not-allowed;
+  color: var(--od-color-muted-strong);
+  background: var(--od-color-surface);
+  opacity: 0.72;
+}
+
+.od-textarea-control-input {
+  min-height: 7rem;
+  resize: vertical;
+}
+
 .od-form-field[data-orientation="inline"] {
   grid-template-columns: auto minmax(0, 1fr);
   align-items: center;
@@ -4362,6 +4374,61 @@ samp {
   margin: 0;
   padding: 0;
   accent-color: var(--od-color-focus);
+}
+
+.od-form-field[data-orientation="inline"]
+  .od-form-field-control
+  > .od-checkbox-control-input[aria-invalid="true"] {
+  outline: 2px solid var(--od-color-coral-strong);
+  outline-offset: 2px;
+}
+
+.od-form-field[data-orientation="inline"]
+  .od-form-field-control
+  > .od-switch-control-input {
+  position: relative;
+  width: 2.5rem;
+  min-height: 1.5rem;
+  border: 1px solid var(--od-color-border-strong);
+  border-radius: 999px;
+  appearance: none;
+  background: var(--od-color-surface-raised);
+  cursor: pointer;
+  transition:
+    border-color 120ms ease,
+    background-color 120ms ease;
+}
+
+.od-switch-control-input::before {
+  position: absolute;
+  width: 1rem;
+  height: 1rem;
+  border-radius: 50%;
+  background: var(--od-color-muted-strong);
+  content: "";
+  inset-block-start: 0.1875rem;
+  inset-inline-start: 0.1875rem;
+  transition:
+    background-color 120ms ease,
+    transform 120ms ease;
+}
+
+.od-switch-control-input:checked {
+  border-color: var(--od-color-focus);
+  background: var(--od-color-focus);
+}
+
+.od-switch-control-input:checked::before {
+  background: var(--od-color-surface-raised);
+  transform: translateX(1rem);
+}
+
+.od-switch-control-input[aria-invalid="true"] {
+  border-color: var(--od-color-coral-strong);
+}
+
+.od-switch-control-input:disabled {
+  cursor: not-allowed;
 }
 
 .od-form-field[data-orientation="inline"] :is(.od-field-help, .od-field-error) {
@@ -5146,6 +5213,11 @@ samp {
   .od-state-panel-loading .od-state-panel-icon > .od-icon,
   .od-playground-state-loading > span {
     animation: none;
+  }
+
+  .od-switch-control-input,
+  .od-switch-control-input::before {
+    transition: none;
   }
 }
 
