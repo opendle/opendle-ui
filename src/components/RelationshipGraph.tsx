@@ -1,5 +1,6 @@
 import type { HTMLAttributes, KeyboardEvent, ReactNode } from "react";
 import {
+  useCallback,
   useEffect,
   useId,
   useLayoutEffect,
@@ -15,6 +16,7 @@ import {
   type RelationshipGraphModelNode,
   type RelationshipGraphModelRelationship,
 } from "../RelationshipGraphModel.js";
+import { GraphToolbar } from "./GraphWorkspace.js";
 
 function classes(...values: (string | false | null | undefined)[]) {
   return values.filter(Boolean).join(" ");
@@ -94,6 +96,11 @@ export interface RelationshipGraphNodeContext {
   readonly trigger: HTMLButtonElement;
 }
 
+export interface RelationshipGraphToolbarOptions {
+  readonly leading?: ReactNode;
+  readonly actions?: ReactNode;
+}
+
 export interface RelationshipGraphProps extends Omit<
   HTMLAttributes<HTMLElement>,
   "children"
@@ -118,6 +125,7 @@ export interface RelationshipGraphProps extends Omit<
   readonly searchQuery?: string;
   readonly defaultSearchQuery?: string;
   readonly onSearchQueryChange?: (query: string) => void;
+  readonly toolbar?: RelationshipGraphToolbarOptions;
   readonly emptyState?: ReactNode;
   readonly invalidState?: ReactNode;
   readonly noResultsTitle?: string;
@@ -555,6 +563,7 @@ export function RelationshipGraph({
   searchQuery,
   defaultSearchQuery = "",
   onSearchQueryChange,
+  toolbar,
   emptyState,
   invalidState,
   noResultsTitle = "No matching items",
@@ -923,6 +932,14 @@ export function RelationshipGraph({
           onSelectionChangeRef.current?.(targetId);
         }
         nodeRefs.current.get(targetId)?.focus({ preventScroll: true });
+      } else {
+        if (selectedNodeId === undefined) {
+          updateState({ internalSelection: null });
+        }
+        if (selectedId !== null) {
+          onSelectionChangeRef.current?.(null);
+        }
+        searchInputRef.current?.focus({ preventScroll: true });
       }
       return;
     }
@@ -1068,10 +1085,13 @@ export function RelationshipGraph({
     visibleKey,
   ]);
 
-  function changeQuery(nextQuery: string) {
-    if (searchQuery === undefined) updateState({ internalQuery: nextQuery });
-    onSearchQueryChange?.(nextQuery);
-  }
+  const changeQuery = useCallback(
+    (nextQuery: string) => {
+      if (searchQuery === undefined) updateState({ internalQuery: nextQuery });
+      onSearchQueryChange?.(nextQuery);
+    },
+    [onSearchQueryChange, searchQuery],
+  );
 
   function selectNode(id: string) {
     if (selectedNodeId === undefined) updateState({ internalSelection: id });
@@ -1125,16 +1145,8 @@ export function RelationshipGraph({
     selectedId,
   };
 
-  return (
-    <section
-      {...props}
-      aria-label={ariaLabel}
-      className={classes("od-relationship-graph", className)}
-      ref={rootRef}
-    >
-      <output aria-live="polite" className="od-visually-hidden">
-        {announcement}
-      </output>
+  const searchControls = useMemo(
+    () => (
       <div className="od-relationship-graph-search">
         <span className="od-relationship-graph-search-field">
           <label htmlFor={searchInputId}>{searchLabel}</label>
@@ -1165,6 +1177,37 @@ export function RelationshipGraph({
           </button>
         ) : null}
       </div>
+    ),
+    [
+      changeQuery,
+      clearSearchLabel,
+      query,
+      searchInputId,
+      searchLabel,
+      searchPlaceholder,
+    ],
+  );
+
+  return (
+    <section
+      {...props}
+      aria-label={ariaLabel}
+      className={classes("od-relationship-graph", className)}
+      ref={rootRef}
+    >
+      <output aria-live="polite" className="od-visually-hidden">
+        {announcement}
+      </output>
+      {toolbar === undefined ? (
+        searchControls
+      ) : (
+        <GraphToolbar
+          actions={toolbar.actions}
+          center={searchControls}
+          className="od-relationship-graph-toolbar"
+          leading={toolbar.leading}
+        />
+      )}
       <section
         aria-label={`${ariaLabel} viewport`}
         className="od-relationship-graph-viewport"

@@ -306,6 +306,7 @@ export {
   type RelationshipGraphPartialResult,
   type RelationshipGraphProps,
   type RelationshipGraphRelationship,
+  type RelationshipGraphToolbarOptions,
 } from "./components/RelationshipGraph.js";
 export {
   OperationPlayground,

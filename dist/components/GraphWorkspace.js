@@ -1,7 +1,27 @@
 import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
-import { useId, useLayoutEffect, useRef } from "react";
+import { Children, Fragment, isValidElement, useId, useLayoutEffect, useRef, } from "react";
 function classes(...values) {
     return values.filter(Boolean).join(" ");
+}
+function hasRenderedContent(value) {
+    let found = false;
+    Children.forEach(value, (child) => {
+        if (found ||
+            child === null ||
+            child === undefined ||
+            typeof child === "boolean") {
+            return;
+        }
+        if (typeof child === "string" && child.length === 0)
+            return;
+        if (isValidElement(child) &&
+            child.type === Fragment) {
+            found = hasRenderedContent(child.props.children);
+            return;
+        }
+        found = true;
+    });
+    return found;
 }
 /** A full-width graph surface with floating controls and an optional inspector. */
 export function GraphWorkspace({ toolbar, inspector, children, className, ...props }) {
@@ -9,7 +29,10 @@ export function GraphWorkspace({ toolbar, inspector, children, className, ...pro
 }
 /** Floating graph controls. Each slot accepts host-owned controls and copy. */
 export function GraphToolbar({ leading, center, actions, className, ...props }) {
-    return (_jsxs("header", { ...props, className: classes("od-graph-toolbar", className), children: [leading ? (_jsx("div", { className: "od-graph-toolbar-leading", children: leading })) : null, center ? _jsx("div", { className: "od-graph-toolbar-center", children: center }) : null, actions ? (_jsx("div", { className: "od-graph-toolbar-actions", children: actions })) : null] }));
+    const hasLeading = hasRenderedContent(leading);
+    const hasCenter = hasRenderedContent(center);
+    const hasActions = hasRenderedContent(actions);
+    return (_jsxs("header", { ...props, className: classes("od-graph-toolbar", className), "data-actions": hasActions, "data-center": hasCenter, "data-leading": hasLeading, children: [hasLeading ? (_jsx("div", { className: "od-graph-toolbar-leading", children: leading })) : null, hasCenter ? (_jsx("div", { className: "od-graph-toolbar-center", children: center })) : null, hasActions ? (_jsx("div", { className: "od-graph-toolbar-actions", children: actions })) : null] }));
 }
 /** A scrollable viewport and a positioned canvas for nodes and edges. */
 export function GraphViewport({ canvasAlignment = "start", canvasWidth, canvasHeight, canvasClassName, canvasProps, children, className, ...props }) {

@@ -8,10 +8,41 @@ import type {
   ReactNode,
   SVGAttributes,
 } from "react";
-import { useId, useLayoutEffect, useRef } from "react";
+import {
+  Children,
+  Fragment,
+  isValidElement,
+  useId,
+  useLayoutEffect,
+  useRef,
+} from "react";
 
 function classes(...values: (string | false | null | undefined)[]) {
   return values.filter(Boolean).join(" ");
+}
+
+function hasRenderedContent(value: ReactNode): boolean {
+  let found = false;
+  Children.forEach(value, (child) => {
+    if (
+      found ||
+      child === null ||
+      child === undefined ||
+      typeof child === "boolean"
+    ) {
+      return;
+    }
+    if (typeof child === "string" && child.length === 0) return;
+    if (
+      isValidElement<{ readonly children?: ReactNode }>(child) &&
+      child.type === Fragment
+    ) {
+      found = hasRenderedContent(child.props.children);
+      return;
+    }
+    found = true;
+  });
+  return found;
 }
 
 export interface GraphWorkspaceProps extends HTMLAttributes<HTMLElement> {
@@ -50,13 +81,24 @@ export function GraphToolbar({
   className,
   ...props
 }: GraphToolbarProps) {
+  const hasLeading = hasRenderedContent(leading);
+  const hasCenter = hasRenderedContent(center);
+  const hasActions = hasRenderedContent(actions);
   return (
-    <header {...props} className={classes("od-graph-toolbar", className)}>
-      {leading ? (
+    <header
+      {...props}
+      className={classes("od-graph-toolbar", className)}
+      data-actions={hasActions}
+      data-center={hasCenter}
+      data-leading={hasLeading}
+    >
+      {hasLeading ? (
         <div className="od-graph-toolbar-leading">{leading}</div>
       ) : null}
-      {center ? <div className="od-graph-toolbar-center">{center}</div> : null}
-      {actions ? (
+      {hasCenter ? (
+        <div className="od-graph-toolbar-center">{center}</div>
+      ) : null}
+      {hasActions ? (
         <div className="od-graph-toolbar-actions">{actions}</div>
       ) : null}
     </header>

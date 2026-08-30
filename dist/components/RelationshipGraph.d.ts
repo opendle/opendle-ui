@@ -49,6 +49,10 @@ export interface RelationshipGraphNodeContext {
     readonly node: RelationshipGraphColumnItem;
     readonly trigger: HTMLButtonElement;
 }
+export interface RelationshipGraphToolbarOptions {
+    readonly leading?: ReactNode;
+    readonly actions?: ReactNode;
+}
 export interface RelationshipGraphProps extends Omit<HTMLAttributes<HTMLElement>, "children"> {
     readonly "aria-label": string;
     readonly columns: readonly [
@@ -70,6 +74,7 @@ export interface RelationshipGraphProps extends Omit<HTMLAttributes<HTMLElement>
     readonly searchQuery?: string;
     readonly defaultSearchQuery?: string;
     readonly onSearchQueryChange?: (query: string) => void;
+    readonly toolbar?: RelationshipGraphToolbarOptions;
     readonly emptyState?: ReactNode;
     readonly invalidState?: ReactNode;
     readonly noResultsTitle?: string;
@@ -80,5 +85,5 @@ export interface RelationshipGraphProps extends Omit<HTMLAttributes<HTMLElement>
     readonly searchContextLabel?: string;
 }
 /** A host-neutral, responsive relationship graph with three named columns. */
-export declare function RelationshipGraph({ columns, relationships, selectedNodeId, defaultSelectedNodeId, onSelectionChange, onNodeActivate, auxiliaryInspector, inspector, searchLabel, searchPlaceholder, searchQuery, defaultSearchQuery, onSearchQueryChange, emptyState, invalidState, noResultsTitle, noResultsDescription, clearSearchLabel, partialNoResultsTitle, partialNoResultsDescription, searchContextLabel, className, "aria-label": ariaLabel, ...props }: RelationshipGraphProps): import("react").JSX.Element;
+export declare function RelationshipGraph({ columns, relationships, selectedNodeId, defaultSelectedNodeId, onSelectionChange, onNodeActivate, auxiliaryInspector, inspector, searchLabel, searchPlaceholder, searchQuery, defaultSearchQuery, onSearchQueryChange, toolbar, emptyState, invalidState, noResultsTitle, noResultsDescription, clearSearchLabel, partialNoResultsTitle, partialNoResultsDescription, searchContextLabel, className, "aria-label": ariaLabel, ...props }: RelationshipGraphProps): import("react").JSX.Element;
 //# sourceMappingURL=RelationshipGraph.d.ts.map

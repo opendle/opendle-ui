@@ -70,6 +70,7 @@ function Fixture({ empty = false }) {
   const [query, setQuery] = useState("");
   const [partialLoaded, setPartialLoaded] = useState(true);
   const [showAlpha, setShowAlpha] = useState(true);
+  const [toolbarMode, setToolbarMode] = useState("all");
   const returnFocusRef = useRef(null);
   function openCreate(label, trigger) {
     returnFocusRef.current = trigger;
@@ -152,6 +153,7 @@ function Fixture({ empty = false }) {
   ) : null;
   window.setRelationshipGraphQuery = setQuery;
   window.setRelationshipGraphPartial = setPartialLoaded;
+  window.setRelationshipToolbarMode = setToolbarMode;
   return (
     <main>
       <h1>Relationship graph browser check</h1>
@@ -177,6 +179,22 @@ function Fixture({ empty = false }) {
         relationships={visibleRelationships}
         searchQuery={query}
         selectedNodeId={selectedId}
+        toolbar={
+          toolbarMode === "search"
+            ? {}
+            : {
+                leading: (
+                  <Button type="button" variant="secondary">
+                    Service context with a long label that can wrap safely
+                  </Button>
+                ),
+                actions: (
+                  <Button type="button" variant="secondary">
+                    Refresh relationship graph
+                  </Button>
+                ),
+              }
+        }
       />
     </main>
   );
@@ -446,6 +464,27 @@ try {
   const graphViewport = desktop.getByRole("region", {
     name: "Example relationship graph viewport",
   });
+  const graphToolbar = desktop.locator(".od-relationship-graph-toolbar");
+  assert.equal(await graphToolbar.count(), 1);
+  assert.equal(
+    await graphToolbar.locator(":scope > div").count(),
+    3,
+    "The complete toolbar must render its three non-empty slots.",
+  );
+  const leadingToolbarAction = desktop.getByRole("button", {
+    name: /Service context with a long label/,
+  });
+  const toolbarSearch = desktop.getByRole("searchbox", {
+    name: "Search graph",
+  });
+  const trailingToolbarAction = desktop.getByRole("button", {
+    name: "Refresh relationship graph",
+  });
+  await leadingToolbarAction.focus();
+  await desktop.keyboard.press("Tab");
+  assert.equal(await activeElementIs(toolbarSearch), true);
+  await desktop.keyboard.press("Tab");
+  assert.equal(await activeElementIs(trailingToolbarAction), true);
   const viewportWidthBeforeInspector = await graphViewport.evaluate(
     (element) => element.getBoundingClientRect().width,
   );
@@ -708,6 +747,17 @@ try {
     true,
     "Clearing search must restore focus to the prior selected control.",
   );
+  await desktop.evaluate(() => window.setRelationshipToolbarMode("search"));
+  await desktop.waitForFunction(
+    () =>
+      document.querySelector(".od-relationship-graph-toolbar")?.children
+        .length === 1,
+  );
+  assert.equal(
+    await node(desktop, "record-a").getAttribute("aria-pressed"),
+    "true",
+    "A toolbar slot change must not reset graph selection.",
+  );
 
   const longLabelFits = await node(desktop, "record-a").evaluate(
     (element) => element.scrollWidth <= element.clientWidth,
@@ -831,6 +881,14 @@ try {
     true,
     "An empty-graph inspector must return focus to its exact create action.",
   );
+  const emptySearch = desktop.getByRole("searchbox", { name: "Search graph" });
+  await emptySearch.fill("missing");
+  await desktop.getByRole("button", { name: "Clear search" }).click();
+  assert.equal(
+    await activeElementIs(emptySearch),
+    true,
+    "Clearing an empty graph must return focus to its graph-owned search.",
+  );
 
   await desktop.evaluate(() => window.showMultipleRelationshipGraphs());
   const secondGraph = desktop.getByRole("region", {
@@ -870,6 +928,26 @@ try {
     true,
     "A compact desktop must keep graph overflow in its viewport.",
   );
+  const stableToolbarGeometry = await overflowPage.evaluate(() => {
+    const toolbar = document.querySelector(".od-relationship-graph-toolbar");
+    const viewport = document.querySelector(".od-relationship-graph-viewport");
+    const before = toolbar?.getBoundingClientRect();
+    if (viewport instanceof HTMLElement) viewport.scrollLeft = 120;
+    const after = toolbar?.getBoundingClientRect();
+    return {
+      afterLeft: after?.left,
+      afterTop: after?.top,
+      beforeLeft: before?.left,
+      beforeTop: before?.top,
+      scrollLeft: viewport instanceof HTMLElement ? viewport.scrollLeft : 0,
+    };
+  });
+  assert.equal(stableToolbarGeometry.scrollLeft > 0, true);
+  assert.deepEqual(
+    [stableToolbarGeometry.afterLeft, stableToolbarGeometry.afterTop],
+    [stableToolbarGeometry.beforeLeft, stableToolbarGeometry.beforeTop],
+    "Local graph scrolling must not move the toolbar.",
+  );
   await assertNoPageOverflow(
     overflowPage,
     "The compact desktop page must not overflow",
@@ -883,6 +961,28 @@ try {
   });
   const phone = await phoneContext.newPage();
   const phoneErrors = await loadFixture(phone);
+  const phoneToolbarOrder = await phone
+    .locator(".od-relationship-graph-toolbar > div")
+    .evaluateAll((elements) =>
+      elements.map((element) => ({
+        className: element.className,
+        top: element.getBoundingClientRect().top,
+      })),
+    );
+  assert.deepEqual(
+    phoneToolbarOrder.map(({ className }) => className),
+    [
+      "od-graph-toolbar-leading",
+      "od-graph-toolbar-center",
+      "od-graph-toolbar-actions",
+    ],
+  );
+  assert.equal(
+    phoneToolbarOrder[0].top < phoneToolbarOrder[1].top &&
+      phoneToolbarOrder[1].top < phoneToolbarOrder[2].top,
+    true,
+    "Phone toolbar slots must reflow in rendered order.",
+  );
   const phoneColumnPositions = await phone
     .locator(".od-relationship-graph-column")
     .evaluateAll((elements) =>

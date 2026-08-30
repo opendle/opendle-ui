@@ -57,6 +57,72 @@ test("relationship search keeps a direct match and the records that explain it",
   );
 });
 
+test("the optional toolbar keeps standalone consumers and collapses empty host slots", () => {
+  const properties = {
+    "aria-label": "Toolbar relationships",
+    columns: graphColumns(),
+    relationships: [],
+  };
+  const omitted = renderToStaticMarkup(
+    React.createElement(RelationshipGraph, properties),
+  );
+  const explicitUndefined = renderToStaticMarkup(
+    React.createElement(RelationshipGraph, {
+      ...properties,
+      toolbar: undefined,
+    }),
+  );
+  assert.doesNotMatch(omitted, /od-graph-toolbar/);
+  assert.doesNotMatch(explicitUndefined, /od-graph-toolbar/);
+
+  const searchOnly = renderToStaticMarkup(
+    React.createElement(RelationshipGraph, { ...properties, toolbar: {} }),
+  );
+  assert.match(searchOnly, /od-relationship-graph-toolbar/);
+  assert.match(searchOnly, /data-leading="false"/);
+  assert.match(searchOnly, /data-center="true"/);
+  assert.match(searchOnly, /data-actions="false"/);
+  assert.doesNotMatch(searchOnly, /od-graph-toolbar-leading/);
+  assert.doesNotMatch(searchOnly, /od-graph-toolbar-actions/);
+
+  const emptySlots = renderToStaticMarkup(
+    React.createElement(RelationshipGraph, {
+      ...properties,
+      toolbar: {
+        actions: React.createElement(React.Fragment, null, false, null),
+        leading: React.createElement(React.Fragment, null),
+      },
+    }),
+  );
+  assert.doesNotMatch(emptySlots, /od-graph-toolbar-leading/);
+  assert.doesNotMatch(emptySlots, /od-graph-toolbar-actions/);
+});
+
+test("the toolbar renders host slots around the graph-owned controlled search", () => {
+  const markup = renderToStaticMarkup(
+    React.createElement(RelationshipGraph, {
+      "aria-label": "Complete toolbar relationships",
+      columns: graphColumns(),
+      relationships: [],
+      searchLabel: "Find a relationship",
+      searchQuery: "host value",
+      toolbar: {
+        actions: React.createElement("button", null, "Refresh graph"),
+        leading: React.createElement("button", null, "Service context"),
+      },
+    }),
+  );
+  const leading = markup.indexOf("Service context");
+  const search = markup.indexOf("Find a relationship");
+  const clear = markup.indexOf("Clear search");
+  const actions = markup.indexOf("Refresh graph");
+  const viewport = markup.indexOf("Complete toolbar relationships viewport");
+  assert.equal(leading < search && search < clear && clear < actions, true);
+  assert.equal(actions < viewport, true);
+  assert.match(markup, /value="host value"/);
+  assert.equal((markup.match(/type="search"/gu) ?? []).length, 1);
+});
+
 test("relationship keyboard navigation stays in columns and follows connections", () => {
   assert.equal(
     relationshipGraphKeyboardTarget(

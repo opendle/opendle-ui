@@ -76,6 +76,10 @@ its inspector state when the selection change callback reports that the node
 is unavailable. A host can supply one auxiliary inspector for a create form or
 other action that does not have a selected node. It must not supply this
 inspector together with an active selected-node inspector.
+Supply `toolbar` when the graph must put host context and actions around its
+search. `RelationshipGraph` keeps search in the center slot of the shared
+`GraphToolbar`; `leading` and `actions` stay host-owned. Omit `toolbar` to keep
+the standalone search surface.
 
 `OperationPlayground` gives host applications one controlled, provider-neutral
 surface for model, embedding, image, video, and audio operations. It supports
