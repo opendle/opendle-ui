@@ -444,6 +444,12 @@ export {
   type PanelProps,
 } from "./components/Panel.js";
 export {
+  DockedPanelLayout,
+  type DockedPanelDefinition,
+  type DockedPanelLayoutProps,
+  type DockedPanelPosition,
+} from "./components/DockedPanelLayout.js";
+export {
   PlanCardShell,
   type PlanCardShellProps,
 } from "./components/PlanCardShell.js";

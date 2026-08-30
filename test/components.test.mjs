@@ -18,6 +18,7 @@ import {
   CalendarBoard,
   ConfirmationDialog,
   ContextItem,
+  DockedPanelLayout,
   GraphBundledLink,
   GraphEdge,
   GraphEdges,
@@ -1507,4 +1508,60 @@ test("ShellErrorBoundary renders its children when no error exists", () => {
     ),
   );
   assert.equal(markup, "<p>Ready</p>");
+});
+
+test("DockedPanelLayout keeps the workspace, inner panel, and outer panel in order", () => {
+  const panel = (title, content) => ({
+    children: React.createElement("p", null, content),
+    onClose: () => undefined,
+    open: true,
+    title,
+  });
+  const markup = renderToStaticMarkup(
+    React.createElement(
+      DockedPanelLayout,
+      {
+        innerPanel: panel("Property inspector", "Property fields"),
+        outerPanel: panel("YAML source", "YAML editor"),
+      },
+      React.createElement("div", { "aria-label": "Graph workspace" }),
+    ),
+  );
+  const workspaceIndex = markup.indexOf("od-docked-panel-layout-workspace");
+  const innerIndex = markup.indexOf('data-position="inner"');
+  const outerIndex = markup.indexOf('data-position="outer"');
+  assert.equal(workspaceIndex >= 0, true);
+  assert.equal(workspaceIndex < innerIndex && innerIndex < outerIndex, true);
+  assert.match(
+    markup,
+    /aria-label="Property inspector"[^>]*role="complementary"/,
+  );
+  assert.match(markup, /aria-label="YAML source"[^>]*role="complementary"/);
+  assert.match(markup, /aria-label="Close Property inspector"/);
+  assert.match(markup, /aria-label="Close YAML source"/);
+});
+
+test("DockedPanelLayout omits a closed panel without changing outer placement", () => {
+  const markup = renderToStaticMarkup(
+    React.createElement(
+      DockedPanelLayout,
+      {
+        innerPanel: {
+          children: "Hidden",
+          onClose: () => undefined,
+          open: false,
+          title: "Property inspector",
+        },
+        outerPanel: {
+          children: "Visible",
+          onClose: () => undefined,
+          open: true,
+          title: "YAML source",
+        },
+      },
+      React.createElement("div", null, "Graph"),
+    ),
+  );
+  assert.doesNotMatch(markup, /data-position="inner"/);
+  assert.match(markup, /data-position="outer"/);
 });

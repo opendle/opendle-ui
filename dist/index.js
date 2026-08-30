@@ -123,6 +123,7 @@ export { MobileNavigation, } from "./components/MobileNavigation.js";
 export { MediaLightbox, } from "./components/MediaLightbox.js";
 export { PageHeading, } from "./components/PageHeading.js";
 export { Panel, PanelHeader, } from "./components/Panel.js";
+export { DockedPanelLayout, } from "./components/DockedPanelLayout.js";
 export { PlanCardShell, } from "./components/PlanCardShell.js";
 export { ReviewPlanCard, } from "./components/ReviewPlanCard.js";
 export { ShellErrorBoundary, } from "./components/ShellErrorBoundary.js";

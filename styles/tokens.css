@@ -4101,6 +4101,70 @@ samp {
   gap: var(--od-space-sm);
 }
 
+/* Full-height workspace composition with two stable end docks. */
+.od-docked-panel-layout {
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  overflow: hidden;
+}
+
+.od-docked-panel-layout-workspace {
+  min-width: 0;
+  min-height: 0;
+  flex: 1 1 auto;
+  overflow: hidden;
+}
+
+.od-docked-panel {
+  width: min(24rem, 32vw);
+  min-width: min(18rem, 100%);
+  height: 100%;
+  min-height: 0;
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-block: 0;
+  border-inline-end: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.od-docked-panel-content {
+  min-height: 0;
+  flex: 1;
+  padding: var(--od-space-md);
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+
+.od-docked-panel-close {
+  width: 2.75rem;
+  min-width: 2.75rem;
+  height: 2.75rem;
+  min-height: 2.75rem;
+  padding: 0;
+}
+
+.od-dialog.od-docked-panel-sheet {
+  display: flex;
+  flex-direction: column;
+}
+
+.od-docked-panel-sheet .od-dialog-header > .od-button {
+  width: 2.75rem;
+  min-width: 2.75rem;
+}
+
+.od-docked-panel-sheet-content {
+  min-height: 0;
+  flex: 1;
+  overscroll-behavior: contain;
+}
+
 .od-dialog {
   --od-dialog-width: 52rem;
 
