@@ -114,12 +114,15 @@ export function useInspectorReachability(
       attributeFilter: ["data-inspector-mode"],
       attributes: true,
     });
-    const geometryObserver = new ResizeObserver(keepReachable);
+    const geometryObserver =
+      typeof globalThis.ResizeObserver === "undefined"
+        ? null
+        : new ResizeObserver(keepReachable);
     const inspector = host.querySelector<HTMLElement>(".od-graph-inspector");
-    if (inspector) geometryObserver.observe(inspector);
+    if (inspector) geometryObserver?.observe(inspector);
     keepReachable();
     return () => {
-      geometryObserver.disconnect();
+      geometryObserver?.disconnect();
       mutationObserver.disconnect();
     };
   });
@@ -448,6 +451,33 @@ function restoreInspectorFocus(target: HTMLElement | null) {
   else apply();
 }
 
+function findInspectorFocusFallback(
+  inspector: HTMLDialogElement,
+): HTMLElement | null {
+  const host = inspector.parentElement?.closest<HTMLElement>(
+    ".od-graph-workspace, .od-relationship-graph",
+  );
+  if (!host) return null;
+  const selectors = [
+    ":is(.od-graph-viewport, .od-relationship-graph-viewport) [data-selected='true']:not(:disabled)",
+    ":is(.od-graph-viewport, .od-relationship-graph-viewport) [tabindex='0']:not(:disabled)",
+    ":is(.od-graph-viewport, .od-relationship-graph-viewport) :is(button:not(:disabled), a[href], [tabindex]:not([tabindex='-1']))",
+  ];
+  for (const selector of selectors) {
+    const target = host.querySelector<HTMLElement>(selector);
+    if (target?.isConnected) return target;
+  }
+  return null;
+}
+
+function isModalDialog(inspector: HTMLDialogElement) {
+  try {
+    return inspector.matches(":modal");
+  } catch {
+    return false;
+  }
+}
+
 function focusInspector(
   inspector: HTMLDialogElement,
   heading: HTMLElement | null,
@@ -465,6 +495,144 @@ function focusInspector(
     ) ??
     inspector;
   initialFocus.focus({ preventScroll: true });
+}
+
+type GraphInspectorMode = "split" | "overlay" | "sheet";
+
+function useGraphInspectorMode(
+  inspectorRef: RefObject<HTMLDialogElement | null>,
+  headingRef: RefObject<HTMLHeadingElement | null>,
+) {
+  const [mode, setMode] = useState<GraphInspectorMode>("overlay");
+  const [hosted, setHosted] = useState(false);
+  const modeRef = useRef<GraphInspectorMode>("overlay");
+  const modeTransitionRef = useRef<{
+    readonly focus: HTMLElement | null;
+    readonly focusWasInside: boolean;
+    readonly scrollTop: number;
+  } | null>(null);
+  const lastInspectorFocusRef = useRef<HTMLElement | null>(null);
+
+  useLayoutEffect(() => {
+    const handleFocusIn = (event: FocusEvent) => {
+      const inspector = inspectorRef.current;
+      const target = event.target;
+      if (!inspector || !(target instanceof HTMLElement)) return;
+      lastInspectorFocusRef.current = inspector.contains(target)
+        ? target
+        : null;
+    };
+    document.addEventListener("focusin", handleFocusIn);
+    return () => {
+      document.removeEventListener("focusin", handleFocusIn);
+    };
+  }, [inspectorRef]);
+
+  useLayoutEffect(() => {
+    const inspector = inspectorRef.current;
+    const host = inspector?.parentElement?.closest<HTMLElement>(
+      ".od-graph-workspace, .od-relationship-graph",
+    );
+    if (!inspector || !host) return;
+    setHosted(true);
+    const remProbe = document.createElement("span");
+    remProbe.ariaHidden = "true";
+    remProbe.className = "od-graph-inspector-rem-probe";
+    host.append(remProbe);
+    const updateMode = () => {
+      const width = host.clientWidth;
+      const rootFontSize = Number.parseFloat(
+        getComputedStyle(document.documentElement).fontSize,
+      );
+      const nextMode =
+        width >= 69 * rootFontSize
+          ? "split"
+          : width > 48 * rootFontSize
+            ? "overlay"
+            : "sheet";
+      host.dataset.inspectorMode = nextMode;
+      if (nextMode === modeRef.current) return;
+      const content = inspector.querySelector<HTMLElement>(
+        ".od-graph-inspector-content",
+      );
+      const active = document.activeElement;
+      const activeIsInside =
+        active instanceof HTMLElement && inspector.contains(active);
+      const lastInspectorFocus = lastInspectorFocusRef.current;
+      const focusWasInside =
+        activeIsInside ||
+        (active === document.body &&
+          lastInspectorFocus !== null &&
+          !lastInspectorFocus.isConnected);
+      modeTransitionRef.current = {
+        focus: activeIsInside ? active : lastInspectorFocus,
+        focusWasInside,
+        scrollTop: content?.scrollTop ?? 0,
+      };
+      modeRef.current = nextMode;
+      setMode(nextMode);
+    };
+    const observer =
+      typeof globalThis.ResizeObserver === "undefined"
+        ? null
+        : new ResizeObserver(updateMode);
+    observer?.observe(host);
+    observer?.observe(remProbe);
+    updateMode();
+    return () => {
+      observer?.disconnect();
+      remProbe.remove();
+      delete host.dataset.inspectorMode;
+    };
+  }, [inspectorRef]);
+
+  useLayoutEffect(() => {
+    const inspector = inspectorRef.current;
+    if (!inspector) return;
+    const content = inspector.querySelector<HTMLElement>(
+      ".od-graph-inspector-content",
+    );
+    const transition = modeTransitionRef.current;
+    modeTransitionRef.current = null;
+    const contentScrollTop = transition?.scrollTop ?? content?.scrollTop ?? 0;
+    const previousFocus =
+      transition?.focus ??
+      (inspector.contains(document.activeElement)
+        ? (document.activeElement as HTMLElement)
+        : null);
+    const isModal = isModalDialog(inspector);
+    if (
+      mode === "sheet" &&
+      !isModal &&
+      typeof inspector.showModal === "function"
+    ) {
+      if (inspector.open) inspector.close();
+      inspector.showModal();
+    } else if (mode !== "sheet" && isModal) {
+      inspector.close();
+      if (typeof inspector.show === "function") inspector.show();
+    } else if (!inspector.open && typeof inspector.show === "function") {
+      inspector.show();
+    }
+    if (content) content.scrollTop = contentScrollTop;
+    if (
+      transition?.focusWasInside &&
+      (!previousFocus?.isConnected || !inspector.contains(previousFocus))
+    ) {
+      headingRef.current?.focus({ preventScroll: true });
+    } else if (transition !== null && !transition.focusWasInside) {
+      if (mode === "sheet") headingRef.current?.focus({ preventScroll: true });
+    } else if (previousFocus?.isConnected) {
+      previousFocus.focus({ preventScroll: true });
+    } else if (
+      mode === "sheet" &&
+      !inspector.contains(document.activeElement)
+    ) {
+      headingRef.current?.focus({ preventScroll: true });
+    }
+  }, [headingRef, inspectorRef, mode]);
+
+  return { hosted, mode };
 }
 
 /** A responsive inspector with initial focus, Escape close, and exact focus return. */
@@ -490,13 +658,7 @@ export function GraphInspector({
   const titleId = useId();
   const inspectorRef = useRef<HTMLDialogElement>(null);
   const headingRef = useRef<HTMLHeadingElement>(null);
-  const [mode, setMode] = useState<"split" | "overlay" | "sheet">("overlay");
-  const [hosted, setHosted] = useState(false);
-  const modeRef = useRef<"split" | "overlay" | "sheet">("overlay");
-  const modeTransitionRef = useRef<{
-    readonly focus: HTMLElement | null;
-    readonly scrollTop: number;
-  } | null>(null);
+  const { hosted, mode } = useGraphInspectorMode(inspectorRef, headingRef);
   const capturedReturnFocusRef = useRef<HTMLElement | null>(null);
   const closeReturnFocusRef = useRef<HTMLElement | null>(null);
   const latestSuppliedReturnFocusRef = useRef<HTMLElement | null>(null);
@@ -547,94 +709,17 @@ export function GraphInspector({
     };
   }, [activationKey, initialFocusRef, suppliedReturnFocusRef]);
 
-  useLayoutEffect(() => {
-    const inspector = inspectorRef.current;
-    const host = inspector?.parentElement?.closest<HTMLElement>(
-      ".od-graph-workspace, .od-relationship-graph",
-    );
-    if (!inspector || !host) return;
-    setHosted(true);
-    const remProbe = document.createElement("span");
-    remProbe.ariaHidden = "true";
-    remProbe.className = "od-graph-inspector-rem-probe";
-    host.append(remProbe);
-    const updateMode = () => {
-      const width = host.clientWidth;
-      const rootFontSize = Number.parseFloat(
-        getComputedStyle(document.documentElement).fontSize,
-      );
-      const splitBoundary = 69 * rootFontSize;
-      const sheetBoundary = 48 * rootFontSize;
-      const nextMode =
-        width >= splitBoundary
-          ? "split"
-          : width > sheetBoundary
-            ? "overlay"
-            : "sheet";
-      host.dataset.inspectorMode = nextMode;
-      if (nextMode === modeRef.current) return;
-      const content = inspector.querySelector<HTMLElement>(
-        ".od-graph-inspector-content",
-      );
-      modeTransitionRef.current = {
-        focus: inspector.contains(document.activeElement)
-          ? (document.activeElement as HTMLElement)
-          : null,
-        scrollTop: content?.scrollTop ?? 0,
-      };
-      modeRef.current = nextMode;
-      setMode(nextMode);
-    };
-    const observer = new ResizeObserver(updateMode);
-    observer.observe(host);
-    observer.observe(remProbe);
-    updateMode();
-    return () => {
-      observer.disconnect();
-      remProbe.remove();
-      delete host.dataset.inspectorMode;
-    };
-  }, []);
-
-  useLayoutEffect(() => {
-    const inspector = inspectorRef.current;
-    if (!inspector) return;
-    const content = inspector.querySelector<HTMLElement>(
-      ".od-graph-inspector-content",
-    );
-    const transition = modeTransitionRef.current;
-    modeTransitionRef.current = null;
-    const contentScrollTop = transition?.scrollTop ?? content?.scrollTop ?? 0;
-    const previousFocus =
-      transition?.focus ??
-      (inspector.contains(document.activeElement)
-        ? (document.activeElement as HTMLElement)
-        : null);
-    const isModal = inspector.matches(":modal");
-    if (mode === "sheet" && !isModal) {
-      if (inspector.open) inspector.close();
-      inspector.showModal();
-      if (!inspector.contains(document.activeElement)) {
-        headingRef.current?.focus({ preventScroll: true });
-      }
-    } else if (mode !== "sheet" && isModal) {
-      inspector.close();
-      inspector.show();
-    } else if (!inspector.open) {
-      inspector.show();
-    }
-    if (content) content.scrollTop = contentScrollTop;
-    if (previousFocus?.isConnected) {
-      previousFocus.focus({ preventScroll: true });
-    }
-  }, [mode]);
-
   function closeInspector() {
-    const returnTarget =
+    const requestedReturnTarget =
       suppliedReturnFocusRef?.current ?? capturedReturnFocusRef.current;
+    const returnTarget = requestedReturnTarget?.isConnected
+      ? requestedReturnTarget
+      : inspectorRef.current
+        ? findInspectorFocusFallback(inspectorRef.current)
+        : null;
     closeReturnFocusRef.current = returnTarget;
     const inspector = inspectorRef.current;
-    if (inspector?.matches(":modal")) inspector.close();
+    if (inspector && isModalDialog(inspector)) inspector.close();
     onClose?.();
     if (returnTarget?.isConnected) returnTarget.focus({ preventScroll: true });
     restoreInspectorFocus(returnTarget);
@@ -654,10 +739,10 @@ export function GraphInspector({
         !inspector.contains(event.target)
       )
         return;
-      if (event.key === "Tab" && inspector.matches(":modal")) {
+      if (event.key === "Tab" && isModalDialog(inspector)) {
         const focusTargets = [
           ...inspector.querySelectorAll<HTMLElement>(
-            ".od-graph-inspector-content, button:not(:disabled), input:not(:disabled), select:not(:disabled), textarea:not(:disabled), a[href], [role='button'], [tabindex]:not([tabindex='-1'])",
+            "button:not(:disabled), input:not(:disabled):not([type='hidden']), select:not(:disabled), textarea:not(:disabled), a[href], [tabindex]:not([tabindex='-1'])",
           ),
         ].filter(
           (element) =>
@@ -685,7 +770,7 @@ export function GraphInspector({
       if (
         event.key !== "Escape" ||
         onClose === undefined ||
-        inspector.matches(":modal")
+        isModalDialog(inspector)
       )
         return;
       event.preventDefault();

@@ -24,6 +24,7 @@ import {
 function Fixture() {
   const [inspector, setInspector] = useState(null);
   const [guardedEscapeCount, setGuardedEscapeCount] = useState(0);
+  const [openerAvailable, setOpenerAvailable] = useState(true);
   const [reachabilityInspector, setReachabilityInspector] = useState(false);
   const returnFocusRef = useRef(null);
   const reachabilityReturnFocusRef = useRef(null);
@@ -45,6 +46,8 @@ function Fixture() {
           ? "Create service"
           : inspector === "guarded"
             ? "Guarded details"
+          : inspector === "unavailable"
+            ? "Unavailable details"
           : inspector === "replacement"
             ? "Replacement details"
             : "Service details"
@@ -84,6 +87,11 @@ function Fixture() {
                   returnFocusRef.current = event.currentTarget;
                   setInspector("external-initial");
                 }}>Open with external initial target</Button>
+                {openerAvailable ? <Button type="button" onClick={(event) => {
+                  returnFocusRef.current = event.currentTarget;
+                  setOpenerAvailable(false);
+                  setInspector("unavailable");
+                }}>Open unavailable record</Button> : null}
               </>
             } />
           }
@@ -235,7 +243,7 @@ const css = await readFile(
   new URL("../styles/tokens.css", import.meta.url),
   "utf8",
 );
-const html = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Graph workspace test</title><style>${css}*{box-sizing:border-box}body{margin:0;background:var(--od-color-background)}#root{display:grid;grid-template-columns:minmax(0,1fr);min-width:0;gap:1rem}.od-graph-workspace{height:34rem;min-height:0}.od-page-surface:nth-of-type(n+2) .od-graph-workspace{height:14rem}</style></head><body><main id="root"></main></body></html>`;
+const html = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Graph workspace test</title><style>${css}*:not(.od-graph-inspector){box-sizing:border-box}body{margin:0;background:var(--od-color-background)}#root{display:grid;grid-template-columns:minmax(0,1fr);min-width:0;gap:1rem}.od-graph-workspace{height:34rem;min-height:0}.od-page-surface:nth-of-type(n+2) .od-graph-workspace{height:14rem}</style></head><body><main id="root"></main></body></html>`;
 const systemChrome = "/usr/bin/google-chrome";
 const browser = await chromium.launch({
   executablePath: existsSync(systemChrome) ? systemChrome : undefined,
@@ -462,6 +470,8 @@ try {
   const boundaryInspector = desktop.getByRole("dialog", {
     name: "Create service",
   });
+  const originalBoundaryInspector = await boundaryInspector.elementHandle();
+  assert.ok(originalBoundaryInspector);
   await desktop.waitForFunction(
     () =>
       document.querySelector("[aria-label='Centered service tree']")?.dataset
@@ -531,6 +541,23 @@ try {
       [width, mode],
     );
     assert.equal(await boundaryInspector.getAttribute("data-mode"), mode);
+    assert.equal(
+      await boundaryInspector.evaluate(
+        (element, original) => element === original,
+        originalBoundaryInspector,
+      ),
+      true,
+      "A mode change must keep the same inspector DOM element.",
+    );
+    assert.equal(
+      await desktop.evaluate(
+        () =>
+          document.documentElement.scrollWidth <=
+          document.documentElement.clientWidth,
+      ),
+      true,
+      `The ${mode} mode must not add page-level horizontal overflow.`,
+    );
   }
   assert.equal(await retainedInput.inputValue(), "Retained value");
   assert.equal(
@@ -550,6 +577,76 @@ try {
   assert.equal(Math.abs(sheetGeometry.right - 12) < 1, true);
   assert.equal(Math.abs(sheetGeometry.bottom - 12) < 1, true);
   assert.equal(sheetGeometry.maxHeight, "776px");
+  await boundaryWorkspace.evaluate((element) => {
+    element.style.width = "771px";
+  });
+  await desktop.waitForFunction(
+    () =>
+      document.querySelector("[aria-label='Centered service tree']")?.dataset
+        .inspectorMode === "overlay",
+  );
+  await boundaryOpener.focus();
+  await boundaryWorkspace.evaluate((element) => {
+    element.style.width = "770px";
+  });
+  await desktop.waitForFunction(
+    () =>
+      document.querySelector("[aria-label='Centered service tree']")?.dataset
+        .inspectorMode === "sheet",
+  );
+  assert.equal(
+    await activeElementIs(boundaryHeading),
+    true,
+    "A change to sheet mode from background focus must focus the inspector heading.",
+  );
+  await boundaryHeading.focus();
+  await desktop.keyboard.press("Shift+Tab");
+  assert.equal(
+    await activeElementIs(tinyInspectorLink),
+    true,
+    "Reverse Tab from the sheet heading must wrap to the last focusable control.",
+  );
+  await desktop.keyboard.press("Tab");
+  const boundaryClose = boundaryInspector.getByRole("button", {
+    name: "Close inspector",
+  });
+  assert.equal(
+    await activeElementIs(boundaryClose),
+    true,
+    "Forward Tab from the last sheet control must wrap to the first focusable control.",
+  );
+  assert.equal(
+    await boundaryInspector.evaluate(
+      (element) => getComputedStyle(element).boxSizing,
+    ),
+    "border-box",
+    "The inspector must own its exact border-box geometry.",
+  );
+  await boundaryWorkspace.evaluate((element) => {
+    element.style.width = "771px";
+  });
+  await desktop.waitForFunction(
+    () =>
+      document.querySelector("[aria-label='Centered service tree']")?.dataset
+        .inspectorMode === "overlay",
+  );
+  await retainedInput.focus();
+  await retainedInput.evaluate((element) => {
+    element.remove();
+  });
+  await boundaryWorkspace.evaluate((element) => {
+    element.style.width = "770px";
+  });
+  await desktop.waitForFunction(
+    () =>
+      document.querySelector("[aria-label='Centered service tree']")?.dataset
+        .inspectorMode === "sheet",
+  );
+  assert.equal(
+    await activeElementIs(boundaryHeading),
+    true,
+    "A mode change must focus the heading when the focused inspector control was removed.",
+  );
   await boundaryWorkspace.evaluate((element) => {
     element.style.width = "";
   });
@@ -690,6 +787,23 @@ try {
     await activeElementIs(guardedOpener),
     true,
     "The guarded inspector close action must return focus to its opener.",
+  );
+  await desktop
+    .getByRole("button", { name: "Open unavailable record" })
+    .click();
+  const unavailableInspector = desktop.getByRole("dialog", {
+    name: "Unavailable details",
+  });
+  await unavailableInspector
+    .getByRole("button", { name: "Close inspector" })
+    .click();
+  await unavailableInspector.waitFor({ state: "detached" });
+  assert.equal(
+    await activeElementIs(
+      desktop.getByRole("button", { name: "Inspect service A" }),
+    ),
+    true,
+    "A removed opening control must fall back to the first available graph control.",
   );
   await verifyInspector(
     desktop,

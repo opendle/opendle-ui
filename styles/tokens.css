@@ -2361,13 +2361,14 @@ samp {
 }
 
 .od-graph-inspector {
+  box-sizing: border-box;
   width: 21rem;
   max-height: none;
   position: absolute;
-  top: 4.75rem;
-  right: 0.875rem;
-  bottom: 0.875rem;
-  left: auto;
+  inset-block-start: 4.75rem;
+  inset-inline-end: 0.875rem;
+  inset-block-end: 0.875rem;
+  inset-inline-start: auto;
   z-index: 9;
   display: flex;
   flex-direction: column;
@@ -2381,22 +2382,21 @@ samp {
 }
 
 .od-graph-workspace[data-inspector-mode="split"] > .od-graph-workspace-stage {
-  right: 21rem;
+  inset-inline-end: 21rem;
 }
 
 .od-graph-workspace[data-inspector-mode="split"] > .od-graph-toolbar {
-  right: 21.875rem;
+  inset-inline-end: 21.875rem;
 }
 
 .od-graph-inspector[data-mode="split"] {
   height: 100%;
-  top: 0;
-  right: 0;
-  bottom: 0;
+  inset-block: 0;
+  inset-inline-end: 0;
+  inset-inline-start: auto;
   width: 21rem;
-  border-top: 0;
-  border-right: 0;
-  border-bottom: 0;
+  border-block: 0;
+  border-inline-end: 0;
   border-radius: 0;
 }
 
@@ -2425,10 +2425,9 @@ samp {
   max-width: none;
   max-height: calc(100dvh - 1.5rem);
   position: fixed;
-  top: auto;
-  right: 0.75rem;
-  bottom: 0.75rem;
-  left: 0.75rem;
+  inset-block-start: auto;
+  inset-block-end: 0.75rem;
+  inset-inline: 0.75rem;
 }
 
 .od-graph-inspector::backdrop {
