@@ -10,7 +10,8 @@ import { build } from "esbuild";
 const repositoryRoot = fileURLToPath(new URL("..", import.meta.url));
 const fixtureSource = String.raw`
 import React, { StrictMode, useRef, useState } from "react";
-import { createRoot } from "react-dom/client";
+import { createRoot, hydrateRoot } from "react-dom/client";
+import { renderToString } from "react-dom/server";
 import {
   Button,
   GraphInspector,
@@ -220,17 +221,33 @@ function Fixture() {
         </GraphWorkspace>
       </PageSurface>
       {toastVisible ? (
-        <Toast
-          aria-label="Save status"
-          onDismiss={() => setToastVisible(false)}
-          role="status"
-        >
-          Service saved
-        </Toast>
+        <>
+          <Toast
+            aria-label="Save status"
+            onDismiss={() => setToastVisible(false)}
+            role="status"
+          >
+            Service saved
+          </Toast>
+          <Toast aria-label="Sync status" role="status">
+            Workspace synced
+          </Toast>
+        </>
       ) : null}
     </>
   );
 }
+
+const hydrationContainer = document.createElement("div");
+hydrationContainer.dataset.toastHydrationRoot = "";
+const hydrationToast = (
+  <Toast aria-label="Hydration status" role="status">
+    Hydrated service status
+  </Toast>
+);
+hydrationContainer.innerHTML = renderToString(hydrationToast);
+document.body.append(hydrationContainer);
+window.__toastHydrationRoot = hydrateRoot(hydrationContainer, hydrationToast);
 
 createRoot(document.getElementById("root")).render(<StrictMode><Fixture /></StrictMode>);
 `;
@@ -271,6 +288,11 @@ async function loadFixture(page) {
   await page.setContent(html);
   await page.addScriptTag({ content: browserScript });
   await page.getByRole("region", { name: "Centered service tree" }).waitFor();
+  await page.getByRole("status", { name: "Hydration status" }).waitFor();
+  await page.evaluate(() => {
+    window.__toastHydrationRoot.unmount();
+    document.querySelector("[data-toast-hydration-root]")?.remove();
+  });
   return errors;
 }
 
@@ -916,17 +938,24 @@ try {
   const phone = await phoneContext.newPage();
   const phoneErrors = await loadFixture(phone);
   const phoneToast = phone.getByRole("status", { name: "Save status" });
+  const phoneSyncToast = phone.getByRole("status", { name: "Sync status" });
   await phone.getByRole("button", { name: "Show saved message" }).click();
   await phoneToast.waitFor();
-  assert.equal(
-    await phoneToast.evaluate((element) => element.closest("dialog") === null),
-    true,
-    "A Toast must stay in its normal host position when no modal is open.",
-  );
-  await phoneToast.getByRole("button", { name: "Dismiss message" }).click();
-  await phoneToast.waitFor({ state: "detached" });
-  await phone.getByRole("button", { name: "Show saved message" }).click();
-  await phoneToast.waitFor();
+  await phoneSyncToast.waitFor();
+  await phoneToast.evaluate((element) => {
+    window.__savedToastNode = element;
+  });
+  await phoneSyncToast.evaluate((element) => {
+    window.__syncToastNode = element;
+  });
+  for (const toast of [phoneToast, phoneSyncToast]) {
+    assert.equal(
+      await toast.evaluate((element) => element.closest("dialog") === null),
+      true,
+      "Each Toast must stay in its normal host position when no modal is open.",
+    );
+  }
+
   const modalToastOpener = phone.getByRole("button", {
     name: "Create service",
   });
@@ -935,10 +964,98 @@ try {
     name: "Create service",
   });
   await modalToastInspector.waitFor();
-  await phone.waitForFunction(() => {
-    const toast = document.querySelector(".od-toast");
-    return toast?.closest("dialog:modal") !== null;
+  await phone.waitForFunction(() =>
+    [...document.querySelectorAll(".od-toast")].every(
+      (toast) => toast.closest("dialog:modal") !== null,
+    ),
+  );
+  assert.equal(
+    await phoneToast.evaluate((element) => element === window.__savedToastNode),
+    true,
+    "A Toast must keep its DOM node when a modal opens.",
+  );
+  assert.equal(
+    await phoneSyncToast.evaluate(
+      (element) => element === window.__syncToastNode,
+    ),
+    true,
+    "Each Toast must keep its DOM node when a modal opens.",
+  );
+  await phone.keyboard.press("Escape");
+  await modalToastInspector.waitFor({ state: "detached" });
+  await phone.waitForFunction(() =>
+    [...document.querySelectorAll(".od-toast")].every(
+      (toast) => toast.closest("dialog") === null,
+    ),
+  );
+  assert.equal(
+    await phoneToast.evaluate((element) => element === window.__savedToastNode),
+    true,
+    "A Toast must keep its DOM node when a modal closes.",
+  );
+  assert.equal(
+    await activeElementIs(modalToastOpener),
+    true,
+    "The modal inspector must still return focus while a Toast stays open.",
+  );
+
+  await phone.evaluate(() => {
+    const firstDialog = document.createElement("dialog");
+    firstDialog.id = "first-toast-modal";
+    firstDialog.setAttribute("aria-label", "First Toast modal");
+    const secondDialog = document.createElement("dialog");
+    secondDialog.id = "second-toast-modal";
+    secondDialog.setAttribute("aria-label", "Second Toast modal");
+    document.body.append(firstDialog, secondDialog);
+    secondDialog.showModal();
+    firstDialog.showModal();
+    if (document.activeElement instanceof HTMLElement)
+      document.activeElement.blur();
+    const unrelatedMutation = document.createElement("span");
+    unrelatedMutation.id = "toast-unrelated-mutation";
+    document.body.append(unrelatedMutation);
   });
+  await phone.waitForFunction(
+    () =>
+      document.querySelector('[aria-label="Save status"]')?.closest("dialog")
+        ?.id === "first-toast-modal",
+  );
+  assert.equal(
+    await phoneToast.evaluate((element) => element === window.__savedToastNode),
+    true,
+    "A Toast must keep its DOM node in layered modals.",
+  );
+  await phone.evaluate(() => {
+    document.querySelector("#first-toast-modal").close();
+  });
+  await phone.waitForFunction(
+    () =>
+      document.querySelector('[aria-label="Save status"]')?.closest("dialog")
+        ?.id === "second-toast-modal",
+  );
+  await phone.evaluate(() => {
+    document.querySelector("#second-toast-modal").close();
+  });
+  await phone.waitForFunction(
+    () =>
+      document
+        .querySelector('[aria-label="Save status"]')
+        ?.closest("dialog") === null,
+  );
+  await phone.evaluate(() => {
+    document.querySelector("#first-toast-modal")?.remove();
+    document.querySelector("#second-toast-modal")?.remove();
+    document.querySelector("#toast-unrelated-mutation")?.remove();
+  });
+
+  await modalToastOpener.click();
+  await modalToastInspector.waitFor();
+  await phone.waitForFunction(
+    () =>
+      document
+        .querySelector('[aria-label="Save status"]')
+        ?.closest("dialog:modal") !== null,
+  );
   const modalToastDismiss = phoneToast.getByRole("button", {
     name: "Dismiss message",
   });
@@ -956,6 +1073,7 @@ try {
   );
   await modalToastDismiss.click();
   await phoneToast.waitFor({ state: "detached" });
+  await phoneSyncToast.waitFor({ state: "detached" });
   await phone.keyboard.press("Escape");
   await modalToastInspector.waitFor({ state: "detached" });
   assert.equal(
