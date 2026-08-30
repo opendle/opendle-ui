@@ -77,6 +77,26 @@ test("StatusPill renders one status dot and its label", () => {
   assert.match(markup, />Healthy<\/span>/);
 });
 
+test("Toast keeps semantic fallback markup and a labelled dismiss action", () => {
+  const markup = renderToStaticMarkup(
+    React.createElement(
+      Toast,
+      {
+        "aria-label": "Save status",
+        className: "host-toast",
+        onDismiss: () => undefined,
+        role: "status",
+      },
+      "Service saved",
+    ),
+  );
+  assert.match(markup, /<output[^>]*aria-label="Save status"/);
+  assert.match(markup, /class="od-toast host-toast"/);
+  assert.match(markup, /role="status"/);
+  assert.match(markup, /aria-label="Dismiss message"/);
+  assert.match(markup, />Service saved<\/span>/);
+});
+
 test("ConfirmationDialog labels a modal confirmation and its exact impact input", () => {
   const markup = renderToStaticMarkup(
     React.createElement(ConfirmationDialog, {

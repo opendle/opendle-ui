@@ -19,6 +19,7 @@ import {
   GraphViewport,
   GraphWorkspace,
   PageSurface,
+  Toast,
 } from "./dist/index.js";
 
 function Fixture() {
@@ -26,6 +27,7 @@ function Fixture() {
   const [guardedEscapeCount, setGuardedEscapeCount] = useState(0);
   const [openerAvailable, setOpenerAvailable] = useState(true);
   const [reachabilityInspector, setReachabilityInspector] = useState(false);
+  const [toastVisible, setToastVisible] = useState(false);
   const returnFocusRef = useRef(null);
   const reachabilityReturnFocusRef = useRef(null);
   const selectedControlRef = useRef(null);
@@ -67,6 +69,7 @@ function Fixture() {
   return (
     <>
       <output aria-label="Guarded Escape count">{guardedEscapeCount}</output>
+      <Button type="button" onClick={() => setToastVisible(true)}>Show saved message</Button>
       <PageSurface data-testid="guttered-surface">
         <h1>Graph workspace browser check</h1>
         <GraphWorkspace
@@ -216,6 +219,15 @@ function Fixture() {
           </GraphViewport>
         </GraphWorkspace>
       </PageSurface>
+      {toastVisible ? (
+        <Toast
+          aria-label="Save status"
+          onDismiss={() => setToastVisible(false)}
+          role="status"
+        >
+          Service saved
+        </Toast>
+      ) : null}
     </>
   );
 }
@@ -903,6 +915,54 @@ try {
   });
   const phone = await phoneContext.newPage();
   const phoneErrors = await loadFixture(phone);
+  const phoneToast = phone.getByRole("status", { name: "Save status" });
+  await phone.getByRole("button", { name: "Show saved message" }).click();
+  await phoneToast.waitFor();
+  assert.equal(
+    await phoneToast.evaluate((element) => element.closest("dialog") === null),
+    true,
+    "A Toast must stay in its normal host position when no modal is open.",
+  );
+  await phoneToast.getByRole("button", { name: "Dismiss message" }).click();
+  await phoneToast.waitFor({ state: "detached" });
+  await phone.getByRole("button", { name: "Show saved message" }).click();
+  await phoneToast.waitFor();
+  const modalToastOpener = phone.getByRole("button", {
+    name: "Create service",
+  });
+  await modalToastOpener.click();
+  const modalToastInspector = phone.getByRole("dialog", {
+    name: "Create service",
+  });
+  await modalToastInspector.waitFor();
+  await phone.waitForFunction(() => {
+    const toast = document.querySelector(".od-toast");
+    return toast?.closest("dialog:modal") !== null;
+  });
+  const modalToastDismiss = phoneToast.getByRole("button", {
+    name: "Dismiss message",
+  });
+  assert.equal(
+    await modalToastDismiss.evaluate((element) => {
+      const bounds = element.getBoundingClientRect();
+      const target = document.elementFromPoint(
+        bounds.left + bounds.width / 2,
+        bounds.top + bounds.height / 2,
+      );
+      return target === element || element.contains(target);
+    }),
+    true,
+    "A Toast dismiss action must stay pointer accessible in a modal inspector.",
+  );
+  await modalToastDismiss.click();
+  await phoneToast.waitFor({ state: "detached" });
+  await phone.keyboard.press("Escape");
+  await modalToastInspector.waitFor({ state: "detached" });
+  assert.equal(
+    await activeElementIs(modalToastOpener),
+    true,
+    "The modal inspector must still return focus after a Toast is dismissed.",
+  );
   await verifyInspector(
     phone,
     phone.getByRole("button", { name: "Create service" }),
