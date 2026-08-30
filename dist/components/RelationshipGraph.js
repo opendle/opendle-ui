@@ -1,7 +1,7 @@
 import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
 import { useCallback, useEffect, useId, useLayoutEffect, useMemo, useReducer, useRef, } from "react";
 import { assertRelationshipGraphModel, relationshipGraphKeyboardTarget, relationshipGraphPath, relationshipGraphSearch, } from "../RelationshipGraphModel.js";
-import { GraphToolbar } from "./GraphWorkspace.js";
+import { GraphToolbar, useInspectorReachability } from "./GraphWorkspace.js";
 function classes(...values) {
     return values.filter(Boolean).join(" ");
 }
@@ -209,6 +209,7 @@ export function RelationshipGraph({ columns, relationships, selectedNodeId, defa
     const columnHeadingPrefix = useId();
     const searchInputId = useId();
     const rootRef = useRef(null);
+    const selectedControlRef = useRef(null);
     const boardRef = useRef(null);
     const nodeRefs = useRef(new Map());
     const partialResultRefs = useRef(new Map());
@@ -323,6 +324,11 @@ export function RelationshipGraph({ columns, relationships, selectedNodeId, defa
     const activeInspector = hasAuxiliaryInspector
         ? auxiliaryInspector
         : selectedNodeInspector;
+    useLayoutEffect(() => {
+        selectedControlRef.current =
+            selectedId === null ? null : (nodeRefs.current.get(selectedId) ?? null);
+    }, [selectedId, visibleKey]);
+    useInspectorReachability(rootRef, selectedControlRef, hasInspectorContent(activeInspector));
     useEffect(() => {
         onSelectionChangeRef.current = onSelectionChange;
     }, [onSelectionChange]);

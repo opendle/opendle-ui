@@ -15,6 +15,7 @@ import {
   useId,
   useLayoutEffect,
   useRef,
+  useState,
 } from "react";
 
 function classes(...values: (string | false | null | undefined)[]) {
@@ -48,23 +49,80 @@ function hasRenderedContent(value: ReactNode): boolean {
 export interface GraphWorkspaceProps extends HTMLAttributes<HTMLElement> {
   readonly toolbar?: ReactNode;
   readonly inspector?: ReactNode;
+  readonly selectedControlRef?: RefObject<HTMLElement | null>;
 }
 
 /** A full-width graph surface with floating controls and an optional inspector. */
 export function GraphWorkspace({
   toolbar,
   inspector,
+  selectedControlRef,
   children,
   className,
   ...props
 }: GraphWorkspaceProps) {
+  const hostRef = useRef<HTMLElement>(null);
+  useInspectorReachability(
+    hostRef,
+    selectedControlRef,
+    inspector !== undefined && inspector !== null,
+  );
   return (
-    <section {...props} className={classes("od-graph-workspace", className)}>
+    <section
+      {...props}
+      className={classes("od-graph-workspace", className)}
+      ref={hostRef}
+    >
       {toolbar}
       <div className="od-graph-workspace-stage">{children}</div>
       {inspector}
     </section>
   );
+}
+
+export function useInspectorReachability(
+  hostRef: RefObject<HTMLElement | null>,
+  selectedControlRef: RefObject<HTMLElement | null> | undefined,
+  active: boolean,
+) {
+  useLayoutEffect(() => {
+    const host = hostRef.current;
+    if (!host || !active) return;
+    const keepReachable = () => {
+      if (host.dataset.inspectorMode !== "overlay") return;
+      const control = selectedControlRef?.current;
+      if (!control?.isConnected) return;
+      const viewport = control.closest<HTMLElement>(
+        ".od-graph-viewport, .od-relationship-graph-viewport",
+      );
+      const inspector = host.querySelector<HTMLElement>(
+        ".od-graph-inspector[data-mode='overlay']",
+      );
+      if (!viewport || !inspector) return;
+      const controlBounds = control.getBoundingClientRect();
+      const viewportBounds = viewport.getBoundingClientRect();
+      const inspectorBounds = inspector.getBoundingClientRect();
+      const visibleEnd = Math.min(viewportBounds.right, inspectorBounds.left);
+      if (controlBounds.right > visibleEnd) {
+        viewport.scrollLeft += controlBounds.right - visibleEnd;
+      } else if (controlBounds.left < viewportBounds.left) {
+        viewport.scrollLeft -= viewportBounds.left - controlBounds.left;
+      }
+    };
+    const mutationObserver = new MutationObserver(keepReachable);
+    mutationObserver.observe(host, {
+      attributeFilter: ["data-inspector-mode"],
+      attributes: true,
+    });
+    const geometryObserver = new ResizeObserver(keepReachable);
+    const inspector = host.querySelector<HTMLElement>(".od-graph-inspector");
+    if (inspector) geometryObserver.observe(inspector);
+    keepReachable();
+    return () => {
+      geometryObserver.disconnect();
+      mutationObserver.disconnect();
+    };
+  });
 }
 
 export interface GraphToolbarProps extends HTMLAttributes<HTMLElement> {
@@ -379,21 +437,25 @@ function restoreInspectorFocus(target: HTMLElement | null) {
     const active = document.activeElement;
     if (
       active instanceof HTMLElement &&
-      active.closest(".od-graph-inspector, dialog[open]")
+      active !== document.body &&
+      active !== document.documentElement
     )
       return;
     if (target.isConnected) target.focus({ preventScroll: true });
   };
-  if (typeof requestAnimationFrame === "function") requestAnimationFrame(apply);
+  if (typeof requestAnimationFrame === "function")
+    requestAnimationFrame(() => requestAnimationFrame(apply));
   else apply();
 }
 
 function focusInspector(
   inspector: HTMLDialogElement,
+  heading: HTMLElement | null,
   initialFocusRef?: RefObject<HTMLElement | null>,
 ) {
   const suppliedInitialFocus = initialFocusRef?.current;
   const initialFocus =
+    heading ??
     (suppliedInitialFocus && inspector.contains(suppliedInitialFocus)
       ? suppliedInitialFocus
       : null) ??
@@ -413,6 +475,7 @@ export function GraphInspector({
   icon,
   actions,
   onClose,
+  onCancel,
   closeLabel = "Close inspector",
   initialFocusRef,
   returnFocusRef: suppliedReturnFocusRef,
@@ -426,6 +489,14 @@ export function GraphInspector({
 }: GraphInspectorProps) {
   const titleId = useId();
   const inspectorRef = useRef<HTMLDialogElement>(null);
+  const headingRef = useRef<HTMLHeadingElement>(null);
+  const [mode, setMode] = useState<"split" | "overlay" | "sheet">("overlay");
+  const [hosted, setHosted] = useState(false);
+  const modeRef = useRef<"split" | "overlay" | "sheet">("overlay");
+  const modeTransitionRef = useRef<{
+    readonly focus: HTMLElement | null;
+    readonly scrollTop: number;
+  } | null>(null);
   const capturedReturnFocusRef = useRef<HTMLElement | null>(null);
   const closeReturnFocusRef = useRef<HTMLElement | null>(null);
   const latestSuppliedReturnFocusRef = useRef<HTMLElement | null>(null);
@@ -444,7 +515,7 @@ export function GraphInspector({
     )
       return;
     capturedReturnFocusRef.current = target;
-    focusInspector(inspector, initialFocusRef);
+    focusInspector(inspector, headingRef.current, initialFocusRef);
   });
 
   useLayoutEffect(() => {
@@ -460,7 +531,7 @@ export function GraphInspector({
         capturedReturnFocusRef.current = active;
       }
     }
-    focusInspector(inspector, initialFocusRef);
+    focusInspector(inspector, headingRef.current, initialFocusRef);
     return () => {
       const returnTarget =
         closeReturnFocusRef.current ??
@@ -476,29 +547,145 @@ export function GraphInspector({
     };
   }, [activationKey, initialFocusRef, suppliedReturnFocusRef]);
 
+  useLayoutEffect(() => {
+    const inspector = inspectorRef.current;
+    const host = inspector?.parentElement?.closest<HTMLElement>(
+      ".od-graph-workspace, .od-relationship-graph",
+    );
+    if (!inspector || !host) return;
+    setHosted(true);
+    const remProbe = document.createElement("span");
+    remProbe.ariaHidden = "true";
+    remProbe.className = "od-graph-inspector-rem-probe";
+    host.append(remProbe);
+    const updateMode = () => {
+      const width = host.clientWidth;
+      const rootFontSize = Number.parseFloat(
+        getComputedStyle(document.documentElement).fontSize,
+      );
+      const splitBoundary = 69 * rootFontSize;
+      const sheetBoundary = 48 * rootFontSize;
+      const nextMode =
+        width >= splitBoundary
+          ? "split"
+          : width > sheetBoundary
+            ? "overlay"
+            : "sheet";
+      host.dataset.inspectorMode = nextMode;
+      if (nextMode === modeRef.current) return;
+      const content = inspector.querySelector<HTMLElement>(
+        ".od-graph-inspector-content",
+      );
+      modeTransitionRef.current = {
+        focus: inspector.contains(document.activeElement)
+          ? (document.activeElement as HTMLElement)
+          : null,
+        scrollTop: content?.scrollTop ?? 0,
+      };
+      modeRef.current = nextMode;
+      setMode(nextMode);
+    };
+    const observer = new ResizeObserver(updateMode);
+    observer.observe(host);
+    observer.observe(remProbe);
+    updateMode();
+    return () => {
+      observer.disconnect();
+      remProbe.remove();
+      delete host.dataset.inspectorMode;
+    };
+  }, []);
+
+  useLayoutEffect(() => {
+    const inspector = inspectorRef.current;
+    if (!inspector) return;
+    const content = inspector.querySelector<HTMLElement>(
+      ".od-graph-inspector-content",
+    );
+    const transition = modeTransitionRef.current;
+    modeTransitionRef.current = null;
+    const contentScrollTop = transition?.scrollTop ?? content?.scrollTop ?? 0;
+    const previousFocus =
+      transition?.focus ??
+      (inspector.contains(document.activeElement)
+        ? (document.activeElement as HTMLElement)
+        : null);
+    const isModal = inspector.matches(":modal");
+    if (mode === "sheet" && !isModal) {
+      if (inspector.open) inspector.close();
+      inspector.showModal();
+      if (!inspector.contains(document.activeElement)) {
+        headingRef.current?.focus({ preventScroll: true });
+      }
+    } else if (mode !== "sheet" && isModal) {
+      inspector.close();
+      inspector.show();
+    } else if (!inspector.open) {
+      inspector.show();
+    }
+    if (content) content.scrollTop = contentScrollTop;
+    if (previousFocus?.isConnected) {
+      previousFocus.focus({ preventScroll: true });
+    }
+  }, [mode]);
+
   function closeInspector() {
     const returnTarget =
       suppliedReturnFocusRef?.current ?? capturedReturnFocusRef.current;
     closeReturnFocusRef.current = returnTarget;
+    const inspector = inspectorRef.current;
+    if (inspector?.matches(":modal")) inspector.close();
     onClose?.();
     if (returnTarget?.isConnected) returnTarget.focus({ preventScroll: true });
     restoreInspectorFocus(returnTarget);
   }
 
-  const handleInspectorEscapeRef = useRef<
+  const handleInspectorKeyboardRef = useRef<
     (event: globalThis.KeyboardEvent) => void
   >(() => undefined);
 
   useLayoutEffect(() => {
-    handleInspectorEscapeRef.current = (event: globalThis.KeyboardEvent) => {
+    handleInspectorKeyboardRef.current = (event: globalThis.KeyboardEvent) => {
       const inspector = inspectorRef.current;
       if (
         !inspector ||
-        onClose === undefined ||
         event.defaultPrevented ||
-        event.key !== "Escape" ||
         !(event.target instanceof Node) ||
         !inspector.contains(event.target)
+      )
+        return;
+      if (event.key === "Tab" && inspector.matches(":modal")) {
+        const focusTargets = [
+          ...inspector.querySelectorAll<HTMLElement>(
+            ".od-graph-inspector-content, button:not(:disabled), input:not(:disabled), select:not(:disabled), textarea:not(:disabled), a[href], [role='button'], [tabindex]:not([tabindex='-1'])",
+          ),
+        ].filter(
+          (element) =>
+            element !== inspector &&
+            element.getAttribute("aria-hidden") !== "true" &&
+            element.getClientRects().length > 0,
+        );
+        const first = focusTargets.at(0) ?? headingRef.current;
+        const last = focusTargets.at(-1) ?? headingRef.current;
+        const active = document.activeElement;
+        const target = event.shiftKey
+          ? active === headingRef.current ||
+            active === first ||
+            !inspector.contains(active)
+            ? last
+            : null
+          : active === last || !inspector.contains(active)
+            ? first
+            : null;
+        if (!target) return;
+        event.preventDefault();
+        target.focus({ preventScroll: true });
+        return;
+      }
+      if (
+        event.key !== "Escape" ||
+        onClose === undefined ||
+        inspector.matches(":modal")
       )
         return;
       event.preventDefault();
@@ -509,7 +696,7 @@ export function GraphInspector({
 
   useLayoutEffect(() => {
     const handleKeyDown = (event: globalThis.KeyboardEvent) => {
-      handleInspectorEscapeRef.current(event);
+      handleInspectorKeyboardRef.current(event);
     };
     document.addEventListener("keydown", handleKeyDown);
     return () => {
@@ -525,8 +712,16 @@ export function GraphInspector({
         ariaLabel === undefined ? (ariaLabelledBy ?? titleId) : undefined
       }
       className={classes("od-graph-inspector", className)}
+      data-hosted={hosted}
+      data-mode={mode}
       data-tone={tone}
       open
+      onCancel={(event) => {
+        onCancel?.(event);
+        if (event.defaultPrevented || onClose === undefined) return;
+        event.preventDefault();
+        closeInspector();
+      }}
       ref={inspectorRef}
       tabIndex={tabIndex ?? -1}
     >
@@ -536,7 +731,9 @@ export function GraphInspector({
           {eyebrow ? (
             <span className="od-graph-inspector-eyebrow">{eyebrow}</span>
           ) : null}
-          <h2 id={titleId}>{title}</h2>
+          <h2 id={titleId} ref={headingRef} tabIndex={-1}>
+            {title}
+          </h2>
         </div>
         {onClose ? (
           <button

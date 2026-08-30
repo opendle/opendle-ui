@@ -24,7 +24,10 @@ import {
 function Fixture() {
   const [inspector, setInspector] = useState(null);
   const [guardedEscapeCount, setGuardedEscapeCount] = useState(0);
+  const [reachabilityInspector, setReachabilityInspector] = useState(false);
   const returnFocusRef = useRef(null);
+  const reachabilityReturnFocusRef = useRef(null);
+  const selectedControlRef = useRef(null);
   const panel = inspector === null ? null : (
     <GraphInspector
       activationKey={inspector?.startsWith("ref-only") ? undefined : inspector}
@@ -49,6 +52,8 @@ function Fixture() {
     >
       <p>{"Long inspector content. ".repeat(80)}</p>
       <label>Service title <input defaultValue="Shared service" /></label>
+      <a aria-label="Tiny inspector link" href="#fixture-target">i</a>
+      <div aria-hidden="true" style={{ flex: "0 0 auto", height: "30rem" }} />
       {inspector === "detail-a" ? (
         <button type="button" onClick={() => setInspector("replacement")}>
           Replace inspector
@@ -132,6 +137,54 @@ function Fixture() {
           </GraphViewport>
         </GraphWorkspace>
       </PageSurface>
+      <PageSurface>
+        <GraphWorkspace
+          aria-label="Overlay reachability graph"
+          inspector={
+            reachabilityInspector ? (
+              <GraphInspector
+                onClose={() => setReachabilityInspector(false)}
+                returnFocusRef={reachabilityReturnFocusRef}
+                title="Reachability record"
+              >
+                <p>The selected record must stay visible.</p>
+              </GraphInspector>
+            ) : null
+          }
+          selectedControlRef={selectedControlRef}
+          style={{ width: "min(1106px, 100%)" }}
+          toolbar={
+            <GraphToolbar
+              actions={
+                <Button
+                  onClick={(event) => {
+                    reachabilityReturnFocusRef.current = event.currentTarget;
+                    setReachabilityInspector(true);
+                  }}
+                  type="button"
+                >
+                  Open reachability inspector
+                </Button>
+              }
+            />
+          }
+        >
+          <GraphViewport
+            aria-label="Overlay reachability viewport"
+            canvasHeight={180}
+            canvasWidth={2100}
+          >
+            <GraphNode
+              aria-label="Selected reachability service"
+              ref={selectedControlRef}
+              selected
+              title="Reachability service"
+              x={1400}
+              y={50}
+            />
+          </GraphViewport>
+        </GraphWorkspace>
+      </PageSurface>
       <PageSurface data-testid="edge-surface" edgeToEdge>
         <GraphWorkspace aria-label="Start aligned free graph">
           <GraphViewport
@@ -205,15 +258,30 @@ function activeElementIs(locator) {
   return locator.evaluate((element) => element === document.activeElement);
 }
 
+function activeElementIsOutside(locator) {
+  return locator.evaluate(
+    (element) =>
+      document.activeElement instanceof HTMLElement &&
+      document.activeElement !== document.body &&
+      !element.contains(document.activeElement),
+  );
+}
+
+async function captureReviewScreenshot(page, name) {
+  const directory = process.env.OPENDLE_UI_SCREENSHOT_DIR;
+  if (directory === undefined) return;
+  await page.screenshot({ path: `${directory}/${name}.png` });
+}
+
 async function verifyInspector(page, opener, title, phone) {
   await opener.click();
   const inspector = page.getByRole("dialog", { name: title });
   await inspector.waitFor();
-  const close = inspector.getByRole("button", { name: "Close inspector" });
+  const heading = inspector.getByRole("heading", { level: 2, name: title });
   assert.equal(
-    await activeElementIs(close),
+    await activeElementIs(heading),
     true,
-    `${title} must move initial focus to its close control.`,
+    `${title} must move initial focus to its heading.`,
   );
   const workspaceBounds = await page
     .getByRole("region", { name: "Centered service tree" })
@@ -242,6 +310,22 @@ async function verifyInspector(page, opener, title, phone) {
       true,
       `${title} must keep the phone inset.`,
     );
+    await page.keyboard.press("Shift+Tab");
+    assert.equal(
+      await inspector.evaluate((element) =>
+        element.contains(document.activeElement),
+      ),
+      true,
+      `${title} must contain reverse Tab focus in the modal sheet; active element is ${await page.evaluate(() => document.activeElement?.outerHTML)}.`,
+    );
+    await opener.focus();
+    assert.equal(
+      await inspector.evaluate((element) =>
+        element.contains(document.activeElement),
+      ),
+      true,
+      `${title} must keep programmatic background focus in the modal sheet.`,
+    );
   } else {
     assert.equal(
       inspectorBounds.x > workspaceBounds.x + workspaceBounds.width / 2,
@@ -254,7 +338,7 @@ async function verifyInspector(page, opener, title, phone) {
   assert.equal(
     await activeElementIs(opener),
     true,
-    `${title} must return focus to the exact opening control.`,
+    `${title} must return focus to the exact opening control; active element is ${await page.evaluate(() => document.activeElement?.outerHTML)}.`,
   );
 }
 
@@ -368,6 +452,210 @@ try {
     "The far tree node must remain reachable through local scrolling.",
   );
 
+  const boundaryWorkspace = desktop.getByRole("region", {
+    name: "Centered service tree",
+  });
+  const boundaryOpener = desktop.getByRole("button", {
+    name: "Create service",
+  });
+  await boundaryOpener.click();
+  const boundaryInspector = desktop.getByRole("dialog", {
+    name: "Create service",
+  });
+  await desktop.waitForFunction(
+    () =>
+      document.querySelector("[aria-label='Centered service tree']")?.dataset
+        .inspectorMode === "split",
+  );
+  await captureReviewScreenshot(desktop, "graph-inspector-split");
+  const boundaryHeading = boundaryInspector.getByRole("heading", {
+    level: 2,
+    name: "Create service",
+  });
+  const tinyInspectorLink = boundaryInspector.getByRole("link", {
+    name: "Tiny inspector link",
+  });
+  const tinyControlBounds = await tinyInspectorLink.boundingBox();
+  assert.ok(tinyControlBounds);
+  assert.equal(
+    tinyControlBounds.width >= 44 && tinyControlBounds.height >= 44,
+    true,
+    `Each inspector control must keep both 2.75rem minimum dimensions: ${JSON.stringify(tinyControlBounds)}.`,
+  );
+  await boundaryHeading.focus();
+  await desktop.keyboard.press("Shift+Tab");
+  assert.equal(
+    await activeElementIsOutside(boundaryInspector),
+    true,
+    "Shift+Tab must reach the page from a split non-modal inspector.",
+  );
+  await tinyInspectorLink.focus();
+  await desktop.keyboard.press("Tab");
+  assert.equal(
+    await activeElementIsOutside(boundaryInspector),
+    true,
+    "Tab must reach the page from a split non-modal inspector.",
+  );
+  const retainedInput = boundaryInspector.getByLabel("Service title");
+  await retainedInput.fill("Retained value");
+  const retainedContent = boundaryInspector.locator(
+    ".od-graph-inspector-content",
+  );
+  const retainedScrollTop = await retainedContent.evaluate((element) => {
+    element.scrollTop = 80;
+    return element.scrollTop;
+  });
+  assert.equal(retainedScrollTop > 0, true);
+  const boundaryChecks = [
+    [1105, "split"],
+    [1104, "split"],
+    [1103, "overlay"],
+    [769, "overlay"],
+    [768, "sheet"],
+    [767, "sheet"],
+  ];
+  for (const [width, mode] of boundaryChecks) {
+    await boundaryWorkspace.evaluate((element, nextWidth) => {
+      element.style.width = `${String(nextWidth + 2)}px`;
+    }, width);
+    await desktop.waitForFunction(
+      ([expectedWidth, expectedMode]) => {
+        const host = document.querySelector(
+          "[aria-label='Centered service tree']",
+        );
+        return (
+          host?.clientWidth === expectedWidth &&
+          host.dataset.inspectorMode === expectedMode
+        );
+      },
+      [width, mode],
+    );
+    assert.equal(await boundaryInspector.getAttribute("data-mode"), mode);
+  }
+  assert.equal(await retainedInput.inputValue(), "Retained value");
+  assert.equal(
+    await retainedContent.evaluate((element) => element.scrollTop),
+    retainedScrollTop,
+  );
+  const sheetGeometry = await boundaryInspector.evaluate((element) => {
+    const bounds = element.getBoundingClientRect();
+    return {
+      bottom: window.innerHeight - bounds.bottom,
+      left: bounds.left,
+      maxHeight: getComputedStyle(element).maxHeight,
+      right: window.innerWidth - bounds.right,
+    };
+  });
+  assert.equal(Math.abs(sheetGeometry.left - 12) < 1, true);
+  assert.equal(Math.abs(sheetGeometry.right - 12) < 1, true);
+  assert.equal(Math.abs(sheetGeometry.bottom - 12) < 1, true);
+  assert.equal(sheetGeometry.maxHeight, "776px");
+  await boundaryWorkspace.evaluate((element) => {
+    element.style.width = "";
+  });
+  await boundaryInspector
+    .getByRole("button", { name: "Close inspector" })
+    .click();
+  await boundaryInspector.waitFor({ state: "detached" });
+  await desktop.evaluate(() => {
+    document.documentElement.style.fontSize = "20px";
+  });
+  const reachabilityWorkspace = desktop.getByRole("region", {
+    name: "Overlay reachability graph",
+  });
+  await desktop
+    .getByRole("button", { name: "Open reachability inspector" })
+    .click();
+  await desktop.waitForFunction(
+    () =>
+      document.querySelector("[aria-label='Overlay reachability graph']")
+        ?.dataset.inspectorMode === "overlay",
+  );
+  const reachabilityDialog = desktop.getByRole("dialog", {
+    name: "Reachability record",
+  });
+  const overlayGeometry = await reachabilityWorkspace.evaluate((host) => {
+    const inspector = host.querySelector(".od-graph-inspector");
+    const control = host.querySelector(
+      "[aria-label='Selected reachability service']",
+    );
+    const viewport = host.querySelector(".od-graph-viewport");
+    const inspectorBounds = inspector?.getBoundingClientRect();
+    const controlBounds = control?.getBoundingClientRect();
+    return {
+      controlRight: controlBounds?.right ?? 0,
+      inspectorLeft: inspectorBounds?.left ?? 0,
+      inspectorWidth: inspectorBounds?.width ?? 0,
+      scrollLeft: viewport?.scrollLeft ?? 0,
+    };
+  });
+  assert.equal(
+    Math.abs(overlayGeometry.inspectorWidth - 420) < 1,
+    true,
+    `The overlay must use its root-relative 21rem width: ${JSON.stringify(overlayGeometry)}.`,
+  );
+  assert.equal(
+    overlayGeometry.scrollLeft > 0 &&
+      overlayGeometry.controlRight <= overlayGeometry.inspectorLeft + 1,
+    true,
+    `The selected control must stay before the actual overlay edge: ${JSON.stringify(overlayGeometry)}.`,
+  );
+  await captureReviewScreenshot(desktop, "graph-inspector-overlay");
+  const reachabilityHeading = reachabilityDialog.getByRole("heading", {
+    level: 2,
+    name: "Reachability record",
+  });
+  await reachabilityHeading.focus();
+  await desktop.keyboard.press("Shift+Tab");
+  assert.equal(
+    await activeElementIsOutside(reachabilityDialog),
+    true,
+    "Shift+Tab must reach the page from an overlay non-modal inspector.",
+  );
+  await reachabilityDialog
+    .getByRole("button", { name: "Close inspector" })
+    .focus();
+  await desktop.keyboard.press("Tab");
+  if (!(await activeElementIsOutside(reachabilityDialog)))
+    await desktop.keyboard.press("Tab");
+  assert.equal(
+    await activeElementIsOutside(reachabilityDialog),
+    true,
+    `Tab must reach the page from an overlay non-modal inspector; active element is ${await desktop.evaluate(() => document.activeElement?.outerHTML)}.`,
+  );
+  await reachabilityHeading.focus();
+  await desktop.evaluate(() => {
+    document.documentElement.style.fontSize = "24px";
+  });
+  await desktop.waitForFunction(
+    () =>
+      document.querySelector("[aria-label='Overlay reachability graph']")
+        ?.dataset.inspectorMode === "sheet",
+  );
+  await captureReviewScreenshot(desktop, "graph-inspector-sheet");
+  await desktop
+    .getByRole("button", { name: "Open reachability inspector" })
+    .focus();
+  assert.equal(
+    await reachabilityDialog.evaluate((element) =>
+      element.contains(document.activeElement),
+    ),
+    true,
+    "The modal sheet must keep background focus contained.",
+  );
+  await desktop.evaluate(() => {
+    document.documentElement.style.fontSize = "16px";
+  });
+  await desktop.waitForFunction(
+    () =>
+      document.querySelector("[aria-label='Overlay reachability graph']")
+        ?.dataset.inspectorMode === "split",
+  );
+  await reachabilityDialog
+    .getByRole("button", { name: "Close inspector" })
+    .click();
+  await reachabilityDialog.waitFor({ state: "detached" });
+
   await verifyInspector(
     desktop,
     desktop.getByRole("button", { name: "Create service" }),
@@ -420,11 +708,11 @@ try {
   await serviceA.click();
   await desktop.getByRole("dialog", { name: "Service details" }).waitFor();
   await serviceB.click();
-  const changedClose = desktop
+  const changedHeading = desktop
     .getByRole("dialog", { name: "Service details" })
-    .getByRole("button", { name: "Close inspector" });
+    .getByRole("heading", { level: 2, name: "Service details" });
   assert.equal(
-    await activeElementIs(changedClose),
+    await activeElementIs(changedHeading),
     true,
     "A changed inspector activation must receive initial focus again.",
   );
@@ -447,11 +735,11 @@ try {
   await refOnlyA.click();
   await desktop.getByRole("dialog", { name: "Service details" }).waitFor();
   await refOnlyB.click();
-  const refOnlyClose = desktop
+  const refOnlyHeading = desktop
     .getByRole("dialog", { name: "Service details" })
-    .getByRole("button", { name: "Close inspector" });
+    .getByRole("heading", { level: 2, name: "Service details" });
   assert.equal(
-    await activeElementIs(refOnlyClose),
+    await activeElementIs(refOnlyHeading),
     true,
     "A changed return-focus ref must move focus into the updated inspector.",
   );
@@ -468,13 +756,13 @@ try {
 
   await serviceA.click();
   await desktop.getByRole("button", { name: "Replace inspector" }).click();
-  const replacementClose = desktop
+  const replacementHeading = desktop
     .getByRole("dialog", { name: "Replacement details" })
-    .getByRole("button", { name: "Close inspector" });
-  await replacementClose.waitFor();
+    .getByRole("heading", { level: 2, name: "Replacement details" });
+  await replacementHeading.waitFor();
   await desktop.waitForTimeout(100);
   assert.equal(
-    await activeElementIs(replacementClose),
+    await activeElementIs(replacementHeading),
     true,
     "An old inspector cleanup must not steal focus from its replacement.",
   );

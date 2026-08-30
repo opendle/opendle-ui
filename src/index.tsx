@@ -296,6 +296,21 @@ export {
   type GraphWorkspaceProps,
 } from "./components/GraphWorkspace.js";
 export {
+  GraphInspectorFact,
+  GraphInspectorFacts,
+  GraphInspectorNotice,
+  GraphInspectorRow,
+  GraphInspectorRows,
+  GraphInspectorSection,
+  type GraphInspectorFactProps,
+  type GraphInspectorFactsProps,
+  type GraphInspectorNoticeProps,
+  type GraphInspectorNoticeTone,
+  type GraphInspectorRowProps,
+  type GraphInspectorRowsProps,
+  type GraphInspectorSectionProps,
+} from "./components/GraphInspectorPrimitives.js";
+export {
   RelationshipGraph,
   type RelationshipGraphColumn,
   type RelationshipGraphColumnItem,

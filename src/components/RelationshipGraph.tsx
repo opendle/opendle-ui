@@ -16,7 +16,7 @@ import {
   type RelationshipGraphModelNode,
   type RelationshipGraphModelRelationship,
 } from "../RelationshipGraphModel.js";
-import { GraphToolbar } from "./GraphWorkspace.js";
+import { GraphToolbar, useInspectorReachability } from "./GraphWorkspace.js";
 
 function classes(...values: (string | false | null | undefined)[]) {
   return values.filter(Boolean).join(" ");
@@ -597,6 +597,7 @@ export function RelationshipGraph({
   const columnHeadingPrefix = useId();
   const searchInputId = useId();
   const rootRef = useRef<HTMLElement>(null);
+  const selectedControlRef = useRef<HTMLElement | null>(null);
   const boardRef = useRef<HTMLDivElement>(null);
   const nodeRefs = useRef(new Map<string, HTMLButtonElement>());
   const partialResultRefs = useRef(new Map<string, HTMLDivElement>());
@@ -788,6 +789,15 @@ export function RelationshipGraph({
   const activeInspector = hasAuxiliaryInspector
     ? auxiliaryInspector
     : selectedNodeInspector;
+  useLayoutEffect(() => {
+    selectedControlRef.current =
+      selectedId === null ? null : (nodeRefs.current.get(selectedId) ?? null);
+  }, [selectedId, visibleKey]);
+  useInspectorReachability(
+    rootRef,
+    selectedControlRef,
+    hasInspectorContent(activeInspector),
+  );
 
   useEffect(() => {
     onSelectionChangeRef.current = onSelectionChange;

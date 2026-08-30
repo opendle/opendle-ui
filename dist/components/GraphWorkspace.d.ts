@@ -2,9 +2,11 @@ import type { ButtonHTMLAttributes, DialogHTMLAttributes, HTMLAttributes, RefObj
 export interface GraphWorkspaceProps extends HTMLAttributes<HTMLElement> {
     readonly toolbar?: ReactNode;
     readonly inspector?: ReactNode;
+    readonly selectedControlRef?: RefObject<HTMLElement | null>;
 }
 /** A full-width graph surface with floating controls and an optional inspector. */
-export declare function GraphWorkspace({ toolbar, inspector, children, className, ...props }: GraphWorkspaceProps): import("react").JSX.Element;
+export declare function GraphWorkspace({ toolbar, inspector, selectedControlRef, children, className, ...props }: GraphWorkspaceProps): import("react").JSX.Element;
+export declare function useInspectorReachability(hostRef: RefObject<HTMLElement | null>, selectedControlRef: RefObject<HTMLElement | null> | undefined, active: boolean): void;
 export interface GraphToolbarProps extends HTMLAttributes<HTMLElement> {
     readonly leading?: ReactNode;
     readonly center?: ReactNode;
@@ -81,6 +83,6 @@ export interface GraphInspectorProps extends Omit<DialogHTMLAttributes<HTMLDialo
     readonly tone?: GraphNodeTone;
 }
 /** A responsive inspector with initial focus, Escape close, and exact focus return. */
-export declare function GraphInspector({ activationKey, title, eyebrow, icon, actions, onClose, closeLabel, initialFocusRef, returnFocusRef: suppliedReturnFocusRef, tone, children, className, tabIndex, "aria-label": ariaLabel, "aria-labelledby": ariaLabelledBy, ...props }: GraphInspectorProps): import("react").JSX.Element;
+export declare function GraphInspector({ activationKey, title, eyebrow, icon, actions, onClose, onCancel, closeLabel, initialFocusRef, returnFocusRef: suppliedReturnFocusRef, tone, children, className, tabIndex, "aria-label": ariaLabel, "aria-labelledby": ariaLabelledBy, ...props }: GraphInspectorProps): import("react").JSX.Element;
 export {};
 //# sourceMappingURL=GraphWorkspace.d.ts.map

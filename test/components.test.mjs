@@ -22,6 +22,12 @@ import {
   GraphEdges,
   GraphEmptyState,
   GraphInspector,
+  GraphInspectorFact,
+  GraphInspectorFacts,
+  GraphInspectorNotice,
+  GraphInspectorRow,
+  GraphInspectorRows,
+  GraphInspectorSection,
   GraphNode,
   GraphToolbar,
   GraphViewport,
@@ -404,6 +410,56 @@ test("graph inspector preserves a caller-supplied accessible relationship", () =
     ),
   );
   assert.match(markup, /<dialog[^>]*aria-labelledby="external-title"/);
+});
+
+test("compact graph inspector primitives keep semantic facts, sections, rows, and notices", () => {
+  const markup = renderToStaticMarkup(
+    React.createElement(
+      GraphInspector,
+      { actions: React.createElement("button", null, "Save"), title: "Record" },
+      React.createElement(
+        GraphInspectorFacts,
+        null,
+        React.createElement(GraphInspectorFact, {
+          label: "Type",
+          value: "Service",
+        }),
+      ),
+      React.createElement(
+        GraphInspectorSection,
+        { count: 1, title: "Relationships" },
+        React.createElement(
+          GraphInspectorRows,
+          null,
+          React.createElement(GraphInspectorRow, {
+            actions: React.createElement("button", null, "Open"),
+            label: "Parent",
+            value: "Platform",
+          }),
+        ),
+      ),
+      React.createElement(
+        GraphInspectorNotice,
+        { tone: "warning" },
+        "Check this value.",
+      ),
+      React.createElement(
+        GraphInspectorNotice,
+        { dynamic: true, tone: "error" },
+        "Save failed.",
+      ),
+    ),
+  );
+  assert.match(markup, /<dl class="od-graph-inspector-facts">/);
+  assert.match(markup, /<dt>Type<\/dt><dd>Service<\/dd>/);
+  assert.match(markup, /<section[^>]*aria-labelledby=/);
+  assert.match(markup, /<h3[^>]*>Relationships<span/);
+  assert.match(markup, /<ul class="od-graph-inspector-rows">/);
+  assert.match(markup, /<li class="od-graph-inspector-row">/);
+  assert.match(markup, /data-tone="warning"/);
+  assert.match(markup, /data-tone="error" role="alert"/);
+  assert.match(markup, /od-graph-inspector-notice-state">Warning:<\/strong>/);
+  assert.match(markup, /od-graph-inspector-notice-state">Error:<\/strong>/);
 });
 
 test("tree helpers use stable vertical layouts by default", () => {

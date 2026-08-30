@@ -499,7 +499,10 @@ try {
   await createInspector.waitFor();
   assert.equal(
     await activeElementIs(
-      createInspector.getByRole("button", { name: "Close inspector" }),
+      createInspector.getByRole("heading", {
+        level: 2,
+        name: "Create mapping",
+      }),
     ),
     true,
     "An auxiliary inspector must receive initial focus.",
@@ -534,8 +537,8 @@ try {
     await graphViewport.evaluate(
       (element) => element.getBoundingClientRect().width,
     ),
-    viewportWidthBeforeInspector,
-    "An inspector must not change the graph width.",
+    viewportWidthBeforeInspector - 336,
+    "A split inspector must reserve its exact 21rem width.",
   );
   await desktop.keyboard.press("Escape");
   await createInspector.waitFor({ state: "detached" });
@@ -554,7 +557,10 @@ try {
   await replacementInspector.waitFor();
   assert.equal(
     await activeElementIs(
-      replacementInspector.getByRole("button", { name: "Close inspector" }),
+      replacementInspector.getByRole("heading", {
+        level: 2,
+        name: "Record Beta",
+      }),
     ),
     true,
     "A create-to-detail replacement must keep focus in the inspector slot.",
@@ -771,6 +777,11 @@ try {
   await node(desktop, "record-a").waitFor({ state: "detached" });
   await desktop.waitForFunction(
     () => document.activeElement?.getAttribute("data-node-id") === "source-a",
+  );
+  assert.equal(
+    await activeElementIs(node(desktop, "source-a")),
+    true,
+    "An unavailable inspector return target must move focus to the nearest available graph control.",
   );
   assert.match(
     await desktop.locator("output.od-visually-hidden").textContent(),
