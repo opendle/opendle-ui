@@ -432,6 +432,21 @@ test("graph inspector preserves a caller-supplied accessible relationship", () =
   assert.match(markup, /<dialog[^>]*aria-labelledby="external-title"/);
 });
 
+test("graph inspector eyebrow uses the strong muted token only", async () => {
+  const stylesheet = await readFile(
+    new URL("../styles/tokens.css", import.meta.url),
+    "utf8",
+  );
+  assert.match(
+    stylesheet,
+    /\.od-graph-node-eyebrow,\s*\.od-graph-inspector-eyebrow\s*\{[^}]*color: #aab4b3;/s,
+  );
+  assert.match(
+    stylesheet,
+    /\.od-graph-inspector-eyebrow\s*\{[^}]*color: var\(--od-color-muted-strong\);/s,
+  );
+});
+
 test("compact graph inspector primitives keep semantic facts, sections, rows, and notices", () => {
   const markup = renderToStaticMarkup(
     React.createElement(

@@ -2458,7 +2458,7 @@ samp {
 .od-graph-inspector-eyebrow {
   display: block;
   margin-bottom: 0.1875rem;
-  color: var(--od-color-muted);
+  color: var(--od-color-muted-strong);
 }
 
 .od-graph-inspector-heading h2 {
