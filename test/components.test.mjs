@@ -18,6 +18,7 @@ import {
   CalendarBoard,
   ConfirmationDialog,
   ContextItem,
+  GraphBundledLink,
   GraphEdge,
   GraphEdges,
   GraphEmptyState,
@@ -29,8 +30,10 @@ import {
   GraphInspectorRows,
   GraphInspectorSection,
   GraphNode,
+  GraphNodeAction,
   GraphToolbar,
   GraphViewport,
+  GraphViewportControls,
   GraphWorkspace,
   HealthBar,
   Icon,
@@ -54,9 +57,16 @@ import {
   StatusPill,
   Toast,
   WorkspaceSelector,
+  clampGraphPosition,
+  clampGraphViewport,
+  fitGraphViewport,
+  graphPositionAtViewportCenter,
+  graphViewportCenter,
   layoutLayeredDirectedGraph,
   layoutTree,
+  moveGraphPosition,
   treeEdgePath,
+  zoomGraphViewportAtPoint,
 } from "../dist/index.js";
 
 test("Icon renders a decorative SVG with the shared class", () => {
@@ -401,7 +411,7 @@ test("graph workspace components expose one labelled canvas and inspector", () =
   assert.match(markup, /aria-label="Service tree"/);
   assert.match(
     markup,
-    /aria-label="Service tree"[^>]*data-canvas-alignment="center"[^>]*role="region"/,
+    /aria-label="Service tree"[^>]*role="region"[^>]*data-canvas-alignment="center"/,
   );
   assert.match(
     markup,
@@ -419,6 +429,191 @@ test("graph workspace components expose one labelled canvas and inspector", () =
   assert.match(markup, /aria-hidden="true"/);
   assert.match(markup, /aria-label="Move Platform under Shared"/);
   assert.match(markup, /role="button"/);
+});
+
+test("graph workspace adds controlled movement, view controls, and link junctions", () => {
+  const markup = renderToStaticMarkup(
+    React.createElement(
+      GraphWorkspace,
+      {
+        "aria-label": "Ontology graph",
+        fullPage: true,
+        toolbar: React.createElement(GraphToolbar, {
+          center: React.createElement(GraphViewportControls, {
+            onAutomaticLayout: () => undefined,
+            onFitView: () => undefined,
+            onZoomIn: () => undefined,
+            onZoomOut: () => undefined,
+            zoomInDisabled: true,
+          }),
+        }),
+      },
+      React.createElement(
+        GraphViewport,
+        {
+          "aria-label": "Ontology viewport",
+          canvasHeight: 480,
+          canvasWidth: 720,
+          connectionMode: true,
+          onConnectionCancel: () => undefined,
+          onViewportChange: () => undefined,
+          viewport: { x: 12, y: 18, zoom: 1.5 },
+        },
+        React.createElement(
+          GraphEdges,
+          { "aria-label": "Ontology relationships" },
+          React.createElement(GraphEdge, {
+            dashed: true,
+            directed: true,
+            path: "M 0 0 L 10 10",
+          }),
+          React.createElement(GraphBundledLink, {
+            "aria-label": "Owns connects Company and Person",
+            junctionX: 120,
+            junctionY: 90,
+            label: "Owns",
+            onSelect: () => undefined,
+            pathA: "M 20 20 L 120 90",
+            pathB: "M 120 90 L 220 20",
+            selected: true,
+          }),
+        ),
+        React.createElement(GraphNode, {
+          "aria-label": "Company object type",
+          connectionTarget: true,
+          onConnectionTarget: () => undefined,
+          onPositionChange: () => undefined,
+          positionBounds: { maxX: 640, maxY: 400, minX: 0, minY: 0 },
+          selected: true,
+          title: "Company",
+          x: 48,
+          y: 96,
+        }),
+        React.createElement(
+          GraphNodeAction,
+          { "aria-label": "Create link from Company", x: 236, y: 112 },
+          "+",
+        ),
+      ),
+    ),
+  );
+  assert.match(markup, /data-full-page="true"/);
+  assert.match(markup, /aria-label="Graph view controls"/);
+  assert.match(markup, /aria-label="Zoom in" disabled=""/);
+  assert.match(markup, />Fit view<\/button>/);
+  assert.match(markup, />Automatic layout<\/button>/);
+  assert.match(markup, /data-pan-zoom="true"/);
+  assert.match(markup, /data-connection-mode="true"/);
+  assert.match(markup, /translate\(12px, 18px\) scale\(1.5\)/);
+  assert.match(markup, /data-directed="true" data-selected="false"/);
+  assert.match(markup, /marker-end="url\(#/);
+  assert.match(markup, /class="od-graph-bundled-link"/);
+  assert.match(markup, /aria-pressed="true"/);
+  assert.equal((markup.match(/data-endpoint="A"/gu) ?? []).length, 1);
+  assert.equal((markup.match(/data-endpoint="B"/gu) ?? []).length, 1);
+  assert.match(markup, /class="od-graph-bundled-link-label"[^>]*>Owns/);
+  assert.match(markup, /data-connection-target="true"/);
+  assert.match(markup, /aria-label="Create link from Company"/);
+  assert.match(markup, /class="od-graph-node-action"/);
+});
+
+test("graph view and position helpers are finite, bounded, and deterministic", () => {
+  const bounds = { maxX: 200, maxY: 160, minX: 0, minY: 0 };
+  assert.deepEqual(clampGraphPosition({ x: -8, y: 180 }, bounds), {
+    x: 0,
+    y: 160,
+  });
+  assert.deepEqual(
+    moveGraphPosition({ x: 190, y: 12 }, { x: 24, y: -20 }, bounds),
+    { x: 200, y: 0 },
+  );
+  assert.deepEqual(
+    clampGraphViewport(
+      { x: -500, y: 700, zoom: 9 },
+      { maxX: 100, maxY: 100, minX: -100, minY: -100 },
+    ),
+    { x: -100, y: 100, zoom: 4 },
+  );
+
+  const viewport = { x: 20, y: 30, zoom: 2 };
+  assert.deepEqual(graphViewportCenter(viewport, { height: 400, width: 600 }), {
+    x: 140,
+    y: 85,
+  });
+  assert.deepEqual(
+    graphPositionAtViewportCenter(
+      viewport,
+      { height: 400, width: 600 },
+      { height: 40, width: 100 },
+    ),
+    { x: 90, y: 65 },
+  );
+  assert.deepEqual(
+    graphViewportCenter(
+      { x: 0, y: 0, zoom: 10 },
+      { height: 100, width: 100 },
+      { maxZoom: 10 },
+    ),
+    { x: 5, y: 5 },
+  );
+  assert.deepEqual(
+    fitGraphViewport(
+      { height: 200, width: 400, x: 100, y: 50 },
+      { height: 500, width: 900 },
+      { maxZoom: 2, minZoom: 0.1, padding: 50 },
+    ),
+    { x: -150, y: -50, zoom: 2 },
+  );
+  const maximumFit = fitGraphViewport(
+    { height: 100, width: 100, x: 1_000_000, y: 0 },
+    { height: 1_000, width: 1_000 },
+  );
+  assert.equal(Math.abs(maximumFit.x + 1_000_000) < 0.000_001, true);
+  assert.equal(
+    Math.abs(maximumFit.x + (1_000_000 + 100 / 2) * maximumFit.zoom - 500) <
+      0.000_001,
+    true,
+  );
+  assert.deepEqual(
+    fitGraphViewport(
+      { height: 0, width: 0, x: 0, y: 0 },
+      { height: 0, width: 0 },
+    ),
+    { x: 0, y: 0, zoom: 4 },
+  );
+  assert.deepEqual(
+    zoomGraphViewportAtPoint({ x: 0, y: 0, zoom: 1 }, 2, { x: 100, y: 80 }),
+    { x: -100, y: -80, zoom: 2 },
+  );
+  assert.throws(
+    () => clampGraphViewport({ x: 0, y: 0, zoom: Number.NaN }),
+    /finite/,
+  );
+  assert.throws(
+    () =>
+      moveGraphPosition(
+        { x: Number.MAX_VALUE, y: 0 },
+        { x: Number.MAX_VALUE, y: 0 },
+      ),
+    /finite/,
+  );
+  assert.throws(
+    () =>
+      clampGraphPosition(
+        { x: 0, y: 0 },
+        { maxX: 0, maxY: 0, minX: 1, minY: 0 },
+      ),
+    /minimum/,
+  );
+  assert.throws(
+    () =>
+      graphViewportCenter(
+        { x: -Number.MAX_VALUE, y: 0, zoom: 0.1 },
+        { height: 0, width: Number.MAX_VALUE },
+        { minX: -Number.MAX_VALUE, maxX: Number.MAX_VALUE },
+      ),
+    /finite/,
+  );
 });
 
 test("graph inspector preserves a caller-supplied accessible relationship", () => {

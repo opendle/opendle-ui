@@ -4,9 +4,12 @@ import type {
   DialogHTMLAttributes,
   HTMLAttributes,
   KeyboardEvent,
+  MouseEvent,
+  PointerEvent,
   RefObject,
   ReactNode,
   SVGAttributes,
+  WheelEvent,
 } from "react";
 import {
   Children,
@@ -17,6 +20,16 @@ import {
   useRef,
   useState,
 } from "react";
+import {
+  clampGraphPosition,
+  clampGraphViewport,
+  moveGraphPosition,
+  zoomGraphViewportAtPoint,
+  type GraphPoint,
+  type GraphPositionBounds,
+  type GraphViewportLimits,
+  type GraphViewportValue,
+} from "../GraphLayout.js";
 
 function classes(...values: (string | false | null | undefined)[]) {
   return values.filter(Boolean).join(" ");
@@ -50,6 +63,7 @@ export interface GraphWorkspaceProps extends HTMLAttributes<HTMLElement> {
   readonly toolbar?: ReactNode;
   readonly inspector?: ReactNode;
   readonly selectedControlRef?: RefObject<HTMLElement | null>;
+  readonly fullPage?: boolean;
 }
 
 /** A full-width graph surface with floating controls and an optional inspector. */
@@ -57,6 +71,7 @@ export function GraphWorkspace({
   toolbar,
   inspector,
   selectedControlRef,
+  fullPage = false,
   children,
   className,
   ...props
@@ -71,6 +86,7 @@ export function GraphWorkspace({
     <section
       {...props}
       className={classes("od-graph-workspace", className)}
+      data-full-page={fullPage}
       ref={hostRef}
     >
       {toolbar}
@@ -166,37 +182,415 @@ export function GraphToolbar({
   );
 }
 
+export interface GraphViewportControlsProps extends Omit<
+  HTMLAttributes<HTMLDivElement>,
+  "children"
+> {
+  readonly onZoomIn?: () => void;
+  readonly onZoomOut?: () => void;
+  readonly onFitView?: () => void;
+  readonly onAutomaticLayout?: () => void;
+  readonly zoomInLabel?: string;
+  readonly zoomOutLabel?: string;
+  readonly fitViewLabel?: string;
+  readonly automaticLayoutLabel?: string;
+  readonly zoomInDisabled?: boolean;
+  readonly zoomOutDisabled?: boolean;
+  readonly fitViewDisabled?: boolean;
+  readonly automaticLayoutDisabled?: boolean;
+}
+
+/** Shared, labelled controls for controlled graph view and layout actions. */
+export function GraphViewportControls({
+  onZoomIn,
+  onZoomOut,
+  onFitView,
+  onAutomaticLayout,
+  zoomInLabel = "Zoom in",
+  zoomOutLabel = "Zoom out",
+  fitViewLabel = "Fit view",
+  automaticLayoutLabel = "Automatic layout",
+  zoomInDisabled = false,
+  zoomOutDisabled = false,
+  fitViewDisabled = false,
+  automaticLayoutDisabled = false,
+  className,
+  ...props
+}: GraphViewportControlsProps) {
+  return (
+    <div
+      {...props}
+      aria-label={props["aria-label"] ?? "Graph view controls"}
+      className={classes("od-graph-viewport-controls", className)}
+      role={props.role ?? "group"}
+    >
+      {onZoomOut ? (
+        <button
+          aria-label={zoomOutLabel}
+          disabled={zoomOutDisabled}
+          onClick={onZoomOut}
+          type="button"
+        >
+          −
+        </button>
+      ) : null}
+      {onZoomIn ? (
+        <button
+          aria-label={zoomInLabel}
+          disabled={zoomInDisabled}
+          onClick={onZoomIn}
+          type="button"
+        >
+          +
+        </button>
+      ) : null}
+      {onFitView ? (
+        <button disabled={fitViewDisabled} onClick={onFitView} type="button">
+          {fitViewLabel}
+        </button>
+      ) : null}
+      {onAutomaticLayout ? (
+        <button
+          disabled={automaticLayoutDisabled}
+          onClick={onAutomaticLayout}
+          type="button"
+        >
+          {automaticLayoutLabel}
+        </button>
+      ) : null}
+    </div>
+  );
+}
+
+export type GraphViewportChangeReason = "keyboard" | "pointer" | "wheel";
+
 export interface GraphViewportProps extends HTMLAttributes<HTMLDivElement> {
   readonly canvasAlignment?: "start" | "center";
   readonly canvasWidth?: number | string;
   readonly canvasHeight?: number | string;
   readonly canvasClassName?: string;
   readonly canvasProps?: Omit<HTMLAttributes<HTMLDivElement>, "children">;
+  readonly viewport?: GraphViewportValue;
+  readonly viewportLimits?: GraphViewportLimits;
+  readonly onViewportChange?: (
+    viewport: GraphViewportValue,
+    reason: GraphViewportChangeReason,
+  ) => void;
+  readonly panStep?: number;
+  readonly zoomStep?: number;
+  readonly connectionMode?: boolean;
+  readonly onConnectionCancel?: () => void;
 }
 
-/** A scrollable viewport and a positioned canvas for nodes and edges. */
+interface GraphPointerPan {
+  pointerId: number;
+  clientX: number;
+  clientY: number;
+  viewport: GraphViewportValue;
+}
+
+function usePreventGraphWheelDefault(
+  viewportRef: RefObject<HTMLDivElement | null>,
+  enabled: boolean,
+) {
+  useLayoutEffect(() => {
+    const element = viewportRef.current;
+    if (!element || !enabled) return;
+    const preventNativeWheel = (event: globalThis.WheelEvent) => {
+      if (
+        event.target instanceof Node &&
+        element.contains(event.target) &&
+        (event.deltaX !== 0 || event.deltaY !== 0)
+      ) {
+        event.preventDefault();
+      }
+    };
+    // A non-passive listener is required because React wheel listeners cannot cancel page zoom.
+    // react-doctor-disable-next-line client-passive-event-listeners, react-doctor/client-passive-event-listeners
+    element.ownerDocument.addEventListener("wheel", preventNativeWheel, {
+      passive: false,
+    });
+    return () => {
+      element.ownerDocument.removeEventListener("wheel", preventNativeWheel);
+    };
+  }, [enabled, viewportRef]);
+}
+
+/** A scrollable or controlled pan-and-zoom viewport for graph content. */
 export function GraphViewport({
   canvasAlignment = "start",
   canvasWidth,
   canvasHeight,
   canvasClassName,
   canvasProps,
+  viewport,
+  viewportLimits,
+  onViewportChange,
+  panStep = 24,
+  zoomStep = 0.1,
+  connectionMode = false,
+  onConnectionCancel,
   children,
   className,
+  onClick,
+  onKeyDown,
+  onLostPointerCapture,
+  onPointerCancel,
+  onPointerDown,
+  onPointerMove,
+  onPointerUp,
+  onWheel,
+  role: suppliedRole,
   ...props
 }: GraphViewportProps) {
+  const viewportRef = useRef<HTMLDivElement>(null);
+  const pointerPanRef = useRef<GraphPointerPan | null>(null);
+  const pointerMovedRef = useRef(false);
+  if (!Number.isFinite(panStep) || panStep <= 0) {
+    throw new Error("Graph viewport pan step must be finite and positive.");
+  }
+  if (!Number.isFinite(zoomStep) || zoomStep <= 0) {
+    throw new Error("Graph viewport zoom step must be finite and positive.");
+  }
+  const controlledViewport = viewport
+    ? clampGraphViewport(viewport, viewportLimits)
+    : undefined;
+  const panZoomEnabled = controlledViewport !== undefined;
+  usePreventGraphWheelDefault(viewportRef, panZoomEnabled);
+  useLayoutEffect(() => {
+    if (pointerPanRef.current && controlledViewport) {
+      pointerPanRef.current.viewport = controlledViewport;
+    }
+  }, [controlledViewport]);
   const canvasStyle: CSSProperties = {
     ...canvasProps?.style,
     height: canvasHeight,
+    transform: controlledViewport
+      ? `translate(${String(controlledViewport.x)}px, ${String(controlledViewport.y)}px) scale(${String(controlledViewport.zoom)})`
+      : canvasProps?.style?.transform,
+    transformOrigin: controlledViewport
+      ? "0 0"
+      : canvasProps?.style?.transformOrigin,
     width: canvasWidth,
+  };
+
+  function reportViewportChange(
+    next: GraphViewportValue,
+    reason: GraphViewportChangeReason,
+  ) {
+    const safeNext = clampGraphViewport(next, viewportLimits);
+    if (
+      safeNext.x !== controlledViewport?.x ||
+      safeNext.y !== controlledViewport.y ||
+      safeNext.zoom !== controlledViewport.zoom
+    ) {
+      onViewportChange?.(safeNext, reason);
+    }
+    return safeNext;
+  }
+
+  function zoomAtCenter(element: HTMLDivElement, zoom: number) {
+    if (!controlledViewport) return;
+    reportViewportChange(
+      zoomGraphViewportAtPoint(
+        controlledViewport,
+        zoom,
+        { x: element.clientWidth / 2, y: element.clientHeight / 2 },
+        viewportLimits,
+      ),
+      "keyboard",
+    );
+  }
+
+  function handleKeyDown(event: KeyboardEvent<HTMLDivElement>) {
+    onKeyDown?.(event);
+    if (event.defaultPrevented) return;
+    if (event.key === "Escape" && connectionMode && onConnectionCancel) {
+      event.preventDefault();
+      onConnectionCancel();
+      return;
+    }
+    if (!controlledViewport) return;
+    const movementByKey: Record<string, GraphPoint | undefined> = {
+      ArrowDown: { x: 0, y: panStep },
+      ArrowLeft: { x: -panStep, y: 0 },
+      ArrowRight: { x: panStep, y: 0 },
+      ArrowUp: { x: 0, y: -panStep },
+    };
+    const movement = movementByKey[event.key];
+    if (movement) {
+      event.preventDefault();
+      reportViewportChange(
+        {
+          ...controlledViewport,
+          x: controlledViewport.x + movement.x,
+          y: controlledViewport.y + movement.y,
+        },
+        "keyboard",
+      );
+      return;
+    }
+    if (event.key === "+" || event.key === "=") {
+      event.preventDefault();
+      zoomAtCenter(event.currentTarget, controlledViewport.zoom + zoomStep);
+    } else if (event.key === "-" || event.key === "_") {
+      event.preventDefault();
+      zoomAtCenter(event.currentTarget, controlledViewport.zoom - zoomStep);
+    }
+  }
+
+  function isGraphBackground(target: EventTarget | null) {
+    return (
+      target instanceof Element &&
+      (target.classList.contains("od-graph-viewport") ||
+        target.classList.contains("od-graph-canvas"))
+    );
+  }
+
+  function runViewportBackgroundAction(event: MouseEvent<HTMLDivElement>) {
+    if (pointerMovedRef.current) {
+      pointerMovedRef.current = false;
+      event.preventDefault();
+      return;
+    }
+    onClick?.(event);
+    if (
+      !event.defaultPrevented &&
+      connectionMode &&
+      onConnectionCancel &&
+      isGraphBackground(event.target)
+    ) {
+      onConnectionCancel();
+    }
+  }
+
+  function handlePointerDown(event: PointerEvent<HTMLDivElement>) {
+    onPointerDown?.(event);
+    if (
+      event.defaultPrevented ||
+      event.button !== 0 ||
+      !controlledViewport ||
+      !isGraphBackground(event.target)
+    ) {
+      return;
+    }
+    pointerPanRef.current = {
+      pointerId: event.pointerId,
+      clientX: event.clientX,
+      clientY: event.clientY,
+      viewport: controlledViewport,
+    };
+    pointerMovedRef.current = false;
+    event.currentTarget.setPointerCapture(event.pointerId);
+  }
+
+  function handlePointerMove(event: PointerEvent<HTMLDivElement>) {
+    onPointerMove?.(event);
+    const pointerPan = pointerPanRef.current;
+    if (event.defaultPrevented || pointerPan?.pointerId !== event.pointerId) {
+      return;
+    }
+    if (
+      event.clientX !== pointerPan.clientX ||
+      event.clientY !== pointerPan.clientY
+    ) {
+      pointerMovedRef.current = true;
+    }
+    event.preventDefault();
+    const safeNext = reportViewportChange(
+      {
+        ...pointerPan.viewport,
+        x: pointerPan.viewport.x + event.clientX - pointerPan.clientX,
+        y: pointerPan.viewport.y + event.clientY - pointerPan.clientY,
+      },
+      "pointer",
+    );
+    pointerPan.clientX = event.clientX;
+    pointerPan.clientY = event.clientY;
+    pointerPan.viewport = safeNext;
+  }
+
+  function finishPointerPan(event: PointerEvent<HTMLDivElement>) {
+    const pointerPan = pointerPanRef.current;
+    if (pointerPan?.pointerId === event.pointerId) {
+      pointerPanRef.current = null;
+      if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+        event.currentTarget.releasePointerCapture(event.pointerId);
+      }
+    }
+  }
+
+  function handlePointerUp(event: PointerEvent<HTMLDivElement>) {
+    onPointerUp?.(event);
+    finishPointerPan(event);
+  }
+
+  function handlePointerCancel(event: PointerEvent<HTMLDivElement>) {
+    onPointerCancel?.(event);
+    finishPointerPan(event);
+    pointerMovedRef.current = false;
+  }
+
+  function handleLostPointerCapture(event: PointerEvent<HTMLDivElement>) {
+    onLostPointerCapture?.(event);
+    if (pointerPanRef.current?.pointerId === event.pointerId) {
+      pointerPanRef.current = null;
+    }
+  }
+
+  function changeViewportFromWheel(event: WheelEvent<HTMLDivElement>) {
+    onWheel?.(event);
+    if (event.defaultPrevented || !controlledViewport) return;
+    if (event.ctrlKey || event.metaKey) {
+      if (event.deltaY === 0) return;
+      const bounds = event.currentTarget.getBoundingClientRect();
+      const direction = event.deltaY > 0 ? -1 : 1;
+      reportViewportChange(
+        zoomGraphViewportAtPoint(
+          controlledViewport,
+          controlledViewport.zoom + direction * zoomStep,
+          { x: event.clientX - bounds.left, y: event.clientY - bounds.top },
+          viewportLimits,
+        ),
+        "wheel",
+      );
+      return;
+    }
+    if (event.deltaX === 0 && event.deltaY === 0) return;
+    reportViewportChange(
+      {
+        ...controlledViewport,
+        x: controlledViewport.x - event.deltaX,
+        y: controlledViewport.y - event.deltaY,
+      },
+      "wheel",
+    );
+  }
+
+  const viewportSemanticProps: HTMLAttributes<HTMLDivElement> = {
+    role: suppliedRole ?? (controlledViewport ? "application" : "region"),
   };
 
   return (
     <div
+      aria-label="Graph viewport"
+      role="application"
       {...props}
+      {...viewportSemanticProps}
       className={classes("od-graph-viewport", className)}
       data-canvas-alignment={canvasAlignment}
-      role={props.role ?? "region"}
+      data-connection-mode={connectionMode}
+      data-pan-zoom={controlledViewport !== undefined}
+      onClick={runViewportBackgroundAction}
+      onKeyDown={handleKeyDown}
+      onLostPointerCapture={handleLostPointerCapture}
+      onPointerCancel={handlePointerCancel}
+      onPointerDown={handlePointerDown}
+      onPointerMove={handlePointerMove}
+      onPointerUp={handlePointerUp}
+      onWheel={changeViewportFromWheel}
+      ref={viewportRef}
+      tabIndex={controlledViewport ? (props.tabIndex ?? 0) : props.tabIndex}
     >
       <div
         {...canvasProps}
@@ -278,9 +672,25 @@ export interface GraphNodeProps extends Omit<
   readonly dropTarget?: boolean;
   readonly root?: boolean;
   readonly tone?: GraphNodeTone;
+  readonly onPositionChange?: (
+    position: GraphPoint,
+    reason: "keyboard" | "pointer",
+  ) => void;
+  readonly positionBounds?: GraphPositionBounds;
+  readonly keyboardMoveStep?: number;
+  readonly viewportZoom?: number;
+  readonly connectionTarget?: boolean;
+  readonly onConnectionTarget?: () => void;
 }
 
-/** An accessible positioned graph node. Arrow-key movement stays host-owned. */
+interface GraphNodePointerMove {
+  pointerId: number;
+  clientX: number;
+  clientY: number;
+  position: GraphPoint;
+}
+
+/** An accessible, controlled graph node with pointer and keyboard movement. */
 export function GraphNode({
   x,
   y,
@@ -293,21 +703,168 @@ export function GraphNode({
   dropTarget = false,
   root = false,
   tone = "neutral",
+  onPositionChange,
+  positionBounds,
+  keyboardMoveStep = 16,
+  viewportZoom = 1,
+  connectionTarget = false,
+  onConnectionTarget,
   className,
   style,
   type = "button",
+  onClick,
+  onKeyDown,
+  onLostPointerCapture,
+  onPointerCancel,
+  onPointerDown,
+  onPointerMove,
+  onPointerUp,
   ...props
 }: GraphNodeProps) {
+  const pointerMoveRef = useRef<GraphNodePointerMove | null>(null);
+  const pointerMovedRef = useRef(false);
+  if (!Number.isFinite(keyboardMoveStep) || keyboardMoveStep <= 0) {
+    throw new Error(
+      "Graph node keyboard movement step must be finite and positive.",
+    );
+  }
+  if (!Number.isFinite(viewportZoom) || viewportZoom <= 0) {
+    throw new Error("Graph node viewport zoom must be finite and positive.");
+  }
+  useLayoutEffect(() => {
+    if (pointerMoveRef.current) {
+      pointerMoveRef.current.position = { x, y };
+    }
+  }, [x, y]);
+
+  function reportPosition(
+    position: GraphPoint,
+    reason: "keyboard" | "pointer",
+  ) {
+    const safePosition = positionBounds
+      ? clampGraphPosition(position, positionBounds)
+      : position;
+    if (safePosition.x !== x || safePosition.y !== y) {
+      onPositionChange?.(safePosition, reason);
+    }
+    return safePosition;
+  }
+
+  function runNodeAction(event: MouseEvent<HTMLButtonElement>) {
+    if (pointerMovedRef.current) {
+      pointerMovedRef.current = false;
+      event.preventDefault();
+      return;
+    }
+    if (connectionTarget && onConnectionTarget) {
+      event.preventDefault();
+      onConnectionTarget();
+      return;
+    }
+    onClick?.(event);
+  }
+
+  function handleKeyDown(event: KeyboardEvent<HTMLButtonElement>) {
+    onKeyDown?.(event);
+    if (event.defaultPrevented || !onPositionChange) return;
+    const screenStep = keyboardMoveStep / viewportZoom;
+    const movementByKey: Record<string, GraphPoint | undefined> = {
+      ArrowDown: { x: 0, y: screenStep },
+      ArrowLeft: { x: -screenStep, y: 0 },
+      ArrowRight: { x: screenStep, y: 0 },
+      ArrowUp: { x: 0, y: -screenStep },
+    };
+    const movement = movementByKey[event.key];
+    if (!movement) return;
+    event.preventDefault();
+    reportPosition(
+      moveGraphPosition({ x, y }, movement, positionBounds),
+      "keyboard",
+    );
+  }
+
+  function handlePointerDown(event: PointerEvent<HTMLButtonElement>) {
+    onPointerDown?.(event);
+    if (event.defaultPrevented || event.button !== 0 || !onPositionChange) {
+      return;
+    }
+    pointerMovedRef.current = false;
+    pointerMoveRef.current = {
+      pointerId: event.pointerId,
+      clientX: event.clientX,
+      clientY: event.clientY,
+      position: { x, y },
+    };
+    event.currentTarget.setPointerCapture(event.pointerId);
+  }
+
+  function handlePointerMove(event: PointerEvent<HTMLButtonElement>) {
+    onPointerMove?.(event);
+    const pointerMove = pointerMoveRef.current;
+    if (event.defaultPrevented || pointerMove?.pointerId !== event.pointerId) {
+      return;
+    }
+    const delta = {
+      x: (event.clientX - pointerMove.clientX) / viewportZoom,
+      y: (event.clientY - pointerMove.clientY) / viewportZoom,
+    };
+    if (delta.x !== 0 || delta.y !== 0) pointerMovedRef.current = true;
+    event.preventDefault();
+    const safePosition = reportPosition(
+      moveGraphPosition(pointerMove.position, delta, positionBounds),
+      "pointer",
+    );
+    pointerMove.clientX = event.clientX;
+    pointerMove.clientY = event.clientY;
+    pointerMove.position = safePosition;
+  }
+
+  function finishPointerMove(event: PointerEvent<HTMLButtonElement>) {
+    const pointerMove = pointerMoveRef.current;
+    if (pointerMove?.pointerId === event.pointerId) {
+      pointerMoveRef.current = null;
+      if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+        event.currentTarget.releasePointerCapture(event.pointerId);
+      }
+    }
+  }
+
+  function handlePointerUp(event: PointerEvent<HTMLButtonElement>) {
+    onPointerUp?.(event);
+    finishPointerMove(event);
+  }
+
+  function handlePointerCancel(event: PointerEvent<HTMLButtonElement>) {
+    onPointerCancel?.(event);
+    finishPointerMove(event);
+    pointerMovedRef.current = false;
+  }
+
+  function handleLostPointerCapture(event: PointerEvent<HTMLButtonElement>) {
+    onLostPointerCapture?.(event);
+    if (pointerMoveRef.current?.pointerId === event.pointerId) {
+      pointerMoveRef.current = null;
+    }
+  }
+
   return (
     <button
       {...props}
       aria-pressed={props["aria-pressed"] ?? selected}
       className={classes("od-graph-node", className)}
+      data-connection-target={connectionTarget}
       data-root={root}
       data-selected={selected}
       data-dragging={dragging}
       data-drop-target={dropTarget}
       data-tone={tone}
+      onClick={runNodeAction}
+      onKeyDown={handleKeyDown}
+      onLostPointerCapture={handleLostPointerCapture}
+      onPointerCancel={handlePointerCancel}
+      onPointerDown={handlePointerDown}
+      onPointerMove={handlePointerMove}
+      onPointerUp={handlePointerUp}
       style={{
         ...style,
         transform: `translate(${String(x)}px, ${String(y)}px)`,
@@ -323,6 +880,45 @@ export function GraphNode({
         {meta ? <span className="od-graph-node-meta">{meta}</span> : null}
       </span>
     </button>
+  );
+}
+
+export interface GraphNodeActionProps extends Omit<
+  ButtonHTMLAttributes<HTMLButtonElement>,
+  "title"
+> {
+  readonly x: number;
+  readonly y: number;
+  readonly viewportZoom?: number;
+  readonly "aria-label": string;
+}
+
+/** A separately focusable graph action that a host can place by one node. */
+export function GraphNodeAction({
+  x,
+  y,
+  viewportZoom = 1,
+  className,
+  style,
+  type = "button",
+  ...props
+}: GraphNodeActionProps) {
+  if (!Number.isFinite(viewportZoom) || viewportZoom <= 0) {
+    throw new Error(
+      "Graph node action viewport zoom must be finite and positive.",
+    );
+  }
+  return (
+    <button
+      {...props}
+      className={classes("od-graph-node-action", className)}
+      style={{
+        ...style,
+        transform: `translate(${String(x)}px, ${String(y)}px) scale(${String(1 / viewportZoom)})`,
+        transformOrigin: "0 0",
+      }}
+      type={type}
+    />
   );
 }
 
@@ -361,6 +957,7 @@ interface GraphEdgeBaseProps extends Omit<
   readonly labelY?: number;
   readonly selected?: boolean;
   readonly dashed?: boolean;
+  readonly directed?: boolean;
 }
 
 export type GraphEdgeProps = GraphEdgeBaseProps &
@@ -377,11 +974,13 @@ export function GraphEdge({
   labelY,
   selected = false,
   dashed = false,
+  directed = false,
   onSelect,
   className,
   onKeyDown,
   ...props
 }: GraphEdgeProps) {
+  const markerId = useId().replaceAll(":", "");
   function handleKeyDown(event: KeyboardEvent<SVGGElement>) {
     onKeyDown?.(event);
     if (event.defaultPrevented || !onSelect) return;
@@ -401,12 +1000,33 @@ export function GraphEdge({
       {...interactiveProps}
       className={classes("od-graph-edge", className)}
       data-dashed={dashed}
+      data-directed={directed}
       data-selected={selected}
       onClick={onSelect}
       onKeyDown={handleKeyDown}
     >
+      {directed ? (
+        <defs>
+          <marker
+            id={markerId}
+            markerHeight="8"
+            markerUnits="strokeWidth"
+            markerWidth="8"
+            orient="auto"
+            refX="7"
+            refY="4"
+            viewBox="0 0 8 8"
+          >
+            <path className="od-graph-edge-arrow" d="M 0 0 L 8 4 L 0 8 z" />
+          </marker>
+        </defs>
+      ) : null}
       <path className="od-graph-edge-target" d={path} />
-      <path className="od-graph-edge-line" d={path} />
+      <path
+        className="od-graph-edge-line"
+        d={path}
+        markerEnd={directed ? `url(#${markerId})` : undefined}
+      />
       {label && labelX !== undefined && labelY !== undefined ? (
         <g className="od-graph-edge-label">
           <text x={labelX} y={labelY}>
@@ -414,6 +1034,88 @@ export function GraphEdge({
           </text>
         </g>
       ) : null}
+    </g>
+  );
+}
+
+export interface GraphBundledLinkProps extends Omit<
+  SVGAttributes<SVGGElement>,
+  "onSelect"
+> {
+  readonly pathA: string;
+  readonly pathB: string;
+  readonly junctionX: number;
+  readonly junctionY: number;
+  readonly label: string;
+  readonly endpointALabel?: string;
+  readonly endpointBLabel?: string;
+  readonly selected?: boolean;
+  readonly onSelect: () => void;
+  readonly "aria-label": string;
+}
+
+/** One selectable link junction with labelled endpoint A and B branches. */
+export function GraphBundledLink({
+  pathA,
+  pathB,
+  junctionX,
+  junctionY,
+  label,
+  endpointALabel = "A",
+  endpointBLabel = "B",
+  selected = false,
+  onSelect,
+  className,
+  onKeyDown,
+  ...props
+}: GraphBundledLinkProps) {
+  function handleKeyDown(event: KeyboardEvent<SVGGElement>) {
+    onKeyDown?.(event);
+    if (event.defaultPrevented) return;
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      onSelect();
+    }
+  }
+
+  return (
+    <g
+      {...props}
+      aria-pressed={props["aria-pressed"] ?? selected}
+      className={classes("od-graph-bundled-link", className)}
+      data-selected={selected}
+      onClick={onSelect}
+      onKeyDown={handleKeyDown}
+      role="button"
+      tabIndex={props.tabIndex ?? 0}
+    >
+      <path className="od-graph-bundled-link-target" d={pathA} />
+      <path className="od-graph-bundled-link-target" d={pathB} />
+      <path
+        className="od-graph-bundled-link-branch"
+        d={pathA}
+        data-endpoint="A"
+      />
+      <path
+        className="od-graph-bundled-link-branch"
+        d={pathB}
+        data-endpoint="B"
+      />
+      <g
+        className="od-graph-bundled-link-junction"
+        transform={`translate(${String(junctionX)} ${String(junctionY)})`}
+      >
+        <rect height="40" rx="8" width="112" x="-56" y="-20" />
+        <text className="od-graph-bundled-link-endpoint" x="-45" y="4">
+          {endpointALabel}
+        </text>
+        <text className="od-graph-bundled-link-label" x="0" y="4">
+          {label}
+        </text>
+        <text className="od-graph-bundled-link-endpoint" x="45" y="4">
+          {endpointBLabel}
+        </text>
+      </g>
     </g>
   );
 }

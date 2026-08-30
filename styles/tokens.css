@@ -1990,6 +1990,14 @@ samp {
   box-shadow: var(--od-shadow);
 }
 
+.od-graph-workspace[data-full-page="true"] {
+  height: 100%;
+  min-height: 0;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
 .od-graph-workspace-stage,
 .od-graph-viewport {
   position: absolute;
@@ -2054,6 +2062,41 @@ samp {
   color: var(--od-color-foreground);
 }
 
+.od-graph-viewport-controls {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+}
+
+.od-graph-viewport-controls button {
+  min-width: 2.75rem;
+  min-height: 2.75rem;
+  padding: 0.375rem 0.625rem;
+  border: 1px solid #667273;
+  border-radius: 0.5rem;
+  color: #f2f5f1;
+  background: #303a3d;
+  font: inherit;
+  font-size: 0.8125rem;
+  font-weight: 700;
+}
+
+.od-graph-viewport-controls button:hover:not(:disabled) {
+  border-color: var(--od-color-lime);
+  background: #3a4547;
+}
+
+.od-graph-viewport-controls button:disabled {
+  cursor: not-allowed;
+  opacity: 0.56;
+}
+
+.od-graph-viewport-controls button:focus-visible {
+  outline: 3px solid var(--od-color-focus);
+  outline-offset: 2px;
+}
+
 .od-graph-toolbar[data-leading="true"][data-center="false"][data-actions="false"],
 .od-graph-toolbar[data-leading="false"][data-center="true"][data-actions="false"],
 .od-graph-toolbar[data-leading="false"][data-center="false"][data-actions="true"] {
@@ -2105,6 +2148,21 @@ samp {
   scrollbar-color: #536062 #182023;
 }
 
+.od-graph-viewport[data-pan-zoom="true"] {
+  overflow: hidden;
+  cursor: grab;
+  touch-action: none;
+}
+
+.od-graph-viewport[data-pan-zoom="true"]:active {
+  cursor: grabbing;
+}
+
+.od-graph-viewport[data-pan-zoom="true"]:focus-visible {
+  outline: 3px solid var(--od-color-focus);
+  outline-offset: -3px;
+}
+
 .od-graph-viewport[data-canvas-alignment="center"] {
   display: flex;
 }
@@ -2130,6 +2188,16 @@ samp {
   min-width: 0;
   flex: 0 0 auto;
   margin: auto;
+}
+
+.od-graph-viewport[data-pan-zoom="true"] .od-graph-canvas {
+  min-width: 0;
+  min-height: 0;
+  position: absolute;
+  top: 0;
+  left: 0;
+  margin: 0;
+  will-change: transform;
 }
 
 .od-graph-empty-state {
@@ -2223,6 +2291,10 @@ samp {
   stroke-dasharray: 5 4;
 }
 
+.od-graph-edge-arrow {
+  fill: #788583;
+}
+
 .od-graph-edge:hover .od-graph-edge-line,
 .od-graph-edge:focus .od-graph-edge-line,
 .od-graph-edge[data-selected="true"] .od-graph-edge-line {
@@ -2238,11 +2310,84 @@ samp {
   filter: drop-shadow(0 0 0.25rem var(--od-color-focus));
 }
 
+.od-graph-edge:hover .od-graph-edge-arrow,
+.od-graph-edge:focus .od-graph-edge-arrow,
+.od-graph-edge[data-selected="true"] .od-graph-edge-arrow {
+  fill: var(--od-color-lime);
+}
+
 .od-graph-edge-label text {
   fill: #d5dcda;
   font-size: 0.5625rem;
   font-weight: 700;
   text-anchor: middle;
+}
+
+.od-graph-bundled-link {
+  pointer-events: auto;
+}
+
+.od-graph-bundled-link-target,
+.od-graph-bundled-link-branch {
+  fill: none;
+}
+
+.od-graph-bundled-link-target {
+  stroke: transparent;
+  stroke-width: 1.25rem;
+}
+
+.od-graph-bundled-link-branch {
+  stroke: #93a09d;
+  stroke-width: 2px;
+  pointer-events: none;
+}
+
+.od-graph-bundled-link-junction rect {
+  fill: #303a3d;
+  stroke: #93a09d;
+  stroke-width: 1.5px;
+}
+
+.od-graph-bundled-link-junction text {
+  fill: var(--od-color-foreground);
+  dominant-baseline: middle;
+  pointer-events: none;
+  text-anchor: middle;
+}
+
+.od-graph-bundled-link-label {
+  font-size: 0.625rem;
+  font-weight: 700;
+}
+
+.od-graph-bundled-link-endpoint {
+  font-size: 0.5625rem;
+  font-weight: 800;
+}
+
+.od-graph-bundled-link:focus {
+  outline: none;
+}
+
+.od-graph-bundled-link:hover .od-graph-bundled-link-branch,
+.od-graph-bundled-link:focus-visible .od-graph-bundled-link-branch,
+.od-graph-bundled-link[data-selected="true"] .od-graph-bundled-link-branch {
+  stroke: var(--od-color-lime);
+  stroke-width: 2.75px;
+}
+
+.od-graph-bundled-link:hover .od-graph-bundled-link-junction rect,
+.od-graph-bundled-link:focus-visible .od-graph-bundled-link-junction rect,
+.od-graph-bundled-link[data-selected="true"]
+  .od-graph-bundled-link-junction
+  rect {
+  stroke: var(--od-color-lime);
+  stroke-width: 2.5px;
+}
+
+.od-graph-bundled-link:focus-visible .od-graph-bundled-link-junction rect {
+  filter: drop-shadow(0 0 0.25rem var(--od-color-focus));
 }
 
 .od-graph-node {
@@ -2272,6 +2417,11 @@ samp {
   background: #303b3d;
 }
 
+.od-graph-node:focus-visible {
+  outline: 3px solid var(--od-color-focus);
+  outline-offset: 3px;
+}
+
 .od-graph-node[data-dragging="true"] {
   opacity: 0.48;
 }
@@ -2289,6 +2439,42 @@ samp {
   box-shadow:
     0 0 0 3px rgb(215 243 106 / 13%),
     0 0.75rem 1.625rem rgb(4 8 10 / 35%);
+}
+
+.od-graph-node[data-connection-target="true"] {
+  border-color: var(--od-color-focus);
+  cursor: crosshair;
+  box-shadow:
+    0 0 0 4px rgb(76 157 187 / 20%),
+    0 0.75rem 1.625rem rgb(4 8 10 / 35%);
+}
+
+.od-graph-node-action {
+  width: 2.75rem;
+  height: 2.75rem;
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 3;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 1px solid var(--od-color-lime);
+  border-radius: 999px;
+  color: #20282b;
+  background: var(--od-color-lime);
+  box-shadow: 0 0.5rem 1rem rgb(4 8 10 / 35%);
+  font: inherit;
+  font-weight: 800;
+}
+
+.od-graph-node-action:hover {
+  background: #e5f999;
+}
+
+.od-graph-node-action:focus-visible {
+  outline: 3px solid var(--od-color-focus);
+  outline-offset: 3px;
 }
 
 .od-graph-node-icon,

@@ -1,3 +1,320 @@
+export interface GraphPoint {
+  readonly x: number;
+  readonly y: number;
+}
+
+export interface GraphSize {
+  readonly width: number;
+  readonly height: number;
+}
+
+export interface GraphRect extends GraphPoint, GraphSize {}
+
+export interface GraphPositionBounds {
+  readonly minX: number;
+  readonly maxX: number;
+  readonly minY: number;
+  readonly maxY: number;
+}
+
+export interface GraphViewportValue extends GraphPoint {
+  readonly zoom: number;
+}
+
+export interface GraphViewportLimits {
+  readonly minX?: number;
+  readonly maxX?: number;
+  readonly minY?: number;
+  readonly maxY?: number;
+  readonly minZoom?: number;
+  readonly maxZoom?: number;
+}
+
+export interface FitGraphViewportOptions extends GraphViewportLimits {
+  readonly padding?: number;
+}
+
+function assertFiniteGraphValue(value: number, name: string) {
+  if (!Number.isFinite(value)) {
+    throw new Error(`${name} must be finite.`);
+  }
+}
+
+function assertGraphSize(size: GraphSize, name: string) {
+  assertFiniteGraphValue(size.width, `${name} width`);
+  assertFiniteGraphValue(size.height, `${name} height`);
+  if (size.width < 0 || size.height < 0) {
+    throw new Error(`${name} dimensions must not be negative.`);
+  }
+}
+
+function orderedGraphRange(
+  minimum: number | undefined,
+  maximum: number | undefined,
+  fallbackMinimum: number,
+  fallbackMaximum: number,
+  name: string,
+) {
+  const min = minimum ?? fallbackMinimum;
+  const max = maximum ?? fallbackMaximum;
+  assertFiniteGraphValue(min, `${name} minimum`);
+  assertFiniteGraphValue(max, `${name} maximum`);
+  if (min > max)
+    throw new Error(`${name} minimum must not exceed its maximum.`);
+  return { min, max };
+}
+
+function clamp(value: number, minimum: number, maximum: number) {
+  return Math.min(maximum, Math.max(minimum, value));
+}
+
+/** Keep one host-owned node position inside finite declared bounds. */
+export function clampGraphPosition(
+  position: GraphPoint,
+  bounds: GraphPositionBounds,
+): GraphPoint {
+  assertFiniteGraphValue(position.x, "Graph position x");
+  assertFiniteGraphValue(position.y, "Graph position y");
+  const xRange = orderedGraphRange(
+    bounds.minX,
+    bounds.maxX,
+    bounds.minX,
+    bounds.maxX,
+    "Graph position x",
+  );
+  const yRange = orderedGraphRange(
+    bounds.minY,
+    bounds.maxY,
+    bounds.minY,
+    bounds.maxY,
+    "Graph position y",
+  );
+  return {
+    x: clamp(position.x, xRange.min, xRange.max),
+    y: clamp(position.y, yRange.min, yRange.max),
+  };
+}
+
+/** Move one host-owned node by a deterministic delta and apply optional bounds. */
+export function moveGraphPosition(
+  position: GraphPoint,
+  delta: GraphPoint,
+  bounds?: GraphPositionBounds,
+): GraphPoint {
+  assertFiniteGraphValue(position.x, "Graph position x");
+  assertFiniteGraphValue(position.y, "Graph position y");
+  assertFiniteGraphValue(delta.x, "Graph movement x");
+  assertFiniteGraphValue(delta.y, "Graph movement y");
+  const next = { x: position.x + delta.x, y: position.y + delta.y };
+  assertFiniteGraphValue(next.x, "Moved graph position x");
+  assertFiniteGraphValue(next.y, "Moved graph position y");
+  return bounds ? clampGraphPosition(next, bounds) : next;
+}
+
+/** Keep one controlled graph viewport inside finite pan and zoom limits. */
+export function clampGraphViewport(
+  viewport: GraphViewportValue,
+  limits: GraphViewportLimits = {},
+): GraphViewportValue {
+  assertFiniteGraphValue(viewport.x, "Graph viewport x");
+  assertFiniteGraphValue(viewport.y, "Graph viewport y");
+  assertFiniteGraphValue(viewport.zoom, "Graph viewport zoom");
+  const xRange = orderedGraphRange(
+    limits.minX,
+    limits.maxX,
+    -1_000_000,
+    1_000_000,
+    "Graph viewport x",
+  );
+  const yRange = orderedGraphRange(
+    limits.minY,
+    limits.maxY,
+    -1_000_000,
+    1_000_000,
+    "Graph viewport y",
+  );
+  const zoomRange = orderedGraphRange(
+    limits.minZoom,
+    limits.maxZoom,
+    0.1,
+    4,
+    "Graph viewport zoom",
+  );
+  if (zoomRange.min <= 0) {
+    throw new Error("Graph viewport zoom must be greater than zero.");
+  }
+  return {
+    x: clamp(viewport.x, xRange.min, xRange.max),
+    y: clamp(viewport.y, yRange.min, yRange.max),
+    zoom: clamp(viewport.zoom, zoomRange.min, zoomRange.max),
+  };
+}
+
+/** Return the graph-space point at the center of a controlled viewport. */
+export function graphViewportCenter(
+  viewport: GraphViewportValue,
+  viewportSize: GraphSize,
+  limits: GraphViewportLimits = {},
+): GraphPoint {
+  const safeViewport = clampGraphViewport(viewport, limits);
+  assertGraphSize(viewportSize, "Graph viewport");
+  const center = {
+    x: (viewportSize.width / 2 - safeViewport.x) / safeViewport.zoom,
+    y: (viewportSize.height / 2 - safeViewport.y) / safeViewport.zoom,
+  };
+  assertFiniteGraphValue(center.x, "Graph viewport center x");
+  assertFiniteGraphValue(center.y, "Graph viewport center y");
+  return center;
+}
+
+/** Place a new graph item around the current viewport center. */
+export function graphPositionAtViewportCenter(
+  viewport: GraphViewportValue,
+  viewportSize: GraphSize,
+  itemSize: GraphSize = { width: 0, height: 0 },
+  limits: GraphViewportLimits = {},
+): GraphPoint {
+  assertGraphSize(itemSize, "Graph item");
+  const center = graphViewportCenter(viewport, viewportSize, limits);
+  const position = {
+    x: center.x - itemSize.width / 2,
+    y: center.y - itemSize.height / 2,
+  };
+  assertFiniteGraphValue(position.x, "Centered graph position x");
+  assertFiniteGraphValue(position.y, "Centered graph position y");
+  return position;
+}
+
+function centeredZoomRange(
+  contentCenter: number,
+  viewportExtent: number,
+  panMinimum: number,
+  panMaximum: number,
+) {
+  const viewportCenter = viewportExtent / 2;
+  if (contentCenter > 0) {
+    return {
+      min: (viewportCenter - panMaximum) / contentCenter,
+      max: (viewportCenter - panMinimum) / contentCenter,
+    };
+  }
+  if (contentCenter < 0) {
+    return {
+      min: (panMinimum - viewportCenter) / -contentCenter,
+      max: (panMaximum - viewportCenter) / -contentCenter,
+    };
+  }
+  return viewportCenter >= panMinimum && viewportCenter <= panMaximum
+    ? { min: Number.NEGATIVE_INFINITY, max: Number.POSITIVE_INFINITY }
+    : { min: Number.POSITIVE_INFINITY, max: Number.NEGATIVE_INFINITY };
+}
+
+/** Change zoom around one screen-space anchor without moving its graph point. */
+export function zoomGraphViewportAtPoint(
+  viewport: GraphViewportValue,
+  zoom: number,
+  anchor: GraphPoint,
+  limits: GraphViewportLimits = {},
+): GraphViewportValue {
+  const current = clampGraphViewport(viewport, limits);
+  assertFiniteGraphValue(anchor.x, "Graph zoom anchor x");
+  assertFiniteGraphValue(anchor.y, "Graph zoom anchor y");
+  const nextZoom = clampGraphViewport({ ...current, zoom }, limits).zoom;
+  const graphX = (anchor.x - current.x) / current.zoom;
+  const graphY = (anchor.y - current.y) / current.zoom;
+  return clampGraphViewport(
+    {
+      x: anchor.x - graphX * nextZoom,
+      y: anchor.y - graphY * nextZoom,
+      zoom: nextZoom,
+    },
+    limits,
+  );
+}
+
+/** Fit finite graph content inside one viewport with stable centered padding. */
+export function fitGraphViewport(
+  content: GraphRect,
+  viewportSize: GraphSize,
+  options: FitGraphViewportOptions = {},
+): GraphViewportValue {
+  assertFiniteGraphValue(content.x, "Graph content x");
+  assertFiniteGraphValue(content.y, "Graph content y");
+  assertGraphSize(content, "Graph content");
+  assertGraphSize(viewportSize, "Graph viewport");
+  const padding = options.padding ?? 32;
+  assertFiniteGraphValue(padding, "Graph fit padding");
+  if (padding < 0) throw new Error("Graph fit padding must not be negative.");
+  const availableWidth = Math.max(0, viewportSize.width - padding * 2);
+  const availableHeight = Math.max(0, viewportSize.height - padding * 2);
+  const widthZoom =
+    content.width === 0
+      ? Number.POSITIVE_INFINITY
+      : availableWidth / content.width;
+  const heightZoom =
+    content.height === 0
+      ? Number.POSITIVE_INFINITY
+      : availableHeight / content.height;
+  const requestedZoom = Math.min(widthZoom, heightZoom);
+  const zoomRange = orderedGraphRange(
+    options.minZoom,
+    options.maxZoom,
+    0.1,
+    4,
+    "Graph viewport zoom",
+  );
+  if (zoomRange.min <= 0) {
+    throw new Error("Graph viewport zoom must be greater than zero.");
+  }
+  const xRange = orderedGraphRange(
+    options.minX,
+    options.maxX,
+    -1_000_000,
+    1_000_000,
+    "Graph viewport x",
+  );
+  const yRange = orderedGraphRange(
+    options.minY,
+    options.maxY,
+    -1_000_000,
+    1_000_000,
+    "Graph viewport y",
+  );
+  const contentCenterX = content.x + content.width / 2;
+  const contentCenterY = content.y + content.height / 2;
+  assertFiniteGraphValue(contentCenterX, "Graph content center x");
+  assertFiniteGraphValue(contentCenterY, "Graph content center y");
+  const centeredX = centeredZoomRange(
+    contentCenterX,
+    viewportSize.width,
+    xRange.min,
+    xRange.max,
+  );
+  const centeredY = centeredZoomRange(
+    contentCenterY,
+    viewportSize.height,
+    yRange.min,
+    yRange.max,
+  );
+  const centeredMinimum = Math.max(zoomRange.min, centeredX.min, centeredY.min);
+  const centeredMaximum = Math.min(zoomRange.max, centeredX.max, centeredY.max);
+  const sizeZoom = Number.isFinite(requestedZoom)
+    ? requestedZoom
+    : zoomRange.max;
+  const zoom =
+    centeredMinimum <= centeredMaximum
+      ? clamp(sizeZoom, centeredMinimum, centeredMaximum)
+      : clampGraphViewport({ x: 0, y: 0, zoom: sizeZoom }, options).zoom;
+  return clampGraphViewport(
+    {
+      x: viewportSize.width / 2 - contentCenterX * zoom,
+      y: viewportSize.height / 2 - contentCenterY * zoom,
+      zoom,
+    },
+    options,
+  );
+}
+
 export interface TreeLayoutItem {
   readonly id: string;
   readonly parentId: string | null;

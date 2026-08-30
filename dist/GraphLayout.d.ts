@@ -1,3 +1,47 @@
+export interface GraphPoint {
+    readonly x: number;
+    readonly y: number;
+}
+export interface GraphSize {
+    readonly width: number;
+    readonly height: number;
+}
+export interface GraphRect extends GraphPoint, GraphSize {
+}
+export interface GraphPositionBounds {
+    readonly minX: number;
+    readonly maxX: number;
+    readonly minY: number;
+    readonly maxY: number;
+}
+export interface GraphViewportValue extends GraphPoint {
+    readonly zoom: number;
+}
+export interface GraphViewportLimits {
+    readonly minX?: number;
+    readonly maxX?: number;
+    readonly minY?: number;
+    readonly maxY?: number;
+    readonly minZoom?: number;
+    readonly maxZoom?: number;
+}
+export interface FitGraphViewportOptions extends GraphViewportLimits {
+    readonly padding?: number;
+}
+/** Keep one host-owned node position inside finite declared bounds. */
+export declare function clampGraphPosition(position: GraphPoint, bounds: GraphPositionBounds): GraphPoint;
+/** Move one host-owned node by a deterministic delta and apply optional bounds. */
+export declare function moveGraphPosition(position: GraphPoint, delta: GraphPoint, bounds?: GraphPositionBounds): GraphPoint;
+/** Keep one controlled graph viewport inside finite pan and zoom limits. */
+export declare function clampGraphViewport(viewport: GraphViewportValue, limits?: GraphViewportLimits): GraphViewportValue;
+/** Return the graph-space point at the center of a controlled viewport. */
+export declare function graphViewportCenter(viewport: GraphViewportValue, viewportSize: GraphSize, limits?: GraphViewportLimits): GraphPoint;
+/** Place a new graph item around the current viewport center. */
+export declare function graphPositionAtViewportCenter(viewport: GraphViewportValue, viewportSize: GraphSize, itemSize?: GraphSize, limits?: GraphViewportLimits): GraphPoint;
+/** Change zoom around one screen-space anchor without moving its graph point. */
+export declare function zoomGraphViewportAtPoint(viewport: GraphViewportValue, zoom: number, anchor: GraphPoint, limits?: GraphViewportLimits): GraphViewportValue;
+/** Fit finite graph content inside one viewport with stable centered padding. */
+export declare function fitGraphViewport(content: GraphRect, viewportSize: GraphSize, options?: FitGraphViewportOptions): GraphViewportValue;
 export interface TreeLayoutItem {
     readonly id: string;
     readonly parentId: string | null;

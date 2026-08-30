@@ -14,13 +14,21 @@ import { createRoot, hydrateRoot } from "react-dom/client";
 import { renderToString } from "react-dom/server";
 import {
   Button,
+  GraphBundledLink,
+  GraphEdge,
+  GraphEdges,
   GraphInspector,
   GraphNode,
+  GraphNodeAction,
   GraphToolbar,
   GraphViewport,
+  GraphViewportControls,
   GraphWorkspace,
   PageSurface,
   Toast,
+  fitGraphViewport,
+  graphPositionAtViewportCenter,
+  layoutLayeredDirectedGraph,
 } from "./dist/index.js";
 
 function Fixture() {
@@ -29,6 +37,19 @@ function Fixture() {
   const [openerAvailable, setOpenerAvailable] = useState(true);
   const [reachabilityInspector, setReachabilityInspector] = useState(false);
   const [toastVisible, setToastVisible] = useState(false);
+  const [controlledViewport, setControlledViewport] = useState({ x: 0, y: 0, zoom: 1 });
+  const [controlledNode, setControlledNode] = useState({ x: 80, y: 100 });
+  const [viewportReason, setViewportReason] = useState("none");
+  const [nodeReason, setNodeReason] = useState("none");
+  const [viewportChanges, setViewportChanges] = useState(0);
+  const [nodeChanges, setNodeChanges] = useState(0);
+  const [viewportPointerId, setViewportPointerId] = useState(null);
+  const [nodeSelections, setNodeSelections] = useState(0);
+  const [nodeActions, setNodeActions] = useState(0);
+  const [connectionMode, setConnectionMode] = useState(false);
+  const [connectionTargets, setConnectionTargets] = useState(0);
+  const [connectionCancellations, setConnectionCancellations] = useState(0);
+  const [selectedLink, setSelectedLink] = useState(false);
   const returnFocusRef = useRef(null);
   const reachabilityReturnFocusRef = useRef(null);
   const selectedControlRef = useRef(null);
@@ -71,6 +92,130 @@ function Fixture() {
     <>
       <output aria-label="Guarded Escape count">{guardedEscapeCount}</output>
       <Button type="button" onClick={() => setToastVisible(true)}>Show saved message</Button>
+      <output aria-label="Controlled viewport value">{JSON.stringify(controlledViewport)}</output>
+      <output aria-label="Viewport change reason">{viewportReason}</output>
+      <output aria-label="Viewport change count">{viewportChanges}</output>
+      <output aria-label="Viewport pointer id">{viewportPointerId ?? "none"}</output>
+      <output aria-label="Controlled node value">{JSON.stringify(controlledNode)}</output>
+      <output aria-label="Node change reason">{nodeReason}</output>
+      <output aria-label="Node change count">{nodeChanges}</output>
+      <output aria-label="Node selection count">{nodeSelections}</output>
+      <output aria-label="Node action count">{nodeActions}</output>
+      <output aria-label="Connection target count">{connectionTargets}</output>
+      <output aria-label="Connection cancellation count">{connectionCancellations}</output>
+      <output aria-label="Link selection state">{String(selectedLink)}</output>
+      <Button type="button" onClick={() => setControlledViewport({ x: 800, y: 600, zoom: 4 })}>
+        Set maximum viewport
+      </Button>
+      <Button type="button" onClick={() => setControlledNode({ x: 0, y: 0 })}>
+        Set minimum node
+      </Button>
+      <PageSurface data-testid="controlled-graph-surface" edgeToEdge style={{ height: "34rem" }}>
+        <GraphWorkspace
+          aria-label="Controlled ontology graph"
+          fullPage
+          toolbar={
+            <GraphToolbar
+              center={
+                <GraphViewportControls
+                  onAutomaticLayout={() => {
+                    const layout = layoutLayeredDirectedGraph([
+                      { id: "company", parentIds: [] },
+                      { id: "person", parentIds: ["company"] },
+                    ], { padding: 24 });
+                    const company = layout.nodes.find((node) => node.id === "company");
+                    if (company) setControlledNode({ x: company.x, y: company.y });
+                  }}
+                  onFitView={() => setControlledViewport(fitGraphViewport(
+                    { x: 0, y: 0, width: 720, height: 420 },
+                    { width: 900, height: 480 },
+                    { padding: 32 },
+                  ))}
+                  onZoomIn={() => setControlledViewport((current) => ({ ...current, zoom: Math.min(4, current.zoom + 0.1) }))}
+                  onZoomOut={() => setControlledViewport((current) => ({ ...current, zoom: Math.max(0.1, current.zoom - 0.1) }))}
+                />
+              }
+              actions={
+                <Button
+                  type="button"
+                  onClick={() => setControlledNode(graphPositionAtViewportCenter(
+                    controlledViewport,
+                    { width: 900, height: 480 },
+                    { width: 176, height: 72 },
+                  ))}
+                >
+                  Place at center
+                </Button>
+              }
+            />
+          }
+        >
+          <GraphViewport
+            aria-label="Controlled ontology viewport"
+            canvasHeight={420}
+            canvasWidth={720}
+            connectionMode={connectionMode}
+            onConnectionCancel={() => {
+              setConnectionMode(false);
+              setConnectionCancellations((count) => count + 1);
+            }}
+            onPointerDown={(event) => setViewportPointerId(event.pointerId)}
+            onViewportChange={(next, reason) => {
+              setControlledViewport(next);
+              setViewportReason(reason);
+              setViewportChanges((count) => count + 1);
+            }}
+            viewport={controlledViewport}
+            viewportLimits={{ minX: -800, maxX: 800, minY: -600, maxY: 600 }}
+          >
+            <GraphEdges aria-label="Ontology graph relationships" height={420} width={720}>
+              <GraphEdge dashed directed path="M 168 136 L 420 280" />
+              <GraphBundledLink
+                aria-label="Employment connects Company and Person"
+                junctionX={360}
+                junctionY={180}
+                label="Employment"
+                onSelect={() => setSelectedLink((selected) => !selected)}
+                pathA="M 168 136 L 360 180"
+                pathB="M 360 180 L 560 136"
+                selected={selectedLink}
+              />
+            </GraphEdges>
+            <GraphNode
+              aria-label="Company object type"
+              connectionTarget={connectionMode}
+              onClick={() => setNodeSelections((count) => count + 1)}
+              onConnectionTarget={() => {
+                setConnectionMode(false);
+                setConnectionTargets((count) => count + 1);
+              }}
+              onPositionChange={(next, reason) => {
+                setControlledNode(next);
+                setNodeReason(reason);
+                setNodeChanges((count) => count + 1);
+              }}
+              positionBounds={{ minX: 0, maxX: 544, minY: 0, maxY: 348 }}
+              selected={nodeSelections > 0}
+              title="Company"
+              viewportZoom={controlledViewport.zoom}
+              x={controlledNode.x}
+              y={controlledNode.y}
+            />
+            <GraphNodeAction
+              aria-label="Create link from Company"
+              onClick={() => {
+                setNodeActions((count) => count + 1);
+                setConnectionMode(true);
+              }}
+              viewportZoom={controlledViewport.zoom}
+              x={controlledNode.x + 184}
+              y={controlledNode.y + 18}
+            >
+              +
+            </GraphNodeAction>
+          </GraphViewport>
+        </GraphWorkspace>
+      </PageSurface>
       <PageSurface data-testid="guttered-surface">
         <h1>Graph workspace browser check</h1>
         <GraphWorkspace
@@ -272,7 +417,7 @@ const css = await readFile(
   new URL("../styles/tokens.css", import.meta.url),
   "utf8",
 );
-const html = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Graph workspace test</title><style>${css}*:not(.od-graph-inspector){box-sizing:border-box}body{margin:0;background:var(--od-color-background)}#root{display:grid;grid-template-columns:minmax(0,1fr);min-width:0;gap:1rem}.od-graph-workspace{height:34rem;min-height:0}.od-page-surface:nth-of-type(n+2) .od-graph-workspace{height:14rem}</style></head><body><main id="root"></main></body></html>`;
+const html = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Graph workspace test</title><style>${css}*:not(.od-graph-inspector){box-sizing:border-box}body{margin:0;background:var(--od-color-background)}#root{display:grid;grid-template-columns:minmax(0,1fr);min-width:0;gap:1rem}.od-graph-workspace{height:34rem;min-height:0}.od-page-surface:nth-of-type(n+3) .od-graph-workspace{height:14rem}</style></head><body><main id="root"></main></body></html>`;
 const systemChrome = "/usr/bin/google-chrome";
 const browser = await chromium.launch({
   executablePath: existsSync(systemChrome) ? systemChrome : undefined,
@@ -409,6 +554,481 @@ try {
     Math.abs(edgeBounds.x) < 0.5 && Math.abs(edgeBounds.width - 1280) < 0.5,
     true,
     "The edge-to-edge page must use the complete viewport width.",
+  );
+
+  const controlledSurface = desktop.getByTestId("controlled-graph-surface");
+  const controlledWorkspace = desktop.getByRole("region", {
+    name: "Controlled ontology graph",
+  });
+  const controlledViewport = desktop.getByRole("application", {
+    name: "Controlled ontology viewport",
+  });
+  const controlledSurfaceBounds = await controlledSurface.boundingBox();
+  const controlledWorkspaceBounds = await controlledWorkspace.boundingBox();
+  assert.ok(controlledSurfaceBounds && controlledWorkspaceBounds);
+  assert.equal(
+    Math.abs(controlledSurfaceBounds.width - controlledWorkspaceBounds.width) <
+      1 &&
+      Math.abs(
+        controlledSurfaceBounds.height - controlledWorkspaceBounds.height,
+      ) < 1,
+    true,
+    "A full-page graph must fill its host surface.",
+  );
+  assert.equal(
+    await controlledWorkspace.getAttribute("data-full-page"),
+    "true",
+  );
+
+  await controlledViewport.focus();
+  await desktop.keyboard.press("ArrowRight");
+  assert.equal(
+    await desktop
+      .getByRole("status", { name: "Viewport change reason" })
+      .textContent(),
+    "keyboard",
+  );
+  assert.equal(
+    JSON.parse(
+      await desktop
+        .getByRole("status", { name: "Controlled viewport value" })
+        .textContent(),
+    ).x,
+    24,
+    "ArrowRight must report one deterministic pan step.",
+  );
+  await desktop.keyboard.press("+");
+  assert.equal(
+    JSON.parse(
+      await desktop
+        .getByRole("status", { name: "Controlled viewport value" })
+        .textContent(),
+    ).zoom,
+    1.1,
+    "The keyboard zoom action must report one controlled zoom step.",
+  );
+  const controlledViewportBounds = await controlledViewport.boundingBox();
+  assert.ok(controlledViewportBounds);
+  await desktop.mouse.move(
+    controlledViewportBounds.x + controlledViewportBounds.width - 30,
+    controlledViewportBounds.y + controlledViewportBounds.height - 30,
+  );
+  await desktop.mouse.down();
+  await desktop.mouse.move(
+    controlledViewportBounds.x + controlledViewportBounds.width - 5,
+    controlledViewportBounds.y + controlledViewportBounds.height - 15,
+  );
+  await desktop.mouse.up();
+  assert.equal(
+    await desktop
+      .getByRole("status", { name: "Viewport change reason" })
+      .textContent(),
+    "pointer",
+    "A graph-background drag must report a pointer pan.",
+  );
+  const zoomBeforePointer = JSON.parse(
+    await desktop
+      .getByRole("status", { name: "Controlled viewport value" })
+      .textContent(),
+  ).zoom;
+  const wheelDefaultAllowed = await controlledViewport.evaluate((element) => {
+    const bounds = element.getBoundingClientRect();
+    return element.dispatchEvent(
+      new WheelEvent("wheel", {
+        bubbles: true,
+        cancelable: true,
+        clientX: bounds.right - 30,
+        clientY: bounds.bottom - 30,
+        ctrlKey: true,
+        deltaY: -120,
+      }),
+    );
+  });
+  assert.equal(
+    wheelDefaultAllowed,
+    false,
+    "Controlled wheel input must not also zoom or scroll the page.",
+  );
+  await desktop.waitForFunction(
+    () =>
+      document.querySelector('[aria-label="Viewport change reason"]')
+        ?.textContent === "wheel",
+  );
+  const zoomAfterPointer = JSON.parse(
+    await desktop
+      .getByRole("status", { name: "Controlled viewport value" })
+      .textContent(),
+  ).zoom;
+  assert.equal(
+    zoomAfterPointer > zoomBeforePointer,
+    true,
+    "A modified pointer wheel action must report controlled zoom.",
+  );
+  assert.equal(
+    await desktop
+      .getByRole("status", { name: "Viewport change reason" })
+      .textContent(),
+    "wheel",
+  );
+  const browserScaleBeforeWheel = await desktop.evaluate(() => ({
+    devicePixelRatio: window.devicePixelRatio,
+    innerWidth: window.innerWidth,
+    visualScale: window.visualViewport?.scale ?? 1,
+  }));
+  const changesBeforeRealWheel = Number(
+    await desktop
+      .getByRole("status", { name: "Viewport change count" })
+      .textContent(),
+  );
+  await desktop.mouse.move(
+    controlledViewportBounds.x + controlledViewportBounds.width - 30,
+    controlledViewportBounds.y + controlledViewportBounds.height - 30,
+  );
+  await desktop.keyboard.down("Control");
+  await desktop.mouse.wheel(0, -120);
+  await desktop.keyboard.up("Control");
+  await desktop.waitForFunction(
+    (previousCount) =>
+      Number(
+        document.querySelector('[aria-label="Viewport change count"]')
+          ?.textContent,
+      ) > previousCount,
+    changesBeforeRealWheel,
+  );
+  assert.deepEqual(
+    await desktop.evaluate(() => ({
+      devicePixelRatio: window.devicePixelRatio,
+      innerWidth: window.innerWidth,
+      visualScale: window.visualViewport?.scale ?? 1,
+    })),
+    browserScaleBeforeWheel,
+    "A real modified wheel must not change the browser page scale.",
+  );
+  await desktop.getByRole("button", { name: "Fit view" }).click();
+  await desktop.mouse.move(
+    controlledViewportBounds.x + controlledViewportBounds.width - 30,
+    controlledViewportBounds.y + controlledViewportBounds.height - 30,
+  );
+  await desktop.mouse.down();
+  const viewportPointerId = Number(
+    await desktop
+      .getByRole("status", { name: "Viewport pointer id" })
+      .textContent(),
+  );
+  const changesBeforePointerCancel = Number(
+    await desktop
+      .getByRole("status", { name: "Viewport change count" })
+      .textContent(),
+  );
+  await controlledViewport.evaluate((element, pointerId) => {
+    element.dispatchEvent(
+      new PointerEvent("pointercancel", {
+        bubbles: true,
+        cancelable: true,
+        pointerId,
+      }),
+    );
+  }, viewportPointerId);
+  await desktop.mouse.move(
+    controlledViewportBounds.x + controlledViewportBounds.width - 10,
+    controlledViewportBounds.y + controlledViewportBounds.height - 10,
+  );
+  await desktop.mouse.up();
+  assert.equal(
+    Number(
+      await desktop
+        .getByRole("status", { name: "Viewport change count" })
+        .textContent(),
+    ),
+    changesBeforePointerCancel,
+    "Pointer cancellation must end the active viewport pan.",
+  );
+
+  const nodeAction = desktop.getByRole("button", {
+    name: "Create link from Company",
+  });
+  const companyNode = desktop.getByRole("button", {
+    name: "Company object type",
+  });
+  for (const control of [
+    nodeAction,
+    desktop.getByRole("button", { name: "Zoom in" }),
+    desktop.getByRole("button", { name: "Zoom out" }),
+  ]) {
+    const controlBounds = await control.boundingBox();
+    assert.ok(controlBounds);
+    assert.equal(
+      controlBounds.width >= 44 && controlBounds.height >= 44,
+      true,
+      "Each compact graph action must keep a 44 CSS pixel pointer target.",
+    );
+  }
+  await nodeAction.click();
+  assert.equal(
+    await desktop
+      .getByRole("status", { name: "Node action count" })
+      .textContent(),
+    "1",
+  );
+  assert.equal(
+    await desktop
+      .getByRole("status", { name: "Node selection count" })
+      .textContent(),
+    "0",
+    "A separate node action must not select its node.",
+  );
+  assert.equal(
+    await companyNode.getAttribute("data-connection-target"),
+    "true",
+  );
+  await companyNode.click();
+  assert.equal(
+    await desktop
+      .getByRole("status", { name: "Connection target count" })
+      .textContent(),
+    "1",
+    "A pointer target must complete connection mode without node selection.",
+  );
+  assert.equal(
+    await desktop
+      .getByRole("status", { name: "Node selection count" })
+      .textContent(),
+    "0",
+  );
+
+  await nodeAction.click();
+  await companyNode.focus();
+  await desktop.keyboard.press("Enter");
+  assert.equal(
+    await desktop
+      .getByRole("status", { name: "Connection target count" })
+      .textContent(),
+    "2",
+    "Enter on a connection target must complete connection mode.",
+  );
+  await nodeAction.click();
+  await companyNode.focus();
+  await desktop.keyboard.press("Escape");
+  assert.equal(
+    await desktop
+      .getByRole("status", { name: "Connection cancellation count" })
+      .textContent(),
+    "1",
+    "Escape must cancel connection mode.",
+  );
+  await nodeAction.click();
+  const cancellationsBeforePan = Number(
+    await desktop
+      .getByRole("status", { name: "Connection cancellation count" })
+      .textContent(),
+  );
+  await desktop.mouse.move(
+    controlledViewportBounds.x + controlledViewportBounds.width - 30,
+    controlledViewportBounds.y + controlledViewportBounds.height - 30,
+  );
+  await desktop.mouse.down();
+  await desktop.mouse.move(
+    controlledViewportBounds.x + controlledViewportBounds.width - 10,
+    controlledViewportBounds.y + controlledViewportBounds.height - 10,
+  );
+  await desktop.mouse.up();
+  assert.equal(
+    Number(
+      await desktop
+        .getByRole("status", { name: "Connection cancellation count" })
+        .textContent(),
+    ),
+    cancellationsBeforePan,
+    "A graph-background pan must keep connection mode active.",
+  );
+  assert.equal(
+    await companyNode.getAttribute("data-connection-target"),
+    "true",
+  );
+  await controlledViewport.click({ position: { x: 12, y: 12 } });
+  assert.equal(
+    await desktop
+      .getByRole("status", { name: "Connection cancellation count" })
+      .textContent(),
+    String(cancellationsBeforePan + 1),
+    "An exact graph-background action must cancel connection mode.",
+  );
+
+  await companyNode.click();
+  assert.equal(
+    await desktop
+      .getByRole("status", { name: "Node selection count" })
+      .textContent(),
+    "1",
+  );
+  await companyNode.focus();
+  const nodeBeforeKeyboard = JSON.parse(
+    await desktop
+      .getByRole("status", { name: "Controlled node value" })
+      .textContent(),
+  );
+  const zoomBeforeKeyboard = JSON.parse(
+    await desktop
+      .getByRole("status", { name: "Controlled viewport value" })
+      .textContent(),
+  ).zoom;
+  await desktop.keyboard.press("ArrowLeft");
+  assert.equal(
+    await desktop
+      .getByRole("status", { name: "Node change reason" })
+      .textContent(),
+    "keyboard",
+  );
+  const nodeAfterKeyboard = JSON.parse(
+    await desktop
+      .getByRole("status", { name: "Controlled node value" })
+      .textContent(),
+  );
+  assert.equal(
+    Math.abs(
+      nodeAfterKeyboard.x - (nodeBeforeKeyboard.x - 16 / zoomBeforeKeyboard),
+    ) < 0.000_001,
+    true,
+    "Keyboard node movement must keep one zoom-aware screen step.",
+  );
+  const nodeBeforePointer = JSON.parse(
+    await desktop
+      .getByRole("status", { name: "Controlled node value" })
+      .textContent(),
+  );
+  const companyBounds = await companyNode.boundingBox();
+  assert.ok(companyBounds);
+  await desktop.mouse.move(companyBounds.x + 20, companyBounds.y + 20);
+  await desktop.mouse.down();
+  await desktop.mouse.move(companyBounds.x + 48, companyBounds.y + 38);
+  await desktop.mouse.up();
+  const nodeAfterPointer = JSON.parse(
+    await desktop
+      .getByRole("status", { name: "Controlled node value" })
+      .textContent(),
+  );
+  assert.equal(
+    nodeAfterPointer.x > nodeBeforePointer.x &&
+      nodeAfterPointer.y > nodeBeforePointer.y,
+    true,
+    `A pointer drag must report a controlled node position: ${JSON.stringify({ nodeAfterPointer, nodeBeforePointer })}.`,
+  );
+  assert.equal(
+    await desktop
+      .getByRole("status", { name: "Node change reason" })
+      .textContent(),
+    "pointer",
+  );
+
+  const bundledLink = desktop.getByRole("button", {
+    name: "Employment connects Company and Person",
+  });
+  await bundledLink.focus();
+  await desktop.keyboard.press("Enter");
+  assert.equal(
+    await desktop
+      .getByRole("status", { name: "Link selection state" })
+      .textContent(),
+    "true",
+  );
+  assert.equal(await bundledLink.getAttribute("aria-pressed"), "true");
+  await desktop.keyboard.press("Space");
+  assert.equal(
+    await desktop
+      .getByRole("status", { name: "Link selection state" })
+      .textContent(),
+    "false",
+  );
+  assert.equal(await bundledLink.locator("[data-endpoint='A']").count(), 1);
+  assert.equal(await bundledLink.locator("[data-endpoint='B']").count(), 1);
+  const inheritanceEdge = controlledViewport.locator(
+    ".od-graph-edge[data-dashed='true'][data-directed='true']",
+  );
+  assert.equal(await inheritanceEdge.count(), 1);
+  assert.match(
+    (await inheritanceEdge
+      .locator(".od-graph-edge-line")
+      .getAttribute("marker-end")) ?? "",
+    /^url\(#/u,
+  );
+
+  await desktop.getByRole("button", { name: "Fit view" }).click();
+  const fitViewport = JSON.parse(
+    await desktop
+      .getByRole("status", { name: "Controlled viewport value" })
+      .textContent(),
+  );
+  assert.equal(
+    Number.isFinite(fitViewport.x) &&
+      Number.isFinite(fitViewport.y) &&
+      fitViewport.zoom >= 0.1 &&
+      fitViewport.zoom <= 4,
+    true,
+    "Fit view must report one finite, bounded viewport.",
+  );
+  await desktop.getByRole("button", { name: "Automatic layout" }).click();
+  assert.deepEqual(
+    JSON.parse(
+      await desktop
+        .getByRole("status", { name: "Controlled node value" })
+        .textContent(),
+    ),
+    { x: 24, y: 24 },
+    "Automatic layout must use one deterministic position.",
+  );
+  await desktop.getByRole("button", { name: "Place at center" }).click();
+  const centeredPosition = JSON.parse(
+    await desktop
+      .getByRole("status", { name: "Controlled node value" })
+      .textContent(),
+  );
+  assert.equal(
+    Number.isFinite(centeredPosition.x) && Number.isFinite(centeredPosition.y),
+    true,
+    "Viewport-center placement must report finite coordinates.",
+  );
+  await desktop.getByRole("button", { name: "Set maximum viewport" }).click();
+  const viewportChangesAtMaximum = Number(
+    await desktop
+      .getByRole("status", { name: "Viewport change count" })
+      .textContent(),
+  );
+  await controlledViewport.focus();
+  await desktop.keyboard.press("ArrowRight");
+  await desktop.keyboard.press("+");
+  assert.equal(
+    Number(
+      await desktop
+        .getByRole("status", { name: "Viewport change count" })
+        .textContent(),
+    ),
+    viewportChangesAtMaximum,
+    "Bounded viewport actions must not report duplicate controlled values.",
+  );
+  const maximumZoomActionBounds = await nodeAction.boundingBox();
+  assert.ok(maximumZoomActionBounds);
+  assert.equal(
+    maximumZoomActionBounds.width >= 44 && maximumZoomActionBounds.height >= 44,
+    true,
+    "A compact node action must keep its pointer target at maximum zoom.",
+  );
+  await desktop.getByRole("button", { name: "Set minimum node" }).click();
+  const nodeChangesAtMinimum = Number(
+    await desktop
+      .getByRole("status", { name: "Node change count" })
+      .textContent(),
+  );
+  await companyNode.focus();
+  await desktop.keyboard.press("ArrowLeft");
+  await desktop.keyboard.press("ArrowUp");
+  assert.equal(
+    Number(
+      await desktop
+        .getByRole("status", { name: "Node change count" })
+        .textContent(),
+    ),
+    nodeChangesAtMinimum,
+    "Bounded node actions must not report duplicate controlled positions.",
   );
 
   const centeredViewport = desktop.getByRole("region", {
