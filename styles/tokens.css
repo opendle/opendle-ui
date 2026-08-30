@@ -2017,8 +2017,15 @@ samp {
   display: flex;
   min-width: 0;
   align-items: center;
+  flex-wrap: wrap;
   gap: var(--od-space-sm);
+  overflow-wrap: anywhere;
   pointer-events: auto;
+}
+
+.od-graph-toolbar > div > * {
+  min-width: 0;
+  max-width: 100%;
 }
 
 .od-graph-toolbar-center {

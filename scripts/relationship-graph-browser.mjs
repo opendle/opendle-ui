@@ -14,6 +14,7 @@ import { createRoot } from "react-dom/client";
 import { Button, GraphInspector, RelationshipGraph } from "./dist/index.js";
 
 const longLabel = "Record Alpha with a deliberately long label that must wrap inside its local node without increasing the page width";
+const longToolbarLabel = "Context-" + "unbroken".repeat(18);
 const baseColumns = [
   {
     id: "sources",
@@ -185,12 +186,12 @@ function Fixture({ empty = false }) {
             : {
                 leading: (
                   <Button type="button" variant="secondary">
-                    Service context with a long label that can wrap safely
+                    {longToolbarLabel}
                   </Button>
                 ),
                 actions: (
                   <Button type="button" variant="secondary">
-                    Refresh relationship graph
+                    {"Refresh-" + "unbroken".repeat(18)}
                   </Button>
                 ),
               }
@@ -472,13 +473,13 @@ try {
     "The complete toolbar must render its three non-empty slots.",
   );
   const leadingToolbarAction = desktop.getByRole("button", {
-    name: /Service context with a long label/,
+    name: /^Context-unbroken/,
   });
   const toolbarSearch = desktop.getByRole("searchbox", {
     name: "Search graph",
   });
   const trailingToolbarAction = desktop.getByRole("button", {
-    name: "Refresh relationship graph",
+    name: /^Refresh-unbroken/,
   });
   await leadingToolbarAction.focus();
   await desktop.keyboard.press("Tab");
