@@ -210,6 +210,13 @@ export {
   type AsyncSearchableSelectRequest,
 } from "./components/AsyncSearchableSelect.js";
 export {
+  YamlEditor,
+  type YamlEditorCompletionSource,
+  type YamlEditorDiagnostic,
+  type YamlEditorHandle,
+  type YamlEditorProps,
+} from "./components/YamlEditor.js";
+export {
   SecretRevealPanel,
   type SecretRevealPanelProps,
 } from "./components/SecretRevealPanel.js";

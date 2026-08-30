@@ -94,6 +94,7 @@ export { FileDropZone, } from "./components/FileDropZone.js";
 export { InlineAlert, } from "./components/InlineAlert.js";
 export { SearchableSelect, } from "./components/SearchableSelect.js";
 export { AsyncSearchableSelect, } from "./components/AsyncSearchableSelect.js";
+export { YamlEditor, } from "./components/YamlEditor.js";
 export { SecretRevealPanel, } from "./components/SecretRevealPanel.js";
 export { ApplicationNavigation, ApplicationNavigationGroup, ApplicationShell, ApplicationSidebar, ApplicationTopbar, } from "./components/ApplicationShell.js";
 export { Button, } from "./components/Button.js";

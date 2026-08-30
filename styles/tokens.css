@@ -4780,6 +4780,191 @@ samp {
   display: none;
 }
 
+.od-yaml-editor {
+  display: grid;
+  min-width: 0;
+  min-height: 0;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  gap: 0.375rem;
+  color: var(--od-color-muted-strong);
+  font-size: 0.75rem;
+}
+
+.od-yaml-editor-heading {
+  display: flex;
+  min-width: 0;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--od-space-sm);
+}
+
+.od-yaml-editor-label {
+  min-width: 0;
+  color: var(--od-color-foreground);
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.od-yaml-editor-mount {
+  min-width: 0;
+  min-height: 12rem;
+  overflow: hidden;
+  border: 1px solid var(--od-color-border-strong);
+  border-radius: var(--od-radius-sm);
+  background: var(--od-color-surface-raised);
+}
+
+.od-yaml-editor-mount > .cm-editor {
+  height: 100%;
+  min-height: inherit;
+  color: var(--od-color-foreground);
+  background: transparent;
+}
+
+.od-yaml-editor-mount .cm-scroller,
+.od-yaml-editor-mount .cm-tooltip,
+.od-yaml-editor-mount .cm-panel {
+  font-family: var(--od-font-mono);
+}
+
+.od-yaml-editor-mount .cm-scroller {
+  min-width: 0;
+  overflow: auto;
+  line-height: 1.55;
+}
+
+.od-yaml-editor-mount .cm-content {
+  min-width: max-content;
+  caret-color: var(--od-color-foreground);
+}
+
+.od-yaml-editor-mount .cm-gutters {
+  border-right-color: var(--od-color-border);
+  color: var(--od-color-muted-strong);
+  background: var(--od-color-surface);
+}
+
+.od-yaml-editor-mount .cm-activeLine,
+.od-yaml-editor-mount .cm-activeLineGutter {
+  background: var(--od-color-blue-soft);
+}
+
+.od-yaml-editor-mount .cm-selectionBackground,
+.od-yaml-editor-mount .cm-content ::selection {
+  background: var(--od-color-purple-soft) !important;
+}
+
+.od-yaml-editor-mount .cm-editor.cm-focused {
+  outline: 3px solid var(--od-color-focus);
+  outline-offset: -3px;
+}
+
+.od-yaml-editor-mount .cm-panel,
+.od-yaml-editor-mount .cm-tooltip {
+  border-color: var(--od-color-border-strong);
+  color: var(--od-color-foreground);
+  background: var(--od-color-surface-raised);
+}
+
+.od-yaml-editor-mount .cm-panel.cm-search {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--od-space-xs);
+  padding: var(--od-space-xs);
+}
+
+.od-yaml-editor-mount .cm-panel.cm-search input,
+.od-yaml-editor-mount .cm-panel.cm-search button {
+  min-height: 2.25rem;
+  border: 1px solid var(--od-color-border-strong);
+  border-radius: var(--od-radius-sm);
+  color: var(--od-color-foreground);
+  background: var(--od-color-surface);
+}
+
+.od-yaml-editor-mount .cm-tooltip-autocomplete > ul > li[aria-selected] {
+  color: var(--od-color-foreground);
+  background: var(--od-color-blue-soft);
+}
+
+.od-yaml-editor-mount .cm-lintRange-error {
+  text-decoration-color: var(--od-color-coral-strong);
+}
+
+.od-yaml-editor-status {
+  min-height: 1.125rem;
+  margin: 0;
+  color: var(--od-color-muted-strong);
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.od-yaml-editor-load-error,
+.od-yaml-editor-load-state {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--od-space-xs);
+  color: var(--od-color-coral-strong);
+}
+
+.od-yaml-editor-load-state {
+  color: var(--od-color-muted-strong);
+}
+
+.od-yaml-editor-retry,
+.od-yaml-editor-diagnostics button {
+  min-height: 2.25rem;
+  border: 1px solid var(--od-color-border-strong);
+  border-radius: var(--od-radius-sm);
+  color: var(--od-color-foreground);
+  background: var(--od-color-surface);
+  cursor: pointer;
+}
+
+.od-yaml-editor-retry:focus-visible,
+.od-yaml-editor-diagnostics button:focus-visible {
+  outline: 3px solid var(--od-color-focus);
+  outline-offset: 2px;
+}
+
+.od-yaml-editor-diagnostics {
+  display: flex;
+  margin: var(--od-space-xs) 0 0;
+  padding: 0;
+  flex-wrap: wrap;
+  gap: var(--od-space-xs);
+  list-style: none;
+}
+
+.od-yaml-editor-diagnostics button:disabled {
+  cursor: not-allowed;
+}
+
+.od-yaml-editor[data-invalid="true"] .od-yaml-editor-mount {
+  border-color: var(--od-color-coral-strong);
+}
+
+.od-yaml-editor[data-disabled="true"] .od-yaml-editor-mount,
+.od-yaml-editor[data-read-only="true"] .od-yaml-editor-mount {
+  background: var(--od-color-surface);
+}
+
+.od-yaml-editor[data-disabled="true"] {
+  opacity: 0.72;
+}
+
+@media (forced-colors: active) {
+  .od-yaml-editor-mount .cm-editor.cm-focused {
+    outline-color: Highlight;
+  }
+
+  .od-yaml-editor[data-invalid="true"] .od-yaml-editor-mount {
+    border-color: Mark;
+  }
+}
+
 .od-secret-reveal-panel {
   overflow: hidden;
   border: 1px solid var(--od-color-amber);

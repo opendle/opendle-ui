@@ -9,7 +9,7 @@ import { build } from "esbuild";
 
 const repositoryRoot = fileURLToPath(new URL("..", import.meta.url));
 const fixtureSource = String.raw`
-import React, { StrictMode, useState } from "react";
+import React, { StrictMode, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
 import {
   AdvancedFieldsDisclosure,
@@ -29,6 +29,7 @@ import {
   SwitchControl,
   TextareaControl,
   TextControl,
+  YamlEditor,
 } from "./dist/index.js";
 
 const options = [
@@ -40,6 +41,52 @@ const options = [
 const asyncSelectorEvents = [];
 const asyncSelectorAttempts = new Map();
 window.asyncSelectorEvents = asyncSelectorEvents;
+
+const originalPromiseAll = Promise.all.bind(Promise);
+let yamlRuntimeLoadAttempt = 0;
+window.yamlRuntimeLoadAttempt = 0;
+window.yamlRuntimeLoadArmed = false;
+Promise.all = (values) => {
+  const entries = Array.from(values);
+  if (!window.yamlRuntimeLoadArmed) return originalPromiseAll(entries);
+  yamlRuntimeLoadAttempt += 1;
+  window.yamlRuntimeLoadAttempt = yamlRuntimeLoadAttempt;
+  const result = originalPromiseAll(entries);
+  if (yamlRuntimeLoadAttempt === 1) {
+    return result.then(() => {
+      throw new Error("Simulated YAML editor load failure.");
+    });
+  }
+  window.yamlRuntimeLoadArmed = false;
+  Promise.all = originalPromiseAll;
+  return result.then(
+    (modules) =>
+      new Promise((resolve) => {
+        window.setTimeout(() => resolve(modules), 600);
+      }),
+  );
+};
+
+function yamlCompletion(context) {
+  const word = context.matchBefore(/\w*/);
+  if (!word || (word.from === word.to && !context.explicit)) return null;
+  if (context.state.sliceDoc(word.from, word.to) === "asy") {
+    return new Promise((resolve) => {
+      window.setTimeout(() => {
+        resolve({
+          from: word.from,
+          options: [{ apply: "asyncField:", label: "asyncField:", type: "property" }],
+        });
+      }, 150);
+    });
+  }
+  return {
+    from: word.from,
+    options: [{ apply: "service:", label: "service:", type: "property" }],
+  };
+}
+
+const yamlCompletionSources = [yamlCompletion];
 
 function waitForAsyncResult(delay, signal, event, ignoreAbort = false) {
   return new Promise((resolve, reject) => {
@@ -171,6 +218,21 @@ function Fixture() {
   });
   const [immediateSelection, setImmediateSelection] = useState(null);
   const [showUnmountSelector, setShowUnmountSelector] = useState(true);
+  const [showYamlEditor, setShowYamlEditor] = useState(false);
+  const [yamlDisabled, setYamlDisabled] = useState(false);
+  const [yamlHostFrozen, setYamlHostFrozen] = useState(false);
+  const [yamlReadOnly, setYamlReadOnly] = useState(false);
+  const [yamlSource, setYamlSource] = useState(
+    "service:\n  apiName: root\n  settings:\n    enabled: true\n",
+  );
+  const yamlEditorRef = useRef(null);
+  const invalidYamlStart = yamlSource.indexOf("invalid");
+  const yamlDiagnostics = invalidYamlStart === -1 ? [] : [{
+    from: invalidYamlStart,
+    message: "Close the YAML sequence.",
+    severity: "error",
+    to: yamlSource.length + 100,
+  }];
   return <main>
     <h1>Shared form controls</h1>
     <FormSection
@@ -317,6 +379,50 @@ function Fixture() {
     <output aria-label="Shared details value">{textareaValue}</output>
     <output aria-label="Shared checkbox value">{String(checkboxValue)}</output>
     <output aria-label="Shared switch value">{String(switchValue)}</output>
+    <section className="yaml-browser-panel" aria-label="YAML editor panel">
+      {showYamlEditor ? <YamlEditor
+        completionSources={yamlCompletionSources}
+        diagnostics={yamlDiagnostics}
+        disabled={yamlDisabled}
+        label="Ontology YAML"
+        onChange={(source) => {
+          if (!yamlHostFrozen) setYamlSource(source);
+        }}
+        readOnly={yamlReadOnly}
+        ref={yamlEditorRef}
+        value={yamlSource}
+      /> : null}
+      <div className="yaml-browser-actions">
+        <Button onClick={() => yamlEditorRef.current?.focus()}>
+          Focus YAML editor
+        </Button>
+        <Button onClick={() => setYamlSource("service:\napiName: root")}>
+          Start YAML indentation
+        </Button>
+        <Button onClick={() => setYamlSource("ser")}>
+          Start YAML completion
+        </Button>
+        <Button onClick={() => setYamlSource("asy")}>
+          Start async YAML completion
+        </Button>
+        <Button onClick={() => setYamlSource("external: true\n")}>
+          Replace YAML source
+        </Button>
+        <Button onClick={() => setYamlHostFrozen((value) => !value)}>
+          Toggle frozen YAML host
+        </Button>
+        <Button onClick={() => setYamlReadOnly((value) => !value)}>
+          Toggle YAML read only
+        </Button>
+        <Button onClick={() => setYamlDisabled((value) => !value)}>
+          Toggle YAML disabled
+        </Button>
+        <Button onClick={() => setShowYamlEditor((value) => !value)}>
+          {showYamlEditor ? "Unmount YAML editor" : "Mount YAML editor"}
+        </Button>
+      </div>
+      <output aria-label="Controlled YAML source">{yamlSource}</output>
+    </section>
     <output aria-label="Selected model">{model}</output>
     <output aria-label="Selected files">{files.join(", ")}</output>
     <output aria-label="File selection events">{fileEvents}</output>
@@ -371,7 +477,7 @@ const css = await readFile(
   new URL("../styles/tokens.css", import.meta.url),
   "utf8",
 );
-const html = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Form control checks</title><style>${css}main{display:grid;width:min(100% - 2rem,64rem);margin:2rem auto;gap:1rem}</style></head><body><div id="root"></div></body></html>`;
+const html = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Form control checks</title><style>${css}main{display:grid;width:min(100% - 2rem,64rem);margin:2rem auto;gap:1rem}.yaml-browser-panel{display:grid;min-width:0;height:30rem;gap:.75rem}.yaml-browser-actions{display:flex;flex-wrap:wrap;gap:.5rem}</style></head><body><div id="root"></div></body></html>`;
 const browser = await chromium.launch({
   executablePath: existsSync("/usr/bin/google-chrome")
     ? "/usr/bin/google-chrome"
@@ -397,6 +503,252 @@ try {
   });
   const desktop = await desktopContext.newPage();
   const desktopErrors = await loadFixture(desktop);
+
+  const yamlTextbox = desktop.getByRole("textbox", { name: "Ontology YAML" });
+  const yamlSourceOutput = desktop.getByRole("status", {
+    name: "Controlled YAML source",
+  });
+  const yamlLoadAlert = desktop.getByRole("alert").filter({
+    hasText: "Could not load the YAML editor.",
+  });
+  await desktop.evaluate(() => {
+    window.yamlRuntimeLoadArmed = true;
+  });
+  await desktop.getByRole("button", { name: "Mount YAML editor" }).click();
+  await yamlLoadAlert.waitFor();
+  await desktop.getByRole("button", { name: "Retry YAML editor" }).click();
+  await desktop.getByText("Loading YAML editor…", { exact: true }).waitFor();
+  await desktop.waitForFunction(() => window.yamlRuntimeLoadAttempt === 2);
+  await desktop.getByRole("button", { name: "Unmount YAML editor" }).click();
+  assert.equal(await yamlTextbox.count(), 0);
+  await desktop.getByRole("button", { name: "Mount YAML editor" }).click();
+  await desktop.getByRole("button", { name: "Focus YAML editor" }).click();
+  await yamlTextbox.waitFor();
+  assert.equal(
+    await desktop.getByText("Loading YAML editor…", { exact: true }).count(),
+    0,
+    "The YAML editor must clear its loading state after it mounts.",
+  );
+  assert.equal(
+    await desktop.locator(".od-yaml-editor .cm-editor").count(),
+    1,
+    "A late runtime result must mount only the current YAML editor.",
+  );
+  assert.equal(
+    await yamlTextbox.evaluate((element) => element === document.activeElement),
+    true,
+    "A focus request during runtime loading must focus the mounted editor.",
+  );
+  assert.match(
+    (await yamlTextbox.getAttribute("id")) ?? "",
+    /^od-yaml-editor-/,
+    "The public editor identifier must belong to the editable textbox.",
+  );
+  assert.equal(await yamlTextbox.getAttribute("aria-multiline"), "true");
+  const yamlDescriptionIds = (
+    (await yamlTextbox.getAttribute("aria-describedby")) ?? ""
+  )
+    .split(" ")
+    .filter(Boolean);
+  assert.equal(yamlDescriptionIds.length, 1);
+  assert.equal(
+    await desktop
+      .locator(`[id=${JSON.stringify(yamlDescriptionIds[0])}]`)
+      .evaluate((element) => element.tagName),
+    "OUTPUT",
+    "The YAML editor must describe itself with its live diagnostic status.",
+  );
+  assert.equal(
+    await desktop.locator(".od-yaml-editor .cm-lineNumbers").count(),
+    1,
+    "The YAML editor must show one line-number gutter.",
+  );
+  assert.equal(
+    await desktop.locator(".od-yaml-editor .cm-foldGutter").count(),
+    1,
+    "The YAML editor must show one fold gutter.",
+  );
+  const foldControl = desktop
+    .locator(
+      '.od-yaml-editor .cm-foldGutter .cm-gutterElement span[title="Fold line"]',
+    )
+    .first();
+  await foldControl.click();
+  assert.equal(
+    await desktop.locator(".od-yaml-editor .cm-foldPlaceholder").count(),
+    1,
+    "The YAML fold control must collapse a YAML mapping.",
+  );
+  await desktop.locator(".od-yaml-editor .cm-foldPlaceholder").click();
+  assert.equal(
+    await desktop.locator(".od-yaml-editor .cm-foldPlaceholder").count(),
+    0,
+    "The YAML fold placeholder must expand the mapping.",
+  );
+  await yamlTextbox.focus();
+  await desktop.keyboard.press("Control+Home");
+  await desktop.keyboard.press("Control+Shift+BracketLeft");
+  assert.equal(
+    await desktop.locator(".od-yaml-editor .cm-foldPlaceholder").count(),
+    1,
+    "The YAML fold keyboard action must collapse the mapping.",
+  );
+  await desktop.keyboard.press("Control+Shift+BracketRight");
+  assert.equal(
+    await desktop.locator(".od-yaml-editor .cm-foldPlaceholder").count(),
+    0,
+    "The YAML unfold keyboard action must expand the mapping.",
+  );
+
+  const focusYamlButton = desktop.getByRole("button", {
+    name: "Focus YAML editor",
+  });
+  await focusYamlButton.click();
+  await desktop.locator(".od-yaml-editor .cm-editor.cm-focused").waitFor();
+  assert.equal(
+    await yamlTextbox.evaluate((element) => element === document.activeElement),
+    true,
+    "The public focus handle must focus the editable YAML document.",
+  );
+  assert.equal(
+    await yamlTextbox.evaluate(
+      (element) =>
+        getComputedStyle(element.closest(".cm-editor")).outlineStyle !== "none",
+    ),
+    true,
+    "The YAML editor must show a focus outline.",
+  );
+  await desktop.keyboard.press("Control+f");
+  const yamlSearch = desktop.locator(
+    '.od-yaml-editor .cm-search input[name="search"]',
+  );
+  await yamlSearch.fill("root");
+  assert.equal(await yamlSearch.isVisible(), true);
+  await desktop.keyboard.press("Escape");
+
+  await desktop.getByRole("button", { name: "Start YAML indentation" }).click();
+  await yamlTextbox.focus();
+  await desktop.keyboard.press("Control+End");
+  await desktop.keyboard.press("Home");
+  await desktop.keyboard.press("Tab");
+  assert.equal(
+    await yamlSourceOutput.textContent(),
+    "service:\n  apiName: root",
+    "Tab must apply two-space YAML indentation and report the controlled source.",
+  );
+
+  await desktop.getByRole("button", { name: "Start YAML completion" }).click();
+  await yamlTextbox.focus();
+  await desktop.keyboard.press("Control+End");
+  await desktop.keyboard.press("Control+Space");
+  await desktop.getByRole("option", { name: "service:" }).waitFor();
+  await desktop.waitForTimeout(100);
+  await desktop.keyboard.press("Enter");
+  assert.equal(
+    await yamlSourceOutput.textContent(),
+    "service:",
+    "A host completion source must update the controlled source.",
+  );
+
+  await desktop
+    .getByRole("button", { name: "Start async YAML completion" })
+    .click();
+  await yamlTextbox.focus();
+  await desktop.keyboard.press("Control+End");
+  await desktop.keyboard.press("Control+Space");
+  await desktop.getByRole("button", { name: "Replace YAML source" }).click();
+  await desktop.waitForTimeout(200);
+  assert.equal(
+    await desktop.getByRole("option", { name: "asyncField:" }).count(),
+    0,
+    "A late completion result must not apply to a replaced source.",
+  );
+  await desktop
+    .getByRole("button", { name: "Start async YAML completion" })
+    .click();
+  await yamlTextbox.focus();
+  await desktop.keyboard.press("Control+End");
+  await desktop.keyboard.press("Control+Space");
+  await desktop.getByRole("option", { name: "asyncField:" }).waitFor();
+  await desktop.keyboard.press("Enter");
+  assert.equal(
+    await yamlSourceOutput.textContent(),
+    "asyncField:",
+    "An asynchronous completion result must update the controlled source.",
+  );
+
+  await yamlTextbox.fill("invalid: [");
+  assert.equal(await yamlSourceOutput.textContent(), "invalid: [");
+  assert.equal(await yamlTextbox.getAttribute("aria-invalid"), "true");
+  assert.match(
+    (await desktop
+      .getByRole("status", { name: "Ontology YAML status" })
+      .textContent()) ?? "",
+    /Error on line 1: Close the YAML sequence\./,
+  );
+  assert.equal(
+    await desktop.locator(".od-yaml-editor .cm-lintRange-error").count(),
+    1,
+    "The host diagnostic must keep an inline error position.",
+  );
+  await desktop
+    .getByRole("button", {
+      name: "Go to error on line 1: Close the YAML sequence.",
+    })
+    .click();
+  assert.equal(
+    await yamlTextbox.evaluate((element) => element === document.activeElement),
+    true,
+    "A diagnostic action must focus its bounded editor range.",
+  );
+
+  await desktop.getByRole("button", { name: "Replace YAML source" }).click();
+  assert.equal(await yamlSourceOutput.textContent(), "external: true\n");
+  assert.equal(await yamlTextbox.textContent(), "external: true");
+  await desktop
+    .getByRole("button", { name: "Toggle frozen YAML host" })
+    .click();
+  await yamlTextbox.fill("unaccepted: true");
+  await desktop.waitForFunction(
+    () =>
+      document.querySelector('.od-yaml-editor [role="textbox"]')
+        ?.textContent === "external: true",
+  );
+  assert.equal(
+    await yamlSourceOutput.textContent(),
+    "external: true\n",
+    "The CodeMirror view must return to the host value when a change is not accepted.",
+  );
+  await desktop
+    .getByRole("button", { name: "Toggle frozen YAML host" })
+    .click();
+  await desktop.getByRole("button", { name: "Toggle YAML read only" }).click();
+  assert.equal(await yamlTextbox.getAttribute("aria-readonly"), "true");
+  await yamlTextbox.focus();
+  await desktop.keyboard.press("Control+End");
+  await desktop.keyboard.type("blocked");
+  assert.equal(await yamlSourceOutput.textContent(), "external: true\n");
+  await desktop.getByRole("button", { name: "Toggle YAML read only" }).click();
+  await yamlTextbox.focus();
+  await desktop
+    .getByRole("button", { name: "Toggle YAML disabled" })
+    .evaluate((button) => button.click());
+  assert.equal(await yamlTextbox.getAttribute("aria-disabled"), "true");
+  assert.equal(await yamlTextbox.getAttribute("tabindex"), "-1");
+  assert.equal(
+    await yamlTextbox.evaluate((element) => element === document.activeElement),
+    false,
+    "A YAML editor that becomes disabled must release focus.",
+  );
+  await focusYamlButton.click();
+  assert.equal(
+    await focusYamlButton.evaluate(
+      (element) => element === document.activeElement,
+    ),
+    true,
+    "The public focus handle must not focus a disabled YAML editor.",
+  );
+  await desktop.getByRole("button", { name: "Toggle YAML disabled" }).click();
 
   const asyncCombobox = desktop.getByRole("combobox", {
     name: "Asynchronous service",
@@ -1017,6 +1369,32 @@ try {
   });
   const phone = await phoneContext.newPage();
   const phoneErrors = await loadFixture(phone);
+  await phone.getByRole("button", { name: "Mount YAML editor" }).click();
+  const phoneYamlPanel = phone.getByRole("region", {
+    name: "YAML editor panel",
+  });
+  const phoneYamlTextbox = phone.getByRole("textbox", {
+    name: "Ontology YAML",
+  });
+  await phoneYamlTextbox.focus();
+  const phoneYamlBounds = await phoneYamlPanel.evaluate((panel) => {
+    const editor = panel.querySelector(".od-yaml-editor");
+    if (!(editor instanceof HTMLElement)) return null;
+    return {
+      editorLeft: editor.getBoundingClientRect().left,
+      editorRight: editor.getBoundingClientRect().right,
+      panelRight: panel.getBoundingClientRect().right,
+      viewportWidth: window.innerWidth,
+    };
+  });
+  assert.ok(phoneYamlBounds, "The phone YAML editor must be visible.");
+  assert.equal(
+    phoneYamlBounds.panelRight <= phoneYamlBounds.viewportWidth &&
+      phoneYamlBounds.editorLeft >= 0 &&
+      phoneYamlBounds.editorRight <= phoneYamlBounds.viewportWidth,
+    true,
+    "The YAML editor must stay in a phone-width sheet.",
+  );
   const phoneAsyncCombobox = phone.getByRole("combobox", {
     name: "Asynchronous service",
     exact: true,

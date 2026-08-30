@@ -24,6 +24,7 @@ import {
   SwitchControl,
   TextareaControl,
   TextControl,
+  YamlEditor,
   designTokens,
 } from "../dist/index.js";
 
@@ -364,6 +365,71 @@ test("AsyncSearchableSelect keeps one controlled accessible selector contract", 
         }),
       ),
     /must be a non-negative integer/,
+  );
+});
+
+test("YamlEditor keeps one controlled source and accessible diagnostics", () => {
+  const markup = renderToStaticMarkup(
+    React.createElement(YamlEditor, {
+      "aria-describedby": "host-yaml-help",
+      diagnostics: [
+        {
+          from: 9,
+          message: "Close the sequence.",
+          severity: "error",
+          to: 1_000,
+        },
+      ],
+      disabled: true,
+      id: "ontology-yaml",
+      label: "Ontology YAML",
+      onChange: () => undefined,
+      readOnly: true,
+      value: "service:\ninvalid: [",
+    }),
+  );
+
+  assert.match(markup, /class="od-yaml-editor"/);
+  assert.match(markup, /data-disabled="true"/);
+  assert.match(markup, /data-invalid="true"/);
+  assert.match(markup, /data-read-only="true"/);
+  assert.match(markup, /id="ontology-yaml-label">Ontology YAML/);
+  assert.match(markup, /id="ontology-yaml-mount"/);
+  assert.match(markup, /<output[^>]*aria-label="Ontology YAML status"/);
+  assert.match(markup, /aria-live="polite"/);
+  assert.match(markup, /aria-label="Ontology YAML status"/);
+  assert.match(markup, /aria-label="YAML diagnostics"/);
+  assert.match(markup, />Go to error on line 2: Close the sequence\.</);
+  assert.match(
+    markup,
+    /1 YAML diagnostic\. Error on line 2: Close the sequence\./,
+  );
+
+  assert.throws(
+    () =>
+      renderToStaticMarkup(
+        React.createElement(YamlEditor, {
+          diagnostics: [
+            { from: -1, message: "Invalid position.", severity: "error" },
+          ],
+          label: "YAML",
+          onChange: () => undefined,
+          value: "value: true",
+        }),
+      ),
+    /positions must be non-negative ordered integers/,
+  );
+  assert.throws(
+    () =>
+      renderToStaticMarkup(
+        React.createElement(YamlEditor, {
+          diagnostics: [{ from: 0, message: " ", severity: "warning" }],
+          label: "YAML",
+          onChange: () => undefined,
+          value: "value: true",
+        }),
+      ),
+    /messages must not be blank/,
   );
 });
 
