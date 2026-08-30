@@ -63,6 +63,7 @@ export { DateTime, type DateTimeProps } from "./components/DateTime.js";
 export { FileDropZone, type FileDropZoneProps, } from "./components/FileDropZone.js";
 export { InlineAlert, type InlineAlertProps, type InlineAlertTone, } from "./components/InlineAlert.js";
 export { SearchableSelect, type SearchableSelectOption, type SearchableSelectProps, } from "./components/SearchableSelect.js";
+export { AsyncSearchableSelect, type AsyncSearchableSelectPage, type AsyncSearchableSelectProps, type AsyncSearchableSelectRequest, } from "./components/AsyncSearchableSelect.js";
 export { SecretRevealPanel, type SecretRevealPanelProps, } from "./components/SecretRevealPanel.js";
 export { ApplicationNavigation, ApplicationNavigationGroup, ApplicationShell, ApplicationSidebar, ApplicationTopbar, type ApplicationNavigationGroupProps, type ApplicationNavigationProps, type ApplicationShellProps, type ApplicationSidebarProps, type ApplicationTopbarProps, } from "./components/ApplicationShell.js";
 export { Button, type ButtonProps, type ButtonVariant, } from "./components/Button.js";

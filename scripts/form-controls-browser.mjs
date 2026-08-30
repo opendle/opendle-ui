@@ -13,6 +13,7 @@ import React, { StrictMode, useState } from "react";
 import { createRoot } from "react-dom/client";
 import {
   AdvancedFieldsDisclosure,
+  AsyncSearchableSelect,
   Button,
   CheckboxControl,
   DateTime,
@@ -36,6 +37,122 @@ const options = [
   { value: "gamma", label: "Gamma vision", description: "Image input" },
 ];
 
+const asyncSelectorEvents = [];
+const asyncSelectorAttempts = new Map();
+window.asyncSelectorEvents = asyncSelectorEvents;
+
+function waitForAsyncResult(delay, signal, event, ignoreAbort = false) {
+  return new Promise((resolve, reject) => {
+    let settled = false;
+    const timer = window.setTimeout(() => {
+      settled = true;
+      resolve();
+    }, delay);
+    signal.addEventListener("abort", () => {
+      if (settled) return;
+      event.aborted = true;
+      if (ignoreAbort) return;
+      window.clearTimeout(timer);
+      reject(new DOMException("The request was cancelled.", "AbortError"));
+    }, { once: true });
+  });
+}
+
+async function loadAsyncOptions({ cursor, query, signal }) {
+  const event = {
+    aborted: false,
+    cursor,
+    query,
+    startedAt: performance.now(),
+  };
+  asyncSelectorEvents.push(event);
+  const key = query + ":" + (cursor ?? "initial");
+  const attempt = (asyncSelectorAttempts.get(key) ?? 0) + 1;
+  asyncSelectorAttempts.set(key, attempt);
+  const staleRequest =
+    query === "slow-resolve" ||
+    query === "slow-reject" ||
+    (query === "selection-loading" && cursor === "selection-page-2");
+  const cursorRequest = query === "cursor" && cursor === "page-2";
+  await waitForAsyncResult(
+    staleRequest ? 550 : cursorRequest ? 120 : 35,
+    signal,
+    event,
+    staleRequest,
+  );
+
+  if (query === "slow-reject") throw new Error("Late search failure");
+  if (query === "fail" && attempt === 1) throw new Error("Search failure");
+  if (cursorRequest && attempt === 1) throw new Error("Cursor failure");
+  if (query === "empty") return { options: [] };
+  if (query === "invalid-cursor") {
+    return {
+      nextCursor: " ",
+      options: [{ value: "invalid-cursor-result", label: "Invalid cursor result" }],
+    };
+  }
+  if (query === "cursor-cycle" && cursor === null) {
+    return {
+      nextCursor: "cycle-a",
+      options: [{ value: "cycle-one", label: "Cycle one" }],
+    };
+  }
+  if (query === "cursor-cycle" && cursor === "cycle-a") {
+    return {
+      nextCursor: "cycle-b",
+      options: [{ value: "cycle-two", label: "Cycle two" }],
+    };
+  }
+  if (query === "cursor-cycle" && cursor === "cycle-b") {
+    return {
+      nextCursor: "cycle-a",
+      options: [{ value: "cycle-three", label: "Cycle three" }],
+    };
+  }
+  if (query === "selection-loading" && cursor === null) {
+    return {
+      nextCursor: "selection-page-2",
+      options: [{ value: "selection-one", label: "Selection one" }],
+    };
+  }
+  if (query === "selection-loading" && cursor === "selection-page-2") {
+    return {
+      options: [{ value: "selection-two", label: "Selection two" }],
+    };
+  }
+  if (query === "cursor" && cursor === null) {
+    return {
+      nextCursor: "page-2",
+      options: [{ value: "page-one", label: "Page one" }],
+    };
+  }
+  if (cursorRequest) {
+    return {
+      options: [
+        { value: "page-one", label: "Page one duplicate" },
+        { value: "page-two", label: "Page two" },
+      ],
+    };
+  }
+  if (query === "slow-resolve") {
+    return { options: [{ value: "stale", label: "Stale resolve" }] };
+  }
+  if (query === "fail") {
+    return { options: [{ value: "recovered", label: "Recovered result" }] };
+  }
+  if (query === "") {
+    return {
+      options: [
+        { value: "alpha-service", label: "Alpha service" },
+        { value: "beta-service", label: "Beta service" },
+      ],
+    };
+  }
+  return {
+    options: [{ value: query, label: "Result for " + query }],
+  };
+}
+
 function Fixture() {
   const [model, setModel] = useState("alpha");
   const [files, setFiles] = useState([]);
@@ -48,6 +165,12 @@ function Fixture() {
   const [textareaValue, setTextareaValue] = useState("Initial details");
   const [checkboxValue, setCheckboxValue] = useState(false);
   const [switchValue, setSwitchValue] = useState(false);
+  const [asyncSelection, setAsyncSelection] = useState({
+    value: "alpha-service",
+    label: "Alpha service",
+  });
+  const [immediateSelection, setImmediateSelection] = useState(null);
+  const [showUnmountSelector, setShowUnmountSelector] = useState(true);
   return <main>
     <h1>Shared form controls</h1>
     <FormSection
@@ -93,6 +216,38 @@ function Fixture() {
         }}
         title="Drop files here"
       />
+    </FormSection>
+    <FormSection legend="Asynchronous selector">
+      <AsyncSearchableSelect
+        allowNoSelection
+        help="Search one bounded host source."
+        label="Asynchronous service"
+        loadOptions={loadAsyncOptions}
+        name="async-service"
+        noSelectionLabel="No service"
+        onChange={setAsyncSelection}
+        value={asyncSelection}
+      />
+      <output aria-label="Selected asynchronous service">
+        {asyncSelection?.value ?? ""}
+      </output>
+      <AsyncSearchableSelect
+        debounceMs={0}
+        label="Immediate asynchronous service"
+        loadOptions={loadAsyncOptions}
+        onChange={setImmediateSelection}
+        value={immediateSelection}
+      />
+      {showUnmountSelector ? <AsyncSearchableSelect
+        debounceMs={0}
+        label="Unmounted asynchronous service"
+        loadOptions={loadAsyncOptions}
+        onChange={() => undefined}
+        value={null}
+      /> : null}
+      <Button onClick={() => setShowUnmountSelector(false)}>
+        Unmount asynchronous selector
+      </Button>
     </FormSection>
     <FormSection columns={2} legend="Controlled fields">
       <TextControl
@@ -242,6 +397,388 @@ try {
   });
   const desktop = await desktopContext.newPage();
   const desktopErrors = await loadFixture(desktop);
+
+  const asyncCombobox = desktop.getByRole("combobox", {
+    name: "Asynchronous service",
+    exact: true,
+  });
+  const asyncRoot = asyncCombobox.locator(
+    "xpath=ancestor::div[contains(concat(' ', normalize-space(@class), ' '), ' od-async-searchable-select ')][1]",
+  );
+  await asyncCombobox.focus();
+  assert.equal(
+    await desktop
+      .locator(".od-async-searchable-select-state")
+      .getByText("Loading options…", { exact: true })
+      .isVisible(),
+    true,
+    "The initial request must have a visible loading state.",
+  );
+  await desktop.getByRole("option", { name: "Alpha service" }).waitFor();
+  assert.equal(
+    await asyncRoot.locator("output.od-visually-hidden").textContent(),
+    "2 options available.",
+    "A completed search must announce its result count.",
+  );
+  assert.match(
+    (await asyncCombobox.getAttribute("aria-activedescendant")) ?? "",
+    /-choice-1$/,
+    "The controlled selection must become the active descendant.",
+  );
+  await desktop.keyboard.press("ArrowDown");
+  await desktop.keyboard.press("Enter");
+  assert.equal(
+    await desktop
+      .getByRole("status", { name: "Selected asynchronous service" })
+      .textContent(),
+    "beta-service",
+    "Arrow keys and Enter must commit the controlled selection.",
+  );
+  await asyncCombobox.click();
+  await desktop.keyboard.press("ArrowDown");
+  await desktop.keyboard.press("Enter");
+  assert.equal(
+    await desktop
+      .getByRole("status", { name: "Selected asynchronous service" })
+      .textContent(),
+    "",
+    "The optional no-selection choice must commit null.",
+  );
+
+  const eventCountBeforeDebounce = await desktop.evaluate(
+    () => window.asyncSelectorEvents.length,
+  );
+  await asyncCombobox.focus();
+  await asyncCombobox.fill("debounce-first");
+  await desktop.waitForTimeout(100);
+  await asyncCombobox.fill("debounce-final");
+  await desktop.waitForTimeout(140);
+  assert.equal(
+    await desktop.evaluate(
+      (start) => window.asyncSelectorEvents.slice(start).length,
+      eventCountBeforeDebounce,
+    ),
+    0,
+    "Search must wait for the default 250 ms debounce.",
+  );
+  await desktop
+    .getByRole("option", {
+      name: "Result for debounce-final",
+    })
+    .waitFor();
+  assert.deepEqual(
+    await desktop.evaluate(
+      (start) =>
+        window.asyncSelectorEvents.slice(start).map((event) => event.query),
+      eventCountBeforeDebounce,
+    ),
+    ["debounce-final"],
+    "The debounce must issue only the final search.",
+  );
+
+  await asyncCombobox.fill("slow-resolve");
+  await desktop.waitForTimeout(280);
+  await asyncCombobox.fill("fresh-result");
+  await desktop
+    .getByRole("option", {
+      name: "Result for fresh-result",
+    })
+    .waitFor();
+  await desktop.waitForTimeout(320);
+  assert.equal(
+    await desktop.getByRole("option", { name: "Stale resolve" }).count(),
+    0,
+    "A late resolved request must not replace current options.",
+  );
+  assert.equal(
+    await desktop.evaluate(() =>
+      window.asyncSelectorEvents.some(
+        (event) => event.query === "slow-resolve" && event.aborted,
+      ),
+    ),
+    true,
+    "A new search must abort the prior signal.",
+  );
+
+  await asyncCombobox.fill("slow-reject");
+  await desktop.waitForTimeout(280);
+  await asyncCombobox.fill("after-reject");
+  await desktop
+    .getByRole("option", {
+      name: "Result for after-reject",
+    })
+    .waitFor();
+  await desktop.waitForTimeout(320);
+  assert.equal(
+    await desktop.getByText("Unable to load options.", { exact: true }).count(),
+    0,
+    "A late rejected request must not replace current error state.",
+  );
+
+  const closeEventStart = await desktop.evaluate(
+    () => window.asyncSelectorEvents.length,
+  );
+  await asyncCombobox.fill("slow-resolve");
+  await desktop.waitForFunction(
+    (start) =>
+      window.asyncSelectorEvents
+        .slice(start)
+        .some((event) => event.query === "slow-resolve"),
+    closeEventStart,
+  );
+  await desktop.keyboard.press("Escape");
+  await desktop.waitForTimeout(600);
+  assert.equal(
+    await asyncRoot.getByRole("listbox").count(),
+    0,
+    "Escape must close the asynchronous selector.",
+  );
+  assert.deepEqual(
+    await desktop.evaluate(
+      (start) =>
+        window.asyncSelectorEvents.slice(start).map((event) => ({
+          aborted: event.aborted,
+          query: event.query,
+        })),
+      closeEventStart,
+    ),
+    [{ aborted: true, query: "slow-resolve" }],
+    "Close must abort the request and must not start a closed search.",
+  );
+
+  await asyncCombobox.fill("empty");
+  await desktop
+    .locator(".od-async-searchable-select-state")
+    .getByText("No options found.", { exact: true })
+    .waitFor();
+  assert.equal(
+    await desktop.getByRole("option", { name: "No service" }).count(),
+    1,
+    "The empty state must keep the optional no-selection choice.",
+  );
+
+  await asyncCombobox.fill("fail");
+  await desktop
+    .locator(".od-async-searchable-select-state")
+    .getByText("Unable to load options.", { exact: true })
+    .waitFor();
+  await desktop.getByRole("button", { name: "Retry", exact: true }).click();
+  await desktop.getByRole("option", { name: "Recovered result" }).waitFor();
+
+  await asyncCombobox.fill("cursor");
+  await desktop.getByRole("option", { name: "Page one" }).waitFor();
+  const loadMore = desktop.getByRole("button", { name: "Load more" });
+  await loadMore.focus();
+  await desktop.keyboard.press("Enter");
+  await desktop
+    .getByRole("button", { name: "Loading more options…" })
+    .waitFor();
+  await desktop
+    .locator(".od-async-searchable-select-cursor")
+    .getByText("Unable to load more options.", { exact: true })
+    .waitFor();
+  assert.equal(
+    await asyncCombobox.evaluate(
+      (element) => element === document.activeElement,
+    ),
+    true,
+    "A failed cursor request must return focus to the combobox.",
+  );
+  const cursorRetry = desktop.getByRole("button", {
+    name: "Retry",
+    exact: true,
+  });
+  await cursorRetry.focus();
+  await desktop.keyboard.press("Enter");
+  await desktop.getByRole("option", { name: "Page two" }).waitFor();
+  assert.equal(
+    await desktop.getByRole("option", { name: "Page one" }).count(),
+    1,
+    "A cursor page must keep one stable copy of each option value.",
+  );
+  assert.deepEqual(
+    await asyncRoot.getByRole("option").allTextContents(),
+    ["No service", "Page one", "Page two"],
+    "Cursor pages must keep stable first-seen order.",
+  );
+  assert.equal(
+    await asyncCombobox.evaluate(
+      (element) => element === document.activeElement,
+    ),
+    true,
+    "A successful cursor request must return focus to the combobox.",
+  );
+  assert.equal(
+    await desktop.getByRole("button", { name: "Load more" }).count(),
+    0,
+    "The cursor action must stop after the last page.",
+  );
+
+  await asyncCombobox.fill("cursor-cycle");
+  await asyncRoot.getByRole("option", { name: "Cycle one" }).waitFor();
+  await asyncRoot.getByRole("button", { name: "Load more" }).click();
+  await asyncRoot.getByRole("option", { name: "Cycle two" }).waitFor();
+  await asyncRoot.getByRole("button", { name: "Load more" }).click();
+  await asyncRoot.getByRole("option", { name: "Cycle three" }).waitFor();
+  assert.equal(
+    await asyncRoot.getByRole("button", { name: "Load more" }).count(),
+    0,
+    "A cursor cycle must stop before it can request an earlier page again.",
+  );
+
+  await asyncCombobox.fill("invalid-cursor");
+  await asyncRoot
+    .getByRole("option", { name: "Invalid cursor result" })
+    .waitFor();
+  assert.equal(
+    await asyncRoot.getByRole("button", { name: "Load more" }).count(),
+    0,
+    "A blank cursor must not create a load-more request.",
+  );
+
+  await asyncCombobox.fill("selection-loading");
+  const selectionOne = asyncRoot.getByRole("option", {
+    name: "Selection one",
+  });
+  await selectionOne.waitFor();
+  const selectionRequestStart = await desktop.evaluate(
+    () => window.asyncSelectorEvents.length,
+  );
+  await asyncRoot.getByRole("button", { name: "Load more" }).click();
+  await asyncRoot
+    .getByRole("button", { name: "Loading more options…" })
+    .waitFor();
+  await selectionOne.dispatchEvent("pointerdown", {
+    button: 0,
+    pointerType: "mouse",
+  });
+  assert.equal(
+    await desktop
+      .getByRole("status", { name: "Selected asynchronous service" })
+      .textContent(),
+    "selection-one",
+    "A pointer selection must commit the controlled option.",
+  );
+  assert.equal(
+    await asyncCombobox.evaluate(
+      (element) => element === document.activeElement,
+    ),
+    true,
+    "A pointer selection must keep focus on the combobox.",
+  );
+  await desktop.waitForTimeout(600);
+  assert.deepEqual(
+    await desktop.evaluate(
+      (start) =>
+        window.asyncSelectorEvents.slice(start).map((event) => ({
+          aborted: event.aborted,
+          cursor: event.cursor,
+        })),
+      selectionRequestStart,
+    ),
+    [{ aborted: true, cursor: "selection-page-2" }],
+    "Selection must invalidate an active cursor request.",
+  );
+
+  await asyncCombobox.fill("selection-loading");
+  await asyncRoot.getByRole("option", { name: "Selection one" }).waitFor();
+  const focusLeaveRequestStart = await desktop.evaluate(
+    () => window.asyncSelectorEvents.length,
+  );
+  await asyncRoot.getByRole("button", { name: "Load more" }).click();
+  await asyncRoot
+    .getByRole("button", { name: "Loading more options…" })
+    .waitFor();
+  const saveSettings = desktop.getByRole("button", { name: "Save settings" });
+  await saveSettings.focus();
+  await desktop.waitForTimeout(600);
+  assert.equal(
+    await asyncRoot.getByRole("listbox").count(),
+    0,
+    "Leaving the selector root must close the listbox.",
+  );
+  assert.deepEqual(
+    await desktop.evaluate(
+      (start) =>
+        window.asyncSelectorEvents
+          .slice(start)
+          .filter((event) => event.cursor === "selection-page-2")
+          .map((event) => ({
+            aborted: event.aborted,
+            cursor: event.cursor,
+          })),
+      focusLeaveRequestStart,
+    ),
+    [{ aborted: true, cursor: "selection-page-2" }],
+    "Leaving a cursor action must abort its request.",
+  );
+  assert.equal(
+    await saveSettings.evaluate(
+      (element) => element === document.activeElement,
+    ),
+    true,
+    "A stale cursor completion must not steal focus after the selector closes.",
+  );
+
+  const unmountedCombobox = desktop.getByRole("combobox", {
+    name: "Unmounted asynchronous service",
+  });
+  const unmountRequestStart = await desktop.evaluate(
+    () => window.asyncSelectorEvents.length,
+  );
+  await unmountedCombobox.fill("slow-resolve");
+  await desktop.waitForFunction(
+    (start) =>
+      window.asyncSelectorEvents
+        .slice(start)
+        .some((event) => event.query === "slow-resolve"),
+    unmountRequestStart,
+  );
+  await desktop
+    .getByRole("button", { name: "Unmount asynchronous selector" })
+    .evaluate((button) => button.click());
+  await desktop.waitForTimeout(50);
+  assert.deepEqual(
+    await desktop.evaluate(
+      (start) =>
+        window.asyncSelectorEvents
+          .slice(start)
+          .filter((event) => event.query === "slow-resolve")
+          .map((event) => ({
+            aborted: event.aborted,
+            query: event.query,
+          })),
+      unmountRequestStart,
+    ),
+    [{ aborted: true, query: "slow-resolve" }],
+    "Unmount must abort the current request.",
+  );
+
+  const immediateCombobox = desktop.getByRole("combobox", {
+    name: "Immediate asynchronous service",
+  });
+  const immediateEventCount = await desktop.evaluate(
+    () => window.asyncSelectorEvents.length,
+  );
+  await immediateCombobox.fill("host-zero-debounce");
+  await desktop
+    .getByRole("option", {
+      name: "Result for host-zero-debounce",
+    })
+    .waitFor();
+  assert.equal(
+    await desktop.evaluate(
+      (start) =>
+        window.asyncSelectorEvents
+          .slice(start)
+          .some((event) => event.query === "host-zero-debounce"),
+      immediateEventCount,
+    ),
+    true,
+    "The host must be able to replace the default debounce.",
+  );
+
+  await desktop.keyboard.press("Tab");
 
   assert.equal(
     await desktop
@@ -480,6 +1017,36 @@ try {
   });
   const phone = await phoneContext.newPage();
   const phoneErrors = await loadFixture(phone);
+  const phoneAsyncCombobox = phone.getByRole("combobox", {
+    name: "Asynchronous service",
+    exact: true,
+  });
+  await phoneAsyncCombobox.focus();
+  await phone.getByRole("option", { name: "Alpha service" }).waitFor();
+  const phoneAsyncBounds = await phone
+    .locator(".od-async-searchable-select")
+    .first()
+    .evaluate((root) => {
+      const popover = root.querySelector(".od-async-searchable-select-popover");
+      if (!(popover instanceof HTMLElement)) return null;
+      return {
+        popoverRight: popover.getBoundingClientRect().right,
+        popoverWidth: popover.getBoundingClientRect().width,
+        rootWidth: root.getBoundingClientRect().width,
+        viewportWidth: window.innerWidth,
+      };
+    });
+  assert.ok(phoneAsyncBounds, "The phone selector popover must be visible.");
+  assert.equal(
+    phoneAsyncBounds.popoverRight <= phoneAsyncBounds.viewportWidth,
+    true,
+    "The phone selector must stay in the viewport.",
+  );
+  assert.equal(
+    Math.abs(phoneAsyncBounds.popoverWidth - phoneAsyncBounds.rootWidth) < 2,
+    true,
+    "The phone selector popover must use its field width.",
+  );
   const phoneControlledSection = phone.getByRole("group", {
     name: "Controlled fields",
   });

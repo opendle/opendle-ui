@@ -204,6 +204,12 @@ export {
   type SearchableSelectProps,
 } from "./components/SearchableSelect.js";
 export {
+  AsyncSearchableSelect,
+  type AsyncSearchableSelectPage,
+  type AsyncSearchableSelectProps,
+  type AsyncSearchableSelectRequest,
+} from "./components/AsyncSearchableSelect.js";
+export {
   SecretRevealPanel,
   type SecretRevealPanelProps,
 } from "./components/SecretRevealPanel.js";

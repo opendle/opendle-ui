@@ -6,6 +6,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 
 import {
   AdvancedFieldsDisclosure,
+  AsyncSearchableSelect,
   Button,
   CheckboxControl,
   DateTime,
@@ -292,6 +293,77 @@ test("SearchableSelect has one labelled search control and validates its option 
         }),
       ),
     /must be positive/,
+  );
+});
+
+test("AsyncSearchableSelect keeps one controlled accessible selector contract", () => {
+  const selected = { value: "alpha", label: "Alpha service" };
+  const markup = renderToStaticMarkup(
+    React.createElement(AsyncSearchableSelect, {
+      allowNoSelection: true,
+      debounceMs: 0,
+      label: "Service",
+      loadOptions: async () => ({ options: [] }),
+      name: "service",
+      onChange: () => undefined,
+      required: true,
+      requirement: "optional",
+      value: selected,
+    }),
+  );
+
+  assert.match(markup, /type="text"/);
+  assert.match(markup, /role="combobox"/);
+  assert.match(markup, /aria-autocomplete="list"/);
+  assert.match(markup, /aria-expanded="false"/);
+  assert.match(markup, /value="Alpha service"/);
+  assert.match(markup, /<input[^>]*type="hidden"[^>]*value="alpha"/);
+  assert.match(markup, /aria-live="polite"/);
+  assert.match(markup, /<input[^>]*aria-required="true"[^>]*required=""/);
+  assert.match(markup, />required<\/span>/);
+  assert.doesNotMatch(markup, />optional<\/span>/);
+  assert.match(markup, /<output[^>]*aria-live="polite"[^>]*><\/output>/);
+  assert.doesNotMatch(markup, /Loading options…/);
+  assert.doesNotMatch(markup, /role="listbox"/);
+
+  const emptySelectionMarkup = renderToStaticMarkup(
+    React.createElement(AsyncSearchableSelect, {
+      allowNoSelection: true,
+      label: "Workspace",
+      loadOptions: async () => ({ options: [] }),
+      name: "workspace",
+      onChange: () => undefined,
+      value: null,
+    }),
+  );
+  assert.match(
+    emptySelectionMarkup,
+    /<input[^>]*type="hidden"[^>]*name="workspace"[^>]*value=""/,
+  );
+  const requirementMarkup = renderToStaticMarkup(
+    React.createElement(AsyncSearchableSelect, {
+      label: "Required service",
+      loadOptions: async () => ({ options: [] }),
+      onChange: () => undefined,
+      requirement: "required",
+      value: null,
+    }),
+  );
+  assert.match(requirementMarkup, /<input[^>]*aria-invalid="true"/);
+  assert.match(requirementMarkup, /<input[^>]*required=""/);
+  assert.match(requirementMarkup, />required<\/span>/);
+  assert.throws(
+    () =>
+      renderToStaticMarkup(
+        React.createElement(AsyncSearchableSelect, {
+          debounceMs: -1,
+          label: "Service",
+          loadOptions: async () => ({ options: [] }),
+          onChange: () => undefined,
+          value: null,
+        }),
+      ),
+    /must be a non-negative integer/,
   );
 });
 
