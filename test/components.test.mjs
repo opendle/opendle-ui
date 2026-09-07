@@ -518,6 +518,39 @@ test("graph workspace adds controlled movement, view controls, and link junction
   assert.match(markup, /class="od-graph-node-action"/);
 });
 
+test("graph node actions keep icon compatibility and expose visible text", () => {
+  for (const variant of [undefined, "icon", "text"]) {
+    const markup = renderToStaticMarkup(
+      React.createElement(
+        GraphNodeAction,
+        {
+          "aria-label": "New item below Parent",
+          x: 40,
+          y: 130,
+          viewportZoom: 0.5,
+          variant,
+          tabIndex: -1,
+          disabled: true,
+        },
+        variant === "text" ? "+ New item" : "+",
+      ),
+    );
+    assert.match(
+      markup,
+      new RegExp('data-variant="' + (variant ?? "icon") + '"'),
+    );
+    assert.match(markup, /aria-label="New item below Parent"/);
+    assert.match(markup, /tabindex="-1"/);
+    assert.match(markup, /disabled=""/);
+    assert.match(markup, /type="button"/);
+    assert.match(markup, /translate\(40px, 130px\) scale\(2\)/);
+    assert.match(
+      markup,
+      variant === "text" ? />\+ New item<\/button>/ : />\+<\/button>/,
+    );
+  }
+});
+
 test("graph view and position helpers are finite, bounded, and deterministic", () => {
   const bounds = { maxX: 200, maxY: 160, minX: 0, minY: 0 };
   assert.deepEqual(clampGraphPosition({ x: -8, y: 180 }, bounds), {

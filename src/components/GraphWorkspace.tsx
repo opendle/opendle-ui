@@ -899,6 +899,7 @@ export interface GraphNodeActionProps extends Omit<
   readonly x: number;
   readonly y: number;
   readonly viewportZoom?: number;
+  readonly variant?: "icon" | "text";
   readonly "aria-label": string;
 }
 
@@ -907,6 +908,7 @@ export function GraphNodeAction({
   x,
   y,
   viewportZoom = 1,
+  variant = "icon",
   className,
   style,
   type = "button",
@@ -921,6 +923,7 @@ export function GraphNodeAction({
     <button
       {...props}
       className={classes("od-graph-node-action", className)}
+      data-variant={variant}
       style={{
         ...style,
         transform: `translate(${String(x)}px, ${String(y)}px) scale(${String(1 / viewportZoom)})`,

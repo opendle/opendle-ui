@@ -2468,6 +2468,17 @@ samp {
   font-weight: 800;
 }
 
+.od-graph-node-action[data-variant="text"] {
+  width: max-content;
+  min-width: 2.75rem;
+  max-width: 20rem;
+  height: auto;
+  min-height: 2.75rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: var(--od-radius-md);
+  overflow-wrap: anywhere;
+}
+
 .od-graph-node-action:hover {
   background: #e5f999;
 }

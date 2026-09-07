@@ -21,8 +21,8 @@ function Fixture() {
  const columns = ['Sources','Records','Targets'].map((label, index) => ({id: label, label, nodes: config.state ? [] : Array.from({length:30}, (_, n) => ({id: index + '-' + n, label: label + ' ' + n}))}));
  const relationship = <RelationshipGraph aria-label="Relationships" fullPage columns={columns} relationships={[]} toolbar={config.standaloneSearch ? undefined : {leading: <Button>Graph context</Button>, actions:action}} auxiliaryInspector={inspector} invalidState={config.state === 'error' ? <Button>Retry graph</Button> : undefined} emptyState={<Button>Load graph</Button>}/>;
  const workspace = <GraphWorkspace aria-label="Workspace" fullPage toolbar={toolbar} inspector={config.kind === 'nested' ? undefined : inspector}>
- {config.kind === 'nested' ? relationship : <GraphViewport aria-label="Graph viewport" canvasWidth={config.state ? undefined : 2200} canvasHeight={config.state ? undefined : 1800}>
- {config.state ? <GraphEmptyState icon="○" title={config.state === 'error' ? 'Graph error' : 'Graph loading'} description="Graph state details" actions={<Button>Retry graph</Button>}/> : <><GraphNode aria-label="First node" title="First node" x={40} y={40} tabIndex={selected === 'a' ? 0 : -1} onFocus={() => setSelected('a')} onKeyDown={e => {if(e.key === 'ArrowDown'){e.preventDefault(); document.querySelector('[data-context-action]').focus()}}}/><GraphNodeAction aria-label="Add below first node" data-context-action x={40} y={130} tabIndex={selected === 'action' ? 0 : -1} onFocus={() => setSelected('action')} onKeyDown={e => {if(e.key === 'ArrowUp'){e.preventDefault();document.querySelector('.od-graph-node').focus()}}} onClick={() => setOpen(true)}>+</GraphNodeAction><GraphNode aria-label="Last node" title="Last node" x={1950} y={1650} tabIndex={-1}/></>}
+ {config.kind === 'nested' ? relationship : <GraphViewport aria-label="Graph viewport" viewport={config.zoom ? {x:0,y:0,zoom:config.zoom} : undefined} canvasWidth={config.state ? undefined : 2200} canvasHeight={config.state ? undefined : 1800}>
+ {config.state ? <GraphEmptyState icon="○" title={config.state === 'error' ? 'Graph error' : 'Graph loading'} description="Graph state details" actions={<Button>Retry graph</Button>}/> : <><GraphNode aria-label="First node" title="First node" x={40} y={40} tabIndex={selected === 'a' ? 0 : -1} onFocus={() => setSelected('a')} onKeyDown={e => {if(e.key === 'ArrowDown'){e.preventDefault(); document.querySelector('[data-context-action]').focus()}}}/><GraphNodeAction variant={config.textAction ? "text" : undefined} viewportZoom={config.zoom ?? 1} aria-label={config.textAction ? config.textAction + " below First node" : "Add below first node"} data-context-action x={40} y={130} tabIndex={selected === 'action' ? 0 : -1} onFocus={() => setSelected('action')} onKeyDown={e => {if(e.key === 'ArrowUp'){e.preventDefault();document.querySelector('.od-graph-node').focus()}}} onClick={() => setOpen(true)}>{config.textAction ?? "+"}</GraphNodeAction><GraphNode aria-label="Last node" title="Last node" x={1950} y={1650} tabIndex={-1}/></>}
  </GraphViewport>}
  </GraphWorkspace>;
  const graph = config.kind === 'relationship' ? relationship : config.kind === 'toolbar' ? toolbar : workspace;
@@ -107,6 +107,154 @@ async function measure(page) {
     };
   });
 }
+async function checkTextAction(page) {
+  const textActionWidths = [];
+  const label = "+ New item";
+  const longLabel =
+    "+ Create a new item with a long visible name " +
+    "LongUnbrokenName".repeat(6);
+  for (const zoom of [0.5, 1, 2]) {
+    for (const fontSize of ["100%", "200%"]) {
+      for (const text of [label, longLabel, "+"]) {
+        await load(page, {
+          kind: "workspace",
+          edge: true,
+          outerEdge: true,
+          textAction: text,
+          zoom,
+        });
+        await page.evaluate((value) => {
+          document.documentElement.style.fontSize = value;
+        }, fontSize);
+        const action = page.getByRole("button", {
+          name: text + " below First node",
+          exact: true,
+        });
+        await action.scrollIntoViewIfNeeded();
+        const m = await action.evaluate((el) => {
+          const r = el.getBoundingClientRect();
+          const range = document.createRange();
+          range.selectNodeContents(el);
+          return {
+            width: r.width,
+            height: r.height,
+            left: r.left,
+            top: r.top,
+            right: r.right,
+            bottom: r.bottom,
+            clientWidth: el.clientWidth,
+            scrollWidth: el.scrollWidth,
+            clientHeight: el.clientHeight,
+            scrollHeight: el.scrollHeight,
+            font: parseFloat(getComputedStyle(el).fontSize),
+            textRects: Array.from(range.getClientRects(), (r) => ({
+              left: r.left,
+              top: r.top,
+              right: r.right,
+              bottom: r.bottom,
+            })),
+          };
+        });
+        assert.ok(
+          m.width >= 44 && m.height >= 44,
+          "Text action keeps a 44px target at each graph zoom",
+        );
+        assert.ok(
+          m.scrollWidth <= m.clientWidth && m.scrollHeight <= m.clientHeight,
+          "Long text stays inside the action",
+        );
+        for (const r of m.textRects)
+          assert.ok(
+            r.left >= m.left - 1 &&
+              r.right <= m.right + 1 &&
+              r.top >= m.top - 1 &&
+              r.bottom <= m.bottom + 1,
+            "Every visible text line stays inside the action",
+          );
+        near(
+          m.font,
+          fontSize === "200%" ? 32 : 16,
+          "Text follows the user font size",
+        );
+        assert.equal(
+          (await measure(page)).documentOverflow,
+          false,
+          "Text action keeps local graph scrolling",
+        );
+        if (text === longLabel && fontSize === "200%" && zoom === 1) {
+          await action.screenshot({
+            path: `${shots}/text-action-long-200-${page.viewportSize().width}.png`,
+          });
+        }
+        if (text === label && fontSize === "100%") {
+          textActionWidths.push(m.width);
+        }
+      }
+    }
+  }
+  for (const width of textActionWidths)
+    near(
+      width,
+      textActionWidths[0],
+      "Inverse scaling keeps visible text width",
+    );
+  await load(page, {
+    kind: "workspace",
+    edge: true,
+    outerEdge: true,
+    textAction: label,
+    zoom: 1,
+  });
+  const node = page.getByRole("button", { name: "First node", exact: true });
+  const action = page.getByRole("button", {
+    name: label + " below First node",
+    exact: true,
+  });
+  const viewport = page.locator(".od-graph-viewport");
+  await node.focus();
+  await page.keyboard.press("ArrowDown");
+  assert.equal(
+    await action.evaluate((el) => el === document.activeElement),
+    true,
+  );
+  assert.equal(await viewport.locator('button[tabindex="0"]').count(), 1);
+  await page.keyboard.press("ArrowUp");
+  assert.equal(
+    await node.evaluate((el) => el === document.activeElement),
+    true,
+  );
+  await page.keyboard.press("ArrowDown");
+  for (const activation of ["Enter", "Space", "pointer", "touch"]) {
+    if (activation === "pointer") await action.click();
+    else if (activation === "touch") await action.tap();
+    else await page.keyboard.press(activation);
+    const inspector = page.getByRole("dialog", { name: "Details" });
+    await inspector.waitFor();
+    await page.keyboard.press("Escape");
+    await inspector.waitFor({ state: "detached" });
+    assert.equal(
+      await action.evaluate((el) => el === document.activeElement),
+      true,
+      "Each activation returns focus to the exact text action",
+    );
+  }
+  await page.keyboard.press("Tab");
+  assert.equal(
+    await viewport.evaluate((el) => el.contains(document.activeElement)),
+    false,
+    "Tab leaves the host-controlled graph focus group",
+  );
+  await action.focus();
+  assert.equal(
+    await action.evaluate((el) => getComputedStyle(el).outlineStyle),
+    "solid",
+    "Keyboard focus is visible",
+  );
+  assert.deepEqual((await new AxeBuilder({ page }).analyze()).violations, []);
+  await page.screenshot({
+    path: `${shots}/text-action-${page.viewportSize().width}.png`,
+  });
+}
 try {
   for (const [width, height] of [
     [1440, 1000],
@@ -116,6 +264,7 @@ try {
     const context = await browser.newContext({
       viewport: { width, height },
       deviceScaleFactor: 1,
+      hasTouch: true,
     });
     const page = await context.newPage();
     for (const kind of ["workspace", "relationship", "nested", "toolbar"]) {
@@ -282,6 +431,7 @@ try {
       "Inspector returns to exact action",
     );
     await page.screenshot({ path: `${shots}/${width}-graph.png` });
+    await checkTextAction(page);
     await context.close();
   }
 } finally {

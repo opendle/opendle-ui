@@ -69,8 +69,12 @@ one `21rem` column; overlays and sheets keep their independent shared insets.
 Omit `fullPage` for a standalone graph with the existing bounded height.
 
 `GraphNodeAction` places a labelled action beside a node inside the graph
-canvas. The host supplies its position, accessible name, action, and roving
-focus handlers. Use the same host-controlled tab stop as the graph nodes.
+canvas. Set `variant="text"` for visible text supplied as children. The default
+`icon` variant keeps the compact circular shape. Text actions wrap long labels
+within `20rem` and retain the minimum `2.75rem` target size. Both variants keep
+their screen size when the host supplies the current `viewportZoom`. The host
+supplies position, accessible name, action, and roving focus handlers. Use the
+same host-controlled tab stop as the graph nodes.
 The host owns selection, parent context, form state, and activation policy.
 
 `RelationshipGraph` gives host applications one responsive three-column

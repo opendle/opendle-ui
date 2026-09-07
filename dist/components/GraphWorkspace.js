@@ -420,11 +420,11 @@ export function GraphNode({ x, y, title, eyebrow, icon, meta, selected = false, 
         }, type: type, children: [icon ? _jsx("span", { className: "od-graph-node-icon", children: icon }) : null, _jsxs("span", { className: "od-graph-node-copy", children: [eyebrow ? (_jsx("span", { className: "od-graph-node-eyebrow", children: eyebrow })) : null, _jsx("strong", { className: "od-graph-node-title", children: title }), meta ? _jsx("span", { className: "od-graph-node-meta", children: meta }) : null] })] }));
 }
 /** A separately focusable graph action that a host can place by one node. */
-export function GraphNodeAction({ x, y, viewportZoom = 1, className, style, type = "button", ...props }) {
+export function GraphNodeAction({ x, y, viewportZoom = 1, variant = "icon", className, style, type = "button", ...props }) {
     if (!Number.isFinite(viewportZoom) || viewportZoom <= 0) {
         throw new Error("Graph node action viewport zoom must be finite and positive.");
     }
-    return (_jsx("button", { ...props, className: classes("od-graph-node-action", className), style: {
+    return (_jsx("button", { ...props, className: classes("od-graph-node-action", className), "data-variant": variant, style: {
             ...style,
             transform: `translate(${String(x)}px, ${String(y)}px) scale(${String(1 / viewportZoom)})`,
             transformOrigin: "0 0",

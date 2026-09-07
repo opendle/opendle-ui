@@ -84,10 +84,11 @@ export interface GraphNodeActionProps extends Omit<ButtonHTMLAttributes<HTMLButt
     readonly x: number;
     readonly y: number;
     readonly viewportZoom?: number;
+    readonly variant?: "icon" | "text";
     readonly "aria-label": string;
 }
 /** A separately focusable graph action that a host can place by one node. */
-export declare function GraphNodeAction({ x, y, viewportZoom, className, style, type, ...props }: GraphNodeActionProps): import("react").JSX.Element;
+export declare function GraphNodeAction({ x, y, viewportZoom, variant, className, style, type, ...props }: GraphNodeActionProps): import("react").JSX.Element;
 export interface GraphEdgesProps extends SVGAttributes<SVGSVGElement> {
     readonly width?: number | string;
     readonly height?: number | string;

@@ -15,7 +15,15 @@ test("built graph page exports keep the optional page contracts", () => {
   const file = fileURLToPath(
     new URL("../graph-page-contract-fixture.mts", import.meta.url),
   );
-  const source = `import {PageSurface, type PageSurfaceProps, GraphToolbar, GraphWorkspace, RelationshipGraph, type RelationshipGraphProps} from './dist/index.js';
+  const source = `import {PageSurface, type PageSurfaceProps, GraphToolbar, GraphWorkspace, RelationshipGraph, type RelationshipGraphProps, GraphNodeAction, type GraphNodeActionProps} from './dist/index.js';
+const textAction: GraphNodeActionProps = {x:0, y:0, 'aria-label':'New item below Parent', variant:'text', children:'+ New item', tabIndex:-1, onKeyDown:event => event.currentTarget.focus()};
+const iconAction: GraphNodeActionProps = {x:0, y:0, 'aria-label':'New item', variant:'icon'};
+const defaultAction: GraphNodeActionProps = {x:0, y:0, 'aria-label':'New item'};
+// @ts-expect-error Only the documented shapes are accepted.
+const invalidAction: GraphNodeActionProps = {x:0, y:0, 'aria-label':'New item', variant:'wide'};
+// @ts-expect-error An accessible name is required.
+const unnamedAction: GraphNodeActionProps = {x:0, y:0, variant:'text'};
+void [GraphNodeAction, textAction, iconAction, defaultAction];
 const edge: PageSurfaceProps = {children: null, edgeToEdge: true};
 const inset: PageSurfaceProps = {children: null, edgeToEdge: false};
 const omitted: PageSurfaceProps = {children: null};
