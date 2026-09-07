@@ -10,14 +10,15 @@ const repositoryRoot = fileURLToPath(new URL("..", import.meta.url));
 const source = String.raw`
 import React, {useState} from 'react';
 import {createRoot} from 'react-dom/client';
-import {Button, PageSurface, GraphWorkspace, GraphToolbar, GraphViewport, GraphNode, GraphNodeAction, GraphEmptyState, GraphInspector, RelationshipGraph} from './dist/index.js';
+import {Button, FormField, SearchableSelect, Toast, PageSurface, GraphWorkspace, GraphToolbar, GraphViewport, GraphNode, GraphNodeAction, GraphEmptyState, GraphInspector, RelationshipGraph} from './dist/index.js';
 function Fixture() {
  const config = window.fixture;
  const [open, setOpen] = useState(false);
  const [selected, setSelected] = useState('a');
+ const [choice, setChoice] = useState('first');
  const action = <Button onClick={() => setOpen(true)}>Inspect graph</Button>;
  const toolbar = <GraphToolbar leading={<Button>Graph context</Button>} actions={action}/>;
- const inspector = open ? <GraphInspector title="Details" onClose={() => setOpen(false)}><p>Selected graph record.</p><Button>Inspector action</Button></GraphInspector> : undefined;
+ const inspector = open ? <GraphInspector title={config.inspectorTitle ?? "Details"} icon={config.inspectorIcon ? <span aria-hidden="true">◇</span> : undefined} eyebrow={config.inspectorEyebrow} actions={config.inspectorActions ? <><Button>Save</Button><Button>Delete</Button></> : undefined} onClose={() => setOpen(false)}>{config.inspectorTitle ? <><FormField label="Draft"><input defaultValue="Keep this value"/></FormField>{config.inspectorSelect ? <SearchableSelect label="Record type" value={choice} onChange={setChoice} options={[{value:"first",label:"First type"},{value:"second",label:"Second type"}]}/> : null}{Array.from({length:20}, (_, i) => <p key={i}>Record detail {i + 1}.</p>)}</> : <><p>Selected graph record.</p><Button>Inspector action</Button></>}</GraphInspector> : undefined;
  const columns = ['Sources','Records','Targets'].map((label, index) => ({id: label, label, nodes: config.state ? [] : Array.from({length:30}, (_, n) => ({id: index + '-' + n, label: label + ' ' + n}))}));
  const relationship = <RelationshipGraph aria-label="Relationships" fullPage columns={columns} relationships={[]} toolbar={config.standaloneSearch ? undefined : {leading: <Button>Graph context</Button>, actions:action}} auxiliaryInspector={inspector} invalidState={config.state === 'error' ? <Button>Retry graph</Button> : undefined} emptyState={<Button>Load graph</Button>}/>;
  const workspace = <GraphWorkspace aria-label="Workspace" fullPage toolbar={toolbar} inspector={config.kind === 'nested' ? undefined : inspector}>
@@ -26,7 +27,7 @@ function Fixture() {
  </GraphViewport>}
  </GraphWorkspace>;
  const graph = config.kind === 'relationship' ? relationship : config.kind === 'toolbar' ? toolbar : workspace;
- return <main><h1 className="od-visually-hidden">Graph fixture</h1><PageSurface edgeToEdge={config.outerEdge} style={{height:'100%'}}><PageSurface edgeToEdge={config.edge} style={{height:'100%'}}>{graph}</PageSurface></PageSurface></main>;
+ return <main><h1 className="od-visually-hidden">Graph fixture</h1><PageSurface edgeToEdge={config.outerEdge} style={{height:'100%'}}><PageSurface edgeToEdge={config.edge} style={{height:'100%'}}>{graph}</PageSurface></PageSurface>{config.inspectorToast && open ? <Toast style={{position:'fixed',right:8,bottom:8}}>Record saved</Toast> : null}</main>;
 }
 createRoot(document.getElementById('root')).render(<Fixture/>);
 `;
@@ -255,7 +256,386 @@ async function checkTextAction(page) {
     path: `${shots}/text-action-${page.viewportSize().width}.png`,
   });
 }
+async function inspectorFrame(page) {
+  return page.locator(".od-graph-inspector").evaluate((el) => {
+    const rect = (node) => {
+      if (!node) return null;
+      const r = node.getBoundingClientRect();
+      return {
+        top: r.top,
+        bottom: r.bottom,
+        left: r.left,
+        right: r.right,
+        width: r.width,
+        height: r.height,
+      };
+    };
+    const content = el.querySelector(".od-graph-inspector-content");
+    const heading = el.querySelector("h2");
+    const titleRange = document.createRange();
+    titleRange.selectNodeContents(heading);
+    return {
+      mode: el.dataset.mode,
+      modal: el.matches(":modal"),
+      dialog: rect(el),
+      header: rect(el.querySelector("header")),
+      title: rect(heading),
+      text: rect(titleRange),
+      footer: rect(el.querySelector("footer")),
+      close: rect(el.querySelector(".od-graph-inspector-close")),
+      content: rect(content),
+      titleText: heading.textContent,
+      rootPadding: getComputedStyle(el).padding,
+      titleOverflow: getComputedStyle(heading).textOverflow,
+      scrollHeight: content.scrollHeight,
+      clientHeight: content.clientHeight,
+      horizontalOverflow:
+        el.scrollWidth > el.clientWidth ||
+        content.scrollWidth > content.clientWidth,
+      documentOverflow: document.documentElement.scrollWidth > innerWidth,
+      controls: [...el.querySelectorAll("button,input")].map(rect),
+    };
+  });
+}
+function assertInspectorFrame(m, title, height, rem) {
+  assert.ok(
+    m.dialog.top >= -1 && m.dialog.bottom <= height + 1,
+    "Inspector stays in the browser",
+  );
+  assert.ok(
+    m.header.top >= m.dialog.top && m.header.bottom <= m.dialog.bottom,
+    "Header stays in the frame",
+  );
+  assert.ok(
+    !m.footer || m.footer.bottom <= m.dialog.bottom + 1,
+    "The footer stays inside the inspector frame",
+  );
+  assert.ok(
+    m.close.bottom <= m.header.bottom + 1,
+    "The close control stays inside the header",
+  );
+  assert.ok(
+    m.content.height >= 2.75 * rem,
+    "The body has room for one control",
+  );
+  assert.ok(
+    m.scrollHeight > m.clientHeight,
+    "Long content has local scrolling",
+  );
+  assert.equal(
+    m.rootPadding,
+    "0px",
+    "Native dialog padding does not duplicate shared padding",
+  );
+  assert.equal(m.titleText, title, "The complete title stays in the h2");
+  assert.notEqual(m.titleOverflow, "ellipsis", "Title does not use ellipsis");
+  assert.ok(
+    m.text.left >= m.title.left - 1 && m.text.right <= m.title.right + 1,
+    "Title text wraps inside its width",
+  );
+  assert.ok(
+    m.text.bottom <= m.title.bottom + 1,
+    "All title lines stay inside the heading",
+  );
+  assert.equal(
+    m.horizontalOverflow,
+    false,
+    "Inspector and content have no horizontal overflow",
+  );
+  assert.equal(
+    m.documentOverflow,
+    false,
+    "Inspector does not grow the page width",
+  );
+  for (const control of m.controls)
+    assert.ok(
+      control.width >= 44 && control.height >= 44,
+      "Controls keep their minimum target",
+    );
+}
+async function checkInspectorFrame() {
+  const context = await browser.newContext();
+  const page = await context.newPage();
+  const variants = [
+    {
+      inspectorTitle: "Service with a long title ".repeat(7).trim(),
+      inspectorIcon: true,
+      inspectorEyebrow: "Service",
+      inspectorActions: true,
+    },
+    {
+      inspectorTitle: "Record with a long title ".repeat(10).slice(0, 200),
+      inspectorIcon: true,
+      inspectorEyebrow: "Record",
+      inspectorActions: true,
+    },
+    {
+      inspectorTitle: "record_identifier_".repeat(12).slice(0, 200),
+      inspectorActions: true,
+    },
+    {
+      inspectorTitle: "Record details",
+      inspectorIcon: true,
+      inspectorActions: true,
+    },
+    { inspectorTitle: "Create record", inspectorEyebrow: "New record" },
+  ];
+  try {
+    for (const kind of ["workspace", "relationship"]) {
+      for (const rem of [16, 32]) {
+        for (const [mode, width] of [
+          ["sheet", 412],
+          ["overlay", 56 * rem],
+          ["split", 75 * rem],
+        ]) {
+          await page.setViewportSize({ width, height: 1000 });
+          for (const [index, variant] of variants.entries()) {
+            await load(page, { kind, edge: true, outerEdge: true, ...variant });
+            await page.evaluate((rem) => {
+              document.documentElement.style.fontSize = rem + "px";
+            }, rem);
+            const opener = page.getByRole("button", {
+              name: "Inspect graph",
+              exact: true,
+            });
+            await opener.click();
+            const inspector = page.locator(".od-graph-inspector");
+            await page.waitForFunction(
+              (mode) =>
+                document.querySelector(".od-graph-inspector")?.dataset.mode ===
+                mode,
+              mode,
+            );
+            const m = await inspectorFrame(page);
+            assert.equal(m.modal, mode === "sheet");
+            assertInspectorFrame(m, variant.inspectorTitle, 1000, rem);
+            if (index === 0) {
+              console.log(
+                "Inspector frame:",
+                kind,
+                mode,
+                rem,
+                JSON.stringify(m),
+              );
+              assert.deepEqual(
+                (await new AxeBuilder({ page }).analyze()).violations,
+                [],
+              );
+              await page.screenshot({
+                path:
+                  shots +
+                  "/inspector-frame-" +
+                  kind +
+                  "-" +
+                  mode +
+                  "-" +
+                  rem +
+                  ".png",
+              });
+            }
+            assert.equal(
+              await inspector
+                .locator("h2")
+                .evaluate((el) => el === document.activeElement),
+              true,
+              "Opening focuses the h2",
+            );
+            await page.keyboard.press("Tab");
+            assert.equal(
+              await inspector
+                .getByRole("button", { name: "Close inspector" })
+                .evaluate((el) => el === document.activeElement),
+              true,
+              "Tab reaches the close control",
+            );
+            const before = await inspectorFrame(page);
+            await inspector
+              .locator(".od-graph-inspector-content")
+              .evaluate((el) => {
+                el.scrollTop = el.scrollHeight;
+              });
+            assert.ok(
+              (await inspector
+                .locator(".od-graph-inspector-content")
+                .evaluate((el) => el.scrollTop)) > 0,
+            );
+            const after = await inspectorFrame(page);
+            near(after.header.top, before.header.top, "Header does not scroll");
+            near(
+              after.close.top,
+              before.close.top,
+              "Close control does not scroll",
+            );
+            if (before.footer)
+              near(
+                after.footer.bottom,
+                before.footer.bottom,
+                "Footer does not scroll",
+              );
+            await inspector
+              .getByRole("button", { name: "Close inspector" })
+              .click();
+            await inspector.waitFor({ state: "detached" });
+            assert.equal(
+              await opener.evaluate((el) => el === document.activeElement),
+              true,
+              "Close returns to the exact opener",
+            );
+          }
+        }
+      }
+    }
+    await page.setViewportSize({ width: 2400, height: 1000 });
+    await load(page, {
+      kind: "workspace",
+      edge: true,
+      outerEdge: true,
+      ...variants[0],
+    });
+    await page.evaluate(() => {
+      document.documentElement.style.fontSize = "200%";
+    });
+    const opener = page.getByRole("button", {
+      name: "Inspect graph",
+      exact: true,
+    });
+    await opener.click();
+    const input = page.getByRole("textbox", { name: "Draft", exact: true });
+    await input.fill("Retained draft");
+    await input.evaluate((el) => {
+      window.retainedInput = el;
+      window.retainedInspector = el.closest("dialog");
+    });
+    for (const [mode, width] of [
+      ["overlay", 1800],
+      ["sheet", 412],
+      ["split", 2400],
+    ]) {
+      await page.setViewportSize({ width, height: 1000 });
+      await page.waitForFunction(
+        (mode) =>
+          document.querySelector(".od-graph-inspector")?.dataset.mode === mode,
+        mode,
+      );
+      assert.equal(
+        await input.evaluate(
+          (el) =>
+            el === window.retainedInput &&
+            el.closest("dialog") === window.retainedInspector &&
+            el === document.activeElement,
+        ),
+        true,
+        "Mode changes keep DOM and focus",
+      );
+      assert.equal(await input.inputValue(), "Retained draft");
+      assertInspectorFrame(
+        await inspectorFrame(page),
+        variants[0].inspectorTitle,
+        1000,
+        32,
+      );
+    }
+    await page.keyboard.press("Escape");
+    await page.locator(".od-graph-inspector").waitFor({ state: "detached" });
+    assert.equal(
+      await opener.evaluate((el) => el === document.activeElement),
+      true,
+      "Escape returns focus after mode changes",
+    );
+  } finally {
+    await context.close();
+  }
+}
+async function checkInspectorPopup() {
+  const context = await browser.newContext({
+    viewport: { width: 412, height: 1000 },
+  });
+  const page = await context.newPage();
+  try {
+    await load(page, {
+      kind: "workspace",
+      edge: true,
+      outerEdge: true,
+      inspectorTitle: "Record details",
+      inspectorSelect: true,
+      inspectorToast: true,
+      inspectorActions: true,
+    });
+    await page.evaluate(() => {
+      document.documentElement.style.fontSize = "200%";
+    });
+    await page
+      .getByRole("button", { name: "Inspect graph", exact: true })
+      .click();
+    const inspector = page.locator(".od-graph-inspector");
+    const toast = inspector.locator("[data-od-toast-portal-host] .od-toast");
+    await toast.waitFor();
+    const bounds = await toast.boundingBox();
+    near(
+      bounds.x + bounds.width,
+      404,
+      "A portal keeps its fixed browser right edge",
+    );
+    near(
+      bounds.y + bounds.height,
+      992,
+      "A portal keeps its fixed browser bottom edge",
+    );
+    const combo = page.getByRole("combobox", {
+      name: "Record type",
+      exact: true,
+    });
+    await combo.focus();
+    await page.keyboard.press("ArrowDown");
+    const listbox = inspector.getByRole("listbox");
+    await listbox.waitFor();
+    const inputBounds = await combo.boundingBox();
+    const popupBounds = await listbox.boundingBox();
+    near(popupBounds.x, inputBounds.x, "Selector popup keeps its input anchor");
+    near(
+      popupBounds.width,
+      inputBounds.width,
+      "Selector popup keeps its input width",
+    );
+    assert.ok(
+      popupBounds.y >= inputBounds.y + inputBounds.height,
+      "Popup stays below its input",
+    );
+    assert.ok(
+      popupBounds.y + popupBounds.height <=
+        (await inspector.locator(".od-graph-inspector-content").boundingBox())
+          .y +
+          (await inspector.locator(".od-graph-inspector-content").boundingBox())
+            .height,
+      "Options remain in the content region",
+    );
+    await page.keyboard.press("End");
+    await page.keyboard.press("Enter");
+    assert.equal(
+      await combo.inputValue(),
+      "Second type",
+      "Keyboard selection commits the value",
+    );
+    await page.keyboard.press("ArrowDown");
+    await page.keyboard.press("Escape");
+    assert.equal(
+      await inspector.count(),
+      1,
+      "Selector Escape keeps the inspector open",
+    );
+    assert.equal(
+      await combo.evaluate((el) => el === document.activeElement),
+      true,
+    );
+    await inspector.getByRole("button", { name: "Close inspector" }).click();
+    await inspector.waitFor({ state: "detached" });
+  } finally {
+    await context.close();
+  }
+}
 try {
+  await checkInspectorPopup();
+  await checkInspectorFrame();
   for (const [width, height] of [
     [1440, 1000],
     [1100, 800],

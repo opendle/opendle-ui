@@ -2558,7 +2558,9 @@ samp {
 }
 
 .od-graph-inspector {
+  container-type: inline-size;
   box-sizing: border-box;
+  padding: 0;
   width: 21rem;
   max-height: none;
   position: absolute;
@@ -2778,6 +2780,32 @@ samp {
 .od-graph-inspector-heading {
   min-width: 0;
   flex: 1;
+}
+
+.od-graph-inspector-icon {
+  flex: none;
+}
+
+@container (max-width: 18rem) {
+  .od-graph-inspector-header {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+  }
+
+  .od-graph-inspector-icon {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .od-graph-inspector-close {
+    grid-column: 3;
+    grid-row: 1;
+  }
+
+  .od-graph-inspector-heading {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
 }
 
 .od-graph-inspector-eyebrow {
