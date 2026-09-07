@@ -1,4 +1,5 @@
 import type { HTMLAttributes, ReactNode } from "react";
+import { PageSurfaceEdgeContext } from "../PageSurfaceContext.js";
 
 export interface PageSurfaceProps extends HTMLAttributes<HTMLDivElement> {
   readonly children: ReactNode;
@@ -18,7 +19,9 @@ export function PageSurface({
       className={["od-page-surface", className].filter(Boolean).join(" ")}
       data-edge-to-edge={edgeToEdge}
     >
-      {children}
+      <PageSurfaceEdgeContext value={edgeToEdge}>
+        {children}
+      </PageSurfaceEdgeContext>
     </div>
   );
 }

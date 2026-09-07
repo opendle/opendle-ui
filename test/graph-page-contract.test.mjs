@@ -1,0 +1,102 @@
+import assert from "node:assert/strict";
+import test from "node:test";
+import { fileURLToPath } from "node:url";
+import ts from "typescript";
+import React from "react";
+import { renderToStaticMarkup } from "react-dom/server";
+import {
+  PageSurface,
+  GraphWorkspace,
+  GraphToolbar,
+  RelationshipGraph,
+} from "../dist/index.js";
+
+test("built graph page exports keep the optional page contracts", () => {
+  const file = fileURLToPath(
+    new URL("../graph-page-contract-fixture.mts", import.meta.url),
+  );
+  const source = `import {PageSurface, type PageSurfaceProps, GraphToolbar, GraphWorkspace, RelationshipGraph, type RelationshipGraphProps} from './dist/index.js';
+const edge: PageSurfaceProps = {children: null, edgeToEdge: true};
+const inset: PageSurfaceProps = {children: null, edgeToEdge: false};
+const omitted: PageSurfaceProps = {children: null};
+const full: Pick<RelationshipGraphProps, 'fullPage'> = {fullPage:true};
+const ordinary: Pick<RelationshipGraphProps, 'fullPage'> = {};
+void [PageSurface, GraphToolbar, GraphWorkspace, RelationshipGraph, edge, inset, omitted, full, ordinary];
+// @ts-expect-error The page contract accepts only a boolean.
+const invalid: PageSurfaceProps = {children:null, edgeToEdge:'yes'};
+`;
+  const options = {
+    strict: true,
+    noEmit: true,
+    module: ts.ModuleKind.NodeNext,
+    moduleResolution: ts.ModuleResolutionKind.NodeNext,
+    target: ts.ScriptTarget.ES2022,
+    jsx: ts.JsxEmit.ReactJSX,
+  };
+  const host = ts.createCompilerHost(options);
+  const read = host.getSourceFile;
+  host.getSourceFile = (
+    name,
+    languageVersion,
+    onError,
+    shouldCreateNewSourceFile,
+  ) =>
+    name === file
+      ? ts.createSourceFile(name, source, languageVersion)
+      : read(name, languageVersion, onError, shouldCreateNewSourceFile);
+  const program = ts.createProgram([file], options, host);
+  assert.deepEqual(
+    ts
+      .getPreEmitDiagnostics(program)
+      .map((diagnostic) =>
+        ts.flattenDiagnosticMessageText(diagnostic.messageText, "\n"),
+      ),
+    [],
+  );
+});
+
+test("the nearest page controls shared graph geometry", () => {
+  const columns = ["Sources", "Records", "Targets"].map((id) => ({
+    id,
+    label: id,
+    nodes: [],
+  }));
+  for (const edgeToEdge of [true, false, undefined]) {
+    const markup = renderToStaticMarkup(
+      React.createElement(
+        PageSurface,
+        { edgeToEdge: true },
+        React.createElement(
+          PageSurface,
+          { edgeToEdge },
+          React.createElement(
+            GraphWorkspace,
+            {
+              toolbar: React.createElement(GraphToolbar, {
+                leading: "Context",
+              }),
+            },
+            React.createElement(RelationshipGraph, {
+              "aria-label": "Relations",
+              columns,
+              relationships: [],
+            }),
+          ),
+        ),
+      ),
+    );
+    for (const name of ["workspace", "toolbar"])
+      assert.match(
+        markup,
+        new RegExp(
+          `class="od-graph-${name}" data-edge-to-edge="${edgeToEdge === true}"`,
+        ),
+      );
+    assert.match(
+      markup,
+      new RegExp(
+        `class="od-relationship-graph" data-edge-to-edge="${edgeToEdge === true}"`,
+      ),
+    );
+  }
+});

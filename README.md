@@ -53,6 +53,26 @@ items with no known parent as roots and rejects duplicate identifiers and
 cycles. Host apps still own graph data, selection, editing, drag behavior, and
 persistence.
 
+Set `PageSurface.edgeToEdge` to `true` to give a graph the complete page width.
+`GraphWorkspace`, `GraphToolbar`, and `RelationshipGraph` read the nearest
+page mode. Each control row receives one shared responsive gutter. Its
+physical left and right padding uses the larger of `--od-page-gutter` and
+that side's safe area. The graph viewport has no page gutter. A nested
+`PageSurface` with a false or omitted mode restores the normal page geometry.
+
+Set `GraphWorkspace.fullPage` or `RelationshipGraph.fullPage` to `true` when
+the host supplies a definite page height. The host calculates that height
+from its dynamic viewport and persistent navigation. In edge mode, control
+rows use their rendered height and the graph viewport receives the remaining
+height. Large graph content scrolls in that viewport. Split inspectors use
+one `21rem` column; overlays and sheets keep their independent shared insets.
+Omit `fullPage` for a standalone graph with the existing bounded height.
+
+`GraphNodeAction` places a labelled action beside a node inside the graph
+canvas. The host supplies its position, accessible name, action, and roving
+focus handlers. Use the same host-controlled tab stop as the graph nodes.
+The host owns selection, parent context, form state, and activation policy.
+
 `RelationshipGraph` gives host applications one responsive three-column
 relationship surface. Hosts name the columns and nodes, supply relationships,
 compose contextual header actions and an optional inspector, and own all

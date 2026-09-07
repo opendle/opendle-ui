@@ -1,6 +1,7 @@
 import type { HTMLAttributes, KeyboardEvent, ReactNode } from "react";
 import {
   useCallback,
+  use,
   useEffect,
   useId,
   useLayoutEffect,
@@ -17,6 +18,8 @@ import {
   type RelationshipGraphModelRelationship,
 } from "../RelationshipGraphModel.js";
 import { GraphToolbar, useInspectorReachability } from "./GraphWorkspace.js";
+
+import { PageSurfaceEdgeContext } from "../PageSurfaceContext.js";
 
 function classes(...values: (string | false | null | undefined)[]) {
   return values.filter(Boolean).join(" ");
@@ -120,6 +123,7 @@ export interface RelationshipGraphProps extends Omit<
   readonly auxiliaryInspector?: ReactNode;
   /** The selected-node inspector. It is removed when the selected node is not in the graph. */
   readonly inspector?: ReactNode;
+  readonly fullPage?: boolean;
   readonly searchLabel?: string;
   readonly searchPlaceholder?: string;
   readonly searchQuery?: string;
@@ -558,6 +562,7 @@ export function RelationshipGraph({
   onNodeActivate,
   auxiliaryInspector,
   inspector,
+  fullPage = false,
   searchLabel = "Search graph",
   searchPlaceholder = "Search all columns",
   searchQuery,
@@ -596,6 +601,7 @@ export function RelationshipGraph({
   const clearSearchRef = useRef<HTMLButtonElement>(null);
   const columnHeadingPrefix = useId();
   const searchInputId = useId();
+  const edgeToEdge = use(PageSurfaceEdgeContext);
   const rootRef = useRef<HTMLElement>(null);
   const selectedControlRef = useRef<HTMLElement | null>(null);
   const boardRef = useRef<HTMLDivElement>(null);
@@ -1203,6 +1209,8 @@ export function RelationshipGraph({
       {...props}
       aria-label={ariaLabel}
       className={classes("od-relationship-graph", className)}
+      data-edge-to-edge={edgeToEdge}
+      data-full-page={fullPage}
       ref={rootRef}
     >
       <output aria-live="polite" className="od-visually-hidden">

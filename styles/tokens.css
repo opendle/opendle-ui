@@ -2616,6 +2616,134 @@ samp {
   inset-inline: 0.75rem;
 }
 
+.od-relationship-graph[data-full-page="true"] {
+  height: 100%;
+  min-height: 0;
+  grid-template-rows: auto minmax(0, 1fr);
+}
+
+.od-relationship-graph[data-full-page="true"]
+  > .od-relationship-graph-viewport {
+  height: 100%;
+  min-height: 0;
+}
+
+/* Edge pages keep controls in flow and give the remaining space to the graph. */
+.od-graph-workspace[data-edge-to-edge="true"],
+.od-relationship-graph[data-edge-to-edge="true"] {
+  box-sizing: border-box;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: auto minmax(0, 1fr);
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  gap: 0;
+  overflow: hidden;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.od-graph-workspace[data-edge-to-edge="true"][data-full-page="false"] {
+  height: max(32rem, calc(100dvh - 4rem));
+  min-height: 32rem;
+}
+
+.od-relationship-graph[data-edge-to-edge="true"][data-full-page="false"] {
+  height: auto;
+}
+
+.od-relationship-graph[data-edge-to-edge="true"][data-full-page="false"]
+  > .od-relationship-graph-viewport {
+  height: clamp(32rem, 70dvh, 52rem);
+}
+
+.od-graph-toolbar[data-edge-to-edge="true"],
+.od-relationship-graph[data-edge-to-edge="true"]
+  > .od-relationship-graph-search {
+  box-sizing: border-box;
+  position: relative;
+  inset: auto;
+  grid-row: 1;
+  grid-column: 1;
+  width: 100%;
+  min-width: 0;
+  padding-block: var(--od-space-sm);
+  padding-left: max(var(--od-page-gutter), env(safe-area-inset-left));
+  padding-right: max(var(--od-page-gutter), env(safe-area-inset-right));
+  flex-wrap: wrap;
+}
+
+.od-graph-toolbar[data-edge-to-edge="true"]
+  .od-graph-toolbar[data-edge-to-edge="true"] {
+  padding: 0;
+}
+
+.od-graph-toolbar[data-edge-to-edge="true"] {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.od-graph-workspace[data-edge-to-edge="true"] > .od-graph-workspace-stage,
+.od-relationship-graph[data-edge-to-edge="true"]
+  > .od-relationship-graph-viewport {
+  box-sizing: border-box;
+  position: relative;
+  inset: auto;
+  grid-row: 2;
+  grid-column: 1;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.od-graph-workspace[data-edge-to-edge="true"][data-inspector-mode="split"],
+.od-relationship-graph[data-edge-to-edge="true"][data-inspector-mode="split"] {
+  grid-template-columns: minmax(0, 1fr) 21rem;
+}
+
+.od-graph-workspace[data-edge-to-edge="true"][data-inspector-mode="split"]
+  > .od-graph-toolbar,
+.od-graph-workspace[data-edge-to-edge="true"][data-inspector-mode="split"]
+  > .od-graph-workspace-stage {
+  inset: auto;
+}
+
+.od-relationship-graph[data-edge-to-edge="true"][data-inspector-mode="split"]
+  > :is(
+    .od-relationship-graph-search,
+    .od-relationship-graph-toolbar,
+    .od-relationship-graph-viewport
+  ) {
+  width: 100%;
+}
+
+.od-graph-empty-state[data-edge-to-edge="true"] {
+  box-sizing: border-box;
+  position: relative;
+  min-height: 100%;
+  padding-block: var(--od-space-lg);
+  padding-left: max(var(--od-page-gutter), env(safe-area-inset-left));
+  padding-right: max(var(--od-page-gutter), env(safe-area-inset-right));
+}
+
+.od-relationship-graph[data-edge-to-edge="true"]
+  .od-relationship-graph-board:has(> .od-relationship-graph-empty) {
+  padding-inline: 0;
+}
+
+.od-relationship-graph[data-edge-to-edge="true"]
+  :is(.od-relationship-graph-empty, .od-relationship-graph-invalid) {
+  padding-left: max(var(--od-page-gutter), env(safe-area-inset-left));
+  padding-right: max(var(--od-page-gutter), env(safe-area-inset-right));
+}
+
 .od-graph-inspector::backdrop {
   background: rgb(4 8 10 / 52%);
 }

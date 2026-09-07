@@ -1,6 +1,7 @@
 import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
-import { Children, Fragment, isValidElement, useId, useLayoutEffect, useRef, useState, } from "react";
+import { Children, Fragment, isValidElement, use, useId, useLayoutEffect, useRef, useState, } from "react";
 import { clampGraphPosition, clampGraphViewport, moveGraphPosition, zoomGraphViewportAtPoint, } from "../GraphLayout.js";
+import { PageSurfaceEdgeContext } from "../PageSurfaceContext.js";
 function classes(...values) {
     return values.filter(Boolean).join(" ");
 }
@@ -26,9 +27,10 @@ function hasRenderedContent(value) {
 }
 /** A full-width graph surface with floating controls and an optional inspector. */
 export function GraphWorkspace({ toolbar, inspector, selectedControlRef, fullPage = false, children, className, ...props }) {
+    const edgeToEdge = use(PageSurfaceEdgeContext);
     const hostRef = useRef(null);
     useInspectorReachability(hostRef, selectedControlRef, inspector !== undefined && inspector !== null);
-    return (_jsxs("section", { ...props, className: classes("od-graph-workspace", className), "data-full-page": fullPage, ref: hostRef, children: [toolbar, _jsx("div", { className: "od-graph-workspace-stage", children: children }), inspector] }));
+    return (_jsxs("section", { ...props, className: classes("od-graph-workspace", className), "data-edge-to-edge": edgeToEdge, "data-full-page": fullPage, ref: hostRef, children: [toolbar, _jsx("div", { className: "od-graph-workspace-stage", children: children }), inspector] }));
 }
 export function useInspectorReachability(hostRef, selectedControlRef, active) {
     useLayoutEffect(() => {
@@ -76,10 +78,11 @@ export function useInspectorReachability(hostRef, selectedControlRef, active) {
 }
 /** Floating graph controls. Each slot accepts host-owned controls and copy. */
 export function GraphToolbar({ leading, center, actions, className, ...props }) {
+    const edgeToEdge = use(PageSurfaceEdgeContext);
     const hasLeading = hasRenderedContent(leading);
     const hasCenter = hasRenderedContent(center);
     const hasActions = hasRenderedContent(actions);
-    return (_jsxs("header", { ...props, className: classes("od-graph-toolbar", className), "data-actions": hasActions, "data-center": hasCenter, "data-leading": hasLeading, children: [hasLeading ? (_jsx("div", { className: "od-graph-toolbar-leading", children: leading })) : null, hasCenter ? (_jsx("div", { className: "od-graph-toolbar-center", children: center })) : null, hasActions ? (_jsx("div", { className: "od-graph-toolbar-actions", children: actions })) : null] }));
+    return (_jsxs("header", { ...props, className: classes("od-graph-toolbar", className), "data-edge-to-edge": edgeToEdge, "data-actions": hasActions, "data-center": hasCenter, "data-leading": hasLeading, children: [hasLeading ? (_jsx("div", { className: "od-graph-toolbar-leading", children: leading })) : null, hasCenter ? (_jsx("div", { className: "od-graph-toolbar-center", children: center })) : null, hasActions ? (_jsx("div", { className: "od-graph-toolbar-actions", children: actions })) : null] }));
 }
 /** Shared, labelled controls for controlled graph view and layout actions. */
 export function GraphViewportControls({ onZoomIn, onZoomOut, onFitView, onAutomaticLayout, zoomInLabel = "Zoom in", zoomOutLabel = "Zoom out", fitViewLabel = "Fit view", automaticLayoutLabel = "Automatic layout", zoomInDisabled = false, zoomOutDisabled = false, fitViewDisabled = false, automaticLayoutDisabled = false, className, ...props }) {
@@ -296,9 +299,10 @@ export function GraphViewport({ canvasAlignment = "start", canvasWidth, canvasHe
 }
 /** An accessible empty state for a graph canvas. */
 export function GraphEmptyState({ actions, className, description, headingLevel = "h2", icon, role = "status", title, ...props }) {
+    const edgeToEdge = use(PageSurfaceEdgeContext);
     const titleId = useId();
     const Heading = headingLevel;
-    return (_jsxs("div", { ...props, "aria-labelledby": props["aria-labelledby"] ?? titleId, className: classes("od-graph-empty-state", className), role: role, children: [_jsx("span", { "aria-hidden": "true", className: "od-graph-empty-state-icon", children: icon }), _jsxs("div", { className: "od-graph-empty-state-copy", children: [_jsx(Heading, { id: titleId, children: title }), _jsx("div", { className: "od-graph-empty-state-description", children: description })] }), actions ? (_jsx("div", { className: "od-graph-empty-state-actions", children: actions })) : null] }));
+    return (_jsxs("div", { ...props, "aria-labelledby": props["aria-labelledby"] ?? titleId, className: classes("od-graph-empty-state", className), "data-edge-to-edge": edgeToEdge, role: role, children: [_jsx("span", { "aria-hidden": "true", className: "od-graph-empty-state-icon", children: icon }), _jsxs("div", { className: "od-graph-empty-state-copy", children: [_jsx(Heading, { id: titleId, children: title }), _jsx("div", { className: "od-graph-empty-state-description", children: description })] }), actions ? (_jsx("div", { className: "od-graph-empty-state-actions", children: actions })) : null] }));
 }
 /** An accessible, controlled graph node with pointer and keyboard movement. */
 export function GraphNode({ x, y, title, eyebrow, icon, meta, selected = false, dragging = false, dropTarget = false, root = false, tone = "neutral", onPositionChange, positionBounds, keyboardMoveStep = 16, viewportZoom = 1, connectionTarget = false, onConnectionTarget, className, style, type = "button", onClick, onKeyDown, onLostPointerCapture, onPointerCancel, onPointerDown, onPointerMove, onPointerUp, ...props }) {

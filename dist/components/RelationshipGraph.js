@@ -1,7 +1,8 @@
 import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
-import { useCallback, useEffect, useId, useLayoutEffect, useMemo, useReducer, useRef, } from "react";
+import { useCallback, use, useEffect, useId, useLayoutEffect, useMemo, useReducer, useRef, } from "react";
 import { assertRelationshipGraphModel, relationshipGraphKeyboardTarget, relationshipGraphPath, relationshipGraphSearch, } from "../RelationshipGraphModel.js";
 import { GraphToolbar, useInspectorReachability } from "./GraphWorkspace.js";
+import { PageSurfaceEdgeContext } from "../PageSurfaceContext.js";
 function classes(...values) {
     return values.filter(Boolean).join(" ");
 }
@@ -194,7 +195,7 @@ function assertRelationshipGraphLabels(ariaLabel, searchLabel, clearSearchLabel,
 }
 /** A host-neutral, responsive relationship graph with three named columns. */
 // react-doctor-disable-next-line react-doctor/no-giant-component -- This coordinator keeps measurement, controlled selection, search, and one keyboard model synchronized. Render-only behavior stays in the host-neutral data model.
-export function RelationshipGraph({ columns, relationships, selectedNodeId, defaultSelectedNodeId = null, onSelectionChange, onNodeActivate, auxiliaryInspector, inspector, searchLabel = "Search graph", searchPlaceholder = "Search all columns", searchQuery, defaultSearchQuery = "", onSearchQueryChange, toolbar, emptyState, invalidState, noResultsTitle = "No matching items", noResultsDescription = "Change the search or restore the complete graph.", clearSearchLabel = "Clear search", partialNoResultsTitle = "No matching loaded items", partialNoResultsDescription = "Load more items or change the search to continue.", searchContextLabel = "Context", className, "aria-label": ariaLabel, ...props }) {
+export function RelationshipGraph({ columns, relationships, selectedNodeId, defaultSelectedNodeId = null, onSelectionChange, onNodeActivate, auxiliaryInspector, inspector, fullPage = false, searchLabel = "Search graph", searchPlaceholder = "Search all columns", searchQuery, defaultSearchQuery = "", onSearchQueryChange, toolbar, emptyState, invalidState, noResultsTitle = "No matching items", noResultsDescription = "Change the search or restore the complete graph.", clearSearchLabel = "Clear search", partialNoResultsTitle = "No matching loaded items", partialNoResultsDescription = "Load more items or change the search to continue.", searchContextLabel = "Context", className, "aria-label": ariaLabel, ...props }) {
     const [state, updateState] = useReducer(updateRelationshipGraphState, {
         announcement: "",
         edgeLayouts: [],
@@ -208,6 +209,7 @@ export function RelationshipGraph({ columns, relationships, selectedNodeId, defa
     const clearSearchRef = useRef(null);
     const columnHeadingPrefix = useId();
     const searchInputId = useId();
+    const edgeToEdge = use(PageSurfaceEdgeContext);
     const rootRef = useRef(null);
     const selectedControlRef = useRef(null);
     const boardRef = useRef(null);
@@ -652,7 +654,7 @@ export function RelationshipGraph({ columns, relationships, selectedNodeId, defa
         searchLabel,
         searchPlaceholder,
     ]);
-    return (_jsxs("section", { ...props, "aria-label": ariaLabel, className: classes("od-relationship-graph", className), ref: rootRef, children: [_jsx("output", { "aria-live": "polite", className: "od-visually-hidden", children: announcement }), toolbar === undefined ? (searchControls) : (_jsx(GraphToolbar, { actions: toolbar.actions, center: searchControls, className: "od-relationship-graph-toolbar", leading: toolbar.leading })), _jsx("section", { "aria-label": `${ariaLabel} viewport`, className: "od-relationship-graph-viewport", children: invalidState !== undefined ? (_jsx("div", { className: "od-relationship-graph-invalid", role: "alert", children: invalidState })) : (_jsxs("div", { className: "od-relationship-graph-board", ref: boardRef, children: [graphIsEmpty ? (_jsx("div", { "aria-live": "polite", className: "od-relationship-graph-empty", children: emptyState ?? "No items are available." })) : noSearchResults ? (_jsxs("div", { "aria-live": "polite", className: "od-relationship-graph-empty", children: [_jsx("strong", { children: partialNoSearchResults
+    return (_jsxs("section", { ...props, "aria-label": ariaLabel, className: classes("od-relationship-graph", className), "data-edge-to-edge": edgeToEdge, "data-full-page": fullPage, ref: rootRef, children: [_jsx("output", { "aria-live": "polite", className: "od-visually-hidden", children: announcement }), toolbar === undefined ? (searchControls) : (_jsx(GraphToolbar, { actions: toolbar.actions, center: searchControls, className: "od-relationship-graph-toolbar", leading: toolbar.leading })), _jsx("section", { "aria-label": `${ariaLabel} viewport`, className: "od-relationship-graph-viewport", children: invalidState !== undefined ? (_jsx("div", { className: "od-relationship-graph-invalid", role: "alert", children: invalidState })) : (_jsxs("div", { className: "od-relationship-graph-board", ref: boardRef, children: [graphIsEmpty ? (_jsx("div", { "aria-live": "polite", className: "od-relationship-graph-empty", children: emptyState ?? "No items are available." })) : noSearchResults ? (_jsxs("div", { "aria-live": "polite", className: "od-relationship-graph-empty", children: [_jsx("strong", { children: partialNoSearchResults
                                         ? partialNoResultsTitle
                                         : noResultsTitle }), _jsx("div", { children: partialNoSearchResults
                                         ? partialNoResultsDescription

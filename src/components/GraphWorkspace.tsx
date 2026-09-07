@@ -15,6 +15,7 @@ import {
   Children,
   Fragment,
   isValidElement,
+  use,
   useId,
   useLayoutEffect,
   useRef,
@@ -30,6 +31,8 @@ import {
   type GraphViewportLimits,
   type GraphViewportValue,
 } from "../GraphLayout.js";
+
+import { PageSurfaceEdgeContext } from "../PageSurfaceContext.js";
 
 function classes(...values: (string | false | null | undefined)[]) {
   return values.filter(Boolean).join(" ");
@@ -76,6 +79,7 @@ export function GraphWorkspace({
   className,
   ...props
 }: GraphWorkspaceProps) {
+  const edgeToEdge = use(PageSurfaceEdgeContext);
   const hostRef = useRef<HTMLElement>(null);
   useInspectorReachability(
     hostRef,
@@ -86,6 +90,7 @@ export function GraphWorkspace({
     <section
       {...props}
       className={classes("od-graph-workspace", className)}
+      data-edge-to-edge={edgeToEdge}
       data-full-page={fullPage}
       ref={hostRef}
     >
@@ -158,6 +163,7 @@ export function GraphToolbar({
   className,
   ...props
 }: GraphToolbarProps) {
+  const edgeToEdge = use(PageSurfaceEdgeContext);
   const hasLeading = hasRenderedContent(leading);
   const hasCenter = hasRenderedContent(center);
   const hasActions = hasRenderedContent(actions);
@@ -165,6 +171,7 @@ export function GraphToolbar({
     <header
       {...props}
       className={classes("od-graph-toolbar", className)}
+      data-edge-to-edge={edgeToEdge}
       data-actions={hasActions}
       data-center={hasCenter}
       data-leading={hasLeading}
@@ -631,6 +638,7 @@ export function GraphEmptyState({
   title,
   ...props
 }: GraphEmptyStateProps) {
+  const edgeToEdge = use(PageSurfaceEdgeContext);
   const titleId = useId();
   const Heading = headingLevel;
   return (
@@ -638,6 +646,7 @@ export function GraphEmptyState({
       {...props}
       aria-labelledby={props["aria-labelledby"] ?? titleId}
       className={classes("od-graph-empty-state", className)}
+      data-edge-to-edge={edgeToEdge}
       role={role}
     >
       <span aria-hidden="true" className="od-graph-empty-state-icon">
