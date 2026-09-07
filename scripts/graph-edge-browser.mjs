@@ -8,9 +8,48 @@ import { build } from "esbuild";
 
 const repositoryRoot = fileURLToPath(new URL("..", import.meta.url));
 const source = String.raw`
-import React, {useState} from 'react';
+import React, {useRef, useState} from 'react';
 import {createRoot} from 'react-dom/client';
-import {Button, FormField, SearchableSelect, Toast, PageSurface, GraphWorkspace, GraphToolbar, GraphViewport, GraphNode, GraphNodeAction, GraphEmptyState, GraphInspector, RelationshipGraph} from './dist/index.js';
+import {Button, FormField, SearchableSelect, Toast, PageSurface, GraphWorkspace, GraphToolbar, GraphViewport, GraphNode, GraphNodeAction, GraphEdges, GraphEdge, GraphEmptyState, GraphInspector, RelationshipGraph} from './dist/index.js';
+function SvgInspectorFixture() {
+ const config = window.fixture;
+ const [open, setOpen] = useState(config.initiallyOpen ?? false);
+ const [selected, setSelected] = useState(config.initiallyOpen ? 'edge' : 'node-a');
+ const [activationKey, setActivationKey] = useState(config.initiallyOpen ? 'edge' : 'node-a');
+ const [edgeConnected, setEdgeConnected] = useState(true);
+ const [, refresh] = useState(0);
+ const selectedControlRef = useRef(null);
+ const returnFocusRef = useRef(null);
+ const nodeARef = useRef(null);
+ const nodeBRef = useRef(null);
+ const edgeRef = useRef(null);
+ const secondEdgeRef = useRef(null);
+ window.svgFixtureRefs = {nodeARef, nodeBRef, edgeRef, secondEdgeRef};
+ const bind = (ref, id) => element => {
+   ref.current = element;
+   if (element && selected === id) selectedControlRef.current = element;
+ };
+ const select = (id, ref) => {
+   setSelected(id);
+   setActivationKey(id);
+   selectedControlRef.current = ref.current;
+ };
+ const openFrom = (id, ref) => {
+   returnFocusRef.current = config.explicitReturn ? ref.current : null;
+   select(id, ref);
+   setOpen(true);
+ };
+ const removeOpener = () => {
+   setEdgeConnected(false);
+   select('node-b', nodeBRef);
+ };
+ const trackEdgeWithoutActivation = () => {
+   returnFocusRef.current = edgeRef.current;
+   refresh(value => value + 1);
+ };
+ const inspector = open ? <GraphInspector activationKey={activationKey} returnFocusRef={config.explicitReturn ? returnFocusRef : undefined} title={selected === 'edge' ? 'Edge details' : selected === 'node-b' ? 'Second node details' : 'First node details'} onClose={() => setOpen(false)}><Button onClick={() => select('node-b', nodeBRef)}>Inspect second node</Button><Button onClick={() => select('edge', edgeRef)}>Inspect edge internally</Button><Button onClick={trackEdgeWithoutActivation}>Track edge without activation</Button><Button onClick={removeOpener}>Remove opening edge</Button></GraphInspector> : undefined;
+ return <main><h1 className="od-visually-hidden">SVG focus fixture</h1><PageSurface edgeToEdge style={{height:'100%'}}><PageSurface edgeToEdge style={{height:'100%'}}><GraphWorkspace aria-label="SVG focus workspace" fullPage inspector={inspector} selectedControlRef={selectedControlRef}><GraphViewport aria-label="SVG graph viewport" canvasWidth={1600} canvasHeight={600}><GraphEdges width={1600} height={600}>{edgeConnected ? <GraphEdge ref={bind(edgeRef, 'edge')} aria-label="First connection" path={config.farEdge ? "M 1120 120 L 1200 120" : "M 260 120 L 720 120"} label="Connects" labelX={config.farEdge ? 1160 : 490} labelY={110} selected={selected === 'edge'} tabIndex={selected === 'edge' ? 0 : -1} onFocus={() => setSelected('edge')} onSelect={() => openFrom('edge', edgeRef)}/> : null}<GraphEdge ref={secondEdgeRef} aria-label="Second connection" path="M 260 240 L 720 240" label="Also connects" labelX={490} labelY={230} selected={selected === 'edge-two'} tabIndex={selected === 'edge-two' ? 0 : -1} onFocus={() => setSelected('edge-two')} onSelect={() => openFrom('edge-two', secondEdgeRef)}/></GraphEdges><GraphNode ref={nodeARef} aria-label="First focus node" title="First focus node" x={100} y={80} selected={selected === 'node-a'} tabIndex={selected === 'node-a' ? 0 : -1} onFocus={() => setSelected('node-a')} onClick={() => openFrom('node-a', nodeARef)}/><GraphNode ref={bind(nodeBRef, 'node-b')} aria-label="Second focus node" title="Second focus node" x={1300} y={80} selected={selected === 'node-b'} tabIndex={selected === 'node-b' ? 0 : -1} onFocus={() => setSelected('node-b')} onClick={() => openFrom('node-b', nodeBRef)}/></GraphViewport></GraphWorkspace></PageSurface></PageSurface></main>;
+}
 function Fixture() {
  const config = window.fixture;
  const [open, setOpen] = useState(false);
@@ -29,7 +68,7 @@ function Fixture() {
  const graph = config.kind === 'relationship' ? relationship : config.kind === 'toolbar' ? toolbar : workspace;
  return <main><h1 className="od-visually-hidden">Graph fixture</h1><PageSurface edgeToEdge={config.outerEdge} style={{height:'100%'}}><PageSurface edgeToEdge={config.edge} style={{height:'100%'}}>{graph}</PageSurface></PageSurface>{config.inspectorToast && open ? <Toast style={{position:'fixed',right:8,bottom:8}}>Record saved</Toast> : null}</main>;
 }
-createRoot(document.getElementById('root')).render(<Fixture/>);
+createRoot(document.getElementById('root')).render(window.fixture.kind === 'svg-focus' ? <SvgInspectorFixture/> : <Fixture/>);
 `;
 const bundle = await build({
   bundle: true,
@@ -240,6 +279,19 @@ async function checkTextAction(page) {
     );
   }
   await page.keyboard.press("Tab");
+  await page.evaluate(
+    () =>
+      new Promise((resolve) =>
+        requestAnimationFrame(() =>
+          requestAnimationFrame(() => requestAnimationFrame(resolve)),
+        ),
+      ),
+  );
+  assert.equal(
+    await page.evaluate(() => document.hasFocus()),
+    false,
+    "Delayed close restoration keeps focus outside the document",
+  );
   assert.equal(
     await viewport.evaluate((el) => el.contains(document.activeElement)),
     false,
@@ -633,7 +685,300 @@ async function checkInspectorPopup() {
     await context.close();
   }
 }
+async function checkSvgInspectorFocus() {
+  const context = await browser.newContext({
+    viewport: { width: 1100, height: 800 },
+  });
+  const page = await context.newPage();
+  try {
+    const loadFocusFixture = async (config = {}) => {
+      await load(page, {
+        kind: "svg-focus",
+        edge: true,
+        outerEdge: true,
+        ...config,
+      });
+    };
+    const waitForExactFocus = async (locator, message) => {
+      await page.waitForFunction(
+        (element) => element === document.activeElement,
+        await locator.elementHandle(),
+        { timeout: 1000 },
+      );
+      assert.equal(
+        await locator.evaluate((element) => element === document.activeElement),
+        true,
+        message,
+      );
+    };
+    const closeInspector = async (name) => {
+      const inspector = page.getByRole("dialog", { name });
+      await inspector.getByRole("button", { name: "Close inspector" }).click();
+      await inspector.waitFor({ state: "detached" });
+      return inspector;
+    };
+
+    await loadFocusFixture();
+    let firstNode = page.getByRole("button", {
+      name: "First focus node",
+      exact: true,
+    });
+    let edge = page.getByRole("button", {
+      name: "First connection",
+      exact: true,
+    });
+    assert.deepEqual(
+      await page.evaluate(() => ({
+        callbackEdge:
+          window.svgFixtureRefs.edgeRef.current instanceof SVGGElement,
+        callbackNode:
+          window.svgFixtureRefs.nodeBRef.current instanceof HTMLButtonElement,
+        objectEdge:
+          window.svgFixtureRefs.secondEdgeRef.current instanceof SVGGElement,
+        objectNode:
+          window.svgFixtureRefs.nodeARef.current instanceof HTMLButtonElement,
+      })),
+      {
+        callbackEdge: true,
+        callbackNode: true,
+        objectEdge: true,
+        objectNode: true,
+      },
+      "Graph node and edge refs expose their native DOM controls",
+    );
+    await firstNode.focus();
+    await page.keyboard.press("Enter");
+    await page.getByRole("dialog", { name: "First node details" }).waitFor();
+    await edge.focus();
+    await page.keyboard.press("Enter");
+    let inspector = page.getByRole("dialog", { name: "Edge details" });
+    await inspector.waitFor();
+    await closeInspector("Edge details");
+    await waitForExactFocus(
+      edge,
+      "An internal SVG activation returns focus to the exact edge",
+    );
+
+    await loadFocusFixture({ explicitReturn: true });
+    firstNode = page.getByRole("button", {
+      name: "First focus node",
+      exact: true,
+    });
+    edge = page.getByRole("button", {
+      name: "First connection",
+      exact: true,
+    });
+    await edge.focus();
+    await page.keyboard.press("Enter");
+    inspector = page.getByRole("dialog", { name: "Edge details" });
+    await inspector
+      .getByRole("button", { name: "Inspect second node" })
+      .click();
+    await page.getByRole("dialog", { name: "Second node details" }).waitFor();
+    await closeInspector("Second node details");
+    await waitForExactFocus(
+      edge,
+      "Internal navigation retains the explicit SVG opener",
+    );
+
+    await firstNode.focus();
+    await page.keyboard.press("Enter");
+    await closeInspector("First node details");
+    await waitForExactFocus(
+      firstNode,
+      "HTML node focus return remains compatible",
+    );
+
+    await firstNode.focus();
+    await page.keyboard.press("Enter");
+    inspector = page.getByRole("dialog", { name: "First node details" });
+    await inspector
+      .getByRole("button", { name: "Inspect edge internally" })
+      .click();
+    await page.getByRole("dialog", { name: "Edge details" }).waitFor();
+    await closeInspector("Edge details");
+    await waitForExactFocus(
+      firstNode,
+      "Internal SVG selection retains the HTML opener",
+    );
+
+    await firstNode.focus();
+    await page.keyboard.press("Enter");
+    inspector = page.getByRole("dialog", { name: "First node details" });
+    await inspector
+      .getByRole("button", { name: "Track edge without activation" })
+      .click();
+    await closeInspector("First node details");
+    await waitForExactFocus(
+      edge,
+      "A supplied SVG ref change is tracked without an activation-key change",
+    );
+
+    await loadFocusFixture({ initiallyOpen: true });
+    edge = page.getByRole("button", {
+      name: "First connection",
+      exact: true,
+    });
+    await page.getByRole("dialog", { name: "Edge details" }).waitFor();
+    await closeInspector("Edge details");
+    await waitForExactFocus(
+      edge,
+      "Body focus falls back to the connected selected SVG edge",
+    );
+
+    await loadFocusFixture({ explicitReturn: true });
+    edge = page.getByRole("button", {
+      name: "First connection",
+      exact: true,
+    });
+    await edge.focus();
+    await page.keyboard.press("Enter");
+    inspector = page.getByRole("dialog", { name: "Edge details" });
+    await inspector
+      .getByRole("button", { name: "Remove opening edge" })
+      .click();
+    const secondNode = page.getByRole("button", {
+      name: "Second focus node",
+      exact: true,
+    });
+    await closeInspector("Second node details");
+    await waitForExactFocus(
+      secondNode,
+      "A disconnected SVG opener falls back to the connected selected node",
+    );
+
+    await loadFocusFixture({ farEdge: true });
+    edge = page.getByRole("button", {
+      name: "First connection",
+      exact: true,
+    });
+    const viewport = page.locator(".od-graph-viewport");
+    await edge.focus();
+    await viewport.evaluate((element) => {
+      element.scrollLeft = 0;
+    });
+    await page.keyboard.press("Enter");
+    inspector = page.getByRole("dialog", { name: "Edge details" });
+    await page.waitForFunction(() => {
+      const edge = document.querySelector("[aria-label='First connection']");
+      const inspector = document.querySelector(".od-graph-inspector");
+      return (
+        edge &&
+        inspector &&
+        edge.getBoundingClientRect().right <=
+          inspector.getBoundingClientRect().left + 1
+      );
+    });
+    assert.ok(
+      (await viewport.evaluate((element) => element.scrollLeft)) > 0,
+      "The overlay scrolls to keep a selected SVG edge reachable",
+    );
+    await closeInspector("Edge details");
+
+    await loadFocusFixture({ explicitReturn: true });
+    edge = page.getByRole("button", {
+      name: "First connection",
+      exact: true,
+    });
+    const secondEdge = page.getByRole("button", {
+      name: "Second connection",
+      exact: true,
+    });
+    await edge.focus();
+    await page.keyboard.press("Enter");
+    inspector = page.getByRole("dialog", { name: "Edge details" });
+    await page.evaluate(
+      ({ close, next }) => {
+        close.click();
+        next.focus();
+      },
+      {
+        close: await inspector
+          .getByRole("button", { name: "Close inspector" })
+          .elementHandle(),
+        next: await secondEdge.elementHandle(),
+      },
+    );
+    await inspector.waitFor({ state: "detached" });
+    await page.evaluate(
+      () =>
+        new Promise((resolve) =>
+          requestAnimationFrame(() =>
+            requestAnimationFrame(() => requestAnimationFrame(resolve)),
+          ),
+        ),
+    );
+    await waitForExactFocus(
+      secondEdge,
+      "Delayed focus restore does not replace active SVG focus",
+    );
+
+    await page.setViewportSize({ width: 1440, height: 800 });
+    await loadFocusFixture({ explicitReturn: true });
+    edge = page.getByRole("button", {
+      name: "First connection",
+      exact: true,
+    });
+    await edge.focus();
+    await page.keyboard.press("Enter");
+    inspector = page.getByRole("dialog", { name: "Edge details" });
+    for (const [mode, width] of [
+      ["split", 1440],
+      ["overlay", 1100],
+      ["sheet", 390],
+      ["overlay", 1100],
+      ["split", 1440],
+    ]) {
+      await page.setViewportSize({ width, height: 800 });
+      await page.waitForFunction(
+        (expected) =>
+          document.querySelector(".od-graph-inspector")?.dataset.mode ===
+          expected,
+        mode,
+      );
+      assert.deepEqual(
+        (await new AxeBuilder({ page }).analyze()).violations,
+        [],
+      );
+    }
+    await closeInspector("Edge details");
+    await waitForExactFocus(
+      edge,
+      "SVG focus return survives split, overlay, and sheet transitions",
+    );
+
+    for (const closeMethod of ["button", "Escape"]) {
+      await page.setViewportSize({ width: 390, height: 800 });
+      await loadFocusFixture({ explicitReturn: true });
+      edge = page.getByRole("button", {
+        name: "First connection",
+        exact: true,
+      });
+      await edge.focus();
+      await page.keyboard.press("Enter");
+      inspector = page.getByRole("dialog", { name: "Edge details" });
+      await page.waitForFunction(
+        () =>
+          document.querySelector(".od-graph-inspector")?.dataset.mode ===
+          "sheet",
+      );
+      if (closeMethod === "Escape") await page.keyboard.press("Escape");
+      else
+        await inspector
+          .getByRole("button", { name: "Close inspector" })
+          .click();
+      await inspector.waitFor({ state: "detached" });
+      await waitForExactFocus(
+        edge,
+        `SVG ${closeMethod} close returns focus in sheet mode`,
+      );
+    }
+  } finally {
+    await context.close();
+  }
+}
 try {
+  await checkSvgInspectorFocus();
   await checkInspectorPopup();
   await checkInspectorFrame();
   for (const [width, height] of [

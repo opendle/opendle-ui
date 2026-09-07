@@ -25,6 +25,9 @@ function hasRenderedContent(value) {
     });
     return found;
 }
+function isGraphControlElement(value) {
+    return value instanceof HTMLElement || value instanceof SVGElement;
+}
 /** A full-width graph surface with floating controls and an optional inspector. */
 export function GraphWorkspace({ toolbar, inspector, selectedControlRef, fullPage = false, children, className, ...props }) {
     const edgeToEdge = use(PageSurfaceEdgeContext);
@@ -468,8 +471,10 @@ function restoreInspectorFocus(target) {
     if (!target?.isConnected)
         return;
     const apply = () => {
+        if (!document.hasFocus())
+            return;
         const active = document.activeElement;
-        if (active instanceof HTMLElement &&
+        if (isGraphControlElement(active) &&
             active !== document.body &&
             active !== document.documentElement)
             return;
@@ -492,7 +497,7 @@ function findInspectorFocusFallback(inspector) {
     ];
     for (const selector of selectors) {
         const target = host.querySelector(selector);
-        if (target?.isConnected)
+        if (isGraphControlElement(target) && target.isConnected)
             return target;
     }
     return null;
@@ -526,7 +531,7 @@ function useGraphInspectorMode(inspectorRef, headingRef) {
         const handleFocusIn = (event) => {
             const inspector = inspectorRef.current;
             const target = event.target;
-            if (!inspector || !(target instanceof HTMLElement))
+            if (!inspector || !isGraphControlElement(target))
                 return;
             lastInspectorFocusRef.current = inspector.contains(target)
                 ? target
@@ -560,7 +565,7 @@ function useGraphInspectorMode(inspectorRef, headingRef) {
                 return;
             const content = inspector.querySelector(".od-graph-inspector-content");
             const active = document.activeElement;
-            const activeIsInside = active instanceof HTMLElement && inspector.contains(active);
+            const activeIsInside = isGraphControlElement(active) && inspector.contains(active);
             const lastInspectorFocus = lastInspectorFocusRef.current;
             const focusWasInside = activeIsInside ||
                 (active === document.body &&
@@ -595,7 +600,8 @@ function useGraphInspectorMode(inspectorRef, headingRef) {
         modeTransitionRef.current = null;
         const contentScrollTop = transition?.scrollTop ?? content?.scrollTop ?? 0;
         const previousFocus = transition?.focus ??
-            (inspector.contains(document.activeElement)
+            (isGraphControlElement(document.activeElement) &&
+                inspector.contains(document.activeElement)
                 ? document.activeElement
                 : null);
         const isModal = isModalDialog(inspector);
@@ -669,7 +675,10 @@ export function GraphInspector({ activationKey, title, eyebrow, icon, actions, o
         }
         else {
             const active = document.activeElement;
-            if (active instanceof HTMLElement && !inspector.contains(active)) {
+            if (isGraphControlElement(active) &&
+                active !== document.body &&
+                active !== document.documentElement &&
+                !inspector.contains(active)) {
                 capturedReturnFocusRef.current = active;
             }
         }

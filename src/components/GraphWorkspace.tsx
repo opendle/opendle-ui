@@ -6,6 +6,7 @@ import type {
   KeyboardEvent,
   MouseEvent,
   PointerEvent,
+  Ref,
   RefObject,
   ReactNode,
   SVGAttributes,
@@ -62,10 +63,17 @@ function hasRenderedContent(value: ReactNode): boolean {
   return found;
 }
 
+/** A native HTML or SVG graph control that supports focus and geometry. */
+export type GraphControlElement = HTMLElement | SVGElement;
+
+function isGraphControlElement(value: unknown): value is GraphControlElement {
+  return value instanceof HTMLElement || value instanceof SVGElement;
+}
+
 export interface GraphWorkspaceProps extends HTMLAttributes<HTMLElement> {
   readonly toolbar?: ReactNode;
   readonly inspector?: ReactNode;
-  readonly selectedControlRef?: RefObject<HTMLElement | null>;
+  readonly selectedControlRef?: RefObject<GraphControlElement | null>;
   readonly fullPage?: boolean;
 }
 
@@ -103,7 +111,7 @@ export function GraphWorkspace({
 
 export function useInspectorReachability(
   hostRef: RefObject<HTMLElement | null>,
-  selectedControlRef: RefObject<HTMLElement | null> | undefined,
+  selectedControlRef: RefObject<GraphControlElement | null> | undefined,
   active: boolean,
 ) {
   useLayoutEffect(() => {
@@ -670,6 +678,7 @@ export interface GraphNodeProps extends Omit<
   ButtonHTMLAttributes<HTMLButtonElement>,
   "children" | "title"
 > {
+  readonly ref?: Ref<HTMLButtonElement>;
   readonly x: number;
   readonly y: number;
   readonly title: ReactNode;
@@ -963,6 +972,7 @@ interface GraphEdgeBaseProps extends Omit<
   SVGAttributes<SVGGElement>,
   "onSelect"
 > {
+  readonly ref?: Ref<SVGGElement>;
   readonly path: string;
   readonly label?: string;
   readonly labelX?: number;
@@ -1144,16 +1154,17 @@ export interface GraphInspectorProps extends Omit<
   readonly onClose?: () => void;
   readonly closeLabel?: string;
   readonly initialFocusRef?: RefObject<HTMLElement | null>;
-  readonly returnFocusRef?: RefObject<HTMLElement | null>;
+  readonly returnFocusRef?: RefObject<GraphControlElement | null>;
   readonly tone?: GraphNodeTone;
 }
 
-function restoreInspectorFocus(target: HTMLElement | null) {
+function restoreInspectorFocus(target: GraphControlElement | null) {
   if (!target?.isConnected) return;
   const apply = () => {
+    if (!document.hasFocus()) return;
     const active = document.activeElement;
     if (
-      active instanceof HTMLElement &&
+      isGraphControlElement(active) &&
       active !== document.body &&
       active !== document.documentElement
     )
@@ -1167,7 +1178,7 @@ function restoreInspectorFocus(target: HTMLElement | null) {
 
 function findInspectorFocusFallback(
   inspector: HTMLDialogElement,
-): HTMLElement | null {
+): GraphControlElement | null {
   const host = inspector.parentElement?.closest<HTMLElement>(
     ".od-graph-workspace, .od-relationship-graph",
   );
@@ -1178,8 +1189,8 @@ function findInspectorFocusFallback(
     ":is(.od-graph-viewport, .od-relationship-graph-viewport) :is(button:not(:disabled), a[href], [tabindex]:not([tabindex='-1']))",
   ];
   for (const selector of selectors) {
-    const target = host.querySelector<HTMLElement>(selector);
-    if (target?.isConnected) return target;
+    const target = host.querySelector(selector);
+    if (isGraphControlElement(target) && target.isConnected) return target;
   }
   return null;
 }
@@ -1221,17 +1232,17 @@ function useGraphInspectorMode(
   const [hosted, setHosted] = useState(false);
   const modeRef = useRef<GraphInspectorMode>("overlay");
   const modeTransitionRef = useRef<{
-    readonly focus: HTMLElement | null;
+    readonly focus: GraphControlElement | null;
     readonly focusWasInside: boolean;
     readonly scrollTop: number;
   } | null>(null);
-  const lastInspectorFocusRef = useRef<HTMLElement | null>(null);
+  const lastInspectorFocusRef = useRef<GraphControlElement | null>(null);
 
   useLayoutEffect(() => {
     const handleFocusIn = (event: FocusEvent) => {
       const inspector = inspectorRef.current;
       const target = event.target;
-      if (!inspector || !(target instanceof HTMLElement)) return;
+      if (!inspector || !isGraphControlElement(target)) return;
       lastInspectorFocusRef.current = inspector.contains(target)
         ? target
         : null;
@@ -1271,7 +1282,7 @@ function useGraphInspectorMode(
       );
       const active = document.activeElement;
       const activeIsInside =
-        active instanceof HTMLElement && inspector.contains(active);
+        isGraphControlElement(active) && inspector.contains(active);
       const lastInspectorFocus = lastInspectorFocusRef.current;
       const focusWasInside =
         activeIsInside ||
@@ -1311,8 +1322,9 @@ function useGraphInspectorMode(
     const contentScrollTop = transition?.scrollTop ?? content?.scrollTop ?? 0;
     const previousFocus =
       transition?.focus ??
-      (inspector.contains(document.activeElement)
-        ? (document.activeElement as HTMLElement)
+      (isGraphControlElement(document.activeElement) &&
+      inspector.contains(document.activeElement)
+        ? document.activeElement
         : null);
     const isModal = isModalDialog(inspector);
     if (
@@ -1373,9 +1385,9 @@ export function GraphInspector({
   const inspectorRef = useRef<HTMLDialogElement>(null);
   const headingRef = useRef<HTMLHeadingElement>(null);
   const { hosted, mode } = useGraphInspectorMode(inspectorRef, headingRef);
-  const capturedReturnFocusRef = useRef<HTMLElement | null>(null);
-  const closeReturnFocusRef = useRef<HTMLElement | null>(null);
-  const latestSuppliedReturnFocusRef = useRef<HTMLElement | null>(null);
+  const capturedReturnFocusRef = useRef<GraphControlElement | null>(null);
+  const closeReturnFocusRef = useRef<GraphControlElement | null>(null);
+  const latestSuppliedReturnFocusRef = useRef<GraphControlElement | null>(null);
 
   useLayoutEffect(() => {
     const target = suppliedReturnFocusRef?.current;
@@ -1403,7 +1415,12 @@ export function GraphInspector({
       capturedReturnFocusRef.current = suppliedReturnFocus;
     } else {
       const active = document.activeElement;
-      if (active instanceof HTMLElement && !inspector.contains(active)) {
+      if (
+        isGraphControlElement(active) &&
+        active !== document.body &&
+        active !== document.documentElement &&
+        !inspector.contains(active)
+      ) {
         capturedReturnFocusRef.current = active;
       }
     }

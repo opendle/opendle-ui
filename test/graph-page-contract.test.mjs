@@ -16,6 +16,29 @@ test("built graph page exports keep the optional page contracts", () => {
     new URL("../graph-page-contract-fixture.mts", import.meta.url),
   );
   const source = `import {PageSurface, type PageSurfaceProps, GraphToolbar, GraphWorkspace, RelationshipGraph, type RelationshipGraphProps, GraphNodeAction, type GraphNodeActionProps} from './dist/index.js';
+
+import {createRef, type Ref} from 'react';
+import {GraphNode, GraphEdge, type GraphControlElement, type GraphWorkspaceProps, type GraphInspectorProps, type GraphNodeProps, type GraphEdgeProps} from './dist/index.js';
+const htmlRef = createRef<HTMLButtonElement>();
+const svgRef = createRef<SVGGElement>();
+const controlRef = createRef<GraphControlElement>();
+const htmlSelection: GraphWorkspaceProps = {selectedControlRef: htmlRef};
+const svgSelection: GraphWorkspaceProps = {selectedControlRef: svgRef};
+const htmlReturn: GraphInspectorProps = {title:'Details', returnFocusRef:htmlRef};
+const svgReturn: GraphInspectorProps = {title:'Details', returnFocusRef:svgRef};
+const mixedReturn: GraphInspectorProps = {title:'Details', returnFocusRef:controlRef};
+const nodeRef: Ref<HTMLButtonElement> = node => { controlRef.current = node; };
+const edgeRef: Ref<SVGGElement> = edge => { controlRef.current = edge; };
+const nodeProps: GraphNodeProps = {x:0,y:0,title:'Node',ref:nodeRef};
+const edgeProps: GraphEdgeProps = {path:'M 0 0 L 10 10',ref:edgeRef};
+const objectNodeProps: GraphNodeProps = {x:0,y:0,title:'Node',ref:htmlRef};
+const objectEdgeProps: GraphEdgeProps = {path:'M 0 0 L 10 10',ref:svgRef};
+// @ts-expect-error A node ref must refer to its native HTML button.
+const invalidNodeRef: GraphNodeProps = {x:0,y:0,title:'Node',ref:svgRef};
+// @ts-expect-error A text node is not a focusable graph control.
+const invalidControl: GraphControlElement = document.createTextNode('Record');
+void [GraphNode, GraphEdge, htmlSelection, svgSelection, htmlReturn, svgReturn, mixedReturn, nodeProps, edgeProps, objectNodeProps, objectEdgeProps];
+
 const textAction: GraphNodeActionProps = {x:0, y:0, 'aria-label':'New item below Parent', variant:'text', children:'+ New item', tabIndex:-1, onKeyDown:event => event.currentTarget.focus()};
 const iconAction: GraphNodeActionProps = {x:0, y:0, 'aria-label':'New item', variant:'icon'};
 const defaultAction: GraphNodeActionProps = {x:0, y:0, 'aria-label':'New item'};

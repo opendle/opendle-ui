@@ -315,6 +315,7 @@ export {
   GraphViewport,
   GraphViewportControls,
   GraphWorkspace,
+  type GraphControlElement,
   type GraphBundledLinkProps,
   type GraphEdgeProps,
   type GraphEdgesProps,

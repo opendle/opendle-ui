@@ -1,14 +1,16 @@
-import type { ButtonHTMLAttributes, DialogHTMLAttributes, HTMLAttributes, RefObject, ReactNode, SVGAttributes } from "react";
+import type { ButtonHTMLAttributes, DialogHTMLAttributes, HTMLAttributes, Ref, RefObject, ReactNode, SVGAttributes } from "react";
 import { type GraphPoint, type GraphPositionBounds, type GraphViewportLimits, type GraphViewportValue } from "../GraphLayout.js";
+/** A native HTML or SVG graph control that supports focus and geometry. */
+export type GraphControlElement = HTMLElement | SVGElement;
 export interface GraphWorkspaceProps extends HTMLAttributes<HTMLElement> {
     readonly toolbar?: ReactNode;
     readonly inspector?: ReactNode;
-    readonly selectedControlRef?: RefObject<HTMLElement | null>;
+    readonly selectedControlRef?: RefObject<GraphControlElement | null>;
     readonly fullPage?: boolean;
 }
 /** A full-width graph surface with floating controls and an optional inspector. */
 export declare function GraphWorkspace({ toolbar, inspector, selectedControlRef, fullPage, children, className, ...props }: GraphWorkspaceProps): import("react").JSX.Element;
-export declare function useInspectorReachability(hostRef: RefObject<HTMLElement | null>, selectedControlRef: RefObject<HTMLElement | null> | undefined, active: boolean): void;
+export declare function useInspectorReachability(hostRef: RefObject<HTMLElement | null>, selectedControlRef: RefObject<GraphControlElement | null> | undefined, active: boolean): void;
 export interface GraphToolbarProps extends HTMLAttributes<HTMLElement> {
     readonly leading?: ReactNode;
     readonly center?: ReactNode;
@@ -60,6 +62,7 @@ export interface GraphEmptyStateProps extends Omit<HTMLAttributes<HTMLDivElement
 export declare function GraphEmptyState({ actions, className, description, headingLevel, icon, role, title, ...props }: GraphEmptyStateProps): import("react").JSX.Element;
 export type GraphNodeTone = "neutral" | "lime" | "blue" | "purple" | "coral" | "amber";
 export interface GraphNodeProps extends Omit<ButtonHTMLAttributes<HTMLButtonElement>, "children" | "title"> {
+    readonly ref?: Ref<HTMLButtonElement>;
     readonly x: number;
     readonly y: number;
     readonly title: ReactNode;
@@ -96,6 +99,7 @@ export interface GraphEdgesProps extends SVGAttributes<SVGSVGElement> {
 /** The SVG layer below graph nodes. */
 export declare function GraphEdges({ width, height, className, children, ...props }: GraphEdgesProps): import("react").JSX.Element;
 interface GraphEdgeBaseProps extends Omit<SVGAttributes<SVGGElement>, "onSelect"> {
+    readonly ref?: Ref<SVGGElement>;
     readonly path: string;
     readonly label?: string;
     readonly labelX?: number;
@@ -135,7 +139,7 @@ export interface GraphInspectorProps extends Omit<DialogHTMLAttributes<HTMLDialo
     readonly onClose?: () => void;
     readonly closeLabel?: string;
     readonly initialFocusRef?: RefObject<HTMLElement | null>;
-    readonly returnFocusRef?: RefObject<HTMLElement | null>;
+    readonly returnFocusRef?: RefObject<GraphControlElement | null>;
     readonly tone?: GraphNodeTone;
 }
 /** A responsive inspector with initial focus, Escape close, and exact focus return. */

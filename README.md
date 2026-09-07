@@ -44,7 +44,15 @@ width selects a split panel, a non-modal overlay, or a modal bottom sheet.
 `GraphInspectorRows`, `GraphInspectorRow`, and `GraphInspectorNotice` supply
 the compact semantic content structure. A host can change the inspector
 activation key or supply a return-focus ref when the selected record changes
-while the inspector stays mounted. The
+while the inspector stays mounted. `GraphControlElement` accepts native HTML
+and SVG controls. `GraphWorkspace.selectedControlRef` uses that type to keep
+the selected control visible beside an overlay. `GraphInspector.returnFocusRef`
+uses the same type to return focus to the exact opener. Keep these references
+separate when inspector navigation changes selection. Update the opener only
+for an external open action. `GraphNode.ref` supplies its `HTMLButtonElement`;
+`GraphEdge.ref` supplies its `SVGGElement`. Use callback refs to update the
+selected-control reference during the DOM commit, before layout effects run.
+Existing HTML-only references remain valid. The
 `layoutTree`, `layoutLayeredDirectedGraph`, and
 `treeEdgePath` helpers give host apps stable tree and multiple-parent graph
 layouts without a graph-library dependency. Layouts run from top to bottom by
