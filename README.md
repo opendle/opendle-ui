@@ -76,6 +76,17 @@ height. Large graph content scrolls in that viewport. Split inspectors use
 one `21rem` column; overlays and sheets keep their independent shared insets.
 Omit `fullPage` for a standalone graph with the existing bounded height.
 
+An overlay inspector starts at the larger of `4.75rem` and the rendered end
+of its graph toolbar or standalone search plus `0.875rem`. The shared package
+updates this position when controls wrap or change size. Controls stay visible;
+the inspector uses less height. Hosts do not supply an offset.
+
+Text-only inspector details receive a Tab stop when they need local scrolling.
+Details with a visible keyboard control keep their existing Tab order. When
+the extra stop is no longer needed, it leaves the Tab order without moving
+current focus. Overlay relationship boards keep enough trailing scroll space
+to move the selected control beside the inspector.
+
 `GraphNodeAction` places a labelled action beside a node inside the graph
 canvas. Set `variant="text"` for visible text supplied as children. The default
 `icon` variant keeps the compact circular shape. Text actions wrap long labels

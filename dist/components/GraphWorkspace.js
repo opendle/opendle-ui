@@ -53,19 +53,27 @@ export function useInspectorReachability(hostRef, selectedControlRef, active) {
             const controlBounds = control.getBoundingClientRect();
             const viewportBounds = viewport.getBoundingClientRect();
             const inspectorBounds = inspector.getBoundingClientRect();
-            const visibleEnd = Math.min(viewportBounds.right, inspectorBounds.left);
+            const overlayAtStart = inspectorBounds.left < viewportBounds.left + viewportBounds.width / 2;
+            const visibleStart = overlayAtStart
+                ? Math.max(viewportBounds.left, inspectorBounds.right)
+                : viewportBounds.left;
+            const visibleEnd = overlayAtStart
+                ? viewportBounds.right
+                : Math.min(viewportBounds.right, inspectorBounds.left);
             if (controlBounds.right > visibleEnd) {
                 viewport.scrollLeft += controlBounds.right - visibleEnd;
             }
-            else if (controlBounds.left < viewportBounds.left) {
-                viewport.scrollLeft -= viewportBounds.left - controlBounds.left;
+            else if (controlBounds.left < visibleStart) {
+                viewport.scrollLeft -= visibleStart - controlBounds.left;
             }
         };
         const mutationObserver = new MutationObserver(keepReachable);
-        mutationObserver.observe(host, {
-            attributeFilter: ["data-inspector-mode"],
-            attributes: true,
-        });
+        for (let ancestor = host; ancestor; ancestor = ancestor.parentElement) {
+            mutationObserver.observe(ancestor, {
+                attributeFilter: ["data-inspector-mode", "dir", "class", "style"],
+                attributes: true,
+            });
+        }
         const geometryObserver = typeof globalThis.ResizeObserver === "undefined"
             ? null
             : new ResizeObserver(keepReachable);
@@ -552,7 +560,40 @@ function useGraphInspectorMode(inspectorRef, headingRef) {
         remProbe.ariaHidden = "true";
         remProbe.className = "od-graph-inspector-rem-probe";
         host.append(remProbe);
+        const observedRegions = new Set();
         const updateMode = () => {
+            const currentControls = new Set([
+                ...host.querySelectorAll(".od-graph-toolbar, .od-relationship-graph-search"),
+            ].filter((control) => control.closest(".od-graph-workspace, .od-relationship-graph") ===
+                host && !inspector.contains(control)));
+            const contentRegion = inspector.querySelector(".od-graph-inspector-content");
+            const currentRegions = new Set([
+                ...currentControls,
+                ...(contentRegion ? [contentRegion, ...contentRegion.children] : []),
+            ]);
+            for (const region of observedRegions) {
+                if (!currentRegions.has(region)) {
+                    observer?.unobserve(region);
+                    observedRegions.delete(region);
+                }
+            }
+            for (const region of currentRegions) {
+                if (!observedRegions.has(region)) {
+                    observedRegions.add(region);
+                    observer?.observe(region);
+                }
+            }
+            const hostStart = host.getBoundingClientRect().top + host.clientTop;
+            let controlsEnd = 0;
+            for (const control of currentControls) {
+                if (control.getClientRects().length > 0) {
+                    controlsEnd = Math.max(controlsEnd, control.getBoundingClientRect().bottom - hostStart);
+                }
+            }
+            const measuredEnd = `${String(controlsEnd)}px`;
+            if (inspector.style.getPropertyValue("--od-graph-inspector-controls-end") !== measuredEnd) {
+                inspector.style.setProperty("--od-graph-inspector-controls-end", measuredEnd);
+            }
             const width = host.clientWidth;
             const rootFontSize = Number.parseFloat(getComputedStyle(document.documentElement).fontSize);
             const nextMode = width >= 69 * rootFontSize
@@ -560,6 +601,22 @@ function useGraphInspectorMode(inspectorRef, headingRef) {
                 : width > 48 * rootFontSize
                     ? "overlay"
                     : "sheet";
+            if (contentRegion) {
+                const hasKeyboardControl = [
+                    ...contentRegion.querySelectorAll("button:not(:disabled), input:not(:disabled), select:not(:disabled), textarea:not(:disabled), a[href], [tabindex]"),
+                ].some((control) => control.tabIndex >= 0 &&
+                    !control.matches(":disabled") &&
+                    control.getClientRects().length > 0 &&
+                    getComputedStyle(control).visibility === "visible");
+                const needsKeyboardScroll = contentRegion.scrollHeight > contentRegion.clientHeight &&
+                    !hasKeyboardControl;
+                if (needsKeyboardScroll && contentRegion.tabIndex !== 0) {
+                    contentRegion.tabIndex = 0;
+                }
+                else if (!needsKeyboardScroll && contentRegion.tabIndex === 0) {
+                    contentRegion.tabIndex = -1;
+                }
+            }
             host.dataset.inspectorMode = nextMode;
             if (nextMode === modeRef.current)
                 return;
@@ -584,9 +641,19 @@ function useGraphInspectorMode(inspectorRef, headingRef) {
             : new ResizeObserver(updateMode);
         observer?.observe(host);
         observer?.observe(remProbe);
+        const controlsObserver = new MutationObserver(updateMode);
+        controlsObserver.observe(host, {
+            childList: true,
+            characterData: true,
+            subtree: true,
+            attributes: true,
+            attributeFilter: ["disabled", "hidden", "tabindex"],
+        });
         updateMode();
         return () => {
             observer?.disconnect();
+            controlsObserver.disconnect();
+            inspector.style.removeProperty("--od-graph-inspector-controls-end");
             remProbe.remove();
             delete host.dataset.inspectorMode;
         };

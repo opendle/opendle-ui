@@ -2600,7 +2600,15 @@ samp {
 }
 
 .od-graph-inspector[data-mode="overlay"] {
-  height: calc(100% - 5.625rem);
+  --od-graph-inspector-overlay-start: max(
+    4.75rem,
+    calc(var(--od-graph-inspector-controls-end, 0px) + 0.875rem)
+  );
+  inset-block-start: var(--od-graph-inspector-overlay-start);
+  height: max(
+    0px,
+    calc(100% - var(--od-graph-inspector-overlay-start) - 0.875rem)
+  );
 }
 
 .od-relationship-graph[data-inspector-mode="split"]
@@ -2617,6 +2625,12 @@ samp {
   min-width: 48rem;
   gap: clamp(1rem, 2vw, 3rem);
   padding: 0.75rem;
+}
+
+.od-relationship-graph[data-inspector-mode="overlay"]
+  > .od-relationship-graph-viewport
+  > .od-relationship-graph-board {
+  margin-inline-end: 21.875rem;
 }
 
 .od-graph-inspector[data-mode="sheet"] {

@@ -11,6 +11,18 @@ const source = String.raw`
 import React, {useRef, useState} from 'react';
 import {createRoot} from 'react-dom/client';
 import {Button, FormField, SearchableSelect, Toast, PageSurface, GraphWorkspace, GraphToolbar, GraphViewport, GraphNode, GraphNodeAction, GraphEdges, GraphEdge, GraphEmptyState, GraphInspector, RelationshipGraph} from './dist/index.js';
+function WrappedControlsFixture() {
+ const config = window.fixture;
+ const [count, setCount] = useState(config.controls ?? 1);
+ const [detailMode, setDetailMode] = useState("text");
+ window.setWrappedDetailMode = setDetailMode;
+ window.setWrappedControls = setCount;
+ const selectedControlRef = useRef(null);
+ const actions = Array.from({length: typeof count === 'number' ? count : 0}, (_, i) => <Button key={i} onClick={e => {e.currentTarget.dataset.activations = String(Number(e.currentTarget.dataset.activations ?? 0) + 1)}}>Graph action {i + 1}</Button>);
+ const inspector = <GraphInspector title="Wrapped controls" onClose={() => {}}>{detailMode.startsWith("plain") ? (detailMode === "plain-short" ? "Short details." : "Long details. ".repeat(800)) : <><p>Selected record details.</p>{detailMode === "form" ? <Button>Detail action</Button> : null}{Array.from({length:detailMode === "short" ? 0 : 25}, (_, i) => <p key={i}>Detail row {i + 1}</p>)}</>}</GraphInspector>;
+ const graph = config.graphKind === 'relationship' ? <RelationshipGraph aria-label="Wrapped relationships" fullPage={config.fullPage ?? true} columns={['Sources','Records','Targets'].map((id, i) => ({id,label:id,nodes:Array.from({length:25},(_, n)=>({id:i+'-'+n,label:id+' '+n}))}))} relationships={[]} selectedNodeId="2-0" toolbar={count === 'search' ? undefined : {leading:<Button>Context</Button>,actions}} inspector={inspector}/> : <GraphWorkspace aria-label="Wrapped workspace" fullPage={config.fullPage ?? true} toolbar={count === 0 ? undefined : <GraphToolbar leading={<Button>Context</Button>} center={<input aria-label="Search records"/>} actions={actions}/>} inspector={inspector} selectedControlRef={selectedControlRef}><GraphViewport aria-label="Wrapped viewport" canvasWidth={2200} canvasHeight={1800}><GraphNode ref={selectedControlRef} aria-label="Selected record" title="Selected record" x={900} y={240} selected/></GraphViewport></GraphWorkspace>;
+ return <main data-controls={count} data-detail-mode={detailMode}><h1 className="od-visually-hidden">Wrapped controls fixture</h1><PageSurface edgeToEdge={config.edge} style={{height:'100%'}}><PageSurface edgeToEdge={config.edge} style={{height:'100%'}}>{graph}</PageSurface></PageSurface></main>;
+}
 function SvgInspectorFixture() {
  const config = window.fixture;
  const [open, setOpen] = useState(config.initiallyOpen ?? false);
@@ -68,7 +80,7 @@ function Fixture() {
  const graph = config.kind === 'relationship' ? relationship : config.kind === 'toolbar' ? toolbar : workspace;
  return <main><h1 className="od-visually-hidden">Graph fixture</h1><PageSurface edgeToEdge={config.outerEdge} style={{height:'100%'}}><PageSurface edgeToEdge={config.edge} style={{height:'100%'}}>{graph}</PageSurface></PageSurface>{config.inspectorToast && open ? <Toast style={{position:'fixed',right:8,bottom:8}}>Record saved</Toast> : null}</main>;
 }
-createRoot(document.getElementById('root')).render(window.fixture.kind === 'svg-focus' ? <SvgInspectorFixture/> : <Fixture/>);
+createRoot(document.getElementById('root')).render(window.fixture.kind === 'wrapped-controls' ? <WrappedControlsFixture/> : window.fixture.kind === 'svg-focus' ? <SvgInspectorFixture/> : <Fixture/>);
 `;
 const bundle = await build({
   bundle: true,
@@ -977,7 +989,450 @@ async function checkSvgInspectorFocus() {
     await context.close();
   }
 }
+async function checkWrappedControls() {
+  const context = await browser.newContext({
+    viewport: { width: 1100, height: 800 },
+  });
+  const page = await context.newPage();
+  try {
+    const changeControls = async (value) => {
+      await page.evaluate((value) => window.setWrappedControls(value), value);
+      await page.waitForFunction(
+        (value) =>
+          document.querySelector("main").dataset.controls === String(value),
+        value,
+      );
+    };
+    const geometry = () =>
+      page.evaluate(() => {
+        const host = document.querySelector(
+          ".od-page-surface .od-page-surface",
+        ).firstElementChild;
+        const inspector = host.querySelector(".od-graph-inspector");
+        const row = host.querySelector(
+          ":scope > .od-graph-toolbar, :scope > .od-relationship-graph-search",
+        );
+        const viewport = host.querySelector(
+          ".od-graph-viewport, .od-relationship-graph-viewport",
+        );
+        const rect = (el) => {
+          const r = el.getBoundingClientRect();
+          return {
+            top: r.top,
+            bottom: r.bottom,
+            left: r.left,
+            right: r.right,
+            width: r.width,
+            height: r.height,
+          };
+        };
+        const hostRect = rect(host);
+        const rowRect = row ? rect(row) : null;
+        const rem = parseFloat(
+          getComputedStyle(document.documentElement).fontSize,
+        );
+        return {
+          host: hostRect,
+          inspector: rect(inspector),
+          row: rowRect,
+          viewport: rect(viewport),
+          boardWidth:
+            host
+              .querySelector(".od-relationship-graph-board")
+              ?.getBoundingClientRect().width ?? null,
+          mode: inspector.dataset.mode,
+          rem,
+          borderTop: host.clientTop,
+          borderLeft: host.clientLeft,
+          borderBottom: parseFloat(getComputedStyle(host).borderBottomWidth),
+          rowLeft: row ? parseFloat(getComputedStyle(row).paddingLeft) : 0,
+          rowRight: row ? parseFloat(getComputedStyle(row).paddingRight) : 0,
+          expectedTop: Math.max(
+            hostRect.top + host.clientTop + 4.75 * rem,
+            (rowRect?.bottom ?? hostRect.top) + 0.875 * rem,
+          ),
+          overflow:
+            document.scrollingElement.scrollHeight >
+              document.scrollingElement.clientHeight ||
+            document.scrollingElement.scrollWidth >
+              document.scrollingElement.clientWidth,
+        };
+      });
+    const checkOverlay = async () => {
+      await page.waitForFunction(() => {
+        const host = document.querySelector(
+          ".od-page-surface .od-page-surface",
+        ).firstElementChild;
+        const inspector = host.querySelector(".od-graph-inspector");
+        const row = host.querySelector(
+          ":scope > .od-graph-toolbar, :scope > .od-relationship-graph-search",
+        );
+        const rem = parseFloat(
+          getComputedStyle(document.documentElement).fontSize,
+        );
+        const expected = Math.max(
+          host.getBoundingClientRect().top + host.clientTop + 4.75 * rem,
+          (row?.getBoundingClientRect().bottom ??
+            host.getBoundingClientRect().top) +
+            0.875 * rem,
+        );
+        return (
+          inspector.dataset.mode === "overlay" &&
+          Math.abs(inspector.getBoundingClientRect().top - expected) <= 1
+        );
+      });
+      const m = await geometry();
+      near(
+        m.inspector.top,
+        m.expectedTop,
+        "Overlay starts after the complete rendered controls",
+      );
+      near(
+        m.inspector.bottom,
+        m.host.bottom - m.borderBottom - 0.875 * m.rem,
+        "Overlay keeps its bottom inset",
+      );
+      near(m.inspector.width, 21 * m.rem, "Overlay keeps its width");
+      assert.equal(
+        m.overflow,
+        false,
+        "Control wrapping does not grow the document",
+      );
+      return m;
+    };
+    const checkActions = async () => {
+      const buttons = page.locator(".od-graph-toolbar button");
+      for (const button of await buttons.all()) {
+        assert.equal(
+          await button.evaluate((el) => {
+            const r = el.getBoundingClientRect();
+            return el.contains(
+              document.elementFromPoint(
+                r.left + r.width / 2,
+                r.top + r.height / 2,
+              ),
+            );
+          }),
+          true,
+          "Each toolbar action is pointer reachable",
+        );
+        await button.focus();
+        assert.equal(
+          await button.evaluate((el) => document.activeElement === el),
+          true,
+          "Each toolbar action accepts keyboard focus",
+        );
+        if ((await button.textContent()).startsWith("Graph action")) {
+          const before = Number(
+            (await button.getAttribute("data-activations")) ?? 0,
+          );
+          await page.keyboard.press("Enter");
+          await button.click();
+          assert.equal(
+            Number(await button.getAttribute("data-activations")),
+            before + 2,
+            "Keyboard and pointer activate the same action",
+          );
+        }
+      }
+    };
+    for (const graphKind of ["workspace", "relationship"]) {
+      for (const edge of [true, false]) {
+        for (const fullPage of [true, false]) {
+          await page.setViewportSize({ width: 1100, height: 800 });
+          await load(page, {
+            kind: "wrapped-controls",
+            graphKind,
+            edge,
+            fullPage,
+            controls: 1,
+          });
+          const initial = await checkOverlay();
+          await changeControls(4);
+          const wrapped = await checkOverlay();
+          assert.ok(
+            wrapped.row.height > initial.row.height,
+            "Actions wrap into more rows",
+          );
+          if (graphKind === "relationship" && !fullPage) {
+            near(
+              wrapped.host.height - initial.host.height,
+              wrapped.row.height - initial.row.height,
+              "Standalone relationship controls retain natural flow height",
+            );
+            near(
+              wrapped.inspector.height,
+              initial.inspector.height,
+              "The overlay adds no standalone height",
+            );
+          } else {
+            assert.ok(
+              wrapped.inspector.height < initial.inspector.height,
+              "Wrapped controls leave less inspector height",
+            );
+            near(
+              wrapped.host.height,
+              initial.host.height,
+              "Wrapping keeps the host height",
+            );
+          }
+          near(
+            wrapped.viewport.width,
+            initial.viewport.width,
+            "Wrapping keeps the graph width",
+          );
+          if (wrapped.boardWidth !== null)
+            near(
+              wrapped.boardWidth,
+              initial.boardWidth,
+              "Overlay scroll space keeps the board width",
+            );
+          await checkActions();
+          if (edge && fullPage) {
+            const selected = page
+              .locator(
+                ".od-graph-viewport [data-selected='true'], .od-relationship-graph-viewport [data-selected='true']",
+              )
+              .first();
+            const selectedBounds = await selected.boundingBox();
+            assert.ok(
+              selectedBounds.x + selectedBounds.width <=
+                wrapped.inspector.left + 1,
+              `${graphKind}: selected control stays beside the overlay`,
+            );
+            assert.equal(
+              await selected.evaluate((el) => {
+                const r = el.getBoundingClientRect();
+                return el.contains(
+                  document.elementFromPoint(
+                    r.left + r.width / 2,
+                    r.top + r.height / 2,
+                  ),
+                );
+              }),
+              true,
+              "The selected control is pointer reachable after local scrolling",
+            );
+            await page.screenshot({
+              path: `${shots}/wrapped-${graphKind}-1100.png`,
+            });
+            const viewport = page.locator(
+              ".od-graph-viewport, .od-relationship-graph-viewport",
+            );
+            const scroll = await viewport.evaluate((el) => {
+              el.scrollTop = 200;
+              return el.scrollTop;
+            });
+            assert.ok(
+              scroll > 0,
+              "The graph keeps local scroll below wrapped controls",
+            );
+          }
+          await page.setViewportSize({ width: 950, height: 800 });
+          await checkOverlay();
+          await changeControls(1);
+          await checkOverlay();
+          await page.setViewportSize({ width: 1100, height: 800 });
+          const restored = await checkOverlay();
+          near(
+            restored.inspector.top,
+            initial.inspector.top,
+            "Removing actions restores the original inset",
+          );
+          await changeControls(graphKind === "workspace" ? 0 : "search");
+          const withoutActions = await checkOverlay();
+          if (graphKind === "workspace")
+            near(
+              withoutActions.inspector.top,
+              withoutActions.host.top +
+                withoutActions.borderTop +
+                4.75 * withoutActions.rem,
+              "Absent controls keep the default inset",
+            );
+          else
+            assert.ok(withoutActions.row, "Standalone search remains measured");
+          await changeControls(4);
+          await checkOverlay();
+        }
+      }
+      await page.setViewportSize({ width: 2200, height: 1400 });
+      await load(
+        page,
+        { kind: "wrapped-controls", graphKind, edge: true, controls: 4 },
+        [90, 120],
+      );
+      await page.evaluate(() => {
+        document.documentElement.style.fontSize = "200%";
+      });
+      await checkOverlay();
+      await checkActions();
+      for (const direction of ["ltr", "rtl", "ltr", "rtl"]) {
+        await page.evaluate((value) => {
+          document.documentElement.dir = value;
+        }, direction);
+        const m = await checkOverlay();
+        near(m.rowLeft, 90, "Physical left safe area stays on the left");
+        near(m.rowRight, 120, "Physical right safe area stays on the right");
+        const selected = page
+          .locator(
+            ".od-graph-viewport [data-selected='true'], .od-relationship-graph-viewport [data-selected='true']",
+          )
+          .first();
+        await page.waitForFunction(
+          (control) => {
+            const viewport = control
+              .closest(".od-graph-viewport, .od-relationship-graph-viewport")
+              .getBoundingClientRect();
+            const inspector = document
+              .querySelector(".od-graph-inspector")
+              .getBoundingClientRect();
+            const node = control.getBoundingClientRect();
+            const overlayOnLeft =
+              inspector.left < viewport.left + viewport.width / 2;
+            return (
+              node.left >=
+                (overlayOnLeft ? inspector.right : viewport.left) - 1 &&
+              node.right <=
+                (overlayOnLeft ? viewport.right : inspector.left) + 1
+            );
+          },
+          await selected.elementHandle(),
+          { timeout: 1000 },
+        );
+        assert.equal(
+          await selected.evaluate((el) => {
+            const r = el.getBoundingClientRect();
+            return el.contains(
+              document.elementFromPoint(
+                r.left + r.width / 2,
+                r.top + r.height / 2,
+              ),
+            );
+          }),
+          true,
+          `${graphKind}: selected control stays pointer reachable after changing to ${direction}`,
+        );
+      }
+      await page.screenshot({ path: `${shots}/wrapped-${graphKind}-200.png` });
+      await page.evaluate(() => {
+        document.documentElement.style.fontSize = "100%";
+        document.documentElement.dir = "ltr";
+      });
+      for (const [mode, width] of [
+        ["split", 1440],
+        ["sheet", 390],
+        ["overlay", 1100],
+      ]) {
+        await page.setViewportSize({ width, height: 800 });
+        await page.waitForFunction(
+          (expected) =>
+            document.querySelector(".od-graph-inspector").dataset.mode ===
+            expected,
+          mode,
+        );
+        const m = await geometry();
+        if (mode === "overlay") await checkOverlay();
+        else if (mode === "split") {
+          near(
+            m.inspector.top,
+            m.host.top,
+            "Split inspector keeps its top edge",
+          );
+          near(
+            m.inspector.bottom,
+            m.host.bottom,
+            "Split inspector keeps full height",
+          );
+        } else {
+          near(m.inspector.left, 12, "Sheet keeps its left inset");
+          near(m.inspector.right, width - 12, "Sheet keeps its right inset");
+        }
+        assert.equal(
+          m.overflow,
+          false,
+          "Mode changes keep the document bounded",
+        );
+        const content = page.locator(".od-graph-inspector-content");
+        await page.waitForFunction(
+          () =>
+            document.querySelector(".od-graph-inspector-content").tabIndex ===
+            0,
+        );
+        await page.getByRole("button", { name: "Close inspector" }).focus();
+        await page.keyboard.press("Tab");
+        assert.equal(
+          await content.evaluate((el) => el === document.activeElement),
+          true,
+          "Text-only scrolling follows Close in keyboard order",
+        );
+        await page.keyboard.press("PageDown");
+        await page.waitForFunction(
+          () =>
+            document.querySelector(".od-graph-inspector-content").scrollTop > 0,
+        );
+        assert.deepEqual(
+          (await new AxeBuilder({ page }).analyze()).violations,
+          [],
+        );
+      }
+      for (const detailMode of [
+        "short",
+        "form",
+        "text",
+        "plain-short",
+        "plain-long",
+        "plain-short",
+      ]) {
+        const content = page.locator(".od-graph-inspector-content");
+        if (
+          detailMode === "plain-short" &&
+          (await content.getAttribute("tabindex")) === "0"
+        )
+          await content.focus();
+        const hadContentFocus = await content.evaluate(
+          (el) => document.activeElement === el,
+        );
+        await page.evaluate(
+          (value) => window.setWrappedDetailMode(value),
+          detailMode,
+        );
+        await page.waitForFunction(
+          (value) =>
+            document.querySelector("main").dataset.detailMode === value,
+          detailMode,
+        );
+        await page.waitForFunction(
+          (value) =>
+            (document.querySelector(".od-graph-inspector-content").tabIndex ===
+              0) ===
+            ["text", "plain-long"].includes(value),
+          detailMode,
+        );
+        if (hadContentFocus)
+          assert.equal(
+            await content.evaluate((el) => document.activeElement === el),
+            true,
+            "Removing a content tab stop preserves current focus",
+          );
+        if (detailMode === "form") {
+          await page.getByRole("button", { name: "Close inspector" }).focus();
+          await page.keyboard.press("Tab");
+          assert.equal(
+            await page
+              .getByRole("button", { name: "Detail action" })
+              .evaluate((el) => el === document.activeElement),
+            true,
+            "Form controls keep their original Tab order",
+          );
+        }
+      }
+    }
+  } finally {
+    await context.close();
+  }
+}
 try {
+  await checkWrappedControls();
   await checkSvgInspectorFocus();
   await checkInspectorPopup();
   await checkInspectorFrame();
@@ -1131,7 +1586,11 @@ try {
       assert.equal(geometry.mode, "overlay");
       near(geometry.width, 336, "Overlay width");
       near(geometry.right, width - 14, "Overlay inset");
-      near(geometry.top, 76, "Overlay top");
+      near(
+        geometry.top,
+        Math.max(76, (await measure(page)).toolbar.bottom + 14),
+        "Overlay top follows the rendered controls",
+      );
       near(geometry.bottom, height - 14, "Overlay bottom");
     } else {
       assert.equal(geometry.mode, "sheet");
