@@ -166,6 +166,65 @@ do not load data, store credentials, make authorization decisions, accept
 executable queries, or own host routes. Host applications keep service keys in
 their backends and supply current authorized data and controlled actions.
 
+## Phone navigation
+
+`MobileNavigation` keeps the existing `items` and `onSelect(id)` button API.
+An item with `href` uses a native `NavigationLink`. Set `active` for the
+current destination. The phone row and optional surface show its active
+state and `aria-current="page"`.
+
+Supply `surface` to add one button that opens ordered destinations and
+account actions. The host supplies all copy and identity values. The context
+has no Tab stop. Links keep the supplied order, followed by account actions
+and the close button. The first destination receives initial focus. Close and
+Escape return focus to the opening button when it is available. The surface
+uses one scroll region so long labels and account actions stay reachable. It
+stays open and visible when the window changes to a desktop width.
+
+```tsx
+<MobileNavigation
+  aria-label="Phone navigation"
+  items={destinations.slice(0, 2)}
+  onNavigate={(destination, event) => {
+    event.preventDefault();
+    navigate(destination.href);
+  }}
+  surface={{
+    label: "All destinations",
+    icon: <Icon name="menu" />,
+    applicationName: "Example application",
+    context: { label: "Administrator", value: displayName },
+    accountActions: <Button onClick={signOut}>Sign out</Button>,
+    closeLabel: "Close navigation",
+    items: destinations,
+  }}
+/>
+```
+
+Each destination has `id`, `label`, `icon`, and `href`, with optional `active`
+and `badge`. `onNavigate(destination, event)` runs only for an unmodified
+primary activation. It runs after the native dialog closes and disables its
+later focus return. Call `event.preventDefault()` for client navigation. Omit
+`onNavigate` for normal browser navigation. Modified and middle clicks keep
+native browser behavior and leave the surface open. The host owns URLs,
+query policy, route readiness, and focus on the destination heading. Put the
+heading in the programmatic focus order with `tabIndex={-1}`. Account actions
+remain host-owned. Supply noninteractive labels and icons, and put account
+controls only in `accountActions`.
+
+`ApplicationShell` uses the dynamic viewport and measures the actual bottom
+row, including wrapped labels and the bottom safe area. It reserves that
+height once and exposes `--od-application-navigation-height` to route content.
+A bounded full-page route can use
+`height: calc(100dvh - var(--od-application-navigation-height, 0px))` when it
+omits a top bar. Subtract any route-owned controls within the route layout.
+The measured value is zero while the phone row is hidden on desktop.
+
+`Dialog.restoreFocusOnClose` defaults to `true`. Set it to `false` only when
+the host takes focus after a route change. Close the dialog before the host
+moves focus. The phone navigation supplies this handoff. Existing `Dialog`
+and `ConfirmationDialog` callers keep the default focus-return behavior.
+
 ## Forms and input
 
 `FormField`, `FieldHelp`, and `FieldError` connect a label, help text, an error,

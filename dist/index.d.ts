@@ -89,7 +89,7 @@ export { clampGraphPosition, clampGraphViewport, fitGraphViewport, graphPosition
 export { IconButton, type IconButtonProps } from "./components/IconButton.js";
 export { NavigationItem, type NavigationItemProps, } from "./components/NavigationItem.js";
 export { NavigationLink, type NavigationLinkProps, } from "./components/NavigationLink.js";
-export { MobileNavigation, type MobileNavigationItem, type MobileNavigationProps, } from "./components/MobileNavigation.js";
+export { MobileNavigation, type MobileNavigationDestination, type MobileNavigationSurface, type MobileNavigationItem, type MobileNavigationProps, } from "./components/MobileNavigation.js";
 export { MediaLightbox, type MediaLightboxProps, } from "./components/MediaLightbox.js";
 export { PageHeading, type PageHeadingProps, } from "./components/PageHeading.js";
 export { Panel, PanelHeader, type PanelHeaderProps, type PanelProps, } from "./components/Panel.js";

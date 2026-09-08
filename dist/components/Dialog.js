@@ -41,11 +41,11 @@ function canReceiveReturnFocus(target, dialog) {
 function isReturnFocusCandidate(target, dialog) {
     return Boolean(target?.isConnected && !dialog.contains(target));
 }
-function restoreFocus(target) {
+function restoreFocus(target, shouldRestore) {
     if (!canReceiveReturnFocus(target))
         return;
     const apply = () => {
-        if (!canReceiveReturnFocus(target))
+        if (!shouldRestore() || !canReceiveReturnFocus(target))
             return;
         const active = document.activeElement;
         const activeDialog = active instanceof HTMLElement
@@ -96,12 +96,13 @@ function containTabFocus(dialog, event) {
     }
 }
 /** A controlled native modal with fixed framing and local body scrolling. */
-export function Dialog({ actions, actionsClassName, "aria-describedby": suppliedDescribedBy, "aria-label": ariaLabel, "aria-labelledby": suppliedLabelledBy, bodyClassName, children, className, closeDisabled = false, closeLabel = "Close dialog", description, eyebrow, headerClassName, headingLevel = "h2", initialFocusRef, onClose, open, returnFocusRef, showCloseButton = true, size = "default", title, ...props }) {
+export function Dialog({ actions, actionsClassName, "aria-describedby": suppliedDescribedBy, "aria-label": ariaLabel, "aria-labelledby": suppliedLabelledBy, bodyClassName, children, className, closeDisabled = false, closeLabel = "Close dialog", description, eyebrow, headerClassName, headingLevel = "h2", initialFocusRef, onClose, open, returnFocusRef, restoreFocusOnClose = true, showCloseButton = true, size = "default", title, ...props }) {
     const titleId = useId();
     const descriptionId = useId();
     const dialogRef = useRef(null);
     const triggerRef = useRef(null);
     const latestReturnFocusTargetRef = useRef(null);
+    const restoreFocusOnCloseRef = useRef(restoreFocusOnClose);
     const wasOpenRef = useRef(false);
     const Heading = headingLevel;
     const requestClose = useCallback(() => {
@@ -115,6 +116,7 @@ export function Dialog({ actions, actionsClassName, "aria-describedby": supplied
         .filter(Boolean)
         .join(" ");
     useLayoutEffect(() => {
+        restoreFocusOnCloseRef.current = restoreFocusOnClose;
         if (!open)
             return;
         if (!wasOpenRef.current)
@@ -148,19 +150,23 @@ export function Dialog({ actions, actionsClassName, "aria-describedby": supplied
         else if (wasOpenRef.current) {
             closeModal(dialog);
             const latestTarget = latestReturnFocusTargetRef.current;
-            restoreFocus(canReceiveReturnFocus(latestTarget, dialog)
-                ? latestTarget
-                : triggerRef.current);
+            if (restoreFocusOnCloseRef.current)
+                restoreFocus(canReceiveReturnFocus(latestTarget, dialog)
+                    ? latestTarget
+                    : triggerRef.current, () => restoreFocusOnCloseRef.current);
         }
         wasOpenRef.current = open;
     }, [initialFocusRef, open, returnFocusRef]);
     useLayoutEffect(() => () => {
+        if (!wasOpenRef.current)
+            return;
         const dialog = dialogRef.current;
         closeModal(dialog);
         const latestTarget = latestReturnFocusTargetRef.current;
-        restoreFocus(canReceiveReturnFocus(latestTarget, dialog ?? undefined)
-            ? latestTarget
-            : triggerRef.current);
+        if (restoreFocusOnCloseRef.current)
+            restoreFocus(canReceiveReturnFocus(latestTarget, dialog ?? undefined)
+                ? latestTarget
+                : triggerRef.current, () => restoreFocusOnCloseRef.current);
     }, []);
     useLayoutEffect(() => {
         const dialog = dialogRef.current;

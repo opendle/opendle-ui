@@ -1,3 +1,4 @@
+import { checkMobileNavigation } from "./mobile-navigation-browser.mjs";
 import { strict as assert } from "node:assert";
 import { existsSync } from "node:fs";
 import { readFile } from "node:fs/promises";
@@ -200,6 +201,7 @@ async function loadFixture(page) {
 }
 
 try {
+  await checkMobileNavigation(browser);
   const desktopContext = await browser.newContext({
     viewport: { width: 1280, height: 800 },
   });

@@ -1,5 +1,7 @@
 import {
   useId,
+  useLayoutEffect,
+  useRef,
   type HTMLAttributes,
   type ReactElement,
   type ReactNode,
@@ -26,10 +28,30 @@ export function ApplicationShell({
   topbar,
   ...props
 }: ApplicationShellProps) {
+  const shellRef = useRef<HTMLDivElement>(null);
+  const navigationRef = useRef<HTMLDivElement>(null);
+  useLayoutEffect(() => {
+    const shell = shellRef.current;
+    const navigation = navigationRef.current;
+    if (!shell || !navigation) return;
+    const measure = () => {
+      shell.style.setProperty(
+        "--od-application-navigation-height",
+        `${String(navigation.getBoundingClientRect().height)}px`,
+      );
+    };
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(navigation);
+    return () => {
+      observer.disconnect();
+    };
+  }, []);
   const { className: mainClassName, ...restMainProps } = mainProps ?? {};
   return (
     <div
       {...props}
+      ref={shellRef}
       className={["od-application-shell", className].filter(Boolean).join(" ")}
     >
       {sidebar}
@@ -44,7 +66,9 @@ export function ApplicationShell({
           {children}
         </main>
       </div>
-      <div className="od-application-mobile-navigation">{mobileNavigation}</div>
+      <div className="od-application-mobile-navigation" ref={navigationRef}>
+        {mobileNavigation}
+      </div>
     </div>
   );
 }

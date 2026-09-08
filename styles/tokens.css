@@ -3710,7 +3710,7 @@ samp {
 .od-application-shell {
   display: grid;
   grid-template-columns: 14rem minmax(0, 1fr);
-  min-height: 100vh;
+  min-height: 100dvh;
   background: var(--od-color-background);
 }
 
@@ -3734,7 +3734,7 @@ samp {
   top: 0;
   display: flex;
   flex-direction: column;
-  height: 100vh;
+  height: 100dvh;
   padding: 1.375rem var(--od-space-md) 1.125rem;
   overflow: hidden;
   color: var(--od-color-surface-raised);
@@ -4414,6 +4414,33 @@ samp {
 .od-dialog::backdrop {
   background: color-mix(in srgb, var(--od-color-sidebar) 74%, transparent);
   backdrop-filter: blur(0.125rem);
+}
+
+.od-mobile-navigation-surface[open] {
+  display: block;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+
+.od-mobile-navigation-surface .od-dialog-body {
+  overflow: visible;
+}
+
+.od-mobile-navigation-surface .od-application-navigation {
+  display: grid;
+  height: auto;
+  overflow: visible;
+  gap: var(--od-space-xs);
+}
+
+.od-mobile-navigation-surface .od-navigation-item {
+  padding-block: var(--od-space-sm);
+  overflow-wrap: anywhere;
+}
+
+.od-mobile-navigation-surface .od-navigation-item[data-active="true"] {
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
 }
 
 .od-dialog-header {
@@ -6184,6 +6211,7 @@ samp {
 
   .od-application-shell {
     display: block;
+    padding-bottom: var(--od-application-navigation-height, 4.25rem);
   }
 
   .od-application-sidebar {
@@ -6199,8 +6227,8 @@ samp {
     gap: var(--od-space-xs);
   }
 
-  .od-application-main {
-    padding-bottom: calc(4.25rem + env(safe-area-inset-bottom));
+  .od-application-column {
+    min-height: calc(100dvh - var(--od-application-navigation-height, 4.25rem));
   }
 
   .od-application-mobile-navigation {
@@ -6215,6 +6243,7 @@ samp {
   .od-application-mobile-navigation .od-mobile-navigation {
     display: grid;
     grid-auto-columns: minmax(4.5rem, 1fr);
+    max-height: 50dvh;
     grid-auto-flow: column;
     min-height: calc(4.25rem + env(safe-area-inset-bottom));
     padding: 0.3125rem 0.3125rem env(safe-area-inset-bottom);
@@ -6231,7 +6260,7 @@ samp {
     backdrop-filter: blur(0.75rem);
   }
 
-  .od-application-mobile-navigation .od-mobile-navigation button {
+  .od-application-mobile-navigation .od-mobile-navigation > :is(button, a) {
     position: relative;
     display: grid;
     min-width: 0;
@@ -6249,19 +6278,27 @@ samp {
 
   .od-application-mobile-navigation
     .od-mobile-navigation
-    button[data-active="true"] {
+    > :is(button, a)[data-active="true"] {
+    text-decoration: underline;
+    text-underline-offset: 0.2em;
     color: var(--od-color-foreground);
     background: var(--od-color-lime-soft);
   }
 
-  .od-application-mobile-navigation .od-mobile-navigation button > span {
+  .od-application-mobile-navigation
+    .od-mobile-navigation
+    > :is(button, a)
+    > span {
     max-width: 100%;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    overflow-wrap: anywhere;
+    white-space: normal;
+    text-align: center;
   }
 
-  .od-application-mobile-navigation .od-mobile-navigation button > i {
+  .od-application-mobile-navigation
+    .od-mobile-navigation
+    > :is(button, a)
+    > :is(i, b) {
     position: absolute;
     top: 0.1875rem;
     left: calc(50% + 0.5rem);

@@ -427,6 +427,8 @@ export {
 } from "./components/NavigationLink.js";
 export {
   MobileNavigation,
+  type MobileNavigationDestination,
+  type MobileNavigationSurface,
   type MobileNavigationItem,
   type MobileNavigationProps,
 } from "./components/MobileNavigation.js";

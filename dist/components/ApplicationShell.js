@@ -1,11 +1,28 @@
 import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
-import { useId, } from "react";
+import { useId, useLayoutEffect, useRef, } from "react";
 /** A responsive application frame with caller-owned content and controls. */
 export function ApplicationShell({ children, className, mainProps, mobileNavigation, sidebar, topbar, ...props }) {
+    const shellRef = useRef(null);
+    const navigationRef = useRef(null);
+    useLayoutEffect(() => {
+        const shell = shellRef.current;
+        const navigation = navigationRef.current;
+        if (!shell || !navigation)
+            return;
+        const measure = () => {
+            shell.style.setProperty("--od-application-navigation-height", `${String(navigation.getBoundingClientRect().height)}px`);
+        };
+        measure();
+        const observer = new ResizeObserver(measure);
+        observer.observe(navigation);
+        return () => {
+            observer.disconnect();
+        };
+    }, []);
     const { className: mainClassName, ...restMainProps } = mainProps ?? {};
-    return (_jsxs("div", { ...props, className: ["od-application-shell", className].filter(Boolean).join(" "), children: [sidebar, _jsxs("div", { className: "od-application-column", children: [topbar, _jsx("main", { ...restMainProps, className: ["od-application-main", mainClassName]
+    return (_jsxs("div", { ...props, ref: shellRef, className: ["od-application-shell", className].filter(Boolean).join(" "), children: [sidebar, _jsxs("div", { className: "od-application-column", children: [topbar, _jsx("main", { ...restMainProps, className: ["od-application-main", mainClassName]
                             .filter(Boolean)
-                            .join(" "), children: children })] }), _jsx("div", { className: "od-application-mobile-navigation", children: mobileNavigation })] }));
+                            .join(" "), children: children })] }), _jsx("div", { className: "od-application-mobile-navigation", ref: navigationRef, children: mobileNavigation })] }));
 }
 /** A sticky sidebar with slots for host-owned brand, context, and navigation. */
 export function ApplicationSidebar({ brand, className, context, footer, navigation, ...props }) {

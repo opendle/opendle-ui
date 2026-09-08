@@ -31,6 +31,8 @@ export interface DialogProps extends Omit<
   readonly closeDisabled?: boolean;
   readonly showCloseButton?: boolean;
   readonly initialFocusRef?: RefObject<HTMLElement | null>;
+  /** Set false when the host takes focus after a route change. */
+  readonly restoreFocusOnClose?: boolean;
   readonly returnFocusRef?: RefObject<HTMLElement | null>;
   readonly headerClassName?: string;
   readonly bodyClassName?: string;
@@ -90,10 +92,13 @@ function isReturnFocusCandidate(
   return Boolean(target?.isConnected && !dialog.contains(target));
 }
 
-function restoreFocus(target: HTMLElement | null) {
+function restoreFocus(
+  target: HTMLElement | null,
+  shouldRestore: () => boolean,
+) {
   if (!canReceiveReturnFocus(target)) return;
   const apply = () => {
-    if (!canReceiveReturnFocus(target)) return;
+    if (!shouldRestore() || !canReceiveReturnFocus(target)) return;
     const active = document.activeElement;
     const activeDialog =
       active instanceof HTMLElement
@@ -177,6 +182,7 @@ export function Dialog({
   onClose,
   open,
   returnFocusRef,
+  restoreFocusOnClose = true,
   showCloseButton = true,
   size = "default",
   title,
@@ -187,6 +193,7 @@ export function Dialog({
   const dialogRef = useRef<HTMLDialogElement>(null);
   const triggerRef = useRef<HTMLElement | null>(null);
   const latestReturnFocusTargetRef = useRef<HTMLElement | null>(null);
+  const restoreFocusOnCloseRef = useRef(restoreFocusOnClose);
   const wasOpenRef = useRef(false);
   const Heading = headingLevel;
   const requestClose = useCallback(() => {
@@ -200,6 +207,7 @@ export function Dialog({
     .join(" ");
 
   useLayoutEffect(() => {
+    restoreFocusOnCloseRef.current = restoreFocusOnClose;
     if (!open) return;
     if (!wasOpenRef.current) latestReturnFocusTargetRef.current = null;
     const target = returnFocusRef?.current;
@@ -230,25 +238,30 @@ export function Dialog({
     } else if (wasOpenRef.current) {
       closeModal(dialog);
       const latestTarget = latestReturnFocusTargetRef.current;
-      restoreFocus(
-        canReceiveReturnFocus(latestTarget, dialog)
-          ? latestTarget
-          : triggerRef.current,
-      );
+      if (restoreFocusOnCloseRef.current)
+        restoreFocus(
+          canReceiveReturnFocus(latestTarget, dialog)
+            ? latestTarget
+            : triggerRef.current,
+          () => restoreFocusOnCloseRef.current,
+        );
     }
     wasOpenRef.current = open;
   }, [initialFocusRef, open, returnFocusRef]);
 
   useLayoutEffect(
     () => () => {
+      if (!wasOpenRef.current) return;
       const dialog = dialogRef.current;
       closeModal(dialog);
       const latestTarget = latestReturnFocusTargetRef.current;
-      restoreFocus(
-        canReceiveReturnFocus(latestTarget, dialog ?? undefined)
-          ? latestTarget
-          : triggerRef.current,
-      );
+      if (restoreFocusOnCloseRef.current)
+        restoreFocus(
+          canReceiveReturnFocus(latestTarget, dialog ?? undefined)
+            ? latestTarget
+            : triggerRef.current,
+          () => restoreFocusOnCloseRef.current,
+        );
     },
     [],
   );
