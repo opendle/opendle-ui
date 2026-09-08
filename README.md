@@ -40,6 +40,10 @@ edge-to-edge mode. `GraphViewport` can center an intrinsic tree canvas while
 free-position canvases keep start alignment. `GraphInspector` manages initial
 focus, Escape close, and focus return to the exact opening control. Its host
 width selects a split panel, a non-modal overlay, or a modal bottom sheet.
+Close and Escape request the host's `onClose` behavior. The host can keep the
+inspector mounted during a pending write or a discard confirmation. The shared
+component keeps its modal state and focus until the host removes it. Removal
+uses the current return-focus reference or a connected graph fallback.
 `GraphInspectorFacts`, `GraphInspectorFact`, `GraphInspectorSection`,
 `GraphInspectorRows`, `GraphInspectorRow`, and `GraphInspectorNotice` supply
 the compact semantic content structure. A host can change the inspector

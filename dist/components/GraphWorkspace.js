@@ -489,10 +489,9 @@ function restoreInspectorFocus(target) {
         if (target.isConnected)
             target.focus({ preventScroll: true });
     };
+    apply();
     if (typeof requestAnimationFrame === "function")
         requestAnimationFrame(() => requestAnimationFrame(apply));
-    else
-        apply();
 }
 function findInspectorFocusFallback(inspector) {
     const host = inspector.parentElement?.closest(".od-graph-workspace, .od-relationship-graph");
@@ -786,32 +785,34 @@ export function GraphInspector({ activationKey, title, eyebrow, icon, actions, o
     const inspectorRef = useRef(null);
     const headingRef = useRef(null);
     const { hosted, mode } = useGraphInspectorMode(inspectorRef, headingRef);
-    const capturedReturnFocusRef = useRef(null);
-    const closeReturnFocusRef = useRef(null);
-    const latestSuppliedReturnFocusRef = useRef(null);
+    const focusStateRef = useRef({ capturedTarget: null, latestSuppliedTarget: null, generation: 0 });
     useLayoutEffect(() => {
+        const focusState = focusStateRef.current;
         const target = suppliedReturnFocusRef?.current;
         if (!target?.isConnected)
             return;
-        const previousTarget = latestSuppliedReturnFocusRef.current;
-        latestSuppliedReturnFocusRef.current = target;
+        const previousTarget = focusState.latestSuppliedTarget;
+        focusState.latestSuppliedTarget = target;
         const inspector = inspectorRef.current;
         if (previousTarget === null ||
             previousTarget === target ||
             !inspector ||
             inspector.contains(document.activeElement))
             return;
-        capturedReturnFocusRef.current = target;
+        focusState.capturedTarget = target;
         focusInspector(inspector, headingRef.current, initialFocusRef);
     });
     useLayoutEffect(() => {
         const inspector = inspectorRef.current;
         if (!inspector)
             return;
-        closeReturnFocusRef.current = null;
+        const focusState = focusStateRef.current;
+        focusState.generation += 1;
+        const focusGeneration = focusState.generation;
+        const hostReturnFocusRef = suppliedReturnFocusRef;
         const suppliedReturnFocus = suppliedReturnFocusRef?.current;
         if (suppliedReturnFocus?.isConnected) {
-            capturedReturnFocusRef.current = suppliedReturnFocus;
+            focusState.capturedTarget = suppliedReturnFocus;
         }
         else {
             const active = document.activeElement;
@@ -819,40 +820,29 @@ export function GraphInspector({ activationKey, title, eyebrow, icon, actions, o
                 active !== document.body &&
                 active !== document.documentElement &&
                 !inspector.contains(active)) {
-                capturedReturnFocusRef.current = active;
+                focusState.capturedTarget = active;
             }
         }
         focusInspector(inspector, headingRef.current, initialFocusRef);
         return () => {
-            const returnTarget = closeReturnFocusRef.current ??
-                latestSuppliedReturnFocusRef.current ??
-                capturedReturnFocusRef.current;
-            const element = inspector;
-            const apply = () => {
-                if (!element.isConnected)
-                    restoreInspectorFocus(returnTarget);
-            };
-            if (typeof requestAnimationFrame === "function")
-                requestAnimationFrame(apply);
-            else
-                apply();
+            const requestedReturnTarget = hostReturnFocusRef?.current ??
+                focusState.latestSuppliedTarget ??
+                focusState.capturedTarget;
+            const fallback = findInspectorFocusFallback(inspector);
+            // A request can be denied or await confirmation. Restore only after removal.
+            // Effect changes and Strict Mode cleanup keep the same connected inspector.
+            queueMicrotask(() => {
+                if (!inspector.isConnected &&
+                    focusState.generation === focusGeneration) {
+                    restoreInspectorFocus(requestedReturnTarget?.isConnected
+                        ? requestedReturnTarget
+                        : fallback);
+                }
+            });
         };
     }, [activationKey, initialFocusRef, suppliedReturnFocusRef]);
     function closeInspector() {
-        const requestedReturnTarget = suppliedReturnFocusRef?.current ?? capturedReturnFocusRef.current;
-        const returnTarget = requestedReturnTarget?.isConnected
-            ? requestedReturnTarget
-            : inspectorRef.current
-                ? findInspectorFocusFallback(inspectorRef.current)
-                : null;
-        closeReturnFocusRef.current = returnTarget;
-        const inspector = inspectorRef.current;
-        if (inspector && isModalDialog(inspector))
-            inspector.close();
         onClose?.();
-        if (returnTarget?.isConnected)
-            returnTarget.focus({ preventScroll: true });
-        restoreInspectorFocus(returnTarget);
     }
     const handleInspectorKeyboardRef = useRef(() => undefined);
     useLayoutEffect(() => {
