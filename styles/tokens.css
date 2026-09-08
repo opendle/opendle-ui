@@ -2103,6 +2103,35 @@ samp {
   color: var(--od-color-foreground);
 }
 
+.od-graph-toolbar .od-form-field,
+.od-graph-toolbar .od-form-field-requirement,
+.od-graph-toolbar .od-field-help {
+  color: inherit;
+}
+
+.od-graph-toolbar .od-field-error {
+  color: var(--od-color-coral);
+}
+
+.od-graph-toolbar
+  .od-form-field-control
+  > :where(input, select, textarea):focus-visible {
+  outline-color: var(--od-color-blue);
+}
+
+@media (forced-colors: active) {
+  .od-graph-toolbar .od-form-field,
+  .od-graph-toolbar .od-field-error {
+    color: CanvasText;
+  }
+
+  .od-graph-toolbar
+    .od-form-field-control
+    > :where(input, select, textarea):focus-visible {
+    outline-color: Highlight;
+  }
+}
+
 .od-graph-viewport-controls {
   display: flex;
   align-items: center;

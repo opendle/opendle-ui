@@ -1,6 +1,8 @@
 import { strict as assert } from "node:assert";
 import { existsSync } from "node:fs";
-import { readFile } from "node:fs/promises";
+import { mkdtemp, readFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import AxeBuilder from "@axe-core/playwright";
@@ -11,7 +13,7 @@ const repositoryRoot = fileURLToPath(new URL("..", import.meta.url));
 const fixtureSource = String.raw`
 import React, { StrictMode, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
-import { Button, GraphInspector, RelationshipGraph } from "./dist/index.js";
+import { Button, FormField, GraphInspector, GraphToolbar, GraphWorkspace, RelationshipGraph, SelectControl } from "./dist/index.js";
 
 const longLabel = "Record Alpha with a deliberately long label that must wrap inside its local node without increasing the page width";
 const longToolbarLabel = "Context-" + "unbroken".repeat(18);
@@ -276,8 +278,33 @@ function NonActionableGroupFixture() {
   );
 }
 
+function ToolbarFormFields() {
+  const [value, setValue] = useState("all");
+  return <>
+    <SelectControl label="Service context" requirement="required" help="Select a service." error="Select an available service." value={value} onChange={(event) => setValue(event.target.value)}>
+      <option value="all">All services</option>
+      <option value="one">Service one</option>
+    </SelectControl>
+    <SelectControl label="Unavailable service" requirement="optional" disabled value="all" onChange={() => {}}>
+      <option value="all">All services</option>
+    </SelectControl>
+    <FormField label="Service name" help="Use a clear name." requirement="optional">
+      <input defaultValue="Example service" />
+    </FormField>
+  </>;
+}
+
+function ToolbarFormsFixture() {
+  return <main>
+    <h1>Graph toolbar forms</h1>
+    <GraphWorkspace aria-label="Toolbar form graph" toolbar={<GraphToolbar leading={<ToolbarFormFields />} />} />
+    <section aria-label="Light forms"><h2>Light forms</h2><ToolbarFormFields /></section>
+  </main>;
+}
+
 const fixtureRoot = createRoot(document.getElementById("root"));
 fixtureRoot.render(<StrictMode><Fixture /></StrictMode>);
+window.showToolbarForms = () => fixtureRoot.render(<StrictMode><ToolbarFormsFixture /></StrictMode>);
 window.showMultipleRelationshipGraphs = () => fixtureRoot.render(<StrictMode><MultipleGraphsFixture /></StrictMode>);
 window.showEmptyRelationshipGraph = () => fixtureRoot.render(<StrictMode><Fixture empty /></StrictMode>);
 window.showNonActionableRelationshipGraph = () => fixtureRoot.render(<StrictMode><NonActionableGroupFixture /></StrictMode>);
@@ -363,7 +390,207 @@ async function assertNoPageOverflow(page, message) {
   );
 }
 
+async function checkToolbarForms() {
+  const screenshotDirectory = await mkdtemp(
+    join(tmpdir(), "opendle-toolbar-forms-"),
+  );
+  for (const viewport of [
+    { width: 1440, height: 1000 },
+    { width: 1100, height: 800 },
+    { width: 390, height: 844 },
+  ]) {
+    for (const mode of ["normal", "large-text", "forced-colors"]) {
+      const context = await browser.newContext({
+        viewport,
+        deviceScaleFactor: 1,
+      });
+      try {
+        const page = await context.newPage();
+        const errors = await loadFixture(page);
+        await page.evaluate(() => window.showToolbarForms());
+        const toolbar = page.locator(".od-graph-toolbar");
+        await toolbar.getByLabel("Service context", { exact: true }).waitFor();
+        if (mode === "large-text") {
+          await page.evaluate(() => {
+            document.documentElement.style.fontSize = "200%";
+          });
+        }
+        if (mode === "forced-colors")
+          await page.emulateMedia({ forcedColors: "active" });
+        await assertNoPageOverflow(
+          page,
+          "Toolbar forms must reflow without page overflow",
+        );
+        const contrast = await toolbar.evaluate((element) => {
+          function color(value) {
+            return value.match(/[\d.]+/g).map(Number);
+          }
+          function blend(front, back, opacity = 1) {
+            const alpha = (front[3] ?? 1) * opacity;
+            return front
+              .slice(0, 3)
+              .map(
+                (channel, index) => channel * alpha + back[index] * (1 - alpha),
+              );
+          }
+          function background(node) {
+            if (!node) return [255, 255, 255];
+            return blend(
+              color(getComputedStyle(node).backgroundColor),
+              background(node.parentElement),
+              Number(getComputedStyle(node).opacity),
+            );
+          }
+          function luminance(channels) {
+            const linear = channels.map((channel) => {
+              const value = channel / 255;
+              return value <= 0.04045
+                ? value / 12.92
+                : ((value + 0.055) / 1.055) ** 2.4;
+            });
+            return linear[0] * 0.2126 + linear[1] * 0.7152 + linear[2] * 0.0722;
+          }
+          function ratio(front, back) {
+            const values = [luminance(front), luminance(back)].sort(
+              (a, b) => b - a,
+            );
+            return (values[0] + 0.05) / (values[1] + 0.05);
+          }
+          return [
+            ...element.querySelectorAll(
+              ".od-form-field-label, .od-form-field-requirement, .od-field-help, .od-field-error, input, select",
+            ),
+          ].map((node) => {
+            const style = getComputedStyle(node);
+            const back = background(node);
+            return {
+              label: node.className || node.tagName,
+              ratio: ratio(
+                blend(
+                  color(style.color),
+                  background(node.parentElement),
+                  Number(style.opacity),
+                ),
+                back,
+              ),
+            };
+          });
+        });
+        for (const result of contrast) {
+          assert.ok(
+            result.ratio >= 4.5,
+            `${viewport.width}/${mode}: ${result.label} contrast ${result.ratio} must be at least 4.5`,
+          );
+        }
+        const select = toolbar.getByLabel("Service context", { exact: true });
+        await select.focus();
+        await page.keyboard.press("ArrowDown");
+        assert.equal(
+          await select.inputValue(),
+          "one",
+          "Keyboard selection must remain available",
+        );
+        const focused = await select.evaluate((node) => {
+          const style = getComputedStyle(node);
+          return {
+            visible: node.matches(":focus-visible"),
+            width: style.outlineWidth,
+            style: style.outlineStyle,
+            color: style.outlineColor,
+          };
+        });
+        assert.equal(focused.visible, true);
+        assert.equal(focused.width, "3px");
+        assert.equal(focused.style, "solid");
+        if (mode !== "forced-colors")
+          assert.equal(focused.color, "rgb(139, 190, 245)");
+        else {
+          const highlight = await page.evaluate(() => {
+            const probe = document.createElement("span");
+            probe.style.color = "Highlight";
+            document.body.append(probe);
+            const result = getComputedStyle(probe).color;
+            probe.remove();
+            return result;
+          });
+          assert.equal(focused.color, highlight);
+        }
+        assert.equal(
+          await toolbar
+            .getByLabel("Unavailable service", { exact: true })
+            .isDisabled(),
+          true,
+        );
+        await page.keyboard.press("Tab");
+        assert.equal(
+          await activeElementIs(
+            toolbar.getByLabel("Service name", { exact: true }),
+          ),
+          true,
+          "Tab must skip the disabled select",
+        );
+        if (mode !== "forced-colors") {
+          const light = page.getByRole("region", { name: "Light forms" });
+          const styles = await light.evaluate((element) => {
+            const read = (selector) => {
+              const style = getComputedStyle(element.querySelector(selector));
+              return {
+                color: style.color,
+                background: style.backgroundColor,
+                opacity: style.opacity,
+              };
+            };
+            return {
+              label: read(".od-form-field-label").color,
+              help: read(".od-field-help").color,
+              requirement: read(".od-form-field-requirement").color,
+              error: read(".od-field-error").color,
+              value: read("select"),
+              disabled: read("select:disabled"),
+            };
+          });
+          assert.deepEqual(
+            styles,
+            {
+              label: "rgb(77, 86, 89)",
+              help: "rgb(77, 86, 89)",
+              requirement: "rgb(77, 86, 89)",
+              error: "rgb(159, 73, 60)",
+              value: {
+                color: "rgb(23, 29, 33)",
+                background: "rgb(255, 255, 255)",
+                opacity: "1",
+              },
+              disabled: {
+                color: "rgb(77, 86, 89)",
+                background: "rgb(251, 250, 246)",
+                opacity: "0.72",
+              },
+            },
+            "Ordinary light form colors must stay unchanged",
+          );
+        }
+        assert.deepEqual(
+          (await new AxeBuilder({ page }).analyze()).violations,
+          [],
+          `${viewport.width}/${mode}: toolbar forms must pass Axe`,
+        );
+        await select.focus();
+        await page.screenshot({
+          path: join(screenshotDirectory, `${viewport.width}-${mode}.png`),
+          fullPage: true,
+        });
+        assert.deepEqual(errors, []);
+      } finally {
+        await context.close();
+      }
+    }
+  }
+  console.log(`Toolbar form screenshots: ${screenshotDirectory}`);
+}
+
 try {
+  await checkToolbarForms();
   const desktopContext = await browser.newContext({
     viewport: { width: 1440, height: 900 },
   });
