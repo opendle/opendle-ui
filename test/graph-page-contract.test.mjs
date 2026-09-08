@@ -24,9 +24,25 @@ const svgRef = createRef<SVGGElement>();
 const controlRef = createRef<GraphControlElement>();
 const htmlSelection: GraphWorkspaceProps = {selectedControlRef: htmlRef};
 const svgSelection: GraphWorkspaceProps = {selectedControlRef: svgRef};
-const htmlReturn: GraphInspectorProps = {title:'Details', returnFocusRef:htmlRef};
-const svgReturn: GraphInspectorProps = {title:'Details', returnFocusRef:svgRef};
-const mixedReturn: GraphInspectorProps = {title:'Details', returnFocusRef:controlRef};
+const htmlReturn: GraphInspectorProps = {title:'Details', onClose: () => {}, returnFocusRef:htmlRef};
+const svgReturn: GraphInspectorProps = {title:'Details', onClose: () => {}, returnFocusRef:svgRef};
+const mixedReturn: GraphInspectorProps = {title:'Details', onClose: () => {}, returnFocusRef:controlRef};
+// @ts-expect-error The host must supply its close behavior.
+const missingClose: GraphInspectorProps = {title:'Details'};
+// @ts-expect-error The heading owns initial focus.
+const customInitialFocus: GraphInspectorProps = {title:'Details', onClose: () => {}, initialFocusRef:htmlRef};
+// @ts-expect-error The shared host owns inspector width.
+const customInspectorWidth: GraphWorkspaceProps = {inspectorWidth:'42rem'};
+// @ts-expect-error The shared host has no separate inspector layout hook.
+const customInspectorClass: GraphWorkspaceProps = {inspectorClassName:'wide'};
+import {GraphInspector, GraphInspectorFacts, GraphInspectorFact, GraphInspectorSection, GraphInspectorRows, GraphInspectorRow, GraphInspectorNotice, type GraphInspectorFactsProps, type GraphInspectorFactProps, type GraphInspectorSectionProps, type GraphInspectorRowsProps, type GraphInspectorRowProps, type GraphInspectorNoticeProps} from './dist/index.js';
+const facts: GraphInspectorFactsProps = {children:null};
+const fact: GraphInspectorFactProps = {label:'Name', value:'Record'};
+const section: GraphInspectorSectionProps = {title:'Properties', count:1};
+const rows: GraphInspectorRowsProps = {children:null};
+const row: GraphInspectorRowProps = {label:'Property', value:'Value', actions:null};
+const notice: GraphInspectorNoticeProps = {tone:'error', dynamic:true, children:'Retry'};
+void [GraphInspector, GraphInspectorFacts, GraphInspectorFact, GraphInspectorSection, GraphInspectorRows, GraphInspectorRow, GraphInspectorNotice, facts, fact, section, rows, row, notice];
 const nodeRef: Ref<HTMLButtonElement> = node => { controlRef.current = node; };
 const edgeRef: Ref<SVGGElement> = edge => { controlRef.current = edge; };
 const nodeProps: GraphNodeProps = {x:0,y:0,title:'Node',ref:nodeRef};

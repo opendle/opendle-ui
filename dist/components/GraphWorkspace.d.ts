@@ -136,13 +136,12 @@ export interface GraphInspectorProps extends Omit<DialogHTMLAttributes<HTMLDialo
     readonly eyebrow?: ReactNode;
     readonly icon?: ReactNode;
     readonly actions?: ReactNode;
-    readonly onClose?: () => void;
+    readonly onClose: () => void;
     readonly closeLabel?: string;
-    readonly initialFocusRef?: RefObject<HTMLElement | null>;
     readonly returnFocusRef?: RefObject<GraphControlElement | null>;
     readonly tone?: GraphNodeTone;
 }
 /** A responsive inspector with initial focus, Escape close, and exact focus return. */
-export declare function GraphInspector({ activationKey, title, eyebrow, icon, actions, onClose, onCancel, closeLabel, initialFocusRef, returnFocusRef: suppliedReturnFocusRef, tone, children, className, tabIndex, "aria-label": ariaLabel, "aria-labelledby": ariaLabelledBy, ...props }: GraphInspectorProps): import("react").JSX.Element;
+export declare function GraphInspector({ activationKey, title, eyebrow, icon, actions, onClose, onCancel, closeLabel, returnFocusRef: suppliedReturnFocusRef, tone, children, className, tabIndex, "aria-label": ariaLabel, "aria-labelledby": ariaLabelledBy, ...props }: GraphInspectorProps): import("react").JSX.Element;
 export {};
 //# sourceMappingURL=GraphWorkspace.d.ts.map

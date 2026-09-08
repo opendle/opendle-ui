@@ -7,6 +7,7 @@ import { chromium } from "@playwright/test";
 import { build } from "esbuild";
 import { checkInspectorCloseRetention } from "./tests/graph-inspector-close-retention.mjs";
 import { checkSecretPanelFit } from "./tests/secret-panel-fit.mjs";
+import { checkInspectorModeGeometry } from "./tests/graph-inspector-mode-geometry.mjs";
 
 const repositoryRoot = fileURLToPath(new URL("..", import.meta.url));
 const source = String.raw`
@@ -1907,6 +1908,7 @@ async function checkWrappedControls() {
 try {
   await checkSecretPanelFit(browser, css);
   await checkInspectorCloseRetention(browser, css);
+  await checkInspectorModeGeometry(browser, css);
   await checkExtremeInspectorTitle();
   await checkWrappedControls();
   await checkSvgInspectorFocus();

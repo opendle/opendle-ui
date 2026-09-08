@@ -44,6 +44,13 @@ Close and Escape request the host's `onClose` behavior. The host can keep the
 inspector mounted during a pending write or a discard confirmation. The shared
 component keeps its modal state and focus until the host removes it. Removal
 uses the current return-focus reference or a connected graph fallback.
+`GraphInspectorProps.onClose` is required. The heading always receives initial
+focus; the removed `initialFocusRef` prop has no replacement. Use
+`GraphWorkspace` or `RelationshipGraph` as the inspector host. The old unhosted
+phone layout is removed. Hosts cannot set an inspector width or mode.
+These are breaking API changes; all three host applications use the strict
+contract. HTML and SVG return-focus references remain supported.
+
 `GraphInspectorFacts`, `GraphInspectorFact`, `GraphInspectorSection`,
 `GraphInspectorRows`, `GraphInspectorRow`, and `GraphInspectorNotice` supply
 the compact semantic content structure. A host can change the inspector

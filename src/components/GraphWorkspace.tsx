@@ -1164,9 +1164,8 @@ export interface GraphInspectorProps extends Omit<
   readonly eyebrow?: ReactNode;
   readonly icon?: ReactNode;
   readonly actions?: ReactNode;
-  readonly onClose?: () => void;
+  readonly onClose: () => void;
   readonly closeLabel?: string;
-  readonly initialFocusRef?: RefObject<HTMLElement | null>;
   readonly returnFocusRef?: RefObject<GraphControlElement | null>;
   readonly tone?: GraphNodeTone;
 }
@@ -1219,14 +1218,9 @@ function isModalDialog(inspector: HTMLDialogElement) {
 function focusInspector(
   inspector: HTMLDialogElement,
   heading: HTMLElement | null,
-  initialFocusRef?: RefObject<HTMLElement | null>,
 ) {
-  const suppliedInitialFocus = initialFocusRef?.current;
   const initialFocus =
     heading ??
-    (suppliedInitialFocus && inspector.contains(suppliedInitialFocus)
-      ? suppliedInitialFocus
-      : null) ??
     inspector.querySelector<HTMLElement>("[data-graph-inspector-close]") ??
     inspector.querySelector<HTMLElement>(
       "button:not(:disabled), input:not(:disabled), select:not(:disabled), textarea:not(:disabled), [href], [tabindex]:not([tabindex='-1'])",
@@ -1319,7 +1313,6 @@ function useGraphInspectorMode(
   headingRef: RefObject<HTMLHeadingElement | null>,
 ) {
   const [mode, setMode] = useState<GraphInspectorMode>("overlay");
-  const [hosted, setHosted] = useState(false);
   const modeRef = useRef<GraphInspectorMode>("overlay");
   const titleHeightRef = useRef(0);
   const modeTransitionRef = useRef<{
@@ -1351,7 +1344,6 @@ function useGraphInspectorMode(
       ".od-graph-workspace, .od-relationship-graph",
     );
     if (!inspector || !host) return;
-    setHosted(true);
     const remProbe = document.createElement("span");
     remProbe.ariaHidden = "true";
     remProbe.className = "od-graph-inspector-rem-probe";
@@ -1545,7 +1537,7 @@ function useGraphInspectorMode(
     }
   }, [headingRef, inspectorRef, mode]);
 
-  return { hosted, mode };
+  return mode;
 }
 
 /** A responsive inspector with initial focus, Escape close, and exact focus return. */
@@ -1558,7 +1550,6 @@ export function GraphInspector({
   onClose,
   onCancel,
   closeLabel = "Close inspector",
-  initialFocusRef,
   returnFocusRef: suppliedReturnFocusRef,
   tone = "neutral",
   children,
@@ -1571,7 +1562,7 @@ export function GraphInspector({
   const titleId = useId();
   const inspectorRef = useRef<HTMLDialogElement>(null);
   const headingRef = useRef<HTMLHeadingElement>(null);
-  const { hosted, mode } = useGraphInspectorMode(inspectorRef, headingRef);
+  const mode = useGraphInspectorMode(inspectorRef, headingRef);
   const focusStateRef = useRef<{
     capturedTarget: GraphControlElement | null;
     latestSuppliedTarget: GraphControlElement | null;
@@ -1593,7 +1584,7 @@ export function GraphInspector({
     )
       return;
     focusState.capturedTarget = target;
-    focusInspector(inspector, headingRef.current, initialFocusRef);
+    focusInspector(inspector, headingRef.current);
   });
 
   useLayoutEffect(() => {
@@ -1617,7 +1608,7 @@ export function GraphInspector({
         focusState.capturedTarget = active;
       }
     }
-    focusInspector(inspector, headingRef.current, initialFocusRef);
+    focusInspector(inspector, headingRef.current);
     return () => {
       const requestedReturnTarget =
         hostReturnFocusRef?.current ??
@@ -1639,10 +1630,10 @@ export function GraphInspector({
         }
       });
     };
-  }, [activationKey, initialFocusRef, suppliedReturnFocusRef]);
+  }, [activationKey, suppliedReturnFocusRef]);
 
   function closeInspector() {
-    onClose?.();
+    onClose();
   }
 
   const handleInspectorKeyboardRef = useRef<
@@ -1687,12 +1678,7 @@ export function GraphInspector({
         target.focus({ preventScroll: true });
         return;
       }
-      if (
-        event.key !== "Escape" ||
-        onClose === undefined ||
-        isModalDialog(inspector)
-      )
-        return;
+      if (event.key !== "Escape" || isModalDialog(inspector)) return;
       event.preventDefault();
       event.stopPropagation();
       closeInspector();
@@ -1717,13 +1703,12 @@ export function GraphInspector({
         ariaLabel === undefined ? (ariaLabelledBy ?? titleId) : undefined
       }
       className={classes("od-graph-inspector", className)}
-      data-hosted={hosted}
       data-mode={mode}
       data-tone={tone}
       open
       onCancel={(event) => {
         onCancel?.(event);
-        if (event.defaultPrevented || onClose === undefined) return;
+        if (event.defaultPrevented) return;
         event.preventDefault();
         closeInspector();
       }}
@@ -1743,19 +1728,17 @@ export function GraphInspector({
               {title}
             </h2>
           </div>
-          {onClose ? (
-            <span className="od-graph-inspector-close-slot">
-              <button
-                aria-label={closeLabel}
-                className="od-graph-inspector-close"
-                data-graph-inspector-close="true"
-                onClick={closeInspector}
-                type="button"
-              >
-                <span aria-hidden="true">×</span>
-              </button>
-            </span>
-          ) : null}
+          <span className="od-graph-inspector-close-slot">
+            <button
+              aria-label={closeLabel}
+              className="od-graph-inspector-close"
+              data-graph-inspector-close="true"
+              onClick={closeInspector}
+              type="button"
+            >
+              <span aria-hidden="true">×</span>
+            </button>
+          </span>
         </header>
         <div className="od-graph-inspector-content">{children}</div>
       </div>

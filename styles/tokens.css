@@ -2559,6 +2559,7 @@ samp {
 
 .od-graph-inspector {
   container-type: inline-size;
+  transition-property: none;
   box-sizing: border-box;
   padding: 0;
   width: 21rem;
@@ -6299,16 +6300,5 @@ samp {
   .od-graph-toolbar-actions {
     width: 100%;
     max-width: 100%;
-  }
-
-  .od-graph-inspector[data-hosted="false"] {
-    width: calc(100% - 1.5rem);
-    height: auto;
-    max-height: min(48%, 24rem);
-    position: fixed;
-    top: auto;
-    right: 0.75rem;
-    bottom: 0.75rem;
-    left: 0.75rem;
   }
 }

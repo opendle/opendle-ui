@@ -517,12 +517,8 @@ function isModalDialog(inspector) {
         return false;
     }
 }
-function focusInspector(inspector, heading, initialFocusRef) {
-    const suppliedInitialFocus = initialFocusRef?.current;
+function focusInspector(inspector, heading) {
     const initialFocus = heading ??
-        (suppliedInitialFocus && inspector.contains(suppliedInitialFocus)
-            ? suppliedInitialFocus
-            : null) ??
         inspector.querySelector("[data-graph-inspector-close]") ??
         inspector.querySelector("button:not(:disabled), input:not(:disabled), select:not(:disabled), textarea:not(:disabled), [href], [tabindex]:not([tabindex='-1'])") ??
         inspector;
@@ -594,7 +590,6 @@ function updateInspectorTitleFit(inspector, titleHeightRef) {
 }
 function useGraphInspectorMode(inspectorRef, headingRef) {
     const [mode, setMode] = useState("overlay");
-    const [hosted, setHosted] = useState(false);
     const modeRef = useRef("overlay");
     const titleHeightRef = useRef(0);
     const modeTransitionRef = useRef(null);
@@ -619,7 +614,6 @@ function useGraphInspectorMode(inspectorRef, headingRef) {
         const host = inspector?.parentElement?.closest(".od-graph-workspace, .od-relationship-graph");
         if (!inspector || !host)
             return;
-        setHosted(true);
         const remProbe = document.createElement("span");
         remProbe.ariaHidden = "true";
         remProbe.className = "od-graph-inspector-rem-probe";
@@ -777,14 +771,14 @@ function useGraphInspectorMode(inspectorRef, headingRef) {
             headingRef.current?.focus({ preventScroll: true });
         }
     }, [headingRef, inspectorRef, mode]);
-    return { hosted, mode };
+    return mode;
 }
 /** A responsive inspector with initial focus, Escape close, and exact focus return. */
-export function GraphInspector({ activationKey, title, eyebrow, icon, actions, onClose, onCancel, closeLabel = "Close inspector", initialFocusRef, returnFocusRef: suppliedReturnFocusRef, tone = "neutral", children, className, tabIndex, "aria-label": ariaLabel, "aria-labelledby": ariaLabelledBy, ...props }) {
+export function GraphInspector({ activationKey, title, eyebrow, icon, actions, onClose, onCancel, closeLabel = "Close inspector", returnFocusRef: suppliedReturnFocusRef, tone = "neutral", children, className, tabIndex, "aria-label": ariaLabel, "aria-labelledby": ariaLabelledBy, ...props }) {
     const titleId = useId();
     const inspectorRef = useRef(null);
     const headingRef = useRef(null);
-    const { hosted, mode } = useGraphInspectorMode(inspectorRef, headingRef);
+    const mode = useGraphInspectorMode(inspectorRef, headingRef);
     const focusStateRef = useRef({ capturedTarget: null, latestSuppliedTarget: null, generation: 0 });
     useLayoutEffect(() => {
         const focusState = focusStateRef.current;
@@ -800,7 +794,7 @@ export function GraphInspector({ activationKey, title, eyebrow, icon, actions, o
             inspector.contains(document.activeElement))
             return;
         focusState.capturedTarget = target;
-        focusInspector(inspector, headingRef.current, initialFocusRef);
+        focusInspector(inspector, headingRef.current);
     });
     useLayoutEffect(() => {
         const inspector = inspectorRef.current;
@@ -823,7 +817,7 @@ export function GraphInspector({ activationKey, title, eyebrow, icon, actions, o
                 focusState.capturedTarget = active;
             }
         }
-        focusInspector(inspector, headingRef.current, initialFocusRef);
+        focusInspector(inspector, headingRef.current);
         return () => {
             const requestedReturnTarget = hostReturnFocusRef?.current ??
                 focusState.latestSuppliedTarget ??
@@ -840,9 +834,9 @@ export function GraphInspector({ activationKey, title, eyebrow, icon, actions, o
                 }
             });
         };
-    }, [activationKey, initialFocusRef, suppliedReturnFocusRef]);
+    }, [activationKey, suppliedReturnFocusRef]);
     function closeInspector() {
-        onClose?.();
+        onClose();
     }
     const handleInspectorKeyboardRef = useRef(() => undefined);
     useLayoutEffect(() => {
@@ -877,9 +871,7 @@ export function GraphInspector({ activationKey, title, eyebrow, icon, actions, o
                 target.focus({ preventScroll: true });
                 return;
             }
-            if (event.key !== "Escape" ||
-                onClose === undefined ||
-                isModalDialog(inspector))
+            if (event.key !== "Escape" || isModalDialog(inspector))
                 return;
             event.preventDefault();
             event.stopPropagation();
@@ -895,12 +887,12 @@ export function GraphInspector({ activationKey, title, eyebrow, icon, actions, o
             document.removeEventListener("keydown", handleKeyDown);
         };
     }, []);
-    return (_jsxs("dialog", { ...props, "aria-label": ariaLabel, "aria-labelledby": ariaLabel === undefined ? (ariaLabelledBy ?? titleId) : undefined, className: classes("od-graph-inspector", className), "data-hosted": hosted, "data-mode": mode, "data-tone": tone, open: true, onCancel: (event) => {
+    return (_jsxs("dialog", { ...props, "aria-label": ariaLabel, "aria-labelledby": ariaLabel === undefined ? (ariaLabelledBy ?? titleId) : undefined, className: classes("od-graph-inspector", className), "data-mode": mode, "data-tone": tone, open: true, onCancel: (event) => {
             onCancel?.(event);
-            if (event.defaultPrevented || onClose === undefined)
+            if (event.defaultPrevented)
                 return;
             event.preventDefault();
             closeInspector();
-        }, ref: inspectorRef, tabIndex: tabIndex ?? -1, children: [_jsxs("div", { className: "od-graph-inspector-body", children: [_jsxs("header", { className: "od-graph-inspector-header", children: [icon ? (_jsx("span", { className: "od-graph-inspector-icon", children: icon })) : null, _jsxs("div", { className: "od-graph-inspector-heading", children: [eyebrow ? (_jsx("span", { className: "od-graph-inspector-eyebrow", children: eyebrow })) : null, _jsx("h2", { id: titleId, ref: headingRef, tabIndex: -1, children: title })] }), onClose ? (_jsx("span", { className: "od-graph-inspector-close-slot", children: _jsx("button", { "aria-label": closeLabel, className: "od-graph-inspector-close", "data-graph-inspector-close": "true", onClick: closeInspector, type: "button", children: _jsx("span", { "aria-hidden": "true", children: "\u00D7" }) }) })) : null] }), _jsx("div", { className: "od-graph-inspector-content", children: children })] }), actions ? (_jsx("footer", { className: "od-graph-inspector-actions", children: actions })) : null] }));
+        }, ref: inspectorRef, tabIndex: tabIndex ?? -1, children: [_jsxs("div", { className: "od-graph-inspector-body", children: [_jsxs("header", { className: "od-graph-inspector-header", children: [icon ? (_jsx("span", { className: "od-graph-inspector-icon", children: icon })) : null, _jsxs("div", { className: "od-graph-inspector-heading", children: [eyebrow ? (_jsx("span", { className: "od-graph-inspector-eyebrow", children: eyebrow })) : null, _jsx("h2", { id: titleId, ref: headingRef, tabIndex: -1, children: title })] }), _jsx("span", { className: "od-graph-inspector-close-slot", children: _jsx("button", { "aria-label": closeLabel, className: "od-graph-inspector-close", "data-graph-inspector-close": "true", onClick: closeInspector, type: "button", children: _jsx("span", { "aria-hidden": "true", children: "\u00D7" }) }) })] }), _jsx("div", { className: "od-graph-inspector-content", children: children })] }), actions ? (_jsx("footer", { className: "od-graph-inspector-actions", children: actions })) : null] }));
 }
 //# sourceMappingURL=GraphWorkspace.js.map

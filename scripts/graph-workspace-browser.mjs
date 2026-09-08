@@ -56,7 +56,6 @@ function Fixture() {
   const panel = inspector === null ? null : (
     <GraphInspector
       activationKey={inspector?.startsWith("ref-only") ? undefined : inspector}
-      initialFocusRef={inspector === "external-initial" ? returnFocusRef : undefined}
       key={inspector === "replacement" ? inspector : "active-inspector"}
       onClose={() => setInspector(null)}
       onKeyDown={(event) => {
@@ -234,8 +233,8 @@ function Fixture() {
                 }}>Open guarded inspector</Button>
                 <Button type="button" onClick={(event) => {
                   returnFocusRef.current = event.currentTarget;
-                  setInspector("external-initial");
-                }}>Open with external initial target</Button>
+                  setInspector("explicit-return");
+                }}>Open with explicit return target</Button>
                 {openerAvailable ? <Button type="button" onClick={(event) => {
                   returnFocusRef.current = event.currentTarget;
                   setOpenerAvailable(false);
@@ -1467,7 +1466,7 @@ try {
   );
   await verifyInspector(
     desktop,
-    desktop.getByRole("button", { name: "Open with external initial target" }),
+    desktop.getByRole("button", { name: "Open with explicit return target" }),
     "Service details",
     false,
   );

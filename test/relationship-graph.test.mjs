@@ -660,7 +660,7 @@ test("relationship graph keeps a non-actionable group header out of selection an
       defaultSearchQuery: "record collection",
       inspector: React.createElement(
         GraphInspector,
-        { title: "Group inspector" },
+        { title: "Group inspector", onClose: () => {} },
         "This inspector must stay closed.",
       ),
       relationships: compoundRelationships,
@@ -817,7 +817,7 @@ test("relationship graph marks host-supplied partial-result actions and messages
 test("relationship graph supports one auxiliary inspector without a selection", () => {
   const auxiliaryInspector = React.createElement(
     GraphInspector,
-    { title: "Create record" },
+    { title: "Create record", onClose: () => {} },
     "Create form",
   );
   const markup = renderToStaticMarkup(
@@ -860,7 +860,7 @@ test("relationship graph ignores empty Boolean inspector nodes", () => {
   );
   const auxiliaryInspector = React.createElement(
     GraphInspector,
-    { title: "Create record" },
+    { title: "Create record", onClose: () => {} },
     "Create form",
   );
   const selectedMarkup = renderToStaticMarkup(

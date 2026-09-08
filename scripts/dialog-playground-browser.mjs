@@ -11,7 +11,7 @@ const repositoryRoot = fileURLToPath(new URL("..", import.meta.url));
 const fixtureSource = String.raw`
 import React, { StrictMode, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
-import { Button, ConfirmationDialog, Dialog, EditableTable, GraphInspector, OperationPlayground, StatusPill } from "./dist/index.js";
+import { Button, ConfirmationDialog, Dialog, EditableTable, GraphInspector, GraphWorkspace, OperationPlayground, StatusPill } from "./dist/index.js";
 
 const emptyState = { status: "empty" };
 const errorState = { status: "error", error: {
@@ -40,15 +40,15 @@ function Fixture() {
   const [providerUnavailable, setProviderUnavailable] = useState(false);
   const [confirmationOpen, setConfirmationOpen] = useState(false);
   const [inspectorCloseCount, setInspectorCloseCount] = useState(0);
+  const [inspectorOpen, setInspectorOpen] = useState(true);
   const [inspectorTriggerVersion, setInspectorTriggerVersion] = useState(0);
   const initialFocusRef = useRef(null);
   const inspectorTriggerRef = useRef(null);
   return <main>
     <StatusPill tone="red">Failed</StatusPill>
     <StatusPill tone="amber">Cooldown</StatusPill>
-    <GraphInspector
-      onClose={() => setInspectorCloseCount((value) => value + 1)}
-      open
+    <GraphWorkspace inspector={inspectorOpen ? <GraphInspector
+      onClose={() => { setInspectorCloseCount((value) => value + 1); setInspectorOpen(false); }}
       title="Assignment inspector"
     >
       <Button key={inspectorTriggerVersion} ref={inspectorTriggerRef} onClick={() => setDialog("wide")}>Open wide dialog</Button>
@@ -68,7 +68,7 @@ function Fixture() {
         onDraftChange={() => undefined}
         rows={editableRows}
       />
-    </GraphInspector>
+    </GraphInspector> : null} />
     <output aria-label="Inspector close count">{inspectorCloseCount}</output>
     <div className="fixture-openers">
       <Button onClick={() => setDialog("narrow")}>Open narrow dialog</Button>
@@ -479,6 +479,10 @@ try {
   });
   const phone = await phoneContext.newPage();
   const phoneErrors = await loadFixture(phone);
+  await phone.getByRole("button", { name: "Close inspector" }).tap();
+  await phone
+    .getByRole("dialog", { name: "Assignment inspector" })
+    .waitFor({ state: "detached" });
   await phone.getByRole("button", { name: "Open narrow dialog" }).tap();
   const phoneDialog = phone.getByRole("dialog", { name: "General dialog" });
   assert.deepEqual(

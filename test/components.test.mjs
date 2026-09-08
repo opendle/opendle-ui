@@ -654,7 +654,11 @@ test("graph inspector preserves a caller-supplied accessible relationship", () =
   const markup = renderToStaticMarkup(
     React.createElement(
       GraphInspector,
-      { "aria-labelledby": "external-title", title: "Internal title" },
+      {
+        "aria-labelledby": "external-title",
+        title: "Internal title",
+        onClose: () => {},
+      },
       "Details",
     ),
   );
@@ -680,7 +684,11 @@ test("compact graph inspector primitives keep semantic facts, sections, rows, an
   const markup = renderToStaticMarkup(
     React.createElement(
       GraphInspector,
-      { actions: React.createElement("button", null, "Save"), title: "Record" },
+      {
+        actions: React.createElement("button", null, "Save"),
+        title: "Record",
+        onClose: () => {},
+      },
       React.createElement(
         GraphInspectorFacts,
         null,
