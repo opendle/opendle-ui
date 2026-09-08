@@ -87,6 +87,14 @@ the extra stop is no longer needed, it leaves the Tab order without moving
 current focus. Overlay relationship boards keep enough trailing scroll space
 to move the selected control beside the inspector.
 
+The inspector keeps its header fixed when the natural header and footer leave
+room for the content padding and one `2.75rem` control. If they do not fit,
+the title, eyebrow, icon, and details scroll together. Close and footer actions
+stay fixed. The default layout returns when it fits again. This shared rule
+applies in all modes and keeps the same content, field values, focus, and
+visible details position within the new scroll bounds. Hosts do not select
+the scroll behavior.
+
 `GraphNodeAction` places a labelled action beside a node inside the graph
 canvas. Set `variant="text"` for visible text supplied as children. The default
 `icon` variant keeps the compact circular shape. Text actions wrap long labels

@@ -529,10 +529,75 @@ function focusInspector(inspector, heading, initialFocusRef) {
         inspector;
     initialFocus.focus({ preventScroll: true });
 }
+function updateInspectorTitleFit(inspector, titleHeightRef) {
+    const header = inspector.querySelector(".od-graph-inspector-header");
+    const content = inspector.querySelector(".od-graph-inspector-content");
+    const body = inspector.querySelector(".od-graph-inspector-body");
+    const footer = inspector.querySelector(".od-graph-inspector-actions");
+    if (!header || !content || !body)
+        return content;
+    const rem = Number.parseFloat(getComputedStyle(document.documentElement).fontSize);
+    const contentStyle = getComputedStyle(content);
+    const frameStyle = getComputedStyle(inspector);
+    const available = (inspector.dataset.mode === "sheet"
+        ? Number.parseFloat(frameStyle.maxHeight)
+        : inspector.getBoundingClientRect().height) -
+        Number.parseFloat(frameStyle.borderTopWidth) -
+        Number.parseFloat(frameStyle.borderBottomWidth);
+    const wasScrollingTitle = inspector.dataset.scrollTitle === "true";
+    const previousScrollTop = body.scrollTop;
+    const previousHeaderHeight = titleHeightRef.current || header.getBoundingClientRect().height;
+    // Measure the default header width without changing the active scroll region.
+    const headerStyle = getComputedStyle(header);
+    const gutter = body.getBoundingClientRect().width - header.getBoundingClientRect().width;
+    const previousWidth = header.style.width;
+    if (wasScrollingTitle && gutter > 0) {
+        header.style.width = `${String(Number.parseFloat(headerStyle.width) + gutter)}px`;
+    }
+    const naturalHeaderHeight = header.getBoundingClientRect().height;
+    if (wasScrollingTitle && gutter > 0) {
+        header.style.width = previousWidth;
+        body.scrollTop = previousScrollTop;
+    }
+    const required = naturalHeaderHeight +
+        (footer?.getBoundingClientRect().height ?? 0) +
+        Number.parseFloat(contentStyle.paddingTop) +
+        Number.parseFloat(contentStyle.paddingBottom) +
+        2.75 * rem;
+    const scrollTitle = required > available;
+    if (scrollTitle !== wasScrollingTitle) {
+        const offset = wasScrollingTitle
+            ? previousScrollTop - previousHeaderHeight
+            : content.scrollTop;
+        const wasScrolled = wasScrollingTitle
+            ? previousScrollTop > 0
+            : content.scrollTop > 0;
+        inspector.dataset.scrollTitle = String(scrollTitle);
+        if (scrollTitle) {
+            content.scrollTop = 0;
+            body.scrollTop = wasScrolled
+                ? header.getBoundingClientRect().height + offset
+                : 0;
+        }
+        else {
+            body.scrollTop = 0;
+            content.scrollTop = Math.max(0, offset);
+        }
+    }
+    else if (scrollTitle && previousScrollTop > previousHeaderHeight) {
+        body.scrollTop =
+            previousScrollTop +
+                header.getBoundingClientRect().height -
+                previousHeaderHeight;
+    }
+    titleHeightRef.current = header.getBoundingClientRect().height;
+    return scrollTitle ? body : content;
+}
 function useGraphInspectorMode(inspectorRef, headingRef) {
     const [mode, setMode] = useState("overlay");
     const [hosted, setHosted] = useState(false);
     const modeRef = useRef("overlay");
+    const titleHeightRef = useRef(0);
     const modeTransitionRef = useRef(null);
     const lastInspectorFocusRef = useRef(null);
     useLayoutEffect(() => {
@@ -569,6 +634,7 @@ function useGraphInspectorMode(inspectorRef, headingRef) {
             const contentRegion = inspector.querySelector(".od-graph-inspector-content");
             const currentRegions = new Set([
                 ...currentControls,
+                ...inspector.querySelectorAll(".od-graph-inspector-header, .od-graph-inspector-actions, .od-graph-inspector-body"),
                 ...(contentRegion ? [contentRegion, ...contentRegion.children] : []),
             ]);
             for (const region of observedRegions) {
@@ -601,14 +667,15 @@ function useGraphInspectorMode(inspectorRef, headingRef) {
                 : width > 48 * rootFontSize
                     ? "overlay"
                     : "sheet";
-            if (contentRegion) {
+            const scrollRegion = updateInspectorTitleFit(inspector, titleHeightRef);
+            if (contentRegion && scrollRegion) {
                 const hasKeyboardControl = [
                     ...contentRegion.querySelectorAll("button:not(:disabled), input:not(:disabled), select:not(:disabled), textarea:not(:disabled), a[href], [tabindex]"),
                 ].some((control) => control.tabIndex >= 0 &&
                     !control.matches(":disabled") &&
                     control.getClientRects().length > 0 &&
                     getComputedStyle(control).visibility === "visible");
-                const needsKeyboardScroll = contentRegion.scrollHeight > contentRegion.clientHeight &&
+                const needsKeyboardScroll = scrollRegion.scrollHeight > scrollRegion.clientHeight &&
                     !hasKeyboardControl;
                 if (needsKeyboardScroll && contentRegion.tabIndex !== 0) {
                     contentRegion.tabIndex = 0;
@@ -632,6 +699,7 @@ function useGraphInspectorMode(inspectorRef, headingRef) {
                 focus: activeIsInside ? active : lastInspectorFocus,
                 focusWasInside,
                 scrollTop: content?.scrollTop ?? 0,
+                bodyScrollTop: inspector.querySelector(".od-graph-inspector-body")?.scrollTop ?? 0,
             };
             modeRef.current = nextMode;
             setMode(nextMode);
@@ -640,6 +708,7 @@ function useGraphInspectorMode(inspectorRef, headingRef) {
             ? null
             : new ResizeObserver(updateMode);
         observer?.observe(host);
+        observer?.observe(inspector);
         observer?.observe(remProbe);
         const controlsObserver = new MutationObserver(updateMode);
         controlsObserver.observe(host, {
@@ -689,6 +758,10 @@ function useGraphInspectorMode(inspectorRef, headingRef) {
         }
         if (content)
             content.scrollTop = contentScrollTop;
+        const body = inspector.querySelector(".od-graph-inspector-body");
+        if (body && transition)
+            body.scrollTop = transition.bodyScrollTop;
+        updateInspectorTitleFit(inspector, titleHeightRef);
         if (transition?.focusWasInside &&
             (!previousFocus?.isConnected || !inspector.contains(previousFocus))) {
             headingRef.current?.focus({ preventScroll: true });
@@ -838,6 +911,6 @@ export function GraphInspector({ activationKey, title, eyebrow, icon, actions, o
                 return;
             event.preventDefault();
             closeInspector();
-        }, ref: inspectorRef, tabIndex: tabIndex ?? -1, children: [_jsxs("header", { className: "od-graph-inspector-header", children: [icon ? _jsx("span", { className: "od-graph-inspector-icon", children: icon }) : null, _jsxs("div", { className: "od-graph-inspector-heading", children: [eyebrow ? (_jsx("span", { className: "od-graph-inspector-eyebrow", children: eyebrow })) : null, _jsx("h2", { id: titleId, ref: headingRef, tabIndex: -1, children: title })] }), onClose ? (_jsx("button", { "aria-label": closeLabel, className: "od-graph-inspector-close", "data-graph-inspector-close": "true", onClick: closeInspector, type: "button", children: _jsx("span", { "aria-hidden": "true", children: "\u00D7" }) })) : null] }), _jsx("div", { className: "od-graph-inspector-content", children: children }), actions ? (_jsx("footer", { className: "od-graph-inspector-actions", children: actions })) : null] }));
+        }, ref: inspectorRef, tabIndex: tabIndex ?? -1, children: [_jsxs("div", { className: "od-graph-inspector-body", children: [_jsxs("header", { className: "od-graph-inspector-header", children: [icon ? (_jsx("span", { className: "od-graph-inspector-icon", children: icon })) : null, _jsxs("div", { className: "od-graph-inspector-heading", children: [eyebrow ? (_jsx("span", { className: "od-graph-inspector-eyebrow", children: eyebrow })) : null, _jsx("h2", { id: titleId, ref: headingRef, tabIndex: -1, children: title })] }), onClose ? (_jsx("span", { className: "od-graph-inspector-close-slot", children: _jsx("button", { "aria-label": closeLabel, className: "od-graph-inspector-close", "data-graph-inspector-close": "true", onClick: closeInspector, type: "button", children: _jsx("span", { "aria-hidden": "true", children: "\u00D7" }) }) })) : null] }), _jsx("div", { className: "od-graph-inspector-content", children: children })] }), actions ? (_jsx("footer", { className: "od-graph-inspector-actions", children: actions })) : null] }));
 }
 //# sourceMappingURL=GraphWorkspace.js.map

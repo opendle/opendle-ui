@@ -67,9 +67,13 @@ function Fixture() {
  const [open, setOpen] = useState(false);
  const [selected, setSelected] = useState('a');
  const [choice, setChoice] = useState('first');
+ const [inspectorTitle, setInspectorTitle] = useState(config.inspectorTitle ?? "Details");
+ const [details, setDetails] = useState(config.details ?? "form");
+ window.setInspectorTitle = setInspectorTitle;
+ window.setInspectorDetails = setDetails;
  const action = <Button onClick={() => setOpen(true)}>Inspect graph</Button>;
  const toolbar = <GraphToolbar leading={<Button>Graph context</Button>} actions={action}/>;
- const inspector = open ? <GraphInspector title={config.inspectorTitle ?? "Details"} icon={config.inspectorIcon ? <span aria-hidden="true">◇</span> : undefined} eyebrow={config.inspectorEyebrow} actions={config.inspectorActions ? <><Button>Save</Button><Button>Delete</Button></> : undefined} onClose={() => setOpen(false)}>{config.inspectorTitle ? <><FormField label="Draft"><input defaultValue="Keep this value"/></FormField>{config.inspectorSelect ? <SearchableSelect label="Record type" value={choice} onChange={setChoice} options={[{value:"first",label:"First type"},{value:"second",label:"Second type"}]}/> : null}{Array.from({length:20}, (_, i) => <p key={i}>Record detail {i + 1}.</p>)}</> : <><p>Selected graph record.</p><Button>Inspector action</Button></>}</GraphInspector> : undefined;
+ const inspector = open ? <GraphInspector title={inspectorTitle} icon={config.inspectorIcon ? <span aria-hidden="true">◇</span> : undefined} eyebrow={config.inspectorEyebrow} actions={config.inspectorActions ? <><Button onClick={e => e.currentTarget.dataset.used = "true"}>{config.wrappedActions ? "Save all record changes" : "Save"}</Button><Button onClick={e => e.currentTarget.dataset.used = "true"}>{config.wrappedActions ? "Delete selected record" : "Delete"}</Button></> : undefined} onClose={() => setOpen(false)}>{details === "empty" ? null : details === "text" ? "Long text details. ".repeat(800) : config.inspectorTitle ? <><FormField label="Draft"><input defaultValue="Keep this value"/></FormField>{config.inspectorSelect ? <SearchableSelect label="Record type" value={choice} onChange={setChoice} options={[{value:"first",label:"First type"},{value:"second",label:"Second type"}]}/> : null}{Array.from({length:20}, (_, i) => <p key={i}>Record detail {i + 1}.</p>)}</> : <><p>Selected graph record.</p><Button>Inspector action</Button></>}</GraphInspector> : undefined;
  const columns = ['Sources','Records','Targets'].map((label, index) => ({id: label, label, nodes: config.state ? [] : Array.from({length:30}, (_, n) => ({id: index + '-' + n, label: label + ' ' + n}))}));
  const relationship = <RelationshipGraph aria-label="Relationships" fullPage columns={columns} relationships={[]} toolbar={config.standaloneSearch ? undefined : {leading: <Button>Graph context</Button>, actions:action}} auxiliaryInspector={inspector} invalidState={config.state === 'error' ? <Button>Retry graph</Button> : undefined} emptyState={<Button>Load graph</Button>}/>;
  const workspace = <GraphWorkspace aria-label="Workspace" fullPage toolbar={toolbar} inspector={config.kind === 'nested' ? undefined : inspector}>
@@ -417,6 +421,473 @@ function assertInspectorFrame(m, title, height, rem) {
       "Controls keep their minimum target",
     );
 }
+
+async function checkExtremeInspectorTitle() {
+  const context = await browser.newContext();
+  const page = await context.newPage();
+  const title = "W".repeat(200);
+  const inspector = page.locator(".od-graph-inspector");
+  const body = inspector.locator(".od-graph-inspector-body");
+  const content = inspector.locator(".od-graph-inspector-content");
+  const close = page.getByRole("button", {
+    name: "Close inspector",
+    exact: true,
+  });
+  const waitFit = async (expected) => {
+    await page.waitForFunction(
+      (expected) =>
+        (document.querySelector(".od-graph-inspector")?.dataset.scrollTitle ===
+          "true") ===
+        expected,
+      expected,
+    );
+    await page.evaluate(
+      () =>
+        new Promise((resolve) =>
+          requestAnimationFrame(() => requestAnimationFrame(resolve)),
+        ),
+    );
+  };
+  const anchorOffset = () =>
+    inspector.evaluate((el) => {
+      const region =
+        el.dataset.scrollTitle === "true"
+          ? el.querySelector(".od-graph-inspector-body")
+          : el.querySelector(".od-graph-inspector-content");
+      return (
+        el
+          .querySelector(".od-graph-inspector-content p")
+          .getBoundingClientRect().top - region.getBoundingClientRect().top
+      );
+    });
+  const fixedControls = async () =>
+    inspector.evaluate((el) => {
+      const frame = el.getBoundingClientRect();
+      return [
+        ...el.querySelectorAll(".od-graph-inspector-close, footer button"),
+      ].map((control) => {
+        const r = control.getBoundingClientRect();
+        const hit = document.elementFromPoint(
+          r.x + r.width / 2,
+          r.y + r.height / 2,
+        );
+        return {
+          reachable:
+            r.top >= frame.top &&
+            r.bottom <= frame.bottom &&
+            r.left >= frame.left &&
+            r.right <= frame.right &&
+            control.contains(hit),
+          top: r.top,
+          bottom: r.bottom,
+        };
+      });
+    });
+  try {
+    for (const kind of ["workspace", "relationship"]) {
+      for (const [mode, width] of [
+        ["sheet", 412],
+        ["overlay", 1792],
+        ["split", 2400],
+      ]) {
+        await page.setViewportSize({ width, height: 1000 });
+        await load(page, {
+          kind,
+          edge: true,
+          outerEdge: true,
+          inspectorTitle: title,
+          inspectorIcon: true,
+          inspectorEyebrow: "Record",
+          inspectorActions: true,
+          wrappedActions: true,
+        });
+        await page.evaluate(
+          () => (document.documentElement.style.fontSize = "200%"),
+        );
+        const opener = page.getByRole("button", {
+          name: "Inspect graph",
+          exact: true,
+        });
+        await opener.click();
+        await waitFit(true);
+        if (kind === "relationship") {
+          await body.evaluate((el) => (el.style.scrollbarGutter = "stable"));
+          await waitFit(true);
+        }
+        assert.equal(await inspector.getAttribute("data-mode"), mode);
+        assert.equal(
+          await inspector
+            .locator("h2")
+            .evaluate((el) => document.activeElement === el),
+          true,
+          "Opening focuses the heading",
+        );
+        assert.equal(
+          await body.evaluate((el) => el.scrollTop),
+          0,
+          "Opening shows the title start",
+        );
+        assert.equal(await inspector.locator("h2").textContent(), title);
+        const lastTitleLine = await body.evaluate((el) => {
+          const heading = el.querySelector("h2");
+          const range = document.createRange();
+          range.setStart(heading.firstChild, heading.textContent.length - 1);
+          range.setEnd(heading.firstChild, heading.textContent.length);
+          const text = range.getBoundingClientRect();
+          el.scrollTop += Math.max(
+            0,
+            text.bottom - el.getBoundingClientRect().bottom,
+          );
+          const visible = range.getBoundingClientRect();
+          const frame = el.getBoundingClientRect();
+          return (
+            visible.top >= frame.top - 1 && visible.bottom <= frame.bottom + 1
+          );
+        });
+        assert.equal(
+          lastTitleLine,
+          true,
+          "The last title character is reachable in the same scroll region",
+        );
+        await body.evaluate((el) => (el.scrollTop = 0));
+        const before = await fixedControls();
+        assert.ok(
+          before.every((control) => control.reachable),
+          "Close and wrapped footer actions are visible and hit targets",
+        );
+        await page.keyboard.press("Tab");
+        assert.equal(
+          await close.evaluate((el) => el === document.activeElement),
+          true,
+          "Tab from heading reaches Close",
+        );
+        await page.keyboard.press("Tab");
+        const draft = page.getByRole("textbox", { name: "Draft" });
+        assert.equal(
+          await draft.evaluate((el) => el === document.activeElement),
+          true,
+        );
+        await draft.fill("Retained draft");
+        await inspector.evaluate((el) => {
+          window.retainedInspector = el;
+          window.retainedContent = el.querySelector(
+            ".od-graph-inspector-content",
+          );
+          window.retainedInput = el.querySelector("input");
+        });
+        await body.evaluate((el) => (el.scrollTop = el.scrollHeight));
+        const end = await page
+          .getByText("Record detail 20.", { exact: true })
+          .boundingBox();
+        const viewport = await body.boundingBox();
+        assert.ok(
+          end.y >= viewport.y &&
+            end.y + end.height <= viewport.y + viewport.height + 1,
+          "The last detail is visible at the shared scroll end",
+        );
+        assert.deepEqual(
+          await fixedControls(),
+          before,
+          "Close and footer stay fixed while title and details scroll",
+        );
+        await body.evaluate((el) => (el.scrollTop = 0));
+        await page.screenshot({
+          path: `${shots}/extreme-title-${kind}-${mode}-top.png`,
+        });
+        await body.evaluate((el) => (el.scrollTop = el.scrollHeight));
+        await page.screenshot({
+          path: `${shots}/extreme-title-${kind}-${mode}-end.png`,
+        });
+        assert.deepEqual(
+          (await new AxeBuilder({ page }).analyze()).violations,
+          [],
+        );
+        assert.equal(
+          await inspector.evaluate(
+            (el) =>
+              el.scrollWidth > el.clientWidth ||
+              document.documentElement.scrollWidth > innerWidth,
+          ),
+          false,
+        );
+        // A fit change retains the host form and its focus, without an activation change.
+        await draft.focus();
+        await page.evaluate(() => window.setInspectorTitle("Short title"));
+        await waitFit(false);
+        assert.equal(
+          await inspector.evaluate(
+            (el) =>
+              el === window.retainedInspector &&
+              el.querySelector(".od-graph-inspector-content") ===
+                window.retainedContent &&
+              el.querySelector("input") === window.retainedInput &&
+              document.activeElement === window.retainedInput,
+          ),
+          true,
+        );
+        assert.equal(await draft.inputValue(), "Retained draft");
+        await page.evaluate(() => window.setInspectorTitle("W".repeat(200)));
+        await waitFit(true);
+        assert.equal(
+          await draft.evaluate(
+            (el) =>
+              el === document.activeElement && el === window.retainedInput,
+          ),
+          true,
+        );
+        // Keep the logical details offset when a new title changes the header height.
+        await body.evaluate(
+          (el) =>
+            (el.scrollTop =
+              el.querySelector("header").getBoundingClientRect().height + 180),
+        );
+        const beforeTitleAnchor = await anchorOffset();
+        await page.evaluate(() => window.setInspectorTitle("Short title"));
+        await waitFit(false);
+        near(
+          await anchorOffset(),
+          beforeTitleAnchor,
+          "A visible details anchor stays at the same position",
+        );
+        near(
+          await content.evaluate((el) => el.scrollTop),
+          180,
+          "Title shrink keeps the details offset",
+        );
+        await page.evaluate(() => window.setInspectorTitle("W".repeat(200)));
+        await waitFit(true);
+        near(
+          await body.evaluate(
+            (el) =>
+              el.scrollTop -
+              el.querySelector("header").getBoundingClientRect().height,
+          ),
+          180,
+          "Title expansion keeps the details offset",
+        );
+        // A reader still within the title has not scrolled into the details.
+        await body.evaluate(
+          (el) =>
+            (el.scrollTop =
+              el.querySelector("header").getBoundingClientRect().height / 2),
+        );
+        await page.evaluate(() => window.setInspectorTitle("Short title"));
+        await waitFit(false);
+        near(
+          await content.evaluate((el) => el.scrollTop),
+          0,
+          "Title-only scrolling does not jump into details",
+        );
+        await page.evaluate(() => window.setInspectorTitle("W".repeat(200)));
+        await waitFit(true);
+        // All mode changes retain the same inspector, content, form, and focus.
+        for (const nextWidth of [2400, 1792, 412, width]) {
+          await body.evaluate(
+            (el) =>
+              (el.scrollTop =
+                el.querySelector("header").getBoundingClientRect().height +
+                180),
+          );
+          const beforeModeAnchor = await anchorOffset();
+          await page.setViewportSize({ width: nextWidth, height: 1000 });
+          await page.waitForFunction(
+            (width) =>
+              document.querySelector(".od-graph-inspector")?.dataset.mode ===
+              (width >= 2208 ? "split" : width > 1536 ? "overlay" : "sheet"),
+            nextWidth,
+          );
+          await waitFit(true);
+          assert.equal(
+            await inspector.evaluate(
+              (el) =>
+                el === window.retainedInspector &&
+                el.querySelector(".od-graph-inspector-content") ===
+                  window.retainedContent &&
+                document.activeElement === window.retainedInput,
+            ),
+            true,
+          );
+          assert.equal(await draft.inputValue(), "Retained draft");
+          near(
+            await body.evaluate(
+              (el) =>
+                el.scrollTop -
+                el.querySelector("header").getBoundingClientRect().height,
+            ),
+            180,
+            "Mode changes keep the visible details offset",
+          );
+          near(
+            await anchorOffset(),
+            beforeModeAnchor,
+            "The details anchor survives header wrapping in a mode change",
+          );
+          assert.ok(
+            (await fixedControls()).every((control) => control.reachable),
+          );
+        }
+        // Text-only details keep one usable keyboard scroll stop after Close.
+        await page.evaluate(() => window.setInspectorDetails("text"));
+        await page.waitForFunction(
+          () =>
+            document.querySelector(".od-graph-inspector-content").tabIndex ===
+            0,
+        );
+        await close.focus();
+        await page.keyboard.press("Tab");
+        assert.equal(
+          await content.evaluate((el) => el === document.activeElement),
+          true,
+        );
+        await body.evaluate((el) => (el.scrollTop = 0));
+        await page.keyboard.press("PageDown");
+        await page.waitForFunction(
+          () =>
+            document.querySelector(".od-graph-inspector-body").scrollTop > 0,
+        );
+        await page.evaluate(() => {
+          window.setInspectorDetails("empty");
+          window.setInspectorTitle("Short title");
+        });
+        await waitFit(false);
+        await page.waitForFunction(
+          () =>
+            document.querySelector(".od-graph-inspector-content").tabIndex ===
+            -1,
+        );
+        assert.equal(
+          await content.evaluate((el) => el === document.activeElement),
+          true,
+          "Removing an extra Tab stop preserves focus",
+        );
+        await page.evaluate(() => window.setInspectorTitle("W".repeat(200)));
+        await waitFit(true);
+        await page
+          .getByRole("button", { name: "Save all record changes", exact: true })
+          .focus();
+        await page.keyboard.press("Enter");
+        assert.equal(
+          await page
+            .getByRole("button", {
+              name: "Save all record changes",
+              exact: true,
+            })
+            .getAttribute("data-used"),
+          "true",
+        );
+        const deleteAction = page.getByRole("button", {
+          name: "Delete selected record",
+          exact: true,
+        });
+        await deleteAction.focus();
+        await page.keyboard.press("Enter");
+        assert.equal(await deleteAction.getAttribute("data-used"), "true");
+        await close.click();
+        await inspector.waitFor({ state: "detached" });
+        await page.waitForFunction(
+          () => document.activeElement?.textContent === "Inspect graph",
+        );
+      }
+    }
+    for (const details of ["empty", "text"]) {
+      await page.setViewportSize({ width: 412, height: 1000 });
+      await load(page, {
+        kind: "workspace",
+        edge: true,
+        outerEdge: true,
+        inspectorTitle: "Short title",
+        details,
+      });
+      await page
+        .getByRole("button", { name: "Inspect graph", exact: true })
+        .click();
+      await page.waitForFunction(
+        () =>
+          document.querySelector(".od-graph-inspector")?.dataset.mode ===
+          "sheet",
+      );
+      await waitFit(false);
+      assert.equal(await inspector.locator("footer").count(), 0);
+      assert.equal(
+        await inspector.evaluate((el) => el.dataset.scrollTitle === "true"),
+        false,
+        "Short content does not use the intrinsic sheet height as its fit limit",
+      );
+      await page.evaluate(
+        () => (document.documentElement.style.fontSize = "200%"),
+      );
+      await page.evaluate(() => window.setInspectorTitle("W".repeat(200)));
+      await waitFit(true);
+      assert.ok((await fixedControls()).every((control) => control.reachable));
+      await page.keyboard.press("Escape");
+      await inspector.waitFor({ state: "detached" });
+      await page.waitForFunction(
+        () => document.activeElement?.textContent === "Inspect graph",
+      );
+    }
+    // Exact fit threshold, including borders, content padding, and wrapped footer.
+    for (const [mode, width] of [
+      ["split", 1400],
+      ["overlay", 1000],
+      ["sheet", 412],
+    ]) {
+      await page.setViewportSize({ width, height: 1000 });
+      await load(page, {
+        kind: "workspace",
+        edge: true,
+        outerEdge: true,
+        inspectorTitle: "W".repeat(150),
+        inspectorIcon: true,
+        inspectorActions: true,
+        wrappedActions: true,
+      });
+      await page
+        .getByRole("button", { name: "Inspect graph", exact: true })
+        .click();
+      await page.waitForFunction(
+        (mode) =>
+          document.querySelector(".od-graph-inspector")?.dataset.mode === mode,
+        mode,
+      );
+      await body.evaluate((el) => (el.style.scrollbarGutter = "stable"));
+      const threshold = await inspector.evaluate((el) => {
+        const content = el.querySelector(".od-graph-inspector-content");
+        const style = getComputedStyle(content);
+        const frame = getComputedStyle(el);
+        return (
+          el.querySelector("header").getBoundingClientRect().height +
+          el.querySelector("footer").getBoundingClientRect().height +
+          parseFloat(style.paddingTop) +
+          parseFloat(style.paddingBottom) +
+          44 +
+          parseFloat(frame.borderTopWidth) +
+          parseFloat(frame.borderBottomWidth)
+        );
+      });
+      for (const delta of [1, 0, -1, 0, 1, -1, 1]) {
+        await inspector.evaluate(
+          (el, { height, mode }) => {
+            if (mode === "sheet") el.style.maxHeight = height + "px";
+            else el.style.height = height + "px";
+          },
+          { height: threshold + delta, mode },
+        );
+        await waitFit(delta < 0);
+        assert.equal(
+          await inspector.evaluate((el) => el.dataset.scrollTitle === "true"),
+          delta < 0,
+          `${mode}: fit boundary ${delta}`,
+        );
+      }
+    }
+    console.log(
+      "Extreme title, fit boundary, retained DOM, focus, and keyboard scroll checks passed.",
+    );
+  } finally {
+    await context.close();
+  }
+}
+
 async function checkInspectorFrame() {
   const context = await browser.newContext();
   const page = await context.newPage();
@@ -1432,6 +1903,7 @@ async function checkWrappedControls() {
   }
 }
 try {
+  await checkExtremeInspectorTitle();
   await checkWrappedControls();
   await checkSvgInspectorFocus();
   await checkInspectorPopup();

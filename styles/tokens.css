@@ -2783,7 +2783,43 @@ samp {
   pointer-events: none;
 }
 
+.od-graph-inspector-body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.od-graph-inspector-close-slot {
+  width: 2.75rem;
+  height: 2.75rem;
+  flex: none;
+}
+
+.od-graph-inspector[data-scroll-title="true"] > .od-graph-inspector-body {
+  overflow: hidden auto;
+  overflow-anchor: none;
+  overscroll-behavior: contain;
+}
+
+.od-graph-inspector[data-scroll-title="true"]:has(.od-graph-inspector-close)
+  > .od-graph-inspector-body {
+  margin-block-start: 4.25rem;
+}
+
+.od-graph-inspector[data-scroll-title="true"] .od-graph-inspector-close {
+  position: absolute;
+  inset-block-start: 0.75rem;
+  inset-inline-end: 0.75rem;
+}
+
+.od-graph-inspector[data-scroll-title="true"] .od-graph-inspector-content {
+  flex: none;
+  overflow: visible;
+}
+
 .od-graph-inspector-header {
+  flex: none;
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -2811,7 +2847,7 @@ samp {
     grid-row: 1;
   }
 
-  .od-graph-inspector-close {
+  .od-graph-inspector-close-slot {
     grid-column: 3;
     grid-row: 1;
   }
@@ -2872,6 +2908,7 @@ samp {
 }
 
 .od-graph-inspector-actions {
+  flex: none;
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
