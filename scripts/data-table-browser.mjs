@@ -1,6 +1,6 @@
 import { strict as assert } from "node:assert";
 import { existsSync } from "node:fs";
-import { readFile } from "node:fs/promises";
+import { mkdir, readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 
 import AxeBuilder from "@axe-core/playwright";
@@ -55,6 +55,32 @@ const columns = [
 const syncColumns = [{
   key: "name", header: "Name", width: "10rem", render: ({ row }) => row.name,
 }];
+
+function ContrastFixture() {
+  const rows = Array.from({ length: 8 }, (_, index) => ({
+    id: String(index),
+    disabled: Boolean(index & 1),
+    pending: Boolean(index & 2),
+    selected: Boolean(index & 4),
+    name: [index & 1 ? "Disabled" : "Enabled", index & 2 ? "pending" : "ready", index & 4 ? "selected" : "unselected"].join(" "),
+  }));
+  return (
+    <DataTable
+      ariaLabel="State contrast records"
+      columns={[
+        { key: "name", header: "Name", render: ({ row }) => <strong>{row.name}</strong> },
+        { key: "value", header: "Value", render: () => "Record value" },
+      ]}
+      getRowId={(row) => row.id}
+      getRowLabel={(row) => row.name}
+      isRowDisabled={(row) => row.disabled}
+      isRowPending={(row) => row.pending}
+      minimumWidth="0"
+      rows={rows}
+      selection={{ selectedRowIds: rows.filter((row) => row.selected).map((row) => row.id), onChange: () => {} }}
+    />
+  );
+}
 
 function Fixture() {
   const [rows, setRows] = useState(initialRows);
@@ -275,7 +301,8 @@ function UnmountFixtures() {
   );
 }
 
-createRoot(document.getElementById("root")).render(<StrictMode><Fixture /></StrictMode>);
+const root = document.getElementById("root");
+createRoot(root).render(<StrictMode>{root.dataset.fixture === "contrast" ? <ContrastFixture /> : <Fixture />}</StrictMode>);
 `;
 
 const bundle = await build({
@@ -326,7 +353,175 @@ async function loadFixture(page) {
   return errors;
 }
 
+async function checkStateContrast() {
+  const shots = new URL("../tmp/data-table-contrast/", import.meta.url);
+  await mkdir(shots, { recursive: true });
+  for (const width of [390, 1440]) {
+    for (const textSize of [100, 200]) {
+      for (const forcedColors of ["none", "active"]) {
+        const context = await browser.newContext({
+          viewport: { width, height: 900 },
+          forcedColors,
+        });
+        try {
+          const page = await context.newPage();
+          const errors = [];
+          page.on("pageerror", (error) => errors.push(error.message));
+          page.on("console", (message) => {
+            if (message.type() === "error") errors.push(message.text());
+          });
+          await page.setContent(html);
+          await page.evaluate((size) => {
+            document.getElementById("root").dataset.fixture = "contrast";
+            document.querySelector("main").style.width = "100%";
+            document.documentElement.style.fontSize = `${size}%`;
+          }, textSize);
+          await page.addScriptTag({ content: browserScript });
+          const root = page.getByRole("region", {
+            name: "State contrast records",
+            exact: true,
+          });
+          await root.waitFor();
+          const cards = width === 390;
+          assert.equal(await root.getByRole("table").isVisible(), !cards);
+          assert.equal(await root.getByRole("list").isVisible(), cards);
+          const rows = root.locator(cards ? ".od-data-table-card" : "tbody tr");
+          assert.equal(await rows.count(), 8);
+          for (let index = 0; index < 8; index += 1) {
+            const row = rows.nth(index);
+            assert.equal(
+              await row.getAttribute(cards ? "data-disabled" : "aria-disabled"),
+              index & 1 ? "true" : null,
+            );
+            assert.equal(
+              await row.getAttribute("aria-busy"),
+              index & 2 ? "true" : null,
+            );
+            assert.equal(
+              await row.getAttribute("data-selected"),
+              index & 4 ? "true" : null,
+            );
+            const selection = row.getByRole("checkbox");
+            assert.equal(await selection.isDisabled(), Boolean(index & 3));
+            assert.equal(await selection.isChecked(), Boolean(index & 4));
+            if (cards) {
+              assert.equal(await row.getByRole("article").count(), 1);
+              assert.equal(await row.locator("dt").count(), 2);
+              assert.equal(await row.locator("dd").count(), 2);
+              const description = await row
+                .getByRole("article")
+                .getAttribute("aria-describedby");
+              assert.equal(Boolean(description), Boolean(index & 1));
+            } else {
+              assert.equal(await row.getByRole("cell").count(), 3);
+            }
+          }
+          const firstSelection = rows.nth(0).getByRole("checkbox");
+          await firstSelection.focus();
+          await firstSelection.press("Tab");
+          const selectedControl = rows.nth(4).getByRole("checkbox");
+          assert.equal(
+            await selectedControl.evaluate(
+              (element) => element === document.activeElement,
+            ),
+            true,
+            "Tab must skip disabled and pending row controls.",
+          );
+          assert.equal(
+            await selectedControl.evaluate((element) => {
+              const style = getComputedStyle(element);
+              return (
+                style.outlineStyle !== "none" &&
+                parseFloat(style.outlineWidth) > 0
+              );
+            }),
+            true,
+            "The available row control must have visible keyboard focus.",
+          );
+          const samples = await rows
+            .locator(
+              cards
+                ? ".od-data-table-card-title, dt, dd"
+                : ".od-data-table-cell",
+            )
+            .evaluateAll((elements) => {
+              const luminance = (color) => {
+                const channels = color.match(/[\d.]+/g).map(Number);
+                const linear = channels.slice(0, 3).map((channel) => {
+                  const value = channel / 255;
+                  return value <= 0.04045
+                    ? value / 12.92
+                    : ((value + 0.055) / 1.055) ** 2.4;
+                });
+                return (
+                  linear[0] * 0.2126 + linear[1] * 0.7152 + linear[2] * 0.0722
+                );
+              };
+              return elements.map((element) => {
+                let ancestor = element;
+                let background;
+                do {
+                  background = getComputedStyle(ancestor).backgroundColor;
+                  ancestor = ancestor.parentElement;
+                } while (
+                  background.startsWith("rgba(") &&
+                  Number(background.match(/[\d.]+/g)[3]) === 0 &&
+                  ancestor
+                );
+                const foreground = getComputedStyle(element).color;
+                const values = [luminance(foreground), luminance(background)];
+                return {
+                  row: element.closest("[data-data-table-row]").dataset
+                    .dataTableRow,
+                  text: element.textContent,
+                  foreground,
+                  background,
+                  ratio:
+                    (Math.max(...values) + 0.05) / (Math.min(...values) + 0.05),
+                };
+              });
+            });
+          assert.equal(samples.length, cards ? 40 : 16);
+          assert.equal(
+            await page.evaluate(
+              () =>
+                document.documentElement.scrollWidth <=
+                document.documentElement.clientWidth,
+            ),
+            true,
+            "State text must not cause page-level overflow.",
+          );
+          const label = `${width}-${textSize}-${forcedColors}`;
+          await root.screenshot({
+            path: fileURLToPath(new URL(`${label}.png`, shots)),
+          });
+          const axe = await new AxeBuilder({ page }).analyze();
+          process.stdout.write(
+            `${label}: ${JSON.stringify({ minimumContrast: Math.min(...samples.map((sample) => sample.ratio)), pendingDisabled: samples.filter((sample) => sample.row === "3"), violations: axe.violations })}\n`,
+          );
+          assert.deepEqual(
+            axe.violations,
+            [],
+            `${label}: Axe must pass in every row state.`,
+          );
+          assert.deepEqual(
+            samples.filter(
+              (sample) => !Number.isFinite(sample.ratio) || sample.ratio < 4.5,
+            ),
+            [],
+            `${label}: all record text must meet 4.5:1, including disabled desktop rows that Axe excludes.`,
+          );
+          assert.deepEqual(errors, []);
+        } finally {
+          await context.close();
+        }
+      }
+    }
+  }
+}
+
 try {
+  await checkStateContrast();
   const desktopContext = await browser.newContext({
     viewport: { width: 1280, height: 800 },
   });

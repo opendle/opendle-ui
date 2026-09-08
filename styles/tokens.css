@@ -332,7 +332,7 @@
 }
 
 .od-data-table-table tbody tr[aria-disabled="true"] > * {
-  color: var(--od-color-muted);
+  color: var(--od-color-muted-strong);
 }
 
 .od-data-table-selection-column,
@@ -467,7 +467,7 @@
 }
 
 .od-data-table-card[data-disabled="true"] {
-  color: var(--od-color-muted);
+  color: var(--od-color-muted-strong);
 }
 
 .od-data-table-card-heading {
