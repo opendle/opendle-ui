@@ -100,6 +100,7 @@ npm run lint
 npm run typecheck
 npm test
 npm run test:browser
+node scripts/graph-viewport-content-browser.mjs
 npm run security
 ./scripts/react-doctor-gate.sh
 

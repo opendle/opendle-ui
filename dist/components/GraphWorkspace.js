@@ -43,7 +43,13 @@ export function useInspectorReachability(hostRef, selectedControlRef, active) {
         const keepReachable = () => {
             if (host.dataset.inspectorMode !== "overlay")
                 return;
-            const control = selectedControlRef?.current;
+            const focused = host.ownerDocument.activeElement;
+            const control = focused instanceof HTMLElement &&
+                focused.closest(".od-graph-workspace, .od-relationship-graph") ===
+                    host &&
+                focused.closest(".od-graph-viewport-content")
+                ? focused
+                : selectedControlRef?.current;
             if (!control?.isConnected)
                 return;
             const viewport = control.closest(".od-graph-viewport, .od-relationship-graph-viewport");
@@ -67,6 +73,14 @@ export function useInspectorReachability(hostRef, selectedControlRef, active) {
                 viewport.scrollLeft -= visibleStart - controlBounds.left;
             }
         };
+        const revealFocusedContent = () => {
+            if (host.ownerDocument.activeElement
+                ?.closest(".od-graph-viewport-content")
+                ?.closest(".od-graph-workspace, .od-relationship-graph") === host) {
+                keepReachable();
+            }
+        };
+        host.addEventListener("focusin", revealFocusedContent);
         const mutationObserver = new MutationObserver(keepReachable);
         for (let ancestor = host; ancestor; ancestor = ancestor.parentElement) {
             mutationObserver.observe(ancestor, {
@@ -82,6 +96,7 @@ export function useInspectorReachability(hostRef, selectedControlRef, active) {
             geometryObserver?.observe(inspector);
         keepReachable();
         return () => {
+            host.removeEventListener("focusin", revealFocusedContent);
             geometryObserver?.disconnect();
             mutationObserver.disconnect();
         };
@@ -98,6 +113,13 @@ export function GraphToolbar({ leading, center, actions, className, ...props }) 
 /** Shared, labelled controls for controlled graph view and layout actions. */
 export function GraphViewportControls({ onZoomIn, onZoomOut, onFitView, onAutomaticLayout, zoomInLabel = "Zoom in", zoomOutLabel = "Zoom out", fitViewLabel = "Fit view", automaticLayoutLabel = "Automatic layout", zoomInDisabled = false, zoomOutDisabled = false, fitViewDisabled = false, automaticLayoutDisabled = false, className, ...props }) {
     return (_jsxs("div", { ...props, "aria-label": props["aria-label"] ?? "Graph view controls", className: classes("od-graph-viewport-controls", className), role: props.role ?? "group", children: [onZoomOut ? (_jsx("button", { "aria-label": zoomOutLabel, disabled: zoomOutDisabled, onClick: onZoomOut, type: "button", children: "\u2212" })) : null, onZoomIn ? (_jsx("button", { "aria-label": zoomInLabel, disabled: zoomInDisabled, onClick: onZoomIn, type: "button", children: "+" })) : null, onFitView ? (_jsx("button", { disabled: fitViewDisabled, onClick: onFitView, type: "button", children: fitViewLabel })) : null, onAutomaticLayout ? (_jsx("button", { disabled: automaticLayoutDisabled, onClick: onAutomaticLayout, type: "button", children: automaticLayoutLabel })) : null] }));
+}
+/** @internal Shared content wrapper for local graph viewports. */
+export function GraphViewportContent({ children, }) {
+    const edgeToEdge = use(PageSurfaceEdgeContext);
+    if (!hasRenderedContent(children))
+        return null;
+    return (_jsx("div", { className: "od-graph-viewport-content", "data-edge-to-edge": edgeToEdge, children: children }));
 }
 function usePreventGraphWheelDefault(viewportRef, enabled) {
     useLayoutEffect(() => {
@@ -122,10 +144,13 @@ function usePreventGraphWheelDefault(viewportRef, enabled) {
     }, [enabled, viewportRef]);
 }
 /** A scrollable or controlled pan-and-zoom viewport for graph content. */
-export function GraphViewport({ canvasAlignment = "start", canvasWidth, canvasHeight, canvasClassName, canvasProps, viewport, viewportLimits, onViewportChange, panStep = 24, zoomStep = 0.1, connectionMode = false, onConnectionCancel, children, className, onClick, onKeyDown, onLostPointerCapture, onPointerCancel, onPointerDown, onPointerMove, onPointerUp, onWheel, role: suppliedRole, ...props }) {
+export function GraphViewport({ viewportContent, canvasAlignment = "start", canvasWidth, canvasHeight, canvasClassName, canvasProps, viewport, viewportLimits, onViewportChange, panStep = 24, zoomStep = 0.1, connectionMode = false, onConnectionCancel, children, className, onClick, onKeyDown, onLostPointerCapture, onPointerCancel, onPointerDown, onPointerMove, onPointerUp, onWheel, role: suppliedRole, ...props }) {
     const viewportRef = useRef(null);
     const pointerPanRef = useRef(null);
     const pointerMovedRef = useRef(false);
+    if (viewport !== undefined && hasRenderedContent(viewportContent)) {
+        throw new Error("Graph viewport content requires native scrolling; omit viewport.");
+    }
     if (!Number.isFinite(panStep) || panStep <= 0) {
         throw new Error("Graph viewport pan step must be finite and positive.");
     }
@@ -306,7 +331,7 @@ export function GraphViewport({ canvasAlignment = "start", canvasWidth, canvasHe
     const viewportSemanticProps = {
         role: suppliedRole ?? (controlledViewport ? "application" : "region"),
     };
-    return (_jsx("div", { "aria-label": "Graph viewport", role: "application", ...props, ...viewportSemanticProps, className: classes("od-graph-viewport", className), "data-canvas-alignment": canvasAlignment, "data-connection-mode": connectionMode, "data-pan-zoom": controlledViewport !== undefined, onClick: runViewportBackgroundAction, onKeyDown: handleKeyDown, onLostPointerCapture: handleLostPointerCapture, onPointerCancel: handlePointerCancel, onPointerDown: handlePointerDown, onPointerMove: handlePointerMove, onPointerUp: handlePointerUp, onWheel: changeViewportFromWheel, ref: viewportRef, tabIndex: controlledViewport ? (props.tabIndex ?? 0) : props.tabIndex, children: _jsx("div", { ...canvasProps, className: classes("od-graph-canvas", canvasClassName, canvasProps?.className), "data-alignment": canvasAlignment, role: canvasProps?.role ?? "group", style: canvasStyle, children: children }) }));
+    return (_jsxs("div", { "aria-label": "Graph viewport", role: "application", ...props, ...viewportSemanticProps, className: classes("od-graph-viewport", className), "data-canvas-alignment": canvasAlignment, "data-connection-mode": connectionMode, "data-pan-zoom": controlledViewport !== undefined, onClick: runViewportBackgroundAction, onKeyDown: handleKeyDown, onLostPointerCapture: handleLostPointerCapture, onPointerCancel: handlePointerCancel, onPointerDown: handlePointerDown, onPointerMove: handlePointerMove, onPointerUp: handlePointerUp, onWheel: changeViewportFromWheel, ref: viewportRef, tabIndex: controlledViewport ? (props.tabIndex ?? 0) : props.tabIndex, children: [_jsx(GraphViewportContent, { children: viewportContent }), _jsx("div", { ...canvasProps, className: classes("od-graph-canvas", canvasClassName, canvasProps?.className), "data-alignment": canvasAlignment, role: canvasProps?.role ?? "group", style: canvasStyle, children: children })] }));
 }
 /** An accessible empty state for a graph canvas. */
 export function GraphEmptyState({ actions, className, description, headingLevel = "h2", icon, role = "status", title, ...props }) {

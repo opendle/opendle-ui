@@ -35,7 +35,13 @@ export interface GraphViewportControlsProps extends Omit<HTMLAttributes<HTMLDivE
 /** Shared, labelled controls for controlled graph view and layout actions. */
 export declare function GraphViewportControls({ onZoomIn, onZoomOut, onFitView, onAutomaticLayout, zoomInLabel, zoomOutLabel, fitViewLabel, automaticLayoutLabel, zoomInDisabled, zoomOutDisabled, fitViewDisabled, automaticLayoutDisabled, className, ...props }: GraphViewportControlsProps): import("react").JSX.Element;
 export type GraphViewportChangeReason = "keyboard" | "pointer" | "wheel";
+/** @internal Shared content wrapper for local graph viewports. */
+export declare function GraphViewportContent({ children, }: {
+    readonly children: ReactNode;
+}): import("react").JSX.Element | null;
 export interface GraphViewportProps extends HTMLAttributes<HTMLDivElement> {
+    /** Content before the retained canvas, at the local viewport width. Requires native scrolling; cannot be used with viewport. */
+    readonly viewportContent?: ReactNode;
     readonly canvasAlignment?: "start" | "center";
     readonly canvasWidth?: number | string;
     readonly canvasHeight?: number | string;
@@ -50,7 +56,7 @@ export interface GraphViewportProps extends HTMLAttributes<HTMLDivElement> {
     readonly onConnectionCancel?: () => void;
 }
 /** A scrollable or controlled pan-and-zoom viewport for graph content. */
-export declare function GraphViewport({ canvasAlignment, canvasWidth, canvasHeight, canvasClassName, canvasProps, viewport, viewportLimits, onViewportChange, panStep, zoomStep, connectionMode, onConnectionCancel, children, className, onClick, onKeyDown, onLostPointerCapture, onPointerCancel, onPointerDown, onPointerMove, onPointerUp, onWheel, role: suppliedRole, ...props }: GraphViewportProps): import("react").JSX.Element;
+export declare function GraphViewport({ viewportContent, canvasAlignment, canvasWidth, canvasHeight, canvasClassName, canvasProps, viewport, viewportLimits, onViewportChange, panStep, zoomStep, connectionMode, onConnectionCancel, children, className, onClick, onKeyDown, onLostPointerCapture, onPointerCancel, onPointerDown, onPointerMove, onPointerUp, onWheel, role: suppliedRole, ...props }: GraphViewportProps): import("react").JSX.Element;
 export interface GraphEmptyStateProps extends Omit<HTMLAttributes<HTMLDivElement>, "title"> {
     readonly icon: ReactNode;
     readonly title: ReactNode;

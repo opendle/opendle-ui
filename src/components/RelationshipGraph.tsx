@@ -17,7 +17,11 @@ import {
   type RelationshipGraphModelNode,
   type RelationshipGraphModelRelationship,
 } from "../RelationshipGraphModel.js";
-import { GraphToolbar, useInspectorReachability } from "./GraphWorkspace.js";
+import {
+  GraphToolbar,
+  GraphViewportContent,
+  useInspectorReachability,
+} from "./GraphWorkspace.js";
 
 import { PageSurfaceEdgeContext } from "../PageSurfaceContext.js";
 
@@ -124,6 +128,10 @@ export interface RelationshipGraphProps extends Omit<
   /** The selected-node inspector. It is removed when the selected node is not in the graph. */
   readonly inspector?: ReactNode;
   readonly fullPage?: boolean;
+  /** The exact local viewport name. Omit to use the graph name plus " viewport". */
+  readonly viewportLabel?: string;
+  /** Content before the retained board, inside the local viewport. */
+  readonly viewportContent?: ReactNode;
   readonly searchLabel?: string;
   readonly searchPlaceholder?: string;
   readonly searchQuery?: string;
@@ -563,6 +571,8 @@ export function RelationshipGraph({
   auxiliaryInspector,
   inspector,
   fullPage = false,
+  viewportLabel,
+  viewportContent,
   searchLabel = "Search graph",
   searchPlaceholder = "Search all columns",
   searchQuery,
@@ -1227,9 +1237,10 @@ export function RelationshipGraph({
         />
       )}
       <section
-        aria-label={`${ariaLabel} viewport`}
+        aria-label={viewportLabel ?? `${ariaLabel} viewport`}
         className="od-relationship-graph-viewport"
       >
+        <GraphViewportContent>{viewportContent}</GraphViewportContent>
         {invalidState !== undefined ? (
           <div className="od-relationship-graph-invalid" role="alert">
             {invalidState}

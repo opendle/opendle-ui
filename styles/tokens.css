@@ -2233,6 +2233,48 @@ samp {
   outline-offset: -3px;
 }
 
+.od-graph-viewport:has(> .od-graph-viewport-content) {
+  display: flex;
+  flex-direction: column;
+}
+
+.od-graph-viewport:has(> .od-graph-viewport-content) > .od-graph-canvas {
+  flex: 0 0 auto;
+}
+
+.od-graph-viewport-content {
+  box-sizing: border-box;
+  flex: 0 0 auto;
+  width: 100%;
+  min-width: 0;
+  padding: var(--od-space-md);
+  overflow-wrap: anywhere;
+  color: #e5ebe7;
+}
+
+.od-graph-viewport-content[data-edge-to-edge="true"] {
+  padding-block: var(--od-space-lg);
+  padding-left: max(var(--od-page-gutter), env(safe-area-inset-left));
+  padding-right: max(var(--od-page-gutter), env(safe-area-inset-right));
+}
+
+.od-graph-viewport-content .od-graph-empty-state[data-edge-to-edge] {
+  position: relative;
+  inset: auto;
+  min-height: 0;
+  padding: 0;
+}
+
+.od-graph-workspace[data-inspector-mode="overlay"]
+  > .od-graph-workspace-stage
+  > .od-graph-viewport
+  > .od-graph-viewport-content,
+.od-relationship-graph[data-inspector-mode="overlay"]
+  > .od-relationship-graph-viewport
+  > .od-graph-viewport-content {
+  margin-inline-end: 21.875rem;
+}
+
 .od-graph-viewport[data-canvas-alignment="center"] {
   display: flex;
 }

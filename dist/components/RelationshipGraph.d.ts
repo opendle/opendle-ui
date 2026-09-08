@@ -70,6 +70,10 @@ export interface RelationshipGraphProps extends Omit<HTMLAttributes<HTMLElement>
     /** The selected-node inspector. It is removed when the selected node is not in the graph. */
     readonly inspector?: ReactNode;
     readonly fullPage?: boolean;
+    /** The exact local viewport name. Omit to use the graph name plus " viewport". */
+    readonly viewportLabel?: string;
+    /** Content before the retained board, inside the local viewport. */
+    readonly viewportContent?: ReactNode;
     readonly searchLabel?: string;
     readonly searchPlaceholder?: string;
     readonly searchQuery?: string;
@@ -86,5 +90,5 @@ export interface RelationshipGraphProps extends Omit<HTMLAttributes<HTMLElement>
     readonly searchContextLabel?: string;
 }
 /** A host-neutral, responsive relationship graph with three named columns. */
-export declare function RelationshipGraph({ columns, relationships, selectedNodeId, defaultSelectedNodeId, onSelectionChange, onNodeActivate, auxiliaryInspector, inspector, fullPage, searchLabel, searchPlaceholder, searchQuery, defaultSearchQuery, onSearchQueryChange, toolbar, emptyState, invalidState, noResultsTitle, noResultsDescription, clearSearchLabel, partialNoResultsTitle, partialNoResultsDescription, searchContextLabel, className, "aria-label": ariaLabel, ...props }: RelationshipGraphProps): import("react").JSX.Element;
+export declare function RelationshipGraph({ columns, relationships, selectedNodeId, defaultSelectedNodeId, onSelectionChange, onNodeActivate, auxiliaryInspector, inspector, fullPage, viewportLabel, viewportContent, searchLabel, searchPlaceholder, searchQuery, defaultSearchQuery, onSearchQueryChange, toolbar, emptyState, invalidState, noResultsTitle, noResultsDescription, clearSearchLabel, partialNoResultsTitle, partialNoResultsDescription, searchContextLabel, className, "aria-label": ariaLabel, ...props }: RelationshipGraphProps): import("react").JSX.Element;
 //# sourceMappingURL=RelationshipGraph.d.ts.map

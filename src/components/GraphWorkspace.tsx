@@ -119,7 +119,14 @@ export function useInspectorReachability(
     if (!host || !active) return;
     const keepReachable = () => {
       if (host.dataset.inspectorMode !== "overlay") return;
-      const control = selectedControlRef?.current;
+      const focused = host.ownerDocument.activeElement;
+      const control =
+        focused instanceof HTMLElement &&
+        focused.closest(".od-graph-workspace, .od-relationship-graph") ===
+          host &&
+        focused.closest(".od-graph-viewport-content")
+          ? focused
+          : selectedControlRef?.current;
       if (!control?.isConnected) return;
       const viewport = control.closest<HTMLElement>(
         ".od-graph-viewport, .od-relationship-graph-viewport",
@@ -145,6 +152,16 @@ export function useInspectorReachability(
         viewport.scrollLeft -= visibleStart - controlBounds.left;
       }
     };
+    const revealFocusedContent = () => {
+      if (
+        host.ownerDocument.activeElement
+          ?.closest(".od-graph-viewport-content")
+          ?.closest(".od-graph-workspace, .od-relationship-graph") === host
+      ) {
+        keepReachable();
+      }
+    };
+    host.addEventListener("focusin", revealFocusedContent);
     const mutationObserver = new MutationObserver(keepReachable);
     for (
       let ancestor: HTMLElement | null = host;
@@ -164,6 +181,7 @@ export function useInspectorReachability(
     if (inspector) geometryObserver?.observe(inspector);
     keepReachable();
     return () => {
+      host.removeEventListener("focusin", revealFocusedContent);
       geometryObserver?.disconnect();
       mutationObserver.disconnect();
     };
@@ -292,7 +310,24 @@ export function GraphViewportControls({
 
 export type GraphViewportChangeReason = "keyboard" | "pointer" | "wheel";
 
+/** @internal Shared content wrapper for local graph viewports. */
+export function GraphViewportContent({
+  children,
+}: {
+  readonly children: ReactNode;
+}) {
+  const edgeToEdge = use(PageSurfaceEdgeContext);
+  if (!hasRenderedContent(children)) return null;
+  return (
+    <div className="od-graph-viewport-content" data-edge-to-edge={edgeToEdge}>
+      {children}
+    </div>
+  );
+}
+
 export interface GraphViewportProps extends HTMLAttributes<HTMLDivElement> {
+  /** Content before the retained canvas, at the local viewport width. Requires native scrolling; cannot be used with viewport. */
+  readonly viewportContent?: ReactNode;
   readonly canvasAlignment?: "start" | "center";
   readonly canvasWidth?: number | string;
   readonly canvasHeight?: number | string;
@@ -346,6 +381,7 @@ function usePreventGraphWheelDefault(
 
 /** A scrollable or controlled pan-and-zoom viewport for graph content. */
 export function GraphViewport({
+  viewportContent,
   canvasAlignment = "start",
   canvasWidth,
   canvasHeight,
@@ -374,6 +410,11 @@ export function GraphViewport({
   const viewportRef = useRef<HTMLDivElement>(null);
   const pointerPanRef = useRef<GraphPointerPan | null>(null);
   const pointerMovedRef = useRef(false);
+  if (viewport !== undefined && hasRenderedContent(viewportContent)) {
+    throw new Error(
+      "Graph viewport content requires native scrolling; omit viewport.",
+    );
+  }
   if (!Number.isFinite(panStep) || panStep <= 0) {
     throw new Error("Graph viewport pan step must be finite and positive.");
   }
@@ -620,6 +661,7 @@ export function GraphViewport({
       ref={viewportRef}
       tabIndex={controlledViewport ? (props.tabIndex ?? 0) : props.tabIndex}
     >
+      <GraphViewportContent>{viewportContent}</GraphViewportContent>
       <div
         {...canvasProps}
         className={classes(
