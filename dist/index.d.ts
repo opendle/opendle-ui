@@ -1,3 +1,4 @@
+export { SkipLink, type SkipLinkProps } from "./components/SkipLink.js";
 import type { SVGAttributes } from "react";
 /** Public package version. Keep this value aligned with package.json. */
 export declare const OPENDLE_UI_VERSION: "0.2.0";

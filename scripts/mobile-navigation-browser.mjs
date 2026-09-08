@@ -12,10 +12,12 @@ const fixture = String.raw`
 import React, { StrictMode, useLayoutEffect, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { flushSync } from "react-dom";
-import { ApplicationShell, ApplicationSidebar, ApplicationNavigation, NavigationLink, MobileNavigation, Button, Icon } from "./dist/index.js";
+import { ApplicationShell, ApplicationSidebar, ApplicationNavigation, NavigationLink, MobileNavigation, Button, Icon, SkipLink } from "./dist/index.js";
 const labels = ["Overview", "Services", "LLM configuration", "Logs", "Usage & cost", "Activity & health"];
 const rowOnly = new URLSearchParams(location.search).has("row-only");
 const native = new URLSearchParams(location.search).has("native");
+const nativeSkip = new URLSearchParams(location.search).has("native-skip");
+const skipLabel = new URLSearchParams(location.search).has("long-skip") ? "Skip directly to the current page content and its available actions ".repeat(3) : "Skip to content";
 function Fixture() {
   const [route, setRoute] = useState(0);
   const [legacy, setLegacy] = useState(0);
@@ -50,8 +52,14 @@ function Fixture() {
     heading.current?.focus();
     window.navigationEvent.headingFocused = document.activeElement === heading.current;
   };
+  const skip = event => {
+    window.skipEvent = {href: event.currentTarget.getAttribute("href"), ctrlKey: event.ctrlKey, metaKey: event.metaKey, shiftKey: event.shiftKey, altKey: event.altKey, button: event.button, defaultPrevented: event.defaultPrevented};
+    if (event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
+    event.preventDefault();
+    heading.current?.focus();
+  };
   return <>
-    <a className="fixture-skip" href="#content">Skip to content</a>
+    <SkipLink href="#page-heading" label={skipLabel} onClick={nativeSkip ? undefined : skip} onAuxClick={event => { window.skipAux = {button: event.button, href: event.currentTarget.getAttribute("href"), defaultPrevented: event.defaultPrevented}; }} />
     <ApplicationShell
       mainProps={{id: "content"}}
       sidebar={<ApplicationSidebar brand="Example application" context="Administrator: Example user"
@@ -66,7 +74,7 @@ function Fixture() {
       /> : <></>}
     >
       <section className="fixture-page">
-        <h1 tabIndex={-1} ref={heading}>{labels[route]}</h1>
+        <h1 id="page-heading" tabIndex={-1} ref={heading}>{labels[route]}</h1>
         <Button>Route action</Button>
         <output aria-label="Legacy count">{legacy}</output>
         <output aria-label="Account count">{account}</output>
@@ -77,6 +85,262 @@ function Fixture() {
 }
 createRoot(document.getElementById("root")).render(<StrictMode><Fixture/></StrictMode>);
 `;
+
+async function checkSkipLink(browser, origin) {
+  for (const viewport of [
+    { width: 1440, height: 1000 },
+    { width: 390, height: 844 },
+  ]) {
+    const context = await browser.newContext({ viewport });
+    try {
+      const page = await context.newPage();
+      for (const native of [false, true]) {
+        await page.goto(origin + (native ? "?native-skip" : ""));
+        const link = page.getByRole("link", {
+          name: "Skip to content",
+          exact: true,
+        });
+        await link.waitFor();
+        const shellTop = await page
+          .locator(".od-application-shell")
+          .evaluate((node) => node.getBoundingClientRect().top);
+        assert.equal(
+          shellTop,
+          0,
+          "The hidden skip link must take no layout space.",
+        );
+        assert.equal(
+          await link.evaluate((node) => getComputedStyle(node).clipPath),
+          "inset(50%)",
+        );
+        await page.keyboard.press("Tab");
+        assert.equal(
+          await link.evaluate((node) => node === document.activeElement),
+          true,
+        );
+        assert.equal(
+          await link.evaluate((node) => getComputedStyle(node).clipPath),
+          "none",
+        );
+        const focusStyle = await link.evaluate((node) => {
+          const style = getComputedStyle(node);
+          const rect = node.getBoundingClientRect();
+          return {
+            outlineStyle: style.outlineStyle,
+            outlineWidth: style.outlineWidth,
+            top: rect.top,
+            left: rect.left,
+            right: rect.right,
+            bottom: rect.bottom,
+            hit:
+              document.elementFromPoint(
+                rect.left + rect.width / 2,
+                rect.top + rect.height / 2,
+              ) === node,
+          };
+        });
+        assert.equal(focusStyle.outlineStyle, "solid");
+        assert.equal(focusStyle.outlineWidth, "3px");
+        assert.ok(
+          focusStyle.top >= 5 &&
+            focusStyle.left >= 5 &&
+            focusStyle.right <= viewport.width - 5 &&
+            focusStyle.bottom <= viewport.height - 5,
+          JSON.stringify(focusStyle),
+        );
+        assert.equal(
+          focusStyle.hit,
+          true,
+          "The focus link must be above the application shell.",
+        );
+        assert.equal(
+          await page
+            .locator(".od-application-shell")
+            .evaluate((node) => node.getBoundingClientRect().top),
+          shellTop,
+        );
+        await page.keyboard.press("Tab");
+        const next =
+          viewport.width === 390
+            ? page.getByRole("button", { name: "Route action", exact: true })
+            : page
+                .getByRole("navigation", { name: "Desktop destinations" })
+                .getByRole("link", { name: "Overview", exact: true });
+        assert.equal(
+          await next.evaluate((node) => node === document.activeElement),
+          true,
+        );
+        await page.keyboard.press("Shift+Tab");
+        await page.keyboard.press("Enter");
+        const heading = page.getByRole("heading", {
+          name: "Overview",
+          exact: true,
+        });
+        assert.equal(
+          await heading.evaluate((node) => node === document.activeElement),
+          true,
+        );
+        assert.equal(new URL(page.url()).hash, native ? "#page-heading" : "");
+        if (!native) {
+          assert.deepEqual(await page.evaluate(() => window.skipEvent), {
+            href: "#page-heading",
+            ctrlKey: false,
+            metaKey: false,
+            shiftKey: false,
+            altKey: false,
+            button: 0,
+            defaultPrevented: false,
+          });
+        }
+        assert.equal(
+          await link.evaluate((node) => getComputedStyle(node).clipPath),
+          "inset(50%)",
+        );
+        await page.keyboard.press("Tab");
+        assert.equal(
+          await page
+            .getByRole("button", { name: "Route action", exact: true })
+            .evaluate((node) => node === document.activeElement),
+          true,
+        );
+      }
+      await page.goto(origin);
+      const link = page.getByRole("link", {
+        name: "Skip to content",
+        exact: true,
+      });
+      await link.waitFor();
+      // Check browser cancellation and the complete React event without opening extra tabs.
+      for (const modifier of ["ctrlKey", "metaKey", "shiftKey", "altKey"]) {
+        const result = await link.evaluate((node, modifier) => {
+          const event = new MouseEvent("click", {
+            bubbles: true,
+            cancelable: true,
+            [modifier]: true,
+          });
+          const allowed = node.dispatchEvent(event);
+          return {
+            allowed,
+            defaultPrevented: event.defaultPrevented,
+            callback: window.skipEvent,
+          };
+        }, modifier);
+        assert.equal(result.allowed, true);
+        assert.equal(result.defaultPrevented, false);
+        assert.equal(result.callback[modifier], true);
+        assert.equal(result.callback.href, "#page-heading");
+      }
+      const auxiliary = await link.evaluate((node) => {
+        const event = new MouseEvent("auxclick", {
+          bubbles: true,
+          cancelable: true,
+          button: 1,
+        });
+        const allowed = node.dispatchEvent(event);
+        return { allowed, callback: window.skipAux };
+      });
+      assert.deepEqual(auxiliary, {
+        allowed: true,
+        callback: { button: 1, href: "#page-heading", defaultPrevented: false },
+      });
+      await page.goto(origin);
+      await link.waitFor();
+      await link.focus();
+      await link.click();
+      assert.equal(new URL(page.url()).hash, "");
+      assert.equal(
+        await page
+          .getByRole("heading", { name: "Overview", exact: true })
+          .evaluate((node) => node === document.activeElement),
+        true,
+      );
+      await page.goto(origin + "?long-skip");
+      const longLink = page.locator(".od-skip-link");
+      await longLink.waitFor();
+      await page.evaluate(() => {
+        document.documentElement.style.fontSize = "200%";
+      });
+      await page.keyboard.press("Tab");
+      await page.screenshot({
+        path:
+          "/tmp/opendle-ui-phone-navigation/skip-link-normal-" +
+          viewport.width +
+          ".png",
+        fullPage: true,
+      });
+      assert.deepEqual(
+        (await new AxeBuilder({ page }).analyze()).violations,
+        [],
+      );
+      await page.emulateMedia({ forcedColors: "active" });
+      const dimensions = await longLink.evaluate((node) => {
+        const rect = node.getBoundingClientRect();
+        const style = getComputedStyle(node);
+        return {
+          left: rect.left,
+          top: rect.top,
+          right: rect.right,
+          bottom: rect.bottom,
+          scrollWidth: node.scrollWidth,
+          clientWidth: node.clientWidth,
+          scrollHeight: node.scrollHeight,
+          clientHeight: node.clientHeight,
+          outlineStyle: style.outlineStyle,
+          outlineWidth: style.outlineWidth,
+          clipPath: style.clipPath,
+          fontSize: style.fontSize,
+          viewportWidth: document.documentElement.clientWidth,
+          documentWidth: document.documentElement.scrollWidth,
+        };
+      });
+      assert.equal(dimensions.fontSize, "32px");
+      assert.equal(dimensions.clipPath, "none");
+      assert.equal(dimensions.outlineStyle, "solid");
+      assert.equal(dimensions.outlineWidth, "3px");
+      assert.ok(
+        dimensions.left >= 5 &&
+          dimensions.top >= 5 &&
+          dimensions.right <= viewport.width - 5 &&
+          dimensions.bottom <= viewport.height - 5,
+        JSON.stringify(dimensions),
+      );
+      assert.ok(
+        dimensions.scrollWidth <= dimensions.clientWidth,
+        JSON.stringify(dimensions),
+      );
+      assert.ok(
+        dimensions.documentWidth <= dimensions.viewportWidth,
+        JSON.stringify(dimensions),
+      );
+      assert.deepEqual(
+        (await new AxeBuilder({ page }).analyze()).violations,
+        [],
+      );
+      await page.screenshot({
+        path:
+          "/tmp/opendle-ui-phone-navigation/skip-link-" +
+          viewport.width +
+          ".png",
+        fullPage: true,
+      });
+      if (dimensions.scrollHeight > dimensions.clientHeight) {
+        await page.keyboard.press("End");
+        await page.waitForFunction(
+          () => document.querySelector(".od-skip-link").scrollTop > 0,
+        );
+      }
+      await page.keyboard.press("Enter");
+      assert.equal(
+        await page
+          .getByRole("heading", { name: "Overview", exact: true })
+          .evaluate((node) => node === document.activeElement),
+        true,
+      );
+    } finally {
+      await context.close();
+    }
+  }
+}
 
 export async function checkMobileNavigation(browser) {
   const bundle = await build({
@@ -95,7 +359,6 @@ export async function checkMobileNavigation(browser) {
     "utf8",
   );
   const html = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Navigation checks</title><style>${css}
-.fixture-skip{position:fixed;left:1rem;top:-10rem;z-index:100}.fixture-skip:focus{top:1rem}
 .fixture-page{display:flex;flex-direction:column;height:calc(100dvh - var(--od-application-navigation-height,0px));padding:1rem;gap:1rem}.fixture-page h1{margin:0}.fixture-page-end{margin-top:auto}
 </style></head><body><div id="root"></div><script>${bundle.outputFiles[0].text}</script></body></html>`;
   const server = createServer((_request, response) => {
@@ -115,6 +378,7 @@ export async function checkMobileNavigation(browser) {
     "Activity & health",
   ];
   try {
+    await checkSkipLink(browser, origin);
     for (const viewport of [
       { width: 1440, height: 1000 },
       { width: 1100, height: 800 },

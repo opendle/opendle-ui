@@ -168,6 +168,22 @@ their backends and supply current authorized data and controlled actions.
 
 ## Phone navigation
 
+Place `SkipLink` before application navigation in DOM order. Supply `href`
+and a text `label`. The native link appears on focus and takes no layout
+space. Give its target `tabIndex={-1}` so activation moves keyboard focus.
+Normal anchor attributes and event handlers pass through to the link.
+
+```tsx
+<SkipLink href="#page-heading" label="Skip to content" />
+// Place this heading inside the page's main region.
+<h1 id="page-heading" tabIndex={-1}>Page title</h1>
+```
+
+The default link uses browser fragment navigation. A host that must keep the
+URL unchanged can supply `onClick`, call `event.preventDefault()`, and focus
+its own target. The host must check modifier keys and the mouse button before
+it cancels native navigation. `SkipLink` does not select a route or target.
+
 `MobileNavigation` keeps the existing `items` and `onSelect(id)` button API.
 An item with `href` uses a native `NavigationLink`. Set `active` for the
 current destination. The phone row and optional surface show its active

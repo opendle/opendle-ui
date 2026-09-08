@@ -1,4 +1,5 @@
 import { jsx as _jsx } from "react/jsx-runtime";
+export { SkipLink } from "./components/SkipLink.js";
 /** Public package version. Keep this value aligned with package.json. */
 export const OPENDLE_UI_VERSION = "0.2.0";
 const iconPaths = {

@@ -68,6 +68,47 @@
   --shadow: var(--od-shadow);
 }
 
+.od-skip-link {
+  position: fixed;
+  z-index: 100;
+  inset-block-start: max(var(--od-space-md), env(safe-area-inset-top, 0px));
+  left: max(var(--od-space-md), env(safe-area-inset-left, 0px));
+  max-inline-size: calc(
+    100% - max(var(--od-space-md), env(safe-area-inset-left, 0px)) -
+      max(var(--od-space-md), env(safe-area-inset-right, 0px))
+  );
+  max-block-size: calc(
+    100dvh - max(var(--od-space-md), env(safe-area-inset-top, 0px)) -
+      max(var(--od-space-md), env(safe-area-inset-bottom, 0px))
+  );
+  min-block-size: 2.75rem;
+  padding: var(--od-space-sm) var(--od-space-md);
+  overflow: auto;
+  border: 1px solid var(--od-color-border-strong);
+  border-radius: var(--od-radius-sm);
+  color: var(--od-color-foreground);
+  background: var(--od-color-surface-raised);
+  font-family: var(--od-font-body);
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+  clip-path: inset(50%);
+}
+
+.od-skip-link:focus {
+  outline: 3px solid var(--od-color-focus);
+  outline-offset: 2px;
+  clip-path: none;
+}
+
+@media (forced-colors: active) {
+  .od-skip-link:focus {
+    border-color: ButtonText;
+    outline-color: Highlight;
+    color: LinkText;
+    background: Canvas;
+  }
+}
+
 /* Host-controlled data table and responsive record cards. */
 .od-data-table {
   display: grid;
