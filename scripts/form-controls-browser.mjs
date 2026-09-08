@@ -497,6 +497,12 @@ async function loadFixture(page) {
   return errors;
 }
 
+async function waitForYamlCompletion(page, name) {
+  await page.getByRole("option", { name, exact: true }).waitFor();
+  // CodeMirror 6.20.3 ignores Enter for 75 ms after the completion list opens.
+  await page.waitForTimeout(100);
+}
+
 try {
   const desktopContext = await browser.newContext({
     viewport: { width: 1280, height: 900 },
@@ -641,8 +647,7 @@ try {
   await yamlTextbox.focus();
   await desktop.keyboard.press("Control+End");
   await desktop.keyboard.press("Control+Space");
-  await desktop.getByRole("option", { name: "service:" }).waitFor();
-  await desktop.waitForTimeout(100);
+  await waitForYamlCompletion(desktop, "service:");
   await desktop.keyboard.press("Enter");
   assert.equal(
     await yamlSourceOutput.textContent(),
@@ -669,7 +674,7 @@ try {
   await yamlTextbox.focus();
   await desktop.keyboard.press("Control+End");
   await desktop.keyboard.press("Control+Space");
-  await desktop.getByRole("option", { name: "asyncField:" }).waitFor();
+  await waitForYamlCompletion(desktop, "asyncField:");
   await desktop.keyboard.press("Enter");
   assert.equal(
     await yamlSourceOutput.textContent(),
