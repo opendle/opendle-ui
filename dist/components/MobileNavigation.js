@@ -19,10 +19,12 @@ export function MobileNavigation({ className, items, onNavigate, onSelect, surfa
             event.metaKey ||
             event.shiftKey)
             return;
-        // Close the native modal before the host changes the route or focus.
-        flushSync(() => {
-            setMode("navigate");
-        });
+        // Close the native modal and cancel queued focus return before navigation.
+        if (surface !== undefined) {
+            flushSync(() => {
+                setMode("navigate");
+            });
+        }
         onNavigate?.(item, event);
     };
     return (_jsxs(_Fragment, { children: [_jsxs("nav", { ...props, className: ["od-mobile-navigation", "mobile-navigation", className]

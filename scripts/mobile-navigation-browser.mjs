@@ -14,6 +14,8 @@ import { createRoot } from "react-dom/client";
 import { flushSync } from "react-dom";
 import { ApplicationShell, ApplicationSidebar, ApplicationNavigation, NavigationLink, MobileNavigation, Button, Icon } from "./dist/index.js";
 const labels = ["Overview", "Services", "LLM configuration", "Logs", "Usage & cost", "Activity & health"];
+const rowOnly = new URLSearchParams(location.search).has("row-only");
+const native = new URLSearchParams(location.search).has("native");
 function Fixture() {
   const [route, setRoute] = useState(0);
   const [legacy, setLegacy] = useState(0);
@@ -26,8 +28,13 @@ function Fixture() {
   useLayoutEffect(() => { if (previousRoute.current !== route) heading.current?.focus(); previousRoute.current = route; }, [route]);
   window.fixture = {
     remove: () => setPresent(false),
+    activateRow: () => { setLegacy(value => value + 1); document.querySelector(".od-mobile-navigation a[href='/destination/1']").click(); },
     long: () => setLong(true),
     route: (id) => setRoute(id),
+    cancelNavigateRow: () => {
+      flushSync(() => document.querySelector(".od-mobile-navigation-surface .od-dialog-actions button:last-child").click());
+      document.querySelector(".od-mobile-navigation a[href='/destination/0']").click();
+    },
     cancelReopenNavigate: () => {
       flushSync(() => document.querySelector(".od-mobile-navigation-surface .od-dialog-actions button:last-child").click());
       flushSync(() => document.querySelector("[aria-haspopup='dialog']").click());
@@ -35,11 +42,13 @@ function Fixture() {
     },
   };
   const navigate = (item, event) => {
+    window.navigationEvent = {href:event.currentTarget.getAttribute("href"),modalClosed:document.querySelector("dialog[open]") === null,legacyAtCallback:document.querySelector("output[aria-label='Legacy count']").textContent};
     event.preventDefault();
     history.pushState({}, "", item.href);
     setRoute(Number(item.id));
     // Exercise immediate focus as well as route-entry layout focus.
     heading.current?.focus();
+    window.navigationEvent.headingFocused = document.activeElement === heading.current;
   };
   return <>
     <a className="fixture-skip" href="#content">Skip to content</a>
@@ -51,8 +60,8 @@ function Fixture() {
       />}
       mobileNavigation={present ? <MobileNavigation aria-label="Phone destinations"
         items={[...items.slice(0,2), {id:"legacy",label:"Assistant",icon:<Icon name="spark"/>,badge:3}]}
-        onSelect={() => setLegacy(value => value + 1)} onNavigate={navigate}
-        surface={{label:"All destinations",icon:<Icon name="menu"/>,applicationName:"Example application",context:{label:"Administrator",value:"Example user"},closeLabel:"Close navigation",items,
+        onSelect={() => setLegacy(value => value + 1)} onNavigate={native ? undefined : navigate}
+        surface={rowOnly ? undefined : {label:"All destinations",icon:<Icon name="menu"/>,applicationName:"Example application",context:{label:"Administrator",value:"Example user"},closeLabel:"Close navigation",items,
           accountActions:<><Button onClick={() => setAccount(value => value + 1)}>Account settings</Button><Button onClick={() => setAccount(value => value + 1)}>Sign out</Button></>}}
       /> : <></>}
     >
@@ -356,6 +365,12 @@ export async function checkMobileNavigation(browser) {
         .click();
       await settle();
       assert.equal(await dialog.isVisible(), false);
+      assert.deepEqual(await page.evaluate(() => window.navigationEvent), {
+        href: "/destination/5",
+        modalClosed: true,
+        legacyAtCallback: "1",
+        headingFocused: true,
+      });
       await focusIs(
         page.getByRole("heading", { name: "Activity & health", exact: true }),
       );
@@ -378,6 +393,13 @@ export async function checkMobileNavigation(browser) {
       );
       await focusIs(
         page.getByRole("heading", { name: "Services", exact: true }),
+      );
+      // A row activation also cancels a queued return after surface cancellation.
+      await trigger.click();
+      await page.evaluate(() => window.fixture.cancelNavigateRow());
+      await settle();
+      await focusIs(
+        page.getByRole("heading", { name: "Overview", exact: true }),
       );
       // A later removal of the closed modal must not restore its old trigger.
       await trigger.click();
@@ -486,6 +508,60 @@ export async function checkMobileNavigation(browser) {
       await focusIs(trigger);
       assert.deepEqual(errors, []);
       await context.close();
+    }
+    // Native navigation and row-only client navigation keep browser event semantics.
+    for (const query of ["?native", "?row-only&native", "?row-only"]) {
+      const context = await browser.newContext({
+        viewport: { width: 390, height: 844 },
+      });
+      try {
+        const page = await context.newPage();
+        await page.goto(origin + query);
+        const row = page.getByRole("navigation", {
+          name: "Phone destinations",
+        });
+        if (query === "?native") {
+          await page
+            .getByRole("button", { name: "All destinations", exact: true })
+            .click();
+          await page
+            .getByRole("dialog")
+            .getByRole("link", { name: "Services", exact: true })
+            .click();
+        } else {
+          assert.equal(await page.locator("dialog").count(), 0);
+          if (query === "?row-only") {
+            await page.evaluate(() => window.fixture.activateRow());
+          } else {
+            await row
+              .getByRole("link", { name: "Services", exact: true })
+              .click();
+          }
+        }
+        await page.waitForURL("**/destination/1");
+        if (query === "?row-only") {
+          assert.deepEqual(await page.evaluate(() => window.navigationEvent), {
+            href: "/destination/1",
+            modalClosed: true,
+            legacyAtCallback: "0",
+            headingFocused: true,
+          });
+          assert.equal(
+            await page
+              .getByRole("status", { name: "Legacy count" })
+              .textContent(),
+            "1",
+          );
+          assert.equal(
+            await page
+              .getByRole("heading", { name: "Services", exact: true })
+              .evaluate((node) => node === document.activeElement),
+            true,
+          );
+        }
+      } finally {
+        await context.close();
+      }
     }
   } finally {
     await new Promise((resolve, reject) =>

@@ -75,10 +75,12 @@ export function MobileNavigation({
       event.shiftKey
     )
       return;
-    // Close the native modal before the host changes the route or focus.
-    flushSync(() => {
-      setMode("navigate");
-    });
+    // Close the native modal and cancel queued focus return before navigation.
+    if (surface !== undefined) {
+      flushSync(() => {
+        setMode("navigate");
+      });
+    }
     onNavigate?.(item, event);
   };
   return (
