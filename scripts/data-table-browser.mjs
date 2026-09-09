@@ -1,6 +1,6 @@
 import { strict as assert } from "node:assert";
 import { existsSync } from "node:fs";
-import { mkdir, readFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 
 import AxeBuilder from "@axe-core/playwright";
@@ -11,7 +11,7 @@ const repositoryRoot = fileURLToPath(new URL("..", import.meta.url));
 const fixtureSource = String.raw`
 import React, { StrictMode, useState } from "react";
 import { createRoot } from "react-dom/client";
-import { DataTable } from "./dist/index.js";
+import { DataTable, EditableTable, StatusPill } from "./dist/index.js";
 
 const initialRows = [
   {
@@ -55,6 +55,42 @@ const columns = [
 const syncColumns = [{
   key: "name", header: "Name", width: "10rem", render: ({ row }) => row.name,
 }];
+
+function ReadabilityFixture() {
+  const [selected, setSelected] = useState([]);
+  const [expanded, setExpanded] = useState([]);
+  const [actionCount, setActionCount] = useState(0);
+  const [rows, setRows] = useState([{
+    id: "edit", label: "Editable record", draft: { name: "Original value" },
+    committedDraft: { name: "Original value" }, editing: false, dirty: false,
+  }]);
+  const density = document.getElementById("root").dataset.density;
+  return <>
+    <DataTable ariaLabel="Readable records" density={density}
+      columns={[
+        { key: "dimension", header: "Complete record description", render: () => "A complete record description with several ordinary words and a long identifier: " + "continuous".repeat(12) },
+        { key: "label", header: "Unbroken".repeat(8), render: ({ presentation }) => <a href={"#record-target-" + presentation}>Read the complete record details</a> },
+        { key: "state", header: "State", align: "center", render: () => <StatusPill tone="green">Ready for review</StatusPill> },
+        { key: "spaced-state", header: "Complete state", align: "start", render: () => <StatusPill tone="green">A record with a longer review state label</StatusPill> },
+        { key: "unbroken-state", header: "Unbroken state", align: "end", render: () => <StatusPill tone="green">{"Unbroken".repeat(12)}</StatusPill> },
+      ]}
+      rows={[{ id: "record" }]} getRowId={(row) => row.id}
+      getRowLabel={() => "Record with complete details"}
+      selection={{ selectedRowIds: selected, onChange: setSelected }}
+      expansion={{ expandedRowIds: expanded, onChange: setExpanded, detail: ({ presentation }) => <p id={"record-target-" + presentation}>Complete expanded record details.</p> }}
+      actions={[{ key: "run", label: () => "Run the selected record action", onAction: () => setActionCount((count) => count + 1) }]}
+    />
+    <output aria-label="Readability action count">{actionCount}</output>
+    <EditableTable ariaLabel="Readable editable records" density={density} rows={rows}
+      columns={[{ key: "name", header: "Editable record name", renderRead: ({ row }) => row.draft.name,
+        renderEdit: ({ row, update }) => <input aria-label="Record name" value={row.draft.name} onChange={(event) => update({ name: event.target.value })} /> }]}
+      onEdit={(id) => setRows((current) => current.map((row) => row.id === id ? { ...row, editing: true } : row))}
+      onDraftChange={(id, patch) => setRows((current) => current.map((row) => row.id === id ? { ...row, draft: { ...row.draft, ...patch }, dirty: true } : row))}
+      onCancel={() => setRows((current) => current.map((row) => ({ ...row, editing: false, dirty: false, draft: row.committedDraft })))}
+      onSave={() => setRows((current) => current.map((row) => ({ ...row, editing: false, dirty: false, committedDraft: row.draft })))}
+    />
+  </>;
+}
 
 function ContrastFixture() {
   const rows = Array.from({ length: 8 }, (_, index) => ({
@@ -302,7 +338,7 @@ function UnmountFixtures() {
 }
 
 const root = document.getElementById("root");
-createRoot(root).render(<StrictMode>{root.dataset.fixture === "contrast" ? <ContrastFixture /> : <Fixture />}</StrictMode>);
+createRoot(root).render(<StrictMode>{root.dataset.fixture === "readability" ? <ReadabilityFixture /> : root.dataset.fixture === "contrast" ? <ContrastFixture /> : <Fixture />}</StrictMode>);
 `;
 
 const bundle = await build({
@@ -520,7 +556,391 @@ async function checkStateContrast() {
   }
 }
 
+async function checkCardReadability() {
+  const shots = new URL("../tmp/data-table-readability/", import.meta.url);
+  await mkdir(shots, { recursive: true });
+  const measurements = [];
+  const cases = [
+    { width: 320, textSize: 100, stacked: true },
+    { width: 320, textSize: 200, stacked: true },
+    { width: 390, textSize: 100, stacked: false },
+    { width: 390, textSize: 200, stacked: true },
+    { width: 600, textSize: 100, stacked: false },
+    { width: 600, textSize: 200, stacked: true },
+    { width: 1440, container: 300, textSize: 100, stacked: true },
+    { width: 1440, container: 300, textSize: 200, stacked: true },
+    { width: 1440, textSize: 100, desktop: true },
+    { width: 1440, textSize: 200, desktop: true },
+  ];
+  async function checkFocus(control) {
+    await control.scrollIntoViewIfNeeded();
+    await control.evaluate((element) =>
+      element.scrollIntoView({ block: "center", inline: "nearest" }),
+    );
+    assert.equal(
+      await control.evaluate((element) => {
+        const box = element.getBoundingClientRect();
+        const style = getComputedStyle(element);
+        const outline =
+          parseFloat(style.outlineWidth) +
+          Math.max(0, parseFloat(style.outlineOffset));
+        const card = element.closest(".od-data-table-card");
+        const bounds = card?.getBoundingClientRect();
+        return (
+          element === document.activeElement &&
+          style.outlineStyle !== "none" &&
+          parseFloat(style.outlineWidth) > 0 &&
+          box.left - outline >= 0 &&
+          box.right + outline <= document.documentElement.clientWidth &&
+          box.top - outline >= 0 &&
+          box.bottom + outline <= window.innerHeight &&
+          (!bounds ||
+            (box.left - outline >= bounds.left &&
+              box.right + outline <= bounds.right &&
+              box.top - outline >= bounds.top &&
+              box.bottom + outline <= bounds.bottom))
+        );
+      }),
+      true,
+      "The complete keyboard focus outline must remain inside the card and page.",
+    );
+  }
+  for (const density of ["default", "compact"]) {
+    for (const sample of cases) {
+      const { width, textSize, container, desktop, stacked } = sample;
+      const label = `${density}-${width}-${container ?? "page"}-${textSize}`;
+      const context = await browser.newContext({
+        viewport: { width, height: 900 },
+      });
+      try {
+        const page = await context.newPage();
+        const errors = [];
+        page.on("pageerror", (error) => errors.push(error.message));
+        page.on("console", (message) => {
+          if (message.type() === "error") errors.push(message.text());
+        });
+        await page.setContent(html);
+        await page.evaluate(
+          ({ textSize, container, density }) => {
+            document.documentElement.style.fontSize = `${textSize}%`;
+            document.querySelector("h1").textContent = "Rows";
+            const main = document.querySelector("main");
+            main.style.width = "100%";
+            const root = document.getElementById("root");
+            root.dataset.fixture = "readability";
+            root.dataset.density = density;
+            if (container) root.style.width = `${container}px`;
+          },
+          { textSize, container, density },
+        );
+        await page.addScriptTag({ content: browserScript });
+        const table = page.getByRole("region", {
+          name: "Readable records",
+          exact: true,
+        });
+        await table.waitFor();
+        assert.equal(
+          await table.getByRole("table").isVisible(),
+          Boolean(desktop),
+        );
+        const card = table.locator(".od-data-table-card");
+        if (!desktop) {
+          const geometry = await card.evaluate((element) => {
+            const rect = (node) => {
+              const box = node.getBoundingClientRect();
+              return {
+                x: box.x,
+                y: box.y,
+                width: box.width,
+                height: box.height,
+                right: box.right,
+                bottom: box.bottom,
+              };
+            };
+            return {
+              card: rect(element),
+              heading: rect(element.querySelector(".od-data-table-card-title")),
+              rows: [
+                ...element.querySelectorAll(".od-data-table-card-value"),
+              ].map((row) => ({
+                row: rect(row),
+                term: rect(row.querySelector("dt")),
+                value: rect(row.querySelector("dd")),
+                padding: parseFloat(getComputedStyle(row).paddingInlineStart),
+                termOverflow:
+                  row.querySelector("dt").scrollWidth >
+                  row.querySelector("dt").clientWidth,
+              })),
+            };
+          });
+          measurements.push({ label, ...geometry });
+          await writeFile(
+            new URL("geometry.json", shots),
+            JSON.stringify(measurements, null, 2),
+          );
+          await card
+            .locator(".od-data-table-card-value")
+            .first()
+            .scrollIntoViewIfNeeded();
+          await page.screenshot({
+            path: fileURLToPath(new URL(`${label}-values.png`, shots)),
+          });
+          for (const row of geometry.rows) {
+            assert.equal(
+              row.termOverflow,
+              false,
+              `${label}: a complete label must wrap inside its region.`,
+            );
+            const available = row.row.width - 2 * row.padding;
+            if (stacked) {
+              assert.ok(
+                row.value.width >= available - 1,
+                `${label}: narrow values need the full content width; received ${row.value.width}px of ${available}px.`,
+              );
+              assert.ok(
+                row.term.width >= available - 1,
+                `${label}: narrow labels need the full content width.`,
+              );
+              assert.ok(
+                row.value.y >= row.term.bottom,
+                `${label}: the value must follow its complete label.`,
+              );
+            } else {
+              assert.ok(
+                row.value.x >= row.term.right,
+                `${label}: wide cards keep labels beside values.`,
+              );
+              assert.ok(
+                row.value.width >= available * 0.6,
+                `${label}: wide values must retain useful reading width.`,
+              );
+            }
+          }
+          if (stacked)
+            assert.ok(
+              geometry.heading.width >=
+                geometry.card.width - 2 * geometry.rows[0].padding - 3,
+              `${label}: the heading must retain full reading width beside row controls.`,
+            );
+          assert.equal(await card.locator("dt").count(), 5);
+          assert.equal(await card.locator("dd").count(), 5);
+        }
+        const pills = await table
+          .locator(".od-status-pill:visible")
+          .evaluateAll((elements) =>
+            elements.map((element) => {
+              const box = element.getBoundingClientRect();
+              const region = element.closest("dd, td");
+              const area = region.getBoundingClientRect();
+              const regionStyle = getComputedStyle(region);
+              const style = getComputedStyle(element);
+              const dot = element.querySelector(".od-status-dot");
+              const dotBox = dot.getBoundingClientRect();
+              const dotStyle = getComputedStyle(dot);
+              const rootText = parseFloat(
+                getComputedStyle(document.documentElement).fontSize,
+              );
+              const labelRange = document.createRange();
+              labelRange.selectNode(element.lastChild);
+              const textBounds = [...labelRange.getClientRects()];
+              const before =
+                box.left - area.left - parseFloat(regionStyle.paddingLeft);
+              const after =
+                area.right - box.right - parseFloat(regionStyle.paddingRight);
+              return {
+                text: element.textContent,
+                align: regionStyle.textAlign,
+                before,
+                after,
+                width: box.width,
+                regionWidth: area.width,
+                padding: [
+                  parseFloat(style.paddingLeft),
+                  parseFloat(style.paddingRight),
+                ],
+                expectedPadding: rootText * 0.5,
+                borderBox: style.boxSizing,
+                inside:
+                  before >= -1 &&
+                  after >= -1 &&
+                  textBounds.every(
+                    (text) =>
+                      text.left >=
+                        box.left + parseFloat(style.paddingLeft) - 1 &&
+                      text.right <=
+                        box.right - parseFloat(style.paddingRight) + 1,
+                  ),
+                dotVisible:
+                  dot.getAttribute("aria-hidden") === "true" &&
+                  Math.abs(dotBox.width - rootText * 0.4) <= 0.1 &&
+                  dotBox.left >= box.left &&
+                  dotBox.right <= box.right &&
+                  dotBox.top >= box.top &&
+                  dotBox.bottom <= box.bottom &&
+                  dotStyle.backgroundColor !== style.backgroundColor,
+              };
+            }),
+          );
+        assert.equal(pills.length, 3);
+        assert.deepEqual(
+          pills.map((pill) => pill.align),
+          ["center", "start", "end"],
+        );
+        for (const pill of pills) {
+          assert.equal(
+            pill.inside,
+            true,
+            `${label}: complete pill text must stay in its padded value region: ${JSON.stringify(pill)}`,
+          );
+          assert.equal(
+            pill.dotVisible,
+            true,
+            `${label}: each decorative status dot must stay visible at its full size.`,
+          );
+          assert.equal(pill.borderBox, "border-box");
+          assert.deepEqual(pill.padding, [
+            pill.expectedPadding,
+            pill.expectedPadding,
+          ]);
+          if (pill.align === "center")
+            assert.ok(
+              Math.abs(pill.before - pill.after) <= 1,
+              `${label}: center alignment must use the value region.`,
+            );
+          if (pill.align === "start")
+            assert.ok(
+              pill.before <= 1,
+              `${label}: start alignment must use the value region.`,
+            );
+          if (pill.align === "end")
+            assert.ok(
+              pill.after <= 1,
+              `${label}: end alignment must use the value region.`,
+            );
+        }
+        const selection = table.getByRole("checkbox", {
+          name: "Select Record with complete details",
+          exact: true,
+        });
+        await selection.focus();
+        await selection.press("Space");
+        assert.equal(await selection.isChecked(), true);
+        await checkFocus(selection);
+        await selection.press("Tab");
+        const expansion = table.getByRole("button", {
+          name: /^(Show|Hide) details for Record with complete details$/,
+        });
+        await checkFocus(expansion);
+        await expansion.press("Enter");
+        assert.equal(
+          await table.locator(".od-data-table-detail:visible").textContent(),
+          "Complete expanded record details.",
+        );
+        await expansion.press("Tab");
+        const link = table.getByRole("link", {
+          name: "Read the complete record details",
+        });
+        await checkFocus(link);
+        await link.press("Tab");
+        const action = table.getByRole("button", {
+          name: "Run the selected record action",
+        });
+        await checkFocus(action);
+        await action.press("Enter");
+        assert.equal(
+          await page
+            .getByRole("status", { name: "Readability action count" })
+            .textContent(),
+          "1",
+        );
+        const editable = page.getByRole("region", {
+          name: "Readable editable records",
+          exact: true,
+        });
+        await editable
+          .getByRole("button", { name: "Edit Editable record" })
+          .press("Enter");
+        const input = editable.getByRole("textbox", { name: "Record name" });
+        await input.fill("A changed record name");
+        await checkFocus(input);
+        if (!desktop) {
+          const inputWidth = await input.evaluate((element) => ({
+            width: element.getBoundingClientRect().width,
+            area: element.closest("dd").getBoundingClientRect().width,
+          }));
+          assert.ok(
+            inputWidth.width >= inputWidth.area - 2 &&
+              inputWidth.width <= inputWidth.area + 1,
+            `${label}: editable input must use its available width.`,
+          );
+        }
+        await page.screenshot({
+          path: fileURLToPath(new URL(`${label}-edit-focus.png`, shots)),
+        });
+        // Reflow the same card DOM in both directions without replacing the focused input.
+        if (!desktop) {
+          const handle = await input.elementHandle();
+          for (const size of [
+            600,
+            300,
+            600,
+            container ?? width - 2 * (textSize / 100) * 16,
+          ]) {
+            await page.locator("#root").evaluate((element, size) => {
+              element.style.width = `${size}px`;
+            }, size);
+            await page.setViewportSize({ width: 1440, height: 900 });
+            await checkFocus(input);
+            assert.equal(
+              await handle.evaluate(
+                (element) => element === document.activeElement,
+              ),
+              true,
+              "Card reflow must keep the same focused input.",
+            );
+            assert.equal(await input.inputValue(), "A changed record name");
+          }
+          await handle.dispose();
+          await page.setViewportSize({ width, height: 900 });
+        }
+        assert.equal(
+          await page.evaluate(
+            () =>
+              document.documentElement.scrollWidth <=
+              document.documentElement.clientWidth,
+          ),
+          true,
+          `${label}: no page horizontal overflow. ${JSON.stringify(await page.evaluate(() => [...document.querySelectorAll("body *")].filter((element) => element.getBoundingClientRect().width && element.scrollWidth > element.clientWidth).map((element) => ({ tag: element.tagName, class: element.className, text: element.textContent.slice(0, 80), width: element.clientWidth, scroll: element.scrollWidth }))))}`,
+        );
+        assert.deepEqual(
+          (await new AxeBuilder({ page }).analyze()).violations,
+          [],
+          `${label}: strict Axe must pass with selection, expansion, and editing.`,
+        );
+        await input.press("Enter");
+        await editable
+          .getByRole("button", { name: "Edit Editable record" })
+          .waitFor();
+        assert.equal(
+          await editable
+            .getByText("A changed record name", { exact: true })
+            .filter({ visible: true })
+            .isVisible(),
+          true,
+        );
+        assert.deepEqual(errors, []);
+      } finally {
+        await context.close();
+      }
+    }
+  }
+  process.stdout.write(
+    `Data table readability: ${cases.length * 2} cases passed. Images and geometry: ${fileURLToPath(shots)}\n`,
+  );
+}
+
 try {
+  await checkCardReadability();
   await checkStateContrast();
   const desktopContext = await browser.newContext({
     viewport: { width: 1280, height: 800 },

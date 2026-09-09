@@ -33,6 +33,14 @@ check. Host apps keep the target, effect, impact text, and mutation behavior.
 media-type policy, loading, URL revocation, and error handling. Host apps keep
 their navigation, routes, product copy, mock data, and service behavior here.
 
+DataTable cards stack each label above its value when the table container is
+`22rem` wide or less. The title then uses its own row above selection and detail
+controls. This layout gives narrow cards the full content width at enlarged
+text sizes. Wider cards keep labels beside values. Long labels can wrap.
+Column alignment still applies inside each value region.
+`StatusPill` wraps long labels inside its available width. It keeps equal
+inline padding and a visible status dot when text wraps.
+
 Graph applications can compose `GraphWorkspace`, `GraphToolbar`,
 `GraphViewport`, `GraphNode`, `GraphEdges`, `GraphEdge`, `GraphInspector`, and
 `GraphEmptyState`. `PageSurface` gives pages one responsive gutter or one
