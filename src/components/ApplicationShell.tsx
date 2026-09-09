@@ -34,17 +34,90 @@ export function ApplicationShell({
     const shell = shellRef.current;
     const navigation = navigationRef.current;
     if (!shell || !navigation) return;
+    let frame = 0;
+    const keepFocusVisible = () => {
+      frame = 0;
+      const active = document.activeElement;
+      const navigationBox = navigation.getBoundingClientRect();
+      if (
+        !(active instanceof Element) ||
+        !shell.contains(active) ||
+        navigation.contains(active) ||
+        active.closest("dialog[open]") ||
+        document.querySelector(":modal") ||
+        active.getClientRects().length === 0 ||
+        navigationBox.height === 0
+      )
+        return;
+      // Dialogs and fixed panels own their local focus and scroll position.
+      for (
+        let parent: Element | null = active;
+        parent && parent !== shell;
+        parent = parent.parentElement
+      ) {
+        if (getComputedStyle(parent).position === "fixed") return;
+      }
+      const style = getComputedStyle(active);
+      const outline = Math.max(
+        0,
+        parseFloat(style.outlineWidth) + parseFloat(style.outlineOffset),
+      );
+      const clearance = Math.max(5, outline);
+      const offset = () => {
+        const box = active.getBoundingClientRect();
+        return Math.max(
+          0,
+          Math.min(
+            box.bottom + clearance - navigationBox.top,
+            box.top - clearance,
+          ),
+        );
+      };
+      // Keep native focus ownership. Use only the space needed to expose it.
+      for (
+        let parent = active.parentElement;
+        parent && offset() > 0;
+        parent = parent.parentElement
+      ) {
+        if (parent === document.scrollingElement) {
+          parent.scrollBy({ top: offset(), behavior: "instant" });
+          break;
+        }
+        if (/(auto|scroll)/.test(getComputedStyle(parent).overflowY)) {
+          const available =
+            active.getBoundingClientRect().top -
+            parent.getBoundingClientRect().top -
+            parent.clientTop -
+            clearance;
+          parent.scrollBy({
+            top: Math.max(0, Math.min(offset(), available)),
+            behavior: "instant",
+          });
+        }
+      }
+    };
+    const schedule = () => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(keepFocusVisible);
+    };
     const measure = () => {
       shell.style.setProperty(
         "--od-application-navigation-height",
         `${String(navigation.getBoundingClientRect().height)}px`,
       );
+      schedule();
     };
     measure();
     const observer = new ResizeObserver(measure);
     observer.observe(navigation);
+    observer.observe(shell);
+    shell.addEventListener("focusin", schedule);
+    window.addEventListener("resize", schedule);
     return () => {
       observer.disconnect();
+      cancelAnimationFrame(frame);
+      shell.removeEventListener("focusin", schedule);
+      window.removeEventListener("resize", schedule);
     };
   }, []);
   const { className: mainClassName, ...restMainProps } = mainProps ?? {};
