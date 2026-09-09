@@ -5187,6 +5187,33 @@ samp {
   line-height: 1.5;
 }
 
+.od-compact-checkbox-group {
+  min-inline-size: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.od-compact-checkbox-group > .od-advanced-fields > summary {
+  overflow-wrap: anywhere;
+}
+
+.od-compact-checkbox-group-options {
+  display: grid;
+  min-inline-size: 0;
+  max-block-size: min(50dvh, 20rem);
+  gap: var(--od-space-xs);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: var(--od-space-sm);
+}
+
+.od-compact-checkbox-group-options .od-form-field-label {
+  display: flex;
+  min-block-size: 2.75rem;
+  align-items: center;
+}
+
 .od-inline-alert {
   display: grid;
   min-width: 0;

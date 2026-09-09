@@ -189,6 +189,11 @@ export {
   type TextareaControlProps,
   type TextControlProps,
 } from "./components/FormControls.js";
+export {
+  CompactCheckboxGroup,
+  type CompactCheckboxGroupOption,
+  type CompactCheckboxGroupProps,
+} from "./components/CompactCheckboxGroup.js";
 export { DateTime, type DateTimeProps } from "./components/DateTime.js";
 export {
   FileDropZone,

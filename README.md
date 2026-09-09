@@ -330,6 +330,40 @@ invalid value.
 </FormSection>
 ```
 
+`CompactCheckboxGroup` groups controlled checkboxes in a semantic fieldset.
+Its native disclosure starts closed and shows `Label (0 selected)`. Supply
+`label`, ordered `options` with unique string values and human labels,
+`value`, and `onChange`. The callback returns selected values in option order.
+Each option can be disabled. Selected disabled options keep their checked
+state and remain in the callback value. Values without a current option are
+excluded from the count and the next callback. Keep option values unique.
+
+```tsx
+<CompactCheckboxGroup
+  label="Visible fields"
+  name="fields"
+  options={fieldOptions}
+  value={visibleFields}
+  onChange={setVisibleFields}
+/>
+```
+
+Closing the group keeps its controls mounted and its values intact. Enter or
+Space toggles the summary. Tab follows option order. Escape closes the group,
+returns focus to its summary, and does not close an enclosing surface. Long
+lists scroll locally. The summary and labels wrap on a phone and with larger
+text. Supply `summary(count)` for different summary text; keep it noninteractive
+and include the label and selected count.
+
+Native fieldset attributes, events, and `ref` pass through. `name` applies to
+the checkboxes. `form` also applies to each checkbox for an external form.
+Native form data uses option order even when the group is closed. As with
+native checkboxes, disabled options are omitted from form data. A disabled
+fieldset prevents selection but still permits inspection of the disclosure.
+Hosts own selection limits, disabled states, validation, and announcements.
+At a host limit, disable only unselected options so selected choices remain
+available to clear. This component adds no product selection limit.
+
 The `designTokens` object maps `color.limeStrong`, `color.coralStrong`,
 `color.amberStrong`, and `space.pageGutter` to the matching CSS custom
 properties.
