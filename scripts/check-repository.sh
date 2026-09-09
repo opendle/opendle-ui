@@ -109,6 +109,7 @@ npm run test:browser
 node scripts/panel-content-browser.mjs
 node scripts/application-shell-focus-browser.mjs
 node scripts/compact-checkbox-group-browser.mjs
+node scripts/radio-group-browser.mjs
 node scripts/graph-native-overlay-browser.mjs
 node scripts/graph-viewport-content-browser.mjs
 node scripts/relationship-column-header-browser.mjs

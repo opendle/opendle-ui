@@ -6542,3 +6542,96 @@ samp {
     max-width: 100%;
   }
 }
+
+.od-radio-group {
+  container: od-radio-group / inline-size;
+  min-inline-size: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  color: var(--od-color-muted-strong);
+  font-size: 0.75rem;
+}
+
+.od-radio-group > legend {
+  max-inline-size: 100%;
+  padding: 0;
+}
+
+.od-radio-group-options {
+  display: grid;
+  min-inline-size: 0;
+  gap: var(--od-space-xs);
+  padding: var(--od-space-xs);
+}
+
+.od-radio-group-options[data-scrollable] {
+  max-block-size: min(50dvh, 24rem);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.od-radio-group-choice {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  min-inline-size: 0;
+  min-block-size: 2.75rem;
+  gap: var(--od-space-sm);
+  padding: 0.625rem;
+  border: 1px solid var(--od-color-border-strong);
+  border-radius: var(--od-radius-sm);
+  color: var(--od-color-foreground);
+  background: var(--od-color-surface-raised);
+  cursor: pointer;
+  line-height: 1.5;
+  scroll-margin-block-start: 0.375rem;
+  scroll-margin-block-end: calc(
+    var(--od-application-navigation-height, 0px) + 0.375rem
+  );
+}
+
+.od-radio-group-choice:has(input:checked) {
+  border-color: var(--od-color-focus);
+  background: var(--od-color-lime-soft);
+}
+
+.od-radio-group-choice:has(input:disabled) {
+  cursor: not-allowed;
+  color: var(--od-color-muted-strong);
+  background: var(--od-color-surface);
+}
+
+.od-radio-group-choice > input {
+  inline-size: 1.125rem;
+  block-size: 1.125rem;
+  margin: 0;
+  accent-color: var(--od-color-focus);
+}
+
+.od-radio-group-choice-label {
+  min-inline-size: 0;
+  overflow-wrap: anywhere;
+}
+
+.od-radio-group[aria-invalid="true"] .od-radio-group-choice {
+  border-color: var(--od-color-coral-strong);
+}
+
+@container od-radio-group (max-width: 12rem) {
+  .od-radio-group-options {
+    padding-inline: 0;
+  }
+
+  .od-radio-group-choice {
+    grid-template-columns: minmax(0, 1fr);
+    padding-inline: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+  }
+
+  .od-radio-group-choice > input {
+    margin-inline-start: 0.375rem;
+  }
+}

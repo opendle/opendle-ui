@@ -347,6 +347,45 @@ invalid value.
 </FormSection>
 ```
 
+`RadioGroup` shows a static single-choice list with complete wrapping labels.
+Supply `label`, ordered `options` with unique string values and labels,
+`value`, and `onChange(value)`. An option can be disabled. The host owns state,
+validation, and all copy. A value without a current option leaves all radios
+unchecked. Use an explicit empty-value option when a filter has an all-values
+choice.
+
+```tsx
+<RadioGroup
+  label="Report scope"
+  name="scope"
+  options={scopeOptions}
+  value={scope}
+  onChange={setScope}
+  help="Choose one scope."
+  error={scopeError}
+/>
+```
+
+At narrow widths, the radio is above its label so the complete row width is
+available for words.
+
+The native fieldset has a visible legend. Help and error text are associated
+with the group and each radio. An error marks the fieldset as invalid.
+Native fieldset attributes, events, and `ref`
+pass through. `name` and `form` apply to each input. Use a distinct, non-empty
+name for each independent group in a form. When omitted, the name is unique
+and stable for that mounted group. Native form data contains the selected
+enabled value under that name. A disabled group retains its displayed value.
+Tab and Shift+Tab enter and leave the native group. Arrow keys move selection
+and skip disabled options. Space selects a focused option. Label clicks also
+select. Option IDs and nodes remain stable across controlled updates and
+reordering. Groups with up to six choices use their natural height. Longer
+lists scroll locally within the smaller of `50dvh` and `24rem`. The control
+has no search, loading, or disclosure behavior. Hosts can place it inside
+`AdvancedFieldsDisclosure`. On focus, the complete choice scrolls into view.
+The row uses the existing measured phone-navigation space. A label taller
+than its viewport remains available through native scrolling.
+
 `CompactCheckboxGroup` groups controlled checkboxes in a semantic fieldset.
 Its native disclosure starts closed and shows `Label (0 selected)`. Supply
 `label`, ordered `options` with unique string values and human labels,
