@@ -1733,7 +1733,11 @@ export function GraphInspector({
         target.focus({ preventScroll: true });
         return;
       }
-      if (event.key !== "Escape" || isModalDialog(inspector)) return;
+      if (
+        event.key !== "Escape" ||
+        (!closeDisabled && isModalDialog(inspector))
+      )
+        return;
       event.preventDefault();
       event.stopPropagation();
       closeInspector();

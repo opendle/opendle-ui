@@ -906,7 +906,8 @@ export function GraphInspector({ activationKey, title, eyebrow, icon, actions, o
                 target.focus({ preventScroll: true });
                 return;
             }
-            if (event.key !== "Escape" || isModalDialog(inspector))
+            if (event.key !== "Escape" ||
+                (!closeDisabled && isModalDialog(inspector)))
                 return;
             event.preventDefault();
             event.stopPropagation();

@@ -255,7 +255,7 @@ try {
         await retained();
         assert.equal(
           await page.evaluate(() => window.cancelRequests),
-          mode === "sheet" ? 2 : 1,
+          1,
           "Host cancel handler still receives cancel events",
         );
         await configure({ locked: false });
@@ -327,10 +327,10 @@ try {
         await closed();
 
         if (mode === "sheet") {
+          await open();
+          await draft.fill("Entered draft");
+          await remember();
           for (const method of ["pointer", "Enter", "Space"]) {
-            await open();
-            await draft.fill("Entered draft");
-            await remember();
             const save = inspector.getByRole("button", {
               name: "Save record",
             });
@@ -348,6 +348,13 @@ try {
               `${method} pending action recovers focus without test intervention`,
             );
             await retained(0, false);
+            for (let attempt = 0; attempt < 4; attempt += 1) {
+              await page.keyboard.press("Escape");
+              await settle(page);
+              await retained(0, false);
+            }
+            await nativeCancel();
+            await retained(0, false);
             await page.keyboard.press("Tab");
             await page.keyboard.press("Shift+Tab");
             assert.equal(
@@ -356,6 +363,7 @@ try {
               ),
               true,
             );
+            // The host releases a failed write and keeps its entered draft.
             await configure({ locked: false, fieldsDisabled: false });
             await close.focus();
             await configure({ locked: true });
@@ -367,9 +375,9 @@ try {
               "Disabling focused Close recovers focus with other controls enabled",
             );
             await configure({ locked: false });
-            await close.click();
-            await closed();
           }
+          await close.click();
+          await closed();
         }
 
         for (const lock of [undefined, false, true]) {

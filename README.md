@@ -52,6 +52,7 @@ to `closeDisabled` keeps the same inspector and form values. Set it back to
 disables its other fields and actions.
 If the focused control becomes disabled in a modal sheet, focus moves to the
 inspector heading. Focus stays on an enabled control.
+While Close is disabled, Escape is stopped before native dialog cancellation.
 `GraphInspectorProps.onClose` is required. The heading always receives initial
 focus; the removed `initialFocusRef` prop has no replacement. Use
 `GraphWorkspace` or `RelationshipGraph` as the inspector host. The old unhosted
