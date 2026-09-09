@@ -4417,6 +4417,21 @@ samp {
   box-shadow: var(--od-shadow);
 }
 
+.od-panel-content {
+  box-sizing: border-box;
+  min-inline-size: 0;
+  max-inline-size: 100%;
+  max-block-size: min(65dvh, 48rem);
+  overflow: auto;
+  overflow-wrap: anywhere;
+  overscroll-behavior: contain;
+}
+
+.od-panel-content:focus-visible {
+  outline: 2px solid var(--od-color-focus);
+  outline-offset: -2px;
+}
+
 .od-panel-header {
   display: flex;
   align-items: flex-start;

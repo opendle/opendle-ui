@@ -448,6 +448,10 @@ export {
   type PanelProps,
 } from "./components/Panel.js";
 export {
+  PanelContent,
+  type PanelContentProps,
+} from "./components/PanelContent.js";
+export {
   DockedPanelLayout,
   type DockedPanelDefinition,
   type DockedPanelLayoutProps,

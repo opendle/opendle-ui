@@ -178,6 +178,34 @@ do not load data, store credentials, make authorization decisions, accept
 executable queries, or own host routes. Host applications keep service keys in
 their backends and supply current authorized data and controlled actions.
 
+## Bounded panel content
+
+`PanelContent` gives a `Panel` one labelled body with local scrolling. Its
+maximum height is the smaller of `65dvh` and `48rem`. Short content keeps its
+natural height. Long text can break within the body; wide content scrolls
+locally. Existing `Panel` callers keep their natural height.
+
+```tsx
+<Panel>
+  <PanelHeader title="Record details" actions={<Button onClick={close}>Close</Button>} />
+  <PanelContent aria-label="Record content">
+    {content}
+  </PanelContent>
+</Panel>
+```
+
+Supply `aria-label` or `aria-labelledby`. The named section supplies a region
+with `tabIndex={0}` for native keyboard scrolling. Native section attributes, events,
+and a ref pass through. Hosts can set `tabIndex` when they manage the Tab order.
+Child controls keep native keyboard behavior. The body does not move focus or
+handle Escape. The host owns initial focus, close actions, and focus return.
+
+Keep the heading and close action outside `PanelContent`. Put the complete
+long body inside it. Avoid another bounded scroll region around its children;
+use wrapping for preformatted text when the content permits it. The host owns
+content layout and padding. Do not add this body inside a component that
+already supplies local body scrolling, such as `Dialog` or `GraphInspector`.
+
 ## Phone navigation
 
 Place `SkipLink` before application navigation in DOM order. Supply `href`

@@ -40,6 +40,7 @@ required_files=(
   "scripts/graph-native-overlay-browser.mjs"
   "scripts/relationship-column-header-browser.mjs"
   "scripts/dialog-playground-browser.mjs"
+  "scripts/panel-content-browser.mjs"
   "scripts/build-consumer.mjs"
   "scripts/check-react-doctor-report.mjs"
   "scripts/dependency-age-gate.sh"
@@ -74,7 +75,8 @@ node --check scripts/graph-edge-browser.mjs
 node --check scripts/graph-native-overlay-browser.mjs
 node --check scripts/relationship-column-header-browser.mjs
 node --check scripts/dialog-playground-browser.mjs
-node --input-type=module -e "import('./dist/index.js').then((shared) => { for (const name of ['AccountMenu', 'AdvancedFieldsDisclosure', 'BoundedDataExplorer', 'ChangeTimeline', 'DateTime', 'Dialog', 'ExplorerWorkspace', 'FileDropZone', 'FormActions', 'FormField', 'FormSection', 'InlineAlert', 'ManagedFileList', 'MetadataBagList', 'OntologyInheritanceTree', 'OperationPlayground', 'ReviewPlanCard', 'SavedViewCanvas', 'SearchableSelect', 'SecretRevealPanel', 'WorkspaceSelector']) if (!(name in shared)) throw new Error('Missing shared export: ' + name); })"
+node --check scripts/panel-content-browser.mjs
+node --input-type=module -e "import('./dist/index.js').then((shared) => { for (const name of ['AccountMenu', 'AdvancedFieldsDisclosure', 'BoundedDataExplorer', 'ChangeTimeline', 'DateTime', 'Dialog', 'ExplorerWorkspace', 'FileDropZone', 'FormActions', 'FormField', 'FormSection', 'InlineAlert', 'ManagedFileList', 'MetadataBagList', 'OntologyInheritanceTree', 'OperationPlayground', 'PanelContent', 'ReviewPlanCard', 'SavedViewCanvas', 'SearchableSelect', 'SecretRevealPanel', 'WorkspaceSelector']) if (!(name in shared)) throw new Error('Missing shared export: ' + name); })"
 
 grep -qx "min-release-age=14" .npmrc
 grep -q 'OPENDLE_UI_DEPENDENCY_MIN_AGE_DAYS:-14' scripts/dependency-age-gate.sh
@@ -104,6 +106,7 @@ npm run lint
 npm run typecheck
 npm test
 npm run test:browser
+node scripts/panel-content-browser.mjs
 node scripts/graph-native-overlay-browser.mjs
 node scripts/graph-viewport-content-browser.mjs
 node scripts/relationship-column-header-browser.mjs
