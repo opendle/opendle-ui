@@ -3083,10 +3083,20 @@ samp {
   margin: 0;
 }
 
-@container (max-width: 12rem) {
-  .od-graph-inspector-fact {
-    grid-template-columns: minmax(0, 1fr);
-  }
+.od-graph-inspector-facts[data-fact-layout="stacked"]
+  > .od-graph-inspector-fact {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.od-graph-inspector-facts[data-measuring-fit] > .od-graph-inspector-fact {
+  grid-template-columns: 5rem minmax(0, 1fr);
+}
+
+.od-graph-inspector-facts[data-measuring-fit]
+  > .od-graph-inspector-fact
+  > :is(dt, dd) {
+  inline-size: min-content;
+  overflow-wrap: normal;
 }
 
 .od-graph-inspector-section {
