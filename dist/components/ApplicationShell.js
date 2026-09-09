@@ -79,7 +79,7 @@ export function ApplicationShell({ children, className, mainProps, mobileNavigat
                 return Math.max(0, Math.min(bottom - viewportEnd, top));
             };
             // Keep native focus ownership. Use only the space needed to expose it.
-            for (let parent = active.parentElement; parent && offset() !== 0; parent = parent.parentElement) {
+            for (let parent = active.parentElement; parent; parent = parent.parentElement) {
                 if (parent === document.scrollingElement) {
                     // An unbounded page can end at its last control. Reserve only the
                     // missing scroll range; bounded full-page routes keep their size.
@@ -103,10 +103,14 @@ export function ApplicationShell({ children, className, mainProps, mobileNavigat
                 if (/(auto|scroll)/.test(getComputedStyle(parent).overflowY)) {
                     const { top, bottom } = bounds();
                     const parentTop = parent.getBoundingClientRect().top + parent.clientTop;
+                    const parentEnd = parentTop + parent.clientHeight;
+                    const localOffset = top < parentTop
+                        ? Math.min(0, Math.max(top - parentTop, bottom - parentEnd))
+                        : Math.max(0, Math.min(bottom - parentEnd, top - parentTop));
                     // Use local scroll range first, without moving the target through
                     // the opposite edge of that region.
                     parent.scrollBy({
-                        top: Math.max(Math.min(0, bottom - parentTop - parent.clientHeight), Math.min(offset(), Math.max(0, top - parentTop))),
+                        top: Math.max(Math.min(0, bottom - parentTop - parent.clientHeight), Math.min(localOffset || offset(), Math.max(0, top - parentTop))),
                         behavior: "instant",
                     });
                 }

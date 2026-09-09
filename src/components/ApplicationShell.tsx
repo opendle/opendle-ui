@@ -118,7 +118,7 @@ export function ApplicationShell({
       // Keep native focus ownership. Use only the space needed to expose it.
       for (
         let parent = active.parentElement;
-        parent && offset() !== 0;
+        parent;
         parent = parent.parentElement
       ) {
         if (parent === document.scrollingElement) {
@@ -149,12 +149,17 @@ export function ApplicationShell({
           const { top, bottom } = bounds();
           const parentTop =
             parent.getBoundingClientRect().top + parent.clientTop;
+          const parentEnd = parentTop + parent.clientHeight;
+          const localOffset =
+            top < parentTop
+              ? Math.min(0, Math.max(top - parentTop, bottom - parentEnd))
+              : Math.max(0, Math.min(bottom - parentEnd, top - parentTop));
           // Use local scroll range first, without moving the target through
           // the opposite edge of that region.
           parent.scrollBy({
             top: Math.max(
               Math.min(0, bottom - parentTop - parent.clientHeight),
-              Math.min(offset(), Math.max(0, top - parentTop)),
+              Math.min(localOffset || offset(), Math.max(0, top - parentTop)),
             ),
             behavior: "instant",
           });

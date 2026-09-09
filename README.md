@@ -292,9 +292,10 @@ After native focus moves, the shell uses the available scroll range to show
 the focused page control and its outline within the viewport and above the
 phone row. The full radio choice stays visible after a controlled update
 changes the surrounding layout. It checks again when the shell, navigation,
-or viewport changes size. Nested scroll regions keep their bounds. At the end
-of an unbounded page, the shell reserves only the missing scroll space for the
-focused control. It releases this space when focus
+or viewport changes size. Each nested scroll region keeps the complete focus
+target within its own bounds when it fits, even when the target fits the page
+viewport. At the end of an unbounded page, the shell reserves only the missing
+scroll space for the focused control. It releases this space when focus
 leaves that control. Bounded full-page routes keep their size. Dialogs and fixed
 panels keep control of their focus and scroll. The shell does not move focus or
 change document styles. When a control cannot fit, the shell does not scroll

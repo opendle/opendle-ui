@@ -525,6 +525,103 @@ try {
         await context.close();
       }
     }
+  const boundedFixture = fixture
+    .replace(
+      /<TextControl label="Report title"[\s\S]*?(?=<AdvancedFieldsDisclosure)/,
+      '<div className="fixture-bounded-disclosure">',
+    )
+    .replace("</AdvancedFieldsDisclosure>", "</AdvancedFieldsDisclosure></div>")
+    .replace(
+      "setState(current=>({...current,value}))",
+      "setState(current=>({...current,value:current.reject?current.value:value}))",
+    );
+  const boundedBundle = await build({
+    bundle: true,
+    format: "iife",
+    jsx: "automatic",
+    logLevel: "silent",
+    stdin: {
+      contents: boundedFixture,
+      loader: "jsx",
+      resolveDir: root,
+      sourcefile: "bounded-radio-fixture.jsx",
+    },
+    write: false,
+  });
+  for (const width of [1100, 1440]) {
+    const context = await browser.newContext({
+      viewport: { width, height: width === 1100 ? 800 : 1000 },
+      deviceScaleFactor: 1,
+    });
+    try {
+      const page = await context.newPage();
+      page.on("pageerror", (error) => errors.push(error.message));
+      await page.setContent(
+        `<!doctype html><html lang="en"><head><title>Bounded radio focus</title><style>${css}\nhtml{font-size:200%}h1{font-size:1.5rem}form{display:grid;gap:1rem}.fixture-bounded-disclosure{height:400px;width:256px;overflow:auto}</style></head><body><div id="root"></div></body></html>`,
+      );
+      await page.addScriptTag({ content: boundedBundle.outputFiles[0].text });
+      await page.waitForFunction(
+        () => typeof window.configureRadio === "function",
+      );
+      await page.locator("summary").click();
+      const group = page.getByRole("group", {
+        name: "Call actor",
+        exact: true,
+      });
+      const first = group.locator("input").first();
+      await first.focus();
+      await settle(page);
+      const documentScroll = await page.evaluate(() => window.scrollY);
+      for (const reject of [false, true]) {
+        await configure(page, { value: "", reject });
+        await first.focus();
+        for (const key of ["ArrowDown", "ArrowDown", "ArrowUp", "ArrowUp"]) {
+          await page.keyboard.press(key);
+          const active = group.locator("input:focus");
+          await focusVisible(page, active);
+          const geometry = await active.evaluate((node) => {
+            const row = node.closest("label").getBoundingClientRect();
+            const local = node
+              .closest(".fixture-bounded-disclosure")
+              .getBoundingClientRect();
+            return {
+              top: row.top,
+              bottom: row.bottom,
+              localTop: local.top,
+              localBottom: local.bottom,
+            };
+          });
+          assert.ok(
+            geometry.top >= geometry.localTop &&
+              geometry.bottom <= geometry.localBottom,
+            `Complete row after bounded summary reflow: ${JSON.stringify(geometry)}`,
+          );
+          assert.equal(
+            await page.evaluate(() => window.scrollY),
+            documentScroll,
+          );
+          if (reject) assert.equal(await first.isChecked(), true);
+        }
+        await audit(page, `bounded-${width}-${reject}`);
+        await capture(page, `bounded-${width}-${reject}`);
+      }
+      await page
+        .getByRole("button", { name: "After choices", exact: true })
+        .focus();
+      await page.keyboard.press("Shift+Tab");
+      await focusVisible(page, first);
+      results.push({
+        scene: `bounded-${width}`,
+        accepted: true,
+        rejected: true,
+        reverseTab: true,
+        documentScroll,
+        strictAxe: true,
+      });
+    } finally {
+      await context.close();
+    }
+  }
   assert.deepEqual(errors, []);
   await writeFile(
     join(evidence, "results.json"),
