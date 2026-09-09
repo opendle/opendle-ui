@@ -542,7 +542,16 @@ function isModalDialog(inspector) {
         return false;
     }
 }
+function hasForegroundModal(inspector) {
+    return [
+        ...inspector.ownerDocument.querySelectorAll("dialog[open]"),
+    ].some((dialog) => dialog !== inspector &&
+        !dialog.contains(inspector) &&
+        isModalDialog(dialog));
+}
 function focusInspector(inspector, heading) {
+    if (hasForegroundModal(inspector))
+        return;
     const initialFocus = heading ??
         inspector.querySelector("[data-graph-inspector-close]") ??
         inspector.querySelector("button:not(:disabled), input:not(:disabled), select:not(:disabled), textarea:not(:disabled), [href], [tabindex]:not([tabindex='-1'])") ??
@@ -618,6 +627,7 @@ function useGraphInspectorMode(inspectorRef, headingRef) {
     const modeRef = useRef("overlay");
     const titleHeightRef = useRef(0);
     const modeTransitionRef = useRef(null);
+    const deferredScrollRef = useRef(null);
     const lastInspectorFocusRef = useRef(null);
     useLayoutEffect(() => {
         const handleFocusIn = (event) => {
@@ -757,52 +767,90 @@ function useGraphInspectorMode(inspectorRef, headingRef) {
         const inspector = inspectorRef.current;
         if (!inspector)
             return;
-        const content = inspector.querySelector(".od-graph-inspector-content");
-        const transition = modeTransitionRef.current;
-        modeTransitionRef.current = null;
-        const contentScrollTop = transition?.scrollTop ?? content?.scrollTop ?? 0;
-        const previousFocus = transition?.focus ??
-            (isGraphControlElement(document.activeElement) &&
-                inspector.contains(document.activeElement)
-                ? document.activeElement
-                : null);
-        const isModal = isModalDialog(inspector);
-        if (mode === "sheet" &&
-            !isModal &&
-            typeof inspector.showModal === "function") {
-            if (inspector.open)
-                inspector.close();
-            inspector.showModal();
-        }
-        else if (mode !== "sheet" && isModal) {
-            inspector.close();
-            if (typeof inspector.show === "function")
-                inspector.show();
-        }
-        else if (!inspector.open && typeof inspector.show === "function") {
-            inspector.show();
-        }
-        if (content)
-            content.scrollTop = contentScrollTop;
-        const body = inspector.querySelector(".od-graph-inspector-body");
-        if (body && transition)
-            body.scrollTop = transition.bodyScrollTop;
-        updateInspectorTitleFit(inspector, titleHeightRef);
-        if (transition?.focusWasInside &&
-            (!previousFocus?.isConnected || !inspector.contains(previousFocus))) {
-            headingRef.current?.focus({ preventScroll: true });
-        }
-        else if (transition !== null && !transition.focusWasInside) {
-            if (mode === "sheet")
+        // A layout change must not promote this inspector above an active modal.
+        // Apply the latest native mode only after the foreground modal leaves.
+        const applyMode = () => {
+            if (!inspector.isConnected)
+                return;
+            const blocked = hasForegroundModal(inspector);
+            const content = inspector.querySelector(".od-graph-inspector-content");
+            const transition = modeTransitionRef.current;
+            modeTransitionRef.current = null;
+            // The background cannot be scrolled by the user. Keep its last offset
+            // before a wider sheet can briefly clamp it during a mode change.
+            const scroll = deferredScrollRef.current ?? {
+                scrollTop: transition?.scrollTop ?? content?.scrollTop ?? 0,
+                bodyScrollTop: transition?.bodyScrollTop ??
+                    inspector.querySelector(".od-graph-inspector-body")?.scrollTop ??
+                    0,
+            };
+            deferredScrollRef.current = blocked ? scroll : null;
+            const contentScrollTop = scroll.scrollTop;
+            const currentFocus = inspector.ownerDocument.activeElement;
+            const previousFocus = isGraphControlElement(currentFocus) && inspector.contains(currentFocus)
+                ? currentFocus
+                : transition?.focus;
+            const isModal = isModalDialog(inspector);
+            if (!blocked) {
+                if (mode === "sheet" &&
+                    !isModal &&
+                    typeof inspector.showModal === "function") {
+                    if (inspector.open)
+                        inspector.close();
+                    inspector.showModal();
+                }
+                else if (mode !== "sheet" && isModal) {
+                    inspector.close();
+                    if (typeof inspector.show === "function")
+                        inspector.show();
+                }
+                else if (!inspector.open && typeof inspector.show === "function") {
+                    inspector.show();
+                }
+            }
+            if (content)
+                content.scrollTop = contentScrollTop;
+            const body = inspector.querySelector(".od-graph-inspector-body");
+            if (body)
+                body.scrollTop = scroll.bodyScrollTop;
+            updateInspectorTitleFit(inspector, titleHeightRef);
+            if (blocked)
+                return;
+            if (transition?.focusWasInside &&
+                (!previousFocus?.isConnected || !inspector.contains(previousFocus))) {
                 headingRef.current?.focus({ preventScroll: true });
-        }
-        else if (previousFocus?.isConnected) {
-            previousFocus.focus({ preventScroll: true });
-        }
-        else if (mode === "sheet" &&
-            !inspector.contains(document.activeElement)) {
-            headingRef.current?.focus({ preventScroll: true });
-        }
+            }
+            else if (previousFocus?.isConnected &&
+                inspector.contains(previousFocus)) {
+                previousFocus.focus({ preventScroll: true });
+            }
+            else if (transition !== null && !transition.focusWasInside) {
+                if (mode === "sheet")
+                    headingRef.current?.focus({ preventScroll: true });
+            }
+            else if (mode === "sheet" &&
+                !inspector.contains(document.activeElement)) {
+                headingRef.current?.focus({ preventScroll: true });
+            }
+        };
+        let foregroundWasOpen = hasForegroundModal(inspector);
+        const observer = new MutationObserver(() => {
+            const foregroundIsOpen = hasForegroundModal(inspector);
+            if (foregroundIsOpen === foregroundWasOpen)
+                return;
+            foregroundWasOpen = foregroundIsOpen;
+            applyMode();
+        });
+        observer.observe(inspector.ownerDocument.documentElement, {
+            subtree: true,
+            childList: true,
+            attributes: true,
+            attributeFilter: ["open"],
+        });
+        applyMode();
+        return () => {
+            observer.disconnect();
+        };
     }, [headingRef, inspectorRef, mode]);
     return mode;
 }
@@ -880,7 +928,8 @@ export function GraphInspector({ activationKey, title, eyebrow, icon, actions, o
             if (!inspector ||
                 event.defaultPrevented ||
                 !(event.target instanceof Node) ||
-                !inspector.contains(event.target))
+                !inspector.contains(event.target) ||
+                hasForegroundModal(inspector))
                 return;
             if (event.key === "Tab" && isModalDialog(inspector)) {
                 const focusTargets = [

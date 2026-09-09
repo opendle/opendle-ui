@@ -50,6 +50,11 @@ from Close, Escape, and native cancel events. The default is `false`. The host's
 to `closeDisabled` keeps the same inspector and form values. Set it back to
 `false` to restore normal close behavior. The host owns the pending state and
 disables its other fields and actions.
+If another native modal is open above the inspector, a layout change keeps
+that modal in control. The inspector retains its DOM, values, and scroll
+position. Its native modal state changes after the foreground modal closes or
+is removed. A resize or text-size change must not cover a confirmation or
+move its focus.
 If the focused control becomes disabled in a modal sheet, focus moves to the
 inspector heading. Focus stays on an enabled control.
 While Close is disabled, Escape is stopped before native dialog cancellation.
@@ -275,6 +280,10 @@ A bounded full-page route can use
 `height: calc(100dvh - var(--od-application-navigation-height, 0px))` when it
 omits a top bar. Subtract any route-owned controls within the route layout.
 The measured value is zero while the phone row is hidden on desktop.
+
+If a focused Dialog control is disabled or removed during a pending action,
+focus moves to an enabled control in that dialog, or to the dialog itself when
+no enabled control remains. A nested dialog keeps its own focus.
 
 `Dialog.restoreFocusOnClose` defaults to `true`. Set it to `false` only when
 the host takes focus after a route change. Close the dialog before the host

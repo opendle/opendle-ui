@@ -268,6 +268,42 @@ export function Dialog({
 
   useLayoutEffect(() => {
     const dialog = dialogRef.current;
+    if (!dialog || !open) return;
+    let lastFocus: HTMLElement | null = null;
+    const rememberFocus = () => {
+      const active = dialog.ownerDocument.activeElement;
+      if (!(active instanceof HTMLElement)) return;
+      const owner = active.closest("dialog");
+      if (owner) lastFocus = owner === dialog ? active : null;
+    };
+    rememberFocus();
+    const recoverFocus = () => {
+      const active = dialog.ownerDocument.activeElement;
+      if (
+        dialog.open &&
+        lastFocus instanceof HTMLElement &&
+        (!lastFocus.isConnected || lastFocus.matches(":disabled")) &&
+        (active === lastFocus || active === dialog.ownerDocument.body)
+      ) {
+        focusInitialElement(dialog, initialFocusRef);
+      }
+    };
+    const observer = new MutationObserver(recoverFocus);
+    observer.observe(dialog, {
+      subtree: true,
+      childList: true,
+      attributes: true,
+      attributeFilter: ["disabled"],
+    });
+    dialog.ownerDocument.addEventListener("focusin", rememberFocus);
+    return () => {
+      observer.disconnect();
+      dialog.ownerDocument.removeEventListener("focusin", rememberFocus);
+    };
+  }, [initialFocusRef, open]);
+
+  useLayoutEffect(() => {
+    const dialog = dialogRef.current;
     if (dialog === null) return;
     const handleClick = (event: MouseEvent) => {
       if (isBackdropClick(dialog, event)) requestClose();
