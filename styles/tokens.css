@@ -1382,6 +1382,7 @@
   top: 0;
   z-index: 4;
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
   gap: var(--od-space-sm);
@@ -1396,13 +1397,17 @@
 
 .od-relationship-graph-column-header > div:first-child {
   min-width: 0;
+  max-width: 100%;
   display: flex;
+  flex: 1 1 auto;
+  flex-wrap: wrap;
   align-items: center;
   gap: 0.5rem;
 }
 
 .od-relationship-graph-column-header h2 {
   min-width: 0;
+  max-width: 100%;
   overflow-wrap: anywhere;
   margin: 0;
   font-size: 0.875rem;
@@ -1410,7 +1415,9 @@
 }
 
 .od-relationship-graph-column-header > div:first-child > span {
-  flex: 0 0 auto;
+  flex: 0 1 auto;
+  max-width: 100%;
+  overflow-wrap: anywhere;
   padding: 0.125rem 0.375rem;
   border-radius: 999px;
   color: #cbd3d1;
@@ -1421,10 +1428,16 @@
 
 .od-relationship-graph-column-actions {
   min-width: 0;
+  max-width: 100%;
   display: flex;
   flex-wrap: wrap;
   justify-content: flex-end;
   gap: 0.375rem;
+}
+
+.od-relationship-graph-column-actions > * {
+  min-width: 0;
+  max-width: 100%;
 }
 
 .od-relationship-graph-column-actions button,
@@ -1790,10 +1803,6 @@
   .od-relationship-graph-column-actions {
     width: 100%;
     justify-content: flex-start;
-  }
-
-  .od-relationship-graph-column-actions > * {
-    max-width: 100%;
   }
 
   .od-relationship-graph-node-relationships {
