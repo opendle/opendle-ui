@@ -13,16 +13,16 @@ const evidence =
 const fixture = String.raw`
 import React, {StrictMode, useState, useRef, useLayoutEffect} from "react";
 import {createRoot} from "react-dom/client";
-import {ApplicationShell, MobileNavigation, Button, Icon, Dialog, FormField, Panel, PanelContent, GraphWorkspace, GraphInspector, GraphViewport, GraphNode, PageSurface} from "./dist/index.js";
+import {ApplicationShell, MobileNavigation, Button, Icon, Dialog, FormField, Panel, PanelContent, GraphWorkspace, GraphInspector, GraphViewport, GraphNode, PageSurface, AdvancedFieldsDisclosure, TextControl} from "./dist/index.js";
 function Fixture(){
- const [mounted,mount]=useState(true), [long,setLong]=useState(false), [route,setRoute]=useState(0), [modal,setModal]=useState(false), [inspector,setInspector]=useState(false), [fullPage,setFullPage]=useState(false), [tailType,setTailType]=useState(null);
+ const [mounted,mount]=useState(true), [long,setLong]=useState(false), [route,setRoute]=useState(0), [modal,setModal]=useState(false), [inspector,setInspector]=useState(false), [fullPage,setFullPage]=useState(false), [tailType,setTailType]=useState(null), [form,setForm]=useState(false);
  const heading=useRef(null), opener=useRef(null);
  useLayoutEffect(()=>{if(route) heading.current?.focus()},[route]);
- window.fixture={mount, long:setLong, route:setRoute, modal:setModal, fullPage:setFullPage, tail:setTailType};
+ window.fixture={mount, long:setLong, route:setRoute, modal:setModal, fullPage:setFullPage, tail:setTailType, form:setForm};
  if(!mounted)return <main><h1>Shell removed</h1><Button>Outside shell</Button></main>;
  const items=[{id:"home",label:long?"Home and application overview with further destinations and account tools":"Home",icon:<Icon name="grid"/>},{id:"route",label:long?"Open another application destination with related pages and account tools":"Next page",icon:<Icon name="grid"/>}];
  return <ApplicationShell mainProps={fullPage?{style:{height:"calc(100dvh - var(--od-application-navigation-height, 0px))",flex:"none",overflow:"hidden"}}:undefined} sidebar={<aside className="od-application-sidebar" aria-label="Desktop sidebar">Desktop navigation</aside>} mobileNavigation={<MobileNavigation aria-label="Phone destinations" items={items} onSelect={()=>setRoute(route+1)}/> }>
- {fullPage?<PageSurface edgeToEdge style={{height:"100%"}}><h1 className="od-visually-hidden">Full page graph</h1><GraphWorkspace fullPage><GraphViewport aria-label="Full page local graph" canvasWidth={240} canvasHeight={1800}><GraphNode title="First graph control" x={20} y={20}/><GraphNode title="Last graph control" x={20} y={1500}/></GraphViewport></GraphWorkspace></PageSurface>:<PageSurface className="fixture-content"><h1 tabIndex={-1} ref={heading}>Page {route}</h1>
+ {form?<PageSurface><h1>Native form focus</h1><form onSubmit={event=>event.preventDefault()}><TextControl label="Form start" value="" onChange={()=>{}}/><AdvancedFieldsDisclosure summary="Advanced filters" open>{Array.from({length:14},(_,index)=><TextControl key={index} label={index===4?"Provider route":"Report field "+(index+1)} help="Choose a value for this report field." value="" onChange={()=>{}}/>)}</AdvancedFieldsDisclosure><Button>Form end</Button></form></PageSurface>:fullPage?<PageSurface edgeToEdge style={{height:"100%"}}><h1 className="od-visually-hidden">Full page graph</h1><GraphWorkspace fullPage><GraphViewport aria-label="Full page local graph" canvasWidth={240} canvasHeight={1800}><GraphNode title="First graph control" x={20} y={20}/><GraphNode title="Last graph control" x={20} y={1500}/></GraphViewport></GraphWorkspace></PageSurface>:<PageSurface className="fixture-content"><h1 tabIndex={-1} ref={heading}>Page {route}</h1>
  <Button>First control</Button><div className="fixture-gap"/>
  <Button>Before target</Button><Button>Target action</Button><Button>After target</Button>
  <div className="fixture-gap"/>
@@ -110,11 +110,95 @@ async function visibleFocus(page, name, scene) {
   );
   assert.ok(geometry.pageWidth <= geometry.width, scene);
 }
+
+async function nativeFormFocus(page, scene) {
+  await page.evaluate(() => window.fixture.form(true));
+  await page.getByLabel("Form start", { exact: true }).waitFor();
+  await page.getByLabel("Form start", { exact: true }).focus();
+  const measurements = [];
+  for (const direction of ["Tab", "Shift+Tab"]) {
+    let reachedEnd = false;
+    for (let index = 0; index < 20; index++) {
+      await page.keyboard.press(direction);
+      await settle(page);
+      const geometry = await page.evaluate(() => {
+        const node = document.activeElement,
+          box = node.getBoundingClientRect(),
+          style = getComputedStyle(node);
+        const nav = document
+          .querySelector(".od-application-mobile-navigation")
+          .getBoundingClientRect();
+        const extent =
+          parseFloat(style.outlineWidth) + parseFloat(style.outlineOffset);
+        return {
+          tag: node.tagName,
+          name: node.labels?.[0]?.textContent ?? node.textContent,
+          visible: node.matches(":focus-visible"),
+          extent,
+          top: box.top - extent,
+          bottom: box.bottom + extent,
+          left: box.left - extent,
+          right: box.right + extent,
+          end: nav.height ? nav.top : innerHeight,
+          width: innerWidth,
+        };
+      });
+      measurements.push({ direction, ...geometry });
+      results.push({ scene, ...measurements.at(-1) });
+      if (
+        geometry.tag === "SUMMARY" ||
+        geometry.name === "Provider route" ||
+        geometry.top < -1
+      )
+        await page.screenshot({
+          path: `${evidence}/${scene}-${direction === "Tab" ? "forward" : "reverse"}-${index}.png`,
+        });
+      assert.equal(geometry.visible, true, JSON.stringify(geometry));
+      assert.ok(geometry.extent > 0, JSON.stringify(geometry));
+      assert.ok(
+        geometry.top >= -1 && geometry.bottom <= geometry.end + 1,
+        JSON.stringify(geometry),
+      );
+      assert.ok(
+        geometry.left >= -1 && geometry.right <= geometry.width + 1,
+        JSON.stringify(geometry),
+      );
+      if (
+        (direction === "Tab" && geometry.name === "Form end") ||
+        (direction === "Shift+Tab" && geometry.name === "Form start")
+      ) {
+        reachedEnd = true;
+        break;
+      }
+    }
+    assert.equal(
+      reachedEnd,
+      true,
+      `Native ${direction} must traverse the complete form`,
+    );
+  }
+  assert.ok(
+    measurements.some(
+      (item) => item.direction === "Shift+Tab" && item.tag === "SUMMARY",
+    ),
+  );
+  assert.ok(
+    measurements.some(
+      (item) =>
+        item.direction === "Shift+Tab" && item.name === "Provider route",
+    ),
+  );
+  assert.deepEqual((await new AxeBuilder({ page }).analyze()).violations, []);
+  await page.evaluate(() => window.fixture.form(false));
+}
 try {
-  for (const width of [320, 390, 1440])
+  for (const width of [1440, 1100, 320, 390])
     for (const scale of [100, 200]) {
       const context = await browser.newContext({
-        viewport: { width, height: 844 },
+        viewport: {
+          width,
+          height: width === 1440 ? 1000 : width === 1100 ? 800 : 844,
+        },
       });
       try {
         const page = await context.newPage(),
@@ -129,6 +213,7 @@ try {
           (scale) => (document.documentElement.style.fontSize = scale + "%"),
           scale,
         );
+        await nativeFormFocus(page, `${width}-${scale}-native-form`);
         // Enter with native keyboard movement. Do not center the target.
         await button(page, "Before target").focus();
         if (width < 1000)
@@ -327,12 +412,8 @@ try {
         // control and its outline even at the document scroll limit.
         await page.getByLabel("Tall content").focus();
         await page.keyboard.press("Tab");
+        await visibleFocus(page, "Last control", width + "-" + scale + "-last");
         if (width < 1000) {
-          await visibleFocus(
-            page,
-            "Last control",
-            width + "-" + scale + "-last",
-          );
           assert.ok(
             (await page
               .locator(".od-application-shell")
@@ -420,12 +501,14 @@ try {
           });
           assert.equal(inputBounds.active, true);
           assert.equal(inputBounds.visible, true);
-          if (width < 1000)
-            assert.ok(
-              inputBounds.bottom + inputBounds.outline <=
-                inputBounds.navTop + 1,
-              JSON.stringify(inputBounds),
-            );
+          assert.ok(
+            inputBounds.top - inputBounds.outline >= -1,
+            JSON.stringify(inputBounds),
+          );
+          assert.ok(
+            inputBounds.bottom + inputBounds.outline <= inputBounds.navTop + 1,
+            JSON.stringify(inputBounds),
+          );
           await page.screenshot({
             path:
               evidence + "/" + width + "-" + scale + "-last-" + type + ".png",

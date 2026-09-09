@@ -3860,6 +3860,7 @@ samp {
 
 .od-application-shell {
   display: grid;
+  padding-bottom: var(--od-application-focus-clearance, 0px);
   grid-template-columns: 14rem minmax(0, 1fr);
   min-height: 100dvh;
   background: var(--od-color-background);

@@ -31,13 +31,13 @@ export function ApplicationShell({ children, className, mainProps, mobileNavigat
                 navigation.contains(active) ||
                 active.closest("dialog[open]") ||
                 document.querySelector(":modal") ||
-                active.getClientRects().length === 0 ||
-                navigationBox.height === 0) {
+                active.getClientRects().length === 0) {
                 clearEndSpace();
                 return;
             }
             // Dialogs and fixed panels own their local focus and scroll position.
             let bounded = /(hidden|clip)/.test(getComputedStyle(shell).overflowY);
+            let localHeight = Infinity;
             for (let parent = active; parent && parent !== shell; parent = parent.parentElement) {
                 const parentStyle = getComputedStyle(parent);
                 if (parentStyle.position === "fixed") {
@@ -46,16 +46,40 @@ export function ApplicationShell({ children, className, mainProps, mobileNavigat
                 }
                 bounded ||=
                     parent !== active && /(hidden|clip)/.test(parentStyle.overflowY);
+                if (parent !== active &&
+                    /(auto|scroll|hidden|clip)/.test(parentStyle.overflowY)) {
+                    localHeight = Math.min(localHeight, parent.clientHeight);
+                }
             }
             const style = getComputedStyle(active);
             const outline = Math.max(0, parseFloat(style.outlineWidth) + parseFloat(style.outlineOffset));
             const clearance = Math.max(5, outline);
-            const offset = () => {
+            const viewportEnd = navigationBox.height
+                ? navigationBox.top
+                : window.innerHeight;
+            const choice = active.closest(".od-radio-group-choice");
+            const bounds = () => {
                 const box = active.getBoundingClientRect();
-                return Math.max(0, Math.min(box.bottom + clearance - navigationBox.top, box.top - clearance));
+                const row = choice?.getBoundingClientRect();
+                let top = box.top - clearance;
+                let bottom = box.bottom + clearance;
+                // The native radio and its complete label are one focus target.
+                // An oversized label keeps the input visible and scrolls natively.
+                if (row &&
+                    row.height + 2 * clearance <= Math.min(viewportEnd, localHeight)) {
+                    top = Math.min(top, row.top);
+                    bottom = Math.max(bottom, row.bottom);
+                }
+                return { top, bottom };
+            };
+            const offset = () => {
+                const { top, bottom } = bounds();
+                if (top < 0)
+                    return Math.min(0, Math.max(top, bottom - viewportEnd));
+                return Math.max(0, Math.min(bottom - viewportEnd, top));
             };
             // Keep native focus ownership. Use only the space needed to expose it.
-            for (let parent = active.parentElement; parent && offset() > 0; parent = parent.parentElement) {
+            for (let parent = active.parentElement; parent && offset() !== 0; parent = parent.parentElement) {
                 if (parent === document.scrollingElement) {
                     // An unbounded page can end at its last control. Reserve only the
                     // missing scroll range; bounded full-page routes keep their size.
@@ -68,16 +92,21 @@ export function ApplicationShell({ children, className, mainProps, mobileNavigat
                         endClearance += Math.ceil(offset() - remaining);
                         shell.style.setProperty("--od-application-focus-clearance", `${String(endClearance)}px`);
                     }
-                    parent.scrollBy({ top: offset(), behavior: "instant" });
+                    const distance = offset();
+                    // Scroll positions can use whole pixels; retain full edge clearance.
+                    parent.scrollBy({
+                        top: distance > 0 ? Math.ceil(distance) : Math.floor(distance),
+                        behavior: "instant",
+                    });
                     break;
                 }
                 if (/(auto|scroll)/.test(getComputedStyle(parent).overflowY)) {
-                    const available = active.getBoundingClientRect().top -
-                        parent.getBoundingClientRect().top -
-                        parent.clientTop -
-                        clearance;
+                    const { top, bottom } = bounds();
+                    const parentTop = parent.getBoundingClientRect().top + parent.clientTop;
+                    // Use local scroll range first, without moving the target through
+                    // the opposite edge of that region.
                     parent.scrollBy({
-                        top: Math.max(0, Math.min(offset(), available)),
+                        top: Math.max(Math.min(0, bottom - parentTop - parent.clientHeight), Math.min(offset(), Math.max(0, top - parentTop))),
                         behavior: "instant",
                     });
                 }

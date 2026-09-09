@@ -1,4 +1,4 @@
-/* global document, FormData, getComputedStyle, innerWidth, requestAnimationFrame, window */
+/* global document, FormData, getComputedStyle, innerHeight, innerWidth, requestAnimationFrame, window */
 import assert from "node:assert/strict";
 import { existsSync } from "node:fs";
 import { mkdtemp, readFile, writeFile } from "node:fs/promises";
@@ -22,7 +22,7 @@ import {createRoot} from 'react-dom/client';
 import {ApplicationShell, AdvancedFieldsDisclosure, Button, Icon, MobileNavigation, PageSurface, RadioGroup, SelectControl, TextControl} from '@opendle/ui';
 const options = [{value:'',label:'All call actors'}, {value:'service',label:'Service calls'}, {value:'administrator',label:'Administrator playground calls'}];
 function Fixture() {
- const [state,setState] = useState({value:'',options,disabled:false,error:null,help:'Choose one call source.', legacy:false, external:false});
+ const [state,setState] = useState({value:'',options,disabled:false,error:null,help:'Choose one call source.', legacy:false, external:false, reflow:true});
  const [other,setOther] = useState('service');
  const [changes,setChanges] = useState([]);
  const groupRef = useRef(null);
@@ -33,10 +33,14 @@ function Fixture() {
  <p id="host-help">This setting applies to the current report.</p>
  <form id="report" aria-label="Report form" onSubmit={event=>event.preventDefault()}>
  <TextControl label="Report title" value="Example report" onChange={()=>{}}/>
- <AdvancedFieldsDisclosure summary="Advanced filters">
- <Button>Before choices</Button>
+ <TextControl label="From" type="date" value="2026-03-01" onChange={()=>{}}/>
+ <TextControl label="Through" type="date" value="2026-03-30" onChange={()=>{}}/>
+ <SelectControl label="Service" value="" onChange={()=>{}}><option value="">All services</option></SelectControl>
+ <TextControl label="Workspace" value="" onChange={()=>{}}/>
+ <AdvancedFieldsDisclosure summary={state.value ? "Advanced filters (1 active)" : "Advanced filters"}>
+ {!state.reflow && <Button>Before choices</Button>}
  {state.legacy ? <SelectControl label="Call actor" value={state.value} onChange={event=>changed(event.currentTarget.value)}>{state.options.map(option=><option key={option.value} value={option.value}>{option.label}</option>)}</SelectControl> :
- <RadioGroup ref={groupRef} label="Call actor" name="actor" options={state.options} value={state.value} onChange={changed} disabled={state.disabled} error={state.error} help={state.help} aria-describedby="host-help" form={state.external?'external-report':undefined}/>}
+ <RadioGroup ref={groupRef} label="Call actor" name="actor" options={state.options} value={state.value} onChange={changed} disabled={state.disabled} error={state.error} help={state.reflow ? undefined : state.help} aria-describedby="host-help" form={state.external?'external-report':undefined}/>}
  <Button>After choices</Button>
  <RadioGroup label="Independent source" options={options} value={other} onChange={setOther}/>
  <RadioGroup label="Another source" options={options} value="service" onChange={()=>{}}/>
@@ -112,7 +116,7 @@ async function focusVisible(page, locator) {
       bottom: box.bottom + extent,
       left: box.left - extent,
       right: box.right + extent,
-      navTop: nav.top,
+      navTop: nav.height ? nav.top : innerHeight,
       bounds: {
         top: bounds.top,
         bottom: bounds.bottom,
@@ -221,11 +225,14 @@ async function formValues(page, id = "report") {
   );
 }
 try {
-  for (const width of [320, 390])
+  for (const width of [320, 390, 1100, 1440])
     for (const scale of [1, 2]) {
       const scene = `${width}-${scale * 100}`;
       const context = await browser.newContext({
-        viewport: { width, height: 844 },
+        viewport: {
+          width,
+          height: width === 1440 ? 1000 : width === 1100 ? 800 : 844,
+        },
         deviceScaleFactor: 1,
       });
       try {
@@ -280,7 +287,7 @@ try {
             1,
             "Each radio has its full visible accessible name",
           );
-        if (scale === 2)
+        if (scale === 2 && width < 1000)
           assert.ok(labels[2].lines > 1, "The complete long label wraps");
         if (scale === 2)
           assert.ok(
@@ -298,12 +305,49 @@ try {
           true,
           "Three choices have no local clipping or scroll",
         );
-        await before.focus();
-        await page.keyboard.press("Tab");
+        await page.getByLabel("Report title", { exact: true }).focus();
+        let reachedFirst = false;
+        for (let step = 0; step < 16; step++) {
+          await page.keyboard.press("Tab");
+          await settle(page);
+          if (
+            await first().evaluate((node) => node === document.activeElement)
+          ) {
+            reachedFirst = true;
+            break;
+          }
+        }
+        assert.equal(
+          reachedFirst,
+          true,
+          "Native Tab reaches the first radio from the report start",
+        );
         await focused(first());
         await focusVisible(page, first());
+        const summaryHeight = await page
+          .locator("summary")
+          .evaluate((node) => node.getBoundingClientRect().height);
         await page.keyboard.press("ArrowDown");
         await focused(second());
+        await settle(page);
+        const countedSummaryHeight = await page
+          .locator("summary")
+          .evaluate((node) => node.getBoundingClientRect().height);
+        assert.equal(
+          await page.locator("summary").textContent(),
+          "Advanced filters (1 active)",
+        );
+        if (width < 1000 && scale === 2)
+          assert.ok(
+            countedSummaryHeight > summaryHeight,
+            "The active-count summary must wrap after native selection",
+          );
+        await capture(page, `${scene}-active-count-reflow`);
+        results.push({
+          scene: `${scene}-active-count-reflow`,
+          summaryHeight,
+          countedSummaryHeight,
+        });
         assert.equal(await second().isChecked(), true);
         await focusVisible(page, second());
         await page.keyboard.press("ArrowRight");
@@ -316,6 +360,7 @@ try {
           await page.getByRole("status", { name: "Changes" }).textContent(),
           '["service","administrator"]',
         );
+        await configure(page, { reflow: false });
         await page.keyboard.press("Tab");
         await focused(after);
         await page.keyboard.press("Shift+Tab");
@@ -431,7 +476,7 @@ try {
         await capture(page, `${scene}-long-labels`);
         const clipped = await page.addStyleTag({
           content:
-            ".od-radio-group-choice-label{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}",
+            ".od-radio-group-choice-label{max-width:8rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}",
         });
         await assert.rejects(
           () => labelsReadable(group),
