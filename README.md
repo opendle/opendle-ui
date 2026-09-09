@@ -288,6 +288,10 @@ A bounded full-page route can use
 `height: calc(100dvh - var(--od-application-navigation-height, 0px))` when it
 omits a top bar. Subtract any route-owned controls within the route layout.
 The measured value is zero while the phone row is hidden on desktop.
+Navigation resize measurements run before the next layout. They update the
+reserved height and focus clearance in one frame, outside resize delivery.
+This lets full-page graph hosts settle when text size changes. Pending
+measurement and focus work is canceled when the shell is removed.
 After native focus moves, the shell uses the available scroll range to show
 the focused page control and its outline within the viewport and above the
 phone row. The full radio choice stays visible after a controlled update

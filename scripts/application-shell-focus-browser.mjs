@@ -18,11 +18,11 @@ function Fixture(){
  const [mounted,mount]=useState(true), [long,setLong]=useState(false), [route,setRoute]=useState(0), [modal,setModal]=useState(false), [inspector,setInspector]=useState(false), [fullPage,setFullPage]=useState(false), [tailType,setTailType]=useState(null), [form,setForm]=useState(false);
  const heading=useRef(null), opener=useRef(null);
  useLayoutEffect(()=>{if(route) heading.current?.focus()},[route]);
- window.fixture={mount, long:setLong, route:setRoute, modal:setModal, fullPage:setFullPage, tail:setTailType, form:setForm};
+ window.fixture={inspector:setInspector, mount, long:setLong, route:setRoute, modal:setModal, fullPage:setFullPage, tail:setTailType, form:setForm};
  if(!mounted)return <main><h1>Shell removed</h1><Button>Outside shell</Button></main>;
  const items=[{id:"home",label:long?"Home and application overview with further destinations and account tools":"Home",icon:<Icon name="grid"/>},{id:"route",label:long?"Open another application destination with related pages and account tools":"Next page",icon:<Icon name="grid"/>}];
  return <ApplicationShell mainProps={fullPage?{style:{height:"calc(100dvh - var(--od-application-navigation-height, 0px))",flex:"none",overflow:"hidden"}}:undefined} sidebar={<aside className="od-application-sidebar" aria-label="Desktop sidebar">Desktop navigation</aside>} mobileNavigation={<MobileNavigation aria-label="Phone destinations" items={items} onSelect={()=>setRoute(route+1)}/> }>
- {form?<PageSurface><h1>Native form focus</h1><form onSubmit={event=>event.preventDefault()}><TextControl label="Form start" value="" onChange={()=>{}}/><AdvancedFieldsDisclosure summary="Advanced filters" open>{Array.from({length:14},(_,index)=><TextControl key={index} label={index===4?"Provider route":"Report field "+(index+1)} help="Choose a value for this report field." value="" onChange={()=>{}}/>)}</AdvancedFieldsDisclosure><Button>Form end</Button></form></PageSurface>:fullPage?<PageSurface edgeToEdge style={{height:"100%"}}><h1 className="od-visually-hidden">Full page graph</h1><GraphWorkspace fullPage><GraphViewport aria-label="Full page local graph" canvasWidth={240} canvasHeight={1800}><GraphNode title="First graph control" x={20} y={20}/><GraphNode title="Last graph control" x={20} y={1500}/></GraphViewport></GraphWorkspace></PageSurface>:<PageSurface className="fixture-content"><h1 tabIndex={-1} ref={heading}>Page {route}</h1>
+ {form?<PageSurface><h1>Native form focus</h1><form onSubmit={event=>event.preventDefault()}><TextControl label="Form start" value="" onChange={()=>{}}/><AdvancedFieldsDisclosure summary="Advanced filters" open>{Array.from({length:14},(_,index)=><TextControl key={index} label={index===4?"Provider route":"Report field "+(index+1)} help="Choose a value for this report field." value="" onChange={()=>{}}/>)}</AdvancedFieldsDisclosure><Button>Form end</Button></form></PageSurface>:fullPage?<PageSurface edgeToEdge style={{height:"100%"}}><h1 className="od-visually-hidden">Full page graph</h1><GraphWorkspace fullPage inspector={inspector?<GraphInspector title="Full page inspector" onClose={()=>setInspector(false)} actions={<Button>Save record</Button>}><FormField label="Record name"><input defaultValue="Retained draft"/></FormField><p>{"Long record details. ".repeat(80)}</p></GraphInspector>:null}><GraphViewport aria-label="Full page local graph" canvasWidth={240} canvasHeight={1800}><GraphNode title="First graph control" x={20} y={20}/><GraphNode title="Last graph control" x={20} y={1500}/></GraphViewport></GraphWorkspace></PageSurface>:<PageSurface className="fixture-content"><h1 tabIndex={-1} ref={heading}>Page {route}</h1>
  <Button>First control</Button><div className="fixture-gap"/>
  <Button>Before target</Button><Button>Target action</Button><Button>After target</Button>
  <div className="fixture-gap"/>
@@ -204,6 +204,17 @@ try {
         const page = await context.newPage(),
           errors = [];
         page.on("pageerror", (e) => errors.push(e.message));
+        page.on("console", (message) => {
+          if (message.type() === "error") errors.push(message.text());
+        });
+        await page.exposeFunction("recordWindowError", (message) =>
+          errors.push(message),
+        );
+        await page.addInitScript(() => {
+          window.addEventListener("error", (event) =>
+            window.recordWindowError(event.message),
+          );
+        });
         await page.route("**/*", (route) =>
           route.fulfill({ contentType: "text/html", body: html }),
         );
@@ -617,6 +628,178 @@ try {
         await context.close();
       }
     }
+  // A navigation measurement must not resize an observed host during delivery.
+  for (const isMobile of [false, true]) {
+    const context = await browser.newContext({
+      viewport: { width: 390, height: 844 },
+      isMobile,
+    });
+    try {
+      const page = await context.newPage();
+      const errors = [];
+      page.on("pageerror", (error) => errors.push(error.message));
+      page.on("console", (message) => {
+        if (message.type() === "error") errors.push(message.text());
+      });
+      await page.exposeFunction("recordWindowError", (message) =>
+        errors.push(message),
+      );
+      await page.addInitScript(() => {
+        window.addEventListener("error", (event) =>
+          window.recordWindowError(event.message),
+        );
+        const NativeObserver = window.ResizeObserver;
+        const statistics = (window.resizeStatistics = {
+          deliveries: 0,
+          targets: 0,
+        });
+        window.ResizeObserver = class extends NativeObserver {
+          targets = new Set();
+          constructor(callback) {
+            super((entries, observer) => {
+              statistics.deliveries++;
+              callback(entries, observer);
+            });
+          }
+          observe(target, options) {
+            if (!this.targets.has(target)) {
+              this.targets.add(target);
+              statistics.targets++;
+            }
+            super.observe(target, options);
+          }
+          unobserve(target) {
+            if (this.targets.delete(target)) statistics.targets--;
+            super.unobserve(target);
+          }
+          disconnect() {
+            statistics.targets -= this.targets.size;
+            this.targets.clear();
+            super.disconnect();
+          }
+        };
+      });
+      await page.route("**/*", (route) =>
+        route.fulfill({ contentType: "text/html", body: html }),
+      );
+      await page.goto("http://127.0.0.1:5174");
+      await page.evaluate(() => window.fixture.fullPage(true));
+      await button(page, "First graph control").waitFor();
+      for (const open of [false, true, false, true]) {
+        await page.evaluate((open) => window.fixture.inspector(open), open);
+        for (const scale of [200, 100]) {
+          await page.evaluate((scale) => {
+            document.documentElement.style.fontSize = scale + "%";
+          }, scale);
+          await page.waitForTimeout(100);
+          const frames = await page.evaluate(
+            () =>
+              new Promise((resolve) => {
+                const samples = [];
+                const sample = () => {
+                  const host = document
+                    .querySelector(".od-graph-workspace")
+                    .getBoundingClientRect();
+                  const nav = document
+                    .querySelector(".od-application-mobile-navigation")
+                    .getBoundingClientRect();
+                  const inspector = document.querySelector(
+                    ".od-graph-inspector",
+                  );
+                  samples.push({
+                    height: host.height,
+                    bottom: host.bottom,
+                    navigationTop: nav.top,
+                    pageHeight: document.documentElement.scrollHeight,
+                    pageWidth: document.documentElement.scrollWidth,
+                    deliveries: window.resizeStatistics.deliveries,
+                    mode: inspector?.dataset.mode ?? null,
+                  });
+                  if (samples.length < 12) requestAnimationFrame(sample);
+                  else resolve(samples);
+                };
+                requestAnimationFrame(sample);
+              }),
+          );
+          assert.ok(
+            frames.every(
+              (value) => JSON.stringify(value) === JSON.stringify(frames[0]),
+            ),
+            "Layout and ResizeObserver delivery must become quiet: " +
+              JSON.stringify(frames),
+          );
+          const value = frames[0];
+          assert.ok(
+            Math.abs(value.bottom - value.navigationTop) <= 1,
+            JSON.stringify(value),
+          );
+          assert.ok(
+            value.pageHeight <= 844 && value.pageWidth <= 390,
+            JSON.stringify(value),
+          );
+          assert.equal(value.mode, open ? "sheet" : null);
+          if (open) {
+            assert.equal(
+              await page.getByLabel("Record name").inputValue(),
+              "Retained draft",
+            );
+            assert.equal(
+              await page
+                .getByRole("heading", { name: "Full page inspector" })
+                .evaluate((node) => node === document.activeElement),
+              true,
+            );
+          }
+          assert.deepEqual(
+            (await new AxeBuilder({ page }).analyze()).violations,
+            [],
+          );
+          results.push({
+            scene: `observer-${isMobile}-${open}-${scale}`,
+            ...value,
+          });
+          await page.screenshot({
+            path: `${evidence}/observer-${isMobile}-${open}-${scale}.png`,
+          });
+        }
+      }
+      // Queue a navigation resize and remove the shell before its scheduled work.
+      await page.evaluate(() => {
+        const navigation = document.querySelector(
+          ".od-application-mobile-navigation",
+        );
+        const removeAfterDelivery = new ResizeObserver(() => {
+          window.fixture.mount(false);
+          removeAfterDelivery.disconnect();
+        });
+        removeAfterDelivery.observe(navigation);
+        window.fixture.long(true);
+      });
+      await button(page, "Outside shell").waitFor();
+      await page.waitForTimeout(100);
+      assert.equal(
+        await page.evaluate(() => window.resizeStatistics.targets),
+        0,
+        "All resize targets must be released on unmount",
+      );
+      const count = await page.evaluate(
+        () => window.resizeStatistics.deliveries,
+      );
+      await page.waitForTimeout(100);
+      assert.equal(
+        await page.evaluate(() => window.resizeStatistics.deliveries),
+        count,
+        "No resize delivery after unmount",
+      );
+      assert.deepEqual(
+        errors,
+        [],
+        "No window, console, or runtime error during navigation resize",
+      );
+    } finally {
+      await context.close();
+    }
+  }
   console.log("Application shell focus browser checks passed.");
 } finally {
   await browser.close();

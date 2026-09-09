@@ -175,10 +175,21 @@ export function ApplicationShell({
         "--od-application-navigation-height",
         `${String(navigation.getBoundingClientRect().height)}px`,
       );
-      schedule();
     };
     measure();
-    const observer = new ResizeObserver(measure);
+    schedule();
+    // Navigation height changes can resize an observed graph host. Apply them
+    // before the next layout, outside the current resize delivery.
+    let measurementFrame = 0;
+    const observer = new ResizeObserver(() => {
+      if (measurementFrame) return;
+      measurementFrame = requestAnimationFrame(() => {
+        measurementFrame = 0;
+        measure();
+        cancelAnimationFrame(frame);
+        keepFocusVisible();
+      });
+    });
     observer.observe(navigation);
     observer.observe(shell);
     shell.addEventListener("focusin", schedule);
@@ -186,6 +197,7 @@ export function ApplicationShell({
     window.addEventListener("resize", schedule);
     return () => {
       observer.disconnect();
+      cancelAnimationFrame(measurementFrame);
       cancelAnimationFrame(frame);
       shell.removeEventListener("focusin", schedule);
       shell.removeEventListener("focusout", schedule);
