@@ -799,7 +799,7 @@ function useGraphInspectorMode(inspectorRef, headingRef) {
     return mode;
 }
 /** A responsive inspector with initial focus, Escape close, and exact focus return. */
-export function GraphInspector({ activationKey, title, eyebrow, icon, actions, onClose, onCancel, closeLabel = "Close inspector", returnFocusRef: suppliedReturnFocusRef, tone = "neutral", children, className, tabIndex, "aria-label": ariaLabel, "aria-labelledby": ariaLabelledBy, ...props }) {
+export function GraphInspector({ activationKey, title, eyebrow, icon, actions, onClose, onCancel, closeLabel = "Close inspector", closeDisabled = false, returnFocusRef: suppliedReturnFocusRef, tone = "neutral", children, className, tabIndex, "aria-label": ariaLabel, "aria-labelledby": ariaLabelledBy, ...props }) {
     const titleId = useId();
     const inspectorRef = useRef(null);
     const headingRef = useRef(null);
@@ -861,6 +861,8 @@ export function GraphInspector({ activationKey, title, eyebrow, icon, actions, o
         };
     }, [activationKey, suppliedReturnFocusRef]);
     function closeInspector() {
+        if (closeDisabled)
+            return;
         onClose();
     }
     const handleInspectorKeyboardRef = useRef(() => undefined);
@@ -918,6 +920,6 @@ export function GraphInspector({ activationKey, title, eyebrow, icon, actions, o
                 return;
             event.preventDefault();
             closeInspector();
-        }, ref: inspectorRef, tabIndex: tabIndex ?? -1, children: [_jsxs("div", { className: "od-graph-inspector-body", children: [_jsxs("header", { className: "od-graph-inspector-header", children: [icon ? (_jsx("span", { className: "od-graph-inspector-icon", children: icon })) : null, _jsxs("div", { className: "od-graph-inspector-heading", children: [eyebrow ? (_jsx("span", { className: "od-graph-inspector-eyebrow", children: eyebrow })) : null, _jsx("h2", { id: titleId, ref: headingRef, tabIndex: -1, children: title })] }), _jsx("span", { className: "od-graph-inspector-close-slot", children: _jsx("button", { "aria-label": closeLabel, className: "od-graph-inspector-close", "data-graph-inspector-close": "true", onClick: closeInspector, type: "button", children: _jsx("span", { "aria-hidden": "true", children: "\u00D7" }) }) })] }), _jsx("div", { className: "od-graph-inspector-content", children: children })] }), actions ? (_jsx("footer", { className: "od-graph-inspector-actions", children: actions })) : null] }));
+        }, ref: inspectorRef, tabIndex: tabIndex ?? -1, children: [_jsxs("div", { className: "od-graph-inspector-body", children: [_jsxs("header", { className: "od-graph-inspector-header", children: [icon ? (_jsx("span", { className: "od-graph-inspector-icon", children: icon })) : null, _jsxs("div", { className: "od-graph-inspector-heading", children: [eyebrow ? (_jsx("span", { className: "od-graph-inspector-eyebrow", children: eyebrow })) : null, _jsx("h2", { id: titleId, ref: headingRef, tabIndex: -1, children: title })] }), _jsx("span", { className: "od-graph-inspector-close-slot", children: _jsx("button", { "aria-label": closeLabel, className: "od-graph-inspector-close", "data-graph-inspector-close": "true", disabled: closeDisabled, onClick: closeInspector, type: "button", children: _jsx("span", { "aria-hidden": "true", children: "\u00D7" }) }) })] }), _jsx("div", { className: "od-graph-inspector-content", children: children })] }), actions ? (_jsx("footer", { className: "od-graph-inspector-actions", children: actions })) : null] }));
 }
 //# sourceMappingURL=GraphWorkspace.js.map

@@ -3008,7 +3008,7 @@ samp {
   line-height: 1;
 }
 
-.od-graph-inspector-close:hover {
+.od-graph-inspector-close:hover:not(:disabled) {
   color: var(--od-color-foreground);
   background: var(--od-color-surface);
 }

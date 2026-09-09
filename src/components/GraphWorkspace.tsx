@@ -1208,6 +1208,7 @@ export interface GraphInspectorProps extends Omit<
   readonly actions?: ReactNode;
   readonly onClose: () => void;
   readonly closeLabel?: string;
+  readonly closeDisabled?: boolean;
   readonly returnFocusRef?: RefObject<GraphControlElement | null>;
   readonly tone?: GraphNodeTone;
 }
@@ -1592,6 +1593,7 @@ export function GraphInspector({
   onClose,
   onCancel,
   closeLabel = "Close inspector",
+  closeDisabled = false,
   returnFocusRef: suppliedReturnFocusRef,
   tone = "neutral",
   children,
@@ -1675,6 +1677,7 @@ export function GraphInspector({
   }, [activationKey, suppliedReturnFocusRef]);
 
   function closeInspector() {
+    if (closeDisabled) return;
     onClose();
   }
 
@@ -1775,6 +1778,7 @@ export function GraphInspector({
               aria-label={closeLabel}
               className="od-graph-inspector-close"
               data-graph-inspector-close="true"
+              disabled={closeDisabled}
               onClick={closeInspector}
               type="button"
             >

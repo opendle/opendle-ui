@@ -44,6 +44,12 @@ Close and Escape request the host's `onClose` behavior. The host can keep the
 inspector mounted during a pending write or a discard confirmation. The shared
 component keeps its modal state and focus until the host removes it. Removal
 uses the current return-focus reference or a connected graph fallback.
+Set `closeDisabled` to `true` to disable Close and block shared close requests
+from Close, Escape, and native cancel events. The default is `false`. The host's
+`onCancel` handler still receives cancel events and can prevent them. A change
+to `closeDisabled` keeps the same inspector and form values. Set it back to
+`false` to restore normal close behavior. The host owns the pending state and
+disables its other fields and actions.
 `GraphInspectorProps.onClose` is required. The heading always receives initial
 focus; the removed `initialFocusRef` prop has no replacement. Use
 `GraphWorkspace` or `RelationshipGraph` as the inspector host. The old unhosted
