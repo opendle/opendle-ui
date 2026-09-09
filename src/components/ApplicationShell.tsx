@@ -35,10 +35,22 @@ export function ApplicationShell({
     const navigation = navigationRef.current;
     if (!shell || !navigation) return;
     let frame = 0;
+    let focusTarget: Element | null = null;
+    let endClearance = 0;
+    const clearEndSpace = () => {
+      if (endClearance) {
+        shell.style.removeProperty("--od-application-focus-clearance");
+        endClearance = 0;
+      }
+    };
     const keepFocusVisible = () => {
       frame = 0;
       const active = document.activeElement;
       const navigationBox = navigation.getBoundingClientRect();
+      if (active !== focusTarget) {
+        clearEndSpace();
+        focusTarget = active;
+      }
       if (
         !(active instanceof Element) ||
         !shell.contains(active) ||
@@ -47,15 +59,24 @@ export function ApplicationShell({
         document.querySelector(":modal") ||
         active.getClientRects().length === 0 ||
         navigationBox.height === 0
-      )
+      ) {
+        clearEndSpace();
         return;
+      }
       // Dialogs and fixed panels own their local focus and scroll position.
+      let bounded = /(hidden|clip)/.test(getComputedStyle(shell).overflowY);
       for (
         let parent: Element | null = active;
         parent && parent !== shell;
         parent = parent.parentElement
       ) {
-        if (getComputedStyle(parent).position === "fixed") return;
+        const parentStyle = getComputedStyle(parent);
+        if (parentStyle.position === "fixed") {
+          clearEndSpace();
+          return;
+        }
+        bounded ||=
+          parent !== active && /(hidden|clip)/.test(parentStyle.overflowY);
       }
       const style = getComputedStyle(active);
       const outline = Math.max(
@@ -80,6 +101,21 @@ export function ApplicationShell({
         parent = parent.parentElement
       ) {
         if (parent === document.scrollingElement) {
+          // An unbounded page can end at its last control. Reserve only the
+          // missing scroll range; bounded full-page routes keep their size.
+          const remaining =
+            parent.scrollHeight - parent.clientHeight - parent.scrollTop;
+          const boundedPage =
+            bounded &&
+            parent.scrollHeight <= parent.clientHeight + endClearance + 1;
+          if (boundedPage) clearEndSpace();
+          if (!boundedPage && offset() > remaining) {
+            endClearance += Math.ceil(offset() - remaining);
+            shell.style.setProperty(
+              "--od-application-focus-clearance",
+              `${String(endClearance)}px`,
+            );
+          }
           parent.scrollBy({ top: offset(), behavior: "instant" });
           break;
         }
@@ -112,12 +148,15 @@ export function ApplicationShell({
     observer.observe(navigation);
     observer.observe(shell);
     shell.addEventListener("focusin", schedule);
+    shell.addEventListener("focusout", schedule);
     window.addEventListener("resize", schedule);
     return () => {
       observer.disconnect();
       cancelAnimationFrame(frame);
       shell.removeEventListener("focusin", schedule);
+      shell.removeEventListener("focusout", schedule);
       window.removeEventListener("resize", schedule);
+      clearEndSpace();
     };
   }, []);
   const { className: mainClassName, ...restMainProps } = mainProps ?? {};

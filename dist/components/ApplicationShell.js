@@ -10,22 +10,42 @@ export function ApplicationShell({ children, className, mainProps, mobileNavigat
         if (!shell || !navigation)
             return;
         let frame = 0;
+        let focusTarget = null;
+        let endClearance = 0;
+        const clearEndSpace = () => {
+            if (endClearance) {
+                shell.style.removeProperty("--od-application-focus-clearance");
+                endClearance = 0;
+            }
+        };
         const keepFocusVisible = () => {
             frame = 0;
             const active = document.activeElement;
             const navigationBox = navigation.getBoundingClientRect();
+            if (active !== focusTarget) {
+                clearEndSpace();
+                focusTarget = active;
+            }
             if (!(active instanceof Element) ||
                 !shell.contains(active) ||
                 navigation.contains(active) ||
                 active.closest("dialog[open]") ||
                 document.querySelector(":modal") ||
                 active.getClientRects().length === 0 ||
-                navigationBox.height === 0)
+                navigationBox.height === 0) {
+                clearEndSpace();
                 return;
+            }
             // Dialogs and fixed panels own their local focus and scroll position.
+            let bounded = /(hidden|clip)/.test(getComputedStyle(shell).overflowY);
             for (let parent = active; parent && parent !== shell; parent = parent.parentElement) {
-                if (getComputedStyle(parent).position === "fixed")
+                const parentStyle = getComputedStyle(parent);
+                if (parentStyle.position === "fixed") {
+                    clearEndSpace();
                     return;
+                }
+                bounded ||=
+                    parent !== active && /(hidden|clip)/.test(parentStyle.overflowY);
             }
             const style = getComputedStyle(active);
             const outline = Math.max(0, parseFloat(style.outlineWidth) + parseFloat(style.outlineOffset));
@@ -37,6 +57,17 @@ export function ApplicationShell({ children, className, mainProps, mobileNavigat
             // Keep native focus ownership. Use only the space needed to expose it.
             for (let parent = active.parentElement; parent && offset() > 0; parent = parent.parentElement) {
                 if (parent === document.scrollingElement) {
+                    // An unbounded page can end at its last control. Reserve only the
+                    // missing scroll range; bounded full-page routes keep their size.
+                    const remaining = parent.scrollHeight - parent.clientHeight - parent.scrollTop;
+                    const boundedPage = bounded &&
+                        parent.scrollHeight <= parent.clientHeight + endClearance + 1;
+                    if (boundedPage)
+                        clearEndSpace();
+                    if (!boundedPage && offset() > remaining) {
+                        endClearance += Math.ceil(offset() - remaining);
+                        shell.style.setProperty("--od-application-focus-clearance", `${String(endClearance)}px`);
+                    }
                     parent.scrollBy({ top: offset(), behavior: "instant" });
                     break;
                 }
@@ -65,12 +96,15 @@ export function ApplicationShell({ children, className, mainProps, mobileNavigat
         observer.observe(navigation);
         observer.observe(shell);
         shell.addEventListener("focusin", schedule);
+        shell.addEventListener("focusout", schedule);
         window.addEventListener("resize", schedule);
         return () => {
             observer.disconnect();
             cancelAnimationFrame(frame);
             shell.removeEventListener("focusin", schedule);
+            shell.removeEventListener("focusout", schedule);
             window.removeEventListener("resize", schedule);
+            clearEndSpace();
         };
     }, []);
     const { className: mainClassName, ...restMainProps } = mainProps ?? {};

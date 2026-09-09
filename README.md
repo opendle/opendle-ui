@@ -288,12 +288,15 @@ A bounded full-page route can use
 `height: calc(100dvh - var(--od-application-navigation-height, 0px))` when it
 omits a top bar. Subtract any route-owned controls within the route layout.
 The measured value is zero while the phone row is hidden on desktop.
-After native focus moves, the shell scrolls only the space needed to show the
-focused page control and its outline above the phone row. It checks again when
-the shell, navigation, or viewport changes size. Nested scroll regions keep
-their bounds. Dialogs and fixed panels keep control of their focus and scroll.
-The shell does not move focus or change document styles. An oversized control
-keeps its top visible when the complete control cannot fit.
+After native focus moves, the shell uses the available scroll range to show
+the focused page control and its outline above the phone row. It checks again
+when the shell, navigation, or viewport changes size. Nested scroll regions
+keep their bounds. At the end of an unbounded page, the shell reserves only the
+missing scroll space for the focused control. It releases this space when focus
+leaves that control. Bounded full-page routes keep their size. Dialogs and fixed
+panels keep control of their focus and scroll. The shell does not move focus or
+change document styles. When a control cannot fit, the shell does not scroll
+its top farther above the viewport or its local scroll boundary.
 
 If a focused Dialog control is disabled or removed during a pending action,
 focus moves to an enabled control in that dialog, or to the dialog itself when

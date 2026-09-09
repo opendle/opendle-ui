@@ -6411,7 +6411,10 @@ samp {
 
   .od-application-shell {
     display: block;
-    padding-bottom: var(--od-application-navigation-height, 4.25rem);
+    padding-bottom: calc(
+      var(--od-application-navigation-height, 4.25rem) +
+        var(--od-application-focus-clearance, 0px)
+    );
   }
 
   .od-application-sidebar {
