@@ -1393,6 +1393,16 @@ function useGraphInspectorMode(
     host.append(remProbe);
     const observedRegions = new Set<Element>();
     const updateMode = () => {
+      const disabledFocus = lastInspectorFocusRef.current;
+      if (
+        isModalDialog(inspector) &&
+        (document.activeElement === document.body ||
+          document.activeElement === disabledFocus) &&
+        disabledFocus?.matches(":disabled") &&
+        inspector.contains(disabledFocus)
+      ) {
+        headingRef.current?.focus({ preventScroll: true });
+      }
       const currentControls = new Set(
         [
           ...host.querySelectorAll<HTMLElement>(
@@ -1526,7 +1536,7 @@ function useGraphInspectorMode(
       remProbe.remove();
       delete host.dataset.inspectorMode;
     };
-  }, [inspectorRef]);
+  }, [headingRef, inspectorRef]);
 
   useLayoutEffect(() => {
     const inspector = inspectorRef.current;

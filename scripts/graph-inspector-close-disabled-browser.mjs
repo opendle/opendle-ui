@@ -30,7 +30,7 @@ function Fixture() {
   return <main aria-label="Inspector close fixture"><h1 className="od-visually-hidden">Inspector close fixture</h1>
     <GraphWorkspace fullPage style={{height:'100dvh'}} inspector={options.open ?
       <GraphInspector {...lock} {...cancel} title="Record draft" onClose={() => {window.closeRequests++; if(!options.retain) setOptions(value => ({...value,open:false}));}}
-        actions={<Button disabled={options.fieldsDisabled}>Save record</Button>}>
+        actions={<Button disabled={options.fieldsDisabled} onClick={() => setOptions(value => ({...value,locked:true,fieldsDisabled:true}))}>Save record</Button>}>
         <FormField label="Display name"><input defaultValue="Record" disabled={options.fieldsDisabled}/></FormField>
         <p>Keep the entered name until the operation is complete.</p>
       </GraphInspector> : null}>
@@ -264,7 +264,17 @@ try {
         await configure({ locked: true });
         await retained();
         await configure({ fieldsDisabled: true });
-        await heading.focus();
+        if (mode === "sheet") {
+          assert.equal(
+            await heading.evaluate(
+              (element) => element === document.activeElement,
+            ),
+            true,
+            "Disabling the focused field recovers modal focus without test intervention",
+          );
+        } else {
+          await heading.focus();
+        }
         await remember();
         if (mode === "sheet") {
           assert.equal(
@@ -315,6 +325,52 @@ try {
         await retained();
         await close.click();
         await closed();
+
+        if (mode === "sheet") {
+          for (const method of ["pointer", "Enter", "Space"]) {
+            await open();
+            await draft.fill("Entered draft");
+            await remember();
+            const save = inspector.getByRole("button", {
+              name: "Save record",
+            });
+            if (method === "pointer") await save.click();
+            else {
+              await save.focus();
+              await page.keyboard.press(method);
+            }
+            await settle(page);
+            assert.equal(
+              await heading.evaluate(
+                (element) => element === document.activeElement,
+              ),
+              true,
+              `${method} pending action recovers focus without test intervention`,
+            );
+            await retained(0, false);
+            await page.keyboard.press("Tab");
+            await page.keyboard.press("Shift+Tab");
+            assert.equal(
+              await heading.evaluate(
+                (element) => element === document.activeElement,
+              ),
+              true,
+            );
+            await configure({ locked: false, fieldsDisabled: false });
+            await close.focus();
+            await configure({ locked: true });
+            assert.equal(
+              await heading.evaluate(
+                (element) => element === document.activeElement,
+              ),
+              true,
+              "Disabling focused Close recovers focus with other controls enabled",
+            );
+            await configure({ locked: false });
+            await close.click();
+            await closed();
+          }
+        }
 
         for (const lock of [undefined, false, true]) {
           for (const method of [

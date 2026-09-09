@@ -50,6 +50,8 @@ from Close, Escape, and native cancel events. The default is `false`. The host's
 to `closeDisabled` keeps the same inspector and form values. Set it back to
 `false` to restore normal close behavior. The host owns the pending state and
 disables its other fields and actions.
+If the focused control becomes disabled in a modal sheet, focus moves to the
+inspector heading. Focus stays on an enabled control.
 `GraphInspectorProps.onClose` is required. The heading always receives initial
 focus; the removed `initialFocusRef` prop has no replacement. Use
 `GraphWorkspace` or `RelationshipGraph` as the inspector host. The old unhosted

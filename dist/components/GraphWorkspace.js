@@ -645,6 +645,14 @@ function useGraphInspectorMode(inspectorRef, headingRef) {
         host.append(remProbe);
         const observedRegions = new Set();
         const updateMode = () => {
+            const disabledFocus = lastInspectorFocusRef.current;
+            if (isModalDialog(inspector) &&
+                (document.activeElement === document.body ||
+                    document.activeElement === disabledFocus) &&
+                disabledFocus?.matches(":disabled") &&
+                inspector.contains(disabledFocus)) {
+                headingRef.current?.focus({ preventScroll: true });
+            }
             const currentControls = new Set([
                 ...host.querySelectorAll(".od-graph-toolbar, .od-relationship-graph-search"),
             ].filter((control) => control.closest(".od-graph-workspace, .od-relationship-graph") ===
@@ -744,7 +752,7 @@ function useGraphInspectorMode(inspectorRef, headingRef) {
             remProbe.remove();
             delete host.dataset.inspectorMode;
         };
-    }, [inspectorRef]);
+    }, [headingRef, inspectorRef]);
     useLayoutEffect(() => {
         const inspector = inspectorRef.current;
         if (!inspector)
