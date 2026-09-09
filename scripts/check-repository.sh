@@ -37,6 +37,7 @@ required_files=(
   "scripts/ontology-explorer-browser.mjs"
   "scripts/form-controls-browser.mjs"
   "scripts/graph-edge-browser.mjs"
+  "scripts/graph-native-overlay-browser.mjs"
   "scripts/relationship-column-header-browser.mjs"
   "scripts/dialog-playground-browser.mjs"
   "scripts/build-consumer.mjs"
@@ -70,6 +71,7 @@ node --check scripts/check-react-doctor-report.mjs
 node --check scripts/ontology-explorer-browser.mjs
 node --check scripts/form-controls-browser.mjs
 node --check scripts/graph-edge-browser.mjs
+node --check scripts/graph-native-overlay-browser.mjs
 node --check scripts/relationship-column-header-browser.mjs
 node --check scripts/dialog-playground-browser.mjs
 node --input-type=module -e "import('./dist/index.js').then((shared) => { for (const name of ['AccountMenu', 'AdvancedFieldsDisclosure', 'BoundedDataExplorer', 'ChangeTimeline', 'DateTime', 'Dialog', 'ExplorerWorkspace', 'FileDropZone', 'FormActions', 'FormField', 'FormSection', 'InlineAlert', 'ManagedFileList', 'MetadataBagList', 'OntologyInheritanceTree', 'OperationPlayground', 'ReviewPlanCard', 'SavedViewCanvas', 'SearchableSelect', 'SecretRevealPanel', 'WorkspaceSelector']) if (!(name in shared)) throw new Error('Missing shared export: ' + name); })"
@@ -102,6 +104,7 @@ npm run lint
 npm run typecheck
 npm test
 npm run test:browser
+node scripts/graph-native-overlay-browser.mjs
 node scripts/graph-viewport-content-browser.mjs
 node scripts/relationship-column-header-browser.mjs
 npm run security

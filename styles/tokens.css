@@ -2276,6 +2276,10 @@ samp {
 
 .od-graph-workspace[data-inspector-mode="overlay"]
   > .od-graph-workspace-stage
+  > .od-graph-viewport[data-pan-zoom="false"]
+  > .od-graph-canvas,
+.od-graph-workspace[data-inspector-mode="overlay"]
+  > .od-graph-workspace-stage
   > .od-graph-viewport
   > .od-graph-viewport-content,
 .od-relationship-graph[data-inspector-mode="overlay"]

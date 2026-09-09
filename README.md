@@ -104,8 +104,11 @@ the inspector uses less height. Hosts do not supply an offset.
 Text-only inspector details receive a Tab stop when they need local scrolling.
 Details with a visible keyboard control keep their existing Tab order. When
 the extra stop is no longer needed, it leaves the Tab order without moving
-current focus. Overlay relationship boards keep enough trailing scroll space
-to move the selected control beside the inspector.
+current focus. Overlay relationship boards and native graph canvases keep
+enough trailing scroll space to move the selected control beside the inspector.
+Native canvases keep their width. Without an overlay, centered canvases keep
+their normal centering. Controlled pan-and-zoom canvases do not receive this
+native scroll space.
 
 The inspector keeps its header fixed when the natural header and footer leave
 room for the content padding and one `2.75rem` control. If they do not fit,
