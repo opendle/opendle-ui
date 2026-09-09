@@ -776,16 +776,23 @@ function useGraphInspectorMode(inspectorRef, headingRef) {
             const content = inspector.querySelector(".od-graph-inspector-content");
             const transition = modeTransitionRef.current;
             modeTransitionRef.current = null;
-            // The background cannot be scrolled by the user. Keep its last offset
-            // before a wider sheet can briefly clamp it during a mode change.
-            const scroll = deferredScrollRef.current ?? {
-                scrollTop: transition?.scrollTop ?? content?.scrollTop ?? 0,
-                bodyScrollTop: transition?.bodyScrollTop ??
-                    inspector.querySelector(".od-graph-inspector-body")?.scrollTop ??
-                    0,
-            };
-            deferredScrollRef.current = blocked ? scroll : null;
-            const contentScrollTop = scroll.scrollTop;
+            const body = inspector.querySelector(".od-graph-inspector-body");
+            const contentScrollTop = transition?.scrollTop ?? content?.scrollTop ?? 0;
+            const bodyScrollTop = transition?.bodyScrollTop ?? body?.scrollTop ?? 0;
+            // Keep a details offset, not offsets tied to one scroll region. A title
+            // can enter or leave the scrolling body while a modal covers it.
+            if (blocked && deferredScrollRef.current === null) {
+                const scrollTitle = inspector.dataset.scrollTitle === "true";
+                deferredScrollRef.current = {
+                    offset: scrollTitle
+                        ? bodyScrollTop - titleHeightRef.current
+                        : contentScrollTop,
+                    wasScrolled: scrollTitle ? bodyScrollTop > 0 : contentScrollTop > 0,
+                };
+            }
+            const deferredScroll = deferredScrollRef.current;
+            if (!blocked)
+                deferredScrollRef.current = null;
             const currentFocus = inspector.ownerDocument.activeElement;
             const previousFocus = isGraphControlElement(currentFocus) && inspector.contains(currentFocus)
                 ? currentFocus
@@ -810,10 +817,20 @@ function useGraphInspectorMode(inspectorRef, headingRef) {
             }
             if (content)
                 content.scrollTop = contentScrollTop;
-            const body = inspector.querySelector(".od-graph-inspector-body");
             if (body)
-                body.scrollTop = scroll.bodyScrollTop;
+                body.scrollTop = bodyScrollTop;
             updateInspectorTitleFit(inspector, titleHeightRef);
+            if (deferredScroll) {
+                if (inspector.dataset.scrollTitle === "true") {
+                    if (body)
+                        body.scrollTop = deferredScroll.wasScrolled
+                            ? Math.max(0, titleHeightRef.current + deferredScroll.offset)
+                            : 0;
+                }
+                else if (content) {
+                    content.scrollTop = Math.max(0, deferredScroll.offset);
+                }
+            }
             if (blocked)
                 return;
             if (transition?.focusWasInside &&

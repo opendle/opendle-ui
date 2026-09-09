@@ -20,6 +20,6 @@ test(
       ],
       { timeout: 170_000, maxBuffer: 1024 * 1024 },
     );
-    assert.equal(JSON.parse(stdout).cases, 14);
+    assert.equal(JSON.parse(stdout).cases, 22);
   },
 );

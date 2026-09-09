@@ -21,12 +21,12 @@ import {flushSync} from 'react-dom';
 import {createRoot} from 'react-dom/client';
 import {Button, Dialog, ConfirmationDialog, FormField, GraphInspector, GraphNode, GraphViewport, GraphWorkspace} from '@opendle/ui';
 function Fixture() {
- const [state, setState] = useState({inspector:false,modal:false,pending:false,nested:false,generic:false,activation:0});
+ const [state, setState] = useState({inspector:false,modal:false,pending:false,nested:false,generic:false,activation:0,longTitle:false});
  const draftRef=useRef(null), openerRef=useRef(null);
  window.configure = patch => flushSync(()=>setState(value=>({...value,...patch})));
  const cancel=()=>{window.cancels++;setState(value=>({...value,modal:false}));};
  const modal=state.generic ? <Dialog open={state.modal} title="Review record" onClose={cancel} returnFocusRef={draftRef} closeDisabled={state.pending} actions={<Button onClick={cancel} disabled={state.pending}>Cancel</Button>}><FormField label="Review note"><input defaultValue="Keep review" disabled={state.pending}/></FormField></Dialog> : <ConfirmationDialog open={state.modal} title="Discard record?" description="This removes the entered draft." confirmLabel="Discard" impactStatement="discard this draft" pending={state.pending} returnFocusRef={draftRef} onCancel={cancel} onConfirm={()=>{window.confirms++;setState(value=>({...value,pending:true}));}}/>;
- const inspector=state.inspector ? <GraphInspector activationKey={state.activation} title="Record draft" returnFocusRef={openerRef} closeDisabled={state.pending} onClose={()=>{window.closes++;setState(value=>({...value,inspector:false}));}} actions={<Button onClick={()=>setState(value=>({...value,modal:true}))}>Review changes</Button>}><FormField label="Draft"><input ref={draftRef} defaultValue="Keep draft"/></FormField><p>{'Long record content. '.repeat(300)}</p>{state.nested ? modal : null}</GraphInspector> : null;
+ const inspector=state.inspector ? <GraphInspector activationKey={state.activation} title={state.longTitle ? "W".repeat(200) : "Record draft"} returnFocusRef={openerRef} closeDisabled={state.pending} onClose={()=>{window.closes++;setState(value=>({...value,inspector:false}));}} actions={<Button onClick={()=>setState(value=>({...value,modal:true}))}>Review changes</Button>}><FormField label="Draft"><input ref={draftRef} defaultValue="Keep draft"/></FormField><p>{'Long record content. '.repeat(300)}</p>{state.nested ? modal : null}</GraphInspector> : null;
  return <main aria-label="Modal order fixture"><h1 className="od-visually-hidden">Modal order fixture</h1><GraphWorkspace fullPage style={{height:'100dvh'}} inspector={inspector}><GraphViewport aria-label="Record graph" canvasWidth={240} canvasHeight={180}><GraphNode ref={openerRef} title="Open record" aria-label="Open record" selected x={20} y={20} onClick={()=>setState(value=>({...value,inspector:true}))}/></GraphViewport></GraphWorkspace>{state.nested ? null : modal}</main>;
 }
 window.cancels=0;window.closes=0;window.confirms=0;
@@ -306,6 +306,164 @@ try {
           await context.close();
         }
       }
+  for (const startScrollingTitle of [false, true]) {
+    for (const endScrollingTitle of [false, true]) {
+      for (const offset of [0, 140]) {
+        const context = await browser.newContext({
+          viewport: { width: startScrollingTitle ? 412 : 1440, height: 1000 },
+        });
+        const page = await context.newPage();
+        page.on("pageerror", (error) => errors.push(error.message));
+        try {
+          await page.setContent(
+            `<!doctype html><html lang="en"><head><title>Covered title scroll</title><style>${css}body{margin:0}</style></head><body><div id="root"></div></body></html>`,
+          );
+          await page.addScriptTag({ content: bundle.outputFiles[0].text });
+          await page.evaluate((scrollingTitle) => {
+            document.documentElement.style.fontSize = scrollingTitle
+              ? "200%"
+              : "100%";
+            window.configure({ longTitle: true });
+          }, startScrollingTitle);
+          await page
+            .getByRole("button", { name: "Open record", exact: true })
+            .click();
+          await settle(page);
+          const inspector = page.locator(".od-graph-inspector");
+          const draft = inspector.getByRole("textbox", {
+            name: "Draft",
+            exact: true,
+          });
+          await draft.fill("Keep the long-title draft");
+          await inspector.evaluate((element, offset) => {
+            window.inspector = element;
+            window.draft = element.querySelector("input");
+            const content = element.querySelector(
+              ".od-graph-inspector-content",
+            );
+            const body = element.querySelector(".od-graph-inspector-body");
+            const header = element.querySelector(".od-graph-inspector-header");
+            if (element.dataset.scrollTitle === "true") {
+              body.scrollTop =
+                offset === 0
+                  ? 0
+                  : header.getBoundingClientRect().height + offset;
+            } else content.scrollTop = offset;
+          }, offset);
+          const proveScroll = async () => {
+            const retained = await inspector.evaluate((element, offset) => {
+              const body = element.querySelector(".od-graph-inspector-body");
+              const header = element.querySelector(
+                ".od-graph-inspector-header",
+              );
+              return {
+                sameInspector: window.inspector === element,
+                sameDraft: window.draft === element.querySelector("input"),
+                offset:
+                  element.dataset.scrollTitle === "true"
+                    ? offset === 0
+                      ? body.scrollTop
+                      : body.scrollTop - header.getBoundingClientRect().height
+                    : element.querySelector(".od-graph-inspector-content")
+                        .scrollTop,
+              };
+            }, offset);
+            assert.equal(retained.sameInspector, true);
+            assert.equal(retained.sameDraft, true);
+            assert.ok(
+              Math.abs(retained.offset - offset) < 1,
+              `The covered details offset is ${retained.offset}, expected ${offset}.`,
+            );
+            await expect(draft).toHaveValue("Keep the long-title draft");
+          };
+          await proveScroll();
+          await page
+            .getByRole("button", { name: "Review changes", exact: true })
+            .click();
+          const modal = page.locator(".od-dialog[open]");
+          const input = modal.locator("input");
+          await input.fill("discard this");
+          const destination = endScrollingTitle ? [412, 200] : [1440, 100];
+          for (const [width, textSize, height = 1000] of [
+            [1440, 100],
+            [390, 200],
+            [412, 225],
+            [412, 200, 1800],
+            [412, 200],
+            [1100, 100],
+            [412, 200],
+            destination,
+          ]) {
+            await page.setViewportSize({ width, height });
+            await page.evaluate((size) => {
+              document.documentElement.style.fontSize = `${size}%`;
+            }, textSize);
+            await settle(page);
+            await proveScroll();
+            await expect(input).toBeFocused();
+            await expect(input).toHaveValue("discard this");
+            await modal
+              .getByRole("button", { name: "Cancel", exact: true })
+              .click({ trial: true });
+          }
+          assert.deepEqual(
+            (await new AxeBuilder({ page }).analyze()).violations,
+            [],
+          );
+          await page.screenshot({
+            path: join(
+              evidence,
+              `title-${startScrollingTitle}-${endScrollingTitle}-${offset}-covered.png`,
+            ),
+          });
+          await modal
+            .getByRole("button", { name: "Cancel", exact: true })
+            .click();
+          await settle(page);
+          await expect(modal).toHaveCount(0);
+          await expect(draft).toBeFocused();
+          await proveScroll();
+          assert.equal(
+            await inspector.evaluate((element) => element.matches(":modal")),
+            endScrollingTitle,
+          );
+          assert.deepEqual(
+            await page.evaluate(() => ({
+              closes: window.closes,
+              confirms: window.confirms,
+              cancels: window.cancels,
+            })),
+            { closes: 0, confirms: 0, cancels: 1 },
+          );
+          assert.deepEqual(
+            (await new AxeBuilder({ page }).analyze()).violations,
+            [],
+          );
+          await page.screenshot({
+            path: join(
+              evidence,
+              `title-${startScrollingTitle}-${endScrollingTitle}-${offset}-returned.png`,
+            ),
+          });
+          await page.keyboard.press("Escape");
+          await settle(page);
+          await expect(page.locator("dialog:modal")).toHaveCount(0);
+          await expect(
+            page.getByRole("button", { name: "Open record", exact: true }),
+          ).toBeFocused();
+          results.push({
+            coveredTitleScroll: true,
+            startScrollingTitle,
+            endScrollingTitle,
+            offset,
+            axe: true,
+          });
+        } finally {
+          await context.close();
+        }
+      }
+    }
+  }
   for (const nested of [false, true]) {
     const nativeSource = String.raw`
 import React, {useRef,useState} from 'react';
