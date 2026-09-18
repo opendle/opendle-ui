@@ -94,7 +94,7 @@ export { NavigationLink, type NavigationLinkProps, } from "./components/Navigati
 export { MobileNavigation, type MobileNavigationDestination, type MobileNavigationSurface, type MobileNavigationItem, type MobileNavigationProps, } from "./components/MobileNavigation.js";
 export { MediaLightbox, type MediaLightboxProps, } from "./components/MediaLightbox.js";
 export { PageHeading, type PageHeadingProps, } from "./components/PageHeading.js";
-export { Panel, PanelHeader, type PanelHeaderProps, type PanelProps, } from "./components/Panel.js";
+export { Panel, PanelHeader, PanelBody, SummaryFacts, type SummaryFactsProps, type PanelHeaderProps, type PanelProps, } from "./components/Panel.js";
 export { PanelContent, type PanelContentProps, } from "./components/PanelContent.js";
 export { DockedPanelLayout, type DockedPanelDefinition, type DockedPanelLayoutProps, type DockedPanelPosition, } from "./components/DockedPanelLayout.js";
 export { PlanCardShell, type PlanCardShellProps, } from "./components/PlanCardShell.js";

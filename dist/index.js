@@ -124,7 +124,7 @@ export { NavigationLink, } from "./components/NavigationLink.js";
 export { MobileNavigation, } from "./components/MobileNavigation.js";
 export { MediaLightbox, } from "./components/MediaLightbox.js";
 export { PageHeading, } from "./components/PageHeading.js";
-export { Panel, PanelHeader, } from "./components/Panel.js";
+export { Panel, PanelHeader, PanelBody, SummaryFacts, } from "./components/Panel.js";
 export { PanelContent, } from "./components/PanelContent.js";
 export { DockedPanelLayout, } from "./components/DockedPanelLayout.js";
 export { PlanCardShell, } from "./components/PlanCardShell.js";

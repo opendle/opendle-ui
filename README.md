@@ -33,6 +33,11 @@ check. Host apps keep the target, effect, impact text, and mutation behavior.
 media-type policy, loading, URL revocation, and error handling. Host apps keep
 their navigation, routes, product copy, mock data, and service behavior here.
 
+Use `PanelHeader` for a card title, description, and related actions. Use
+`PanelBody` for padded content with consistent spacing. `SummaryFacts` shows
+label-value pairs in a responsive description list. Supply one unique label
+per item. Long values wrap, and narrow containers stack the facts.
+
 DataTable cards stack each label above its value when the table container is
 `22rem` wide or less. The title then uses its own row above selection and detail
 controls. This layout gives narrow cards the full content width at enlarged

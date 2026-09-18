@@ -6636,3 +6636,56 @@ samp {
     margin-inline-start: 0.375rem;
   }
 }
+
+/* Panel bodies and full-page record summaries share one spacing system. */
+.od-panel-body {
+  display: grid;
+  min-inline-size: 0;
+  gap: var(--od-space-md);
+  padding: var(--od-space-md);
+  overflow-wrap: anywhere;
+}
+
+.od-panel-header + .od-panel-body {
+  padding-block-start: 0;
+}
+
+.od-panel-body > p,
+.od-panel-body > .od-form-actions {
+  margin: 0;
+}
+
+.od-panel-body > p {
+  color: var(--od-color-muted-strong);
+  font-size: 0.8125rem;
+  line-height: 1.6;
+}
+
+.od-summary-facts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr));
+  gap: var(--od-space-md);
+  min-inline-size: 0;
+  margin: 0;
+}
+
+.od-summary-facts > div {
+  display: grid;
+  align-content: start;
+  min-inline-size: 0;
+  gap: var(--od-space-xs);
+}
+
+.od-summary-facts dt {
+  color: var(--od-color-muted-strong);
+  font-size: 0.6875rem;
+  font-weight: 700;
+}
+
+.od-summary-facts dd {
+  min-inline-size: 0;
+  margin: 0;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}

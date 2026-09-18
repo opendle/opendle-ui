@@ -449,6 +449,9 @@ export {
 export {
   Panel,
   PanelHeader,
+  PanelBody,
+  SummaryFacts,
+  type SummaryFactsProps,
   type PanelHeaderProps,
   type PanelProps,
 } from "./components/Panel.js";

@@ -47,3 +47,47 @@ export function PanelHeader({
     </header>
   );
 }
+
+/** A padded panel body with consistent spacing between its content. */
+export function PanelBody({
+  children,
+  className,
+  ...props
+}: HTMLAttributes<HTMLDivElement>) {
+  return (
+    <div
+      {...props}
+      className={["od-panel-body", className].filter(Boolean).join(" ")}
+    >
+      {children}
+    </div>
+  );
+}
+
+export interface SummaryFactsProps extends HTMLAttributes<HTMLDListElement> {
+  readonly items: readonly {
+    readonly label: string;
+    readonly value: ReactNode;
+  }[];
+}
+
+/** Responsive metadata with an explicit label for each value. */
+export function SummaryFacts({
+  items,
+  className,
+  ...props
+}: SummaryFactsProps) {
+  return (
+    <dl
+      {...props}
+      className={["od-summary-facts", className].filter(Boolean).join(" ")}
+    >
+      {items.map(({ label, value }) => (
+        <div key={label}>
+          <dt>{label}</dt>
+          <dd>{value}</dd>
+        </div>
+      ))}
+    </dl>
+  );
+}
