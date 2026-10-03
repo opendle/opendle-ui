@@ -36,15 +36,23 @@ export function FormField({ children, className, controlId, error, help, label, 
     const control = cloneElement(children, controlAccessibilityProps);
     return (_jsxs("div", { ...props, className: ["od-form-field", className].filter(Boolean).join(" "), "data-orientation": orientation, children: [_jsxs("div", { className: "od-form-field-heading", children: [_jsx("label", { className: "od-form-field-label", htmlFor: id, children: label }), requirement ? (_jsx("span", { "aria-hidden": "true", className: "od-form-field-requirement", children: requirement })) : null] }), _jsx("div", { className: "od-form-field-control", children: control }), helpId ? _jsx(FieldHelp, { id: helpId, children: help }) : null, errorId ? _jsx(FieldError, { id: errorId, children: error }) : null] }));
 }
-export function FormActions({ alignment = "end", children, className, ...props }) {
-    return (_jsx("div", { ...props, className: ["od-form-actions", className].filter(Boolean).join(" "), "data-alignment": alignment, children: children }));
+export function FormActions({ alignment = "end", children, className, secondaryActions, ...props }) {
+    return (_jsxs("div", { ...props, className: ["od-form-actions", className].filter(Boolean).join(" "), "data-alignment": alignment, children: [hasContent(secondaryActions) ? (_jsx("div", { className: "od-form-actions-secondary", children: secondaryActions })) : null, children] }));
 }
-export function FormSection({ actions, children, className, columns = 1, description, legend, ...props }) {
+/** Groups form controls without a visible frame; disabled locks the whole group. */
+export function FormControls({ className, ...props }) {
+    return (_jsx("fieldset", { ...props, className: ["od-form-controls", className].filter(Boolean).join(" ") }));
+}
+/** A responsive field grid without an extra visible container. */
+export function FormGrid({ children, className, columns = 2, ...props }) {
+    return (_jsx("div", { ...props, className: ["od-form-grid", className].filter(Boolean).join(" "), "data-columns": columns, children: children }));
+}
+export function FormSection({ actions, children, className, columns = 1, description, legend, variant = "default", ...props }) {
     const descriptionId = useId();
     const describedBy = description
         ? joinIds(props["aria-describedby"], descriptionId)
         : props["aria-describedby"];
-    return (_jsxs("fieldset", { ...props, "aria-describedby": describedBy, className: ["od-form-section", className].filter(Boolean).join(" "), children: [_jsx("legend", { children: legend }), description ? (_jsx("p", { className: "od-form-section-description", id: descriptionId, children: description })) : null, _jsx("div", { className: "od-form-section-fields", "data-columns": columns, children: children }), actions ? _jsx(FormActions, { children: actions }) : null] }));
+    return (_jsxs("fieldset", { ...props, "aria-describedby": describedBy, className: ["od-form-section", className].filter(Boolean).join(" "), "data-variant": variant, children: [_jsx("legend", { children: legend }), description ? (_jsx("p", { className: "od-form-section-description", id: descriptionId, children: description })) : null, _jsx("div", { className: "od-form-section-fields", "data-columns": columns, children: children }), actions ? _jsx(FormActions, { children: actions }) : null] }));
 }
 export function AdvancedFieldsDisclosure({ children, className, description, summary = "Advanced fields", ...props }) {
     return (_jsxs("details", { ...props, className: ["od-advanced-fields", className].filter(Boolean).join(" "), children: [_jsx("summary", { children: summary }), _jsxs("div", { className: "od-advanced-fields-content", children: [description ? (_jsx("p", { className: "od-advanced-fields-description", children: description })) : null, children] })] }));

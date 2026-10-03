@@ -6,6 +6,8 @@ export interface RelationshipGraphModelNode {
   readonly order: number;
   readonly actionable?: boolean;
   readonly parentId?: string;
+  /** A related row uses this group's route instead of its own edges. */
+  readonly pathSourceId?: string;
   readonly kind?: RelationshipGraphModelNodeKind;
   readonly searchValue: string;
 }
@@ -95,6 +97,18 @@ export function assertRelationshipGraphModel(
         `Relationship graph node ${node.id} has an invalid actionable state.`,
       );
     }
+    if (node.pathSourceId !== undefined) {
+      const source = nodesById.get(node.pathSourceId);
+      if (
+        kind !== "row" ||
+        source?.kind !== "group" ||
+        source.columnIndex !== node.columnIndex
+      ) {
+        throw new Error(
+          `Relationship graph row ${node.id} must use a source group in its column.`,
+        );
+      }
+    }
     if (node.parentId === undefined) continue;
     const parent = nodesById.get(node.parentId);
     if (parent?.kind !== "group") {
@@ -162,9 +176,18 @@ export function relationshipGraphPath(
   const nodeIds = new Set<string>([active.id]);
   const relationshipIds = new Set<string>();
   const activeSeeds =
-    active.kind === "group"
-      ? (childrenByParent.get(active.id) ?? [active.id])
-      : [active.id];
+    active.pathSourceId !== undefined
+      ? nodes
+          .filter(
+            (node) =>
+              node.parentId === active.pathSourceId &&
+              node.pathSourceId === undefined,
+          )
+          .map((node) => node.id)
+      : active.kind === "group"
+        ? (childrenByParent.get(active.id) ?? [active.id])
+        : [active.id];
+  if (active.pathSourceId !== undefined) nodeIds.add(active.pathSourceId);
   for (const seed of activeSeeds) nodeIds.add(seed);
   let leftFrontier = new Set<string>(activeSeeds);
   let rightFrontier = new Set<string>(activeSeeds);
@@ -202,6 +225,12 @@ export function relationshipGraphPath(
   for (const node of nodes) {
     if (node.parentId !== undefined && nodeIds.has(node.id)) {
       nodeIds.add(node.parentId);
+    }
+  }
+  for (const node of nodes) {
+    if (node.pathSourceId !== undefined && nodeIds.has(node.pathSourceId)) {
+      nodeIds.add(node.id);
+      if (node.parentId !== undefined) nodeIds.add(node.parentId);
     }
   }
 
@@ -244,6 +273,19 @@ export function relationshipGraphSearch(
       searchSeeds.add(childId);
     }
   }
+  for (const node of nodes) {
+    if (node.pathSourceId === undefined || !searchSeeds.has(node.id)) continue;
+    visibleNodeIds.add(node.pathSourceId);
+    for (const sourceRow of nodes) {
+      if (
+        sourceRow.parentId === node.pathSourceId &&
+        sourceRow.pathSourceId === undefined
+      ) {
+        visibleNodeIds.add(sourceRow.id);
+        searchSeeds.add(sourceRow.id);
+      }
+    }
+  }
   let leftFrontier = new Set(searchSeeds);
   let rightFrontier = new Set(searchSeeds);
   for (let distance = 0; distance < 2; distance += 1) {
@@ -265,6 +307,15 @@ export function relationshipGraphSearch(
   for (const node of nodes) {
     if (node.parentId !== undefined && visibleNodeIds.has(node.id)) {
       visibleNodeIds.add(node.parentId);
+    }
+  }
+  for (const node of nodes) {
+    if (
+      node.pathSourceId !== undefined &&
+      visibleNodeIds.has(node.pathSourceId)
+    ) {
+      visibleNodeIds.add(node.id);
+      if (node.parentId !== undefined) visibleNodeIds.add(node.parentId);
     }
   }
   return { directMatchIds, visibleNodeIds };
@@ -306,11 +357,22 @@ export function relationshipGraphKeyboardTarget(
     current.columnIndex + (key === "ArrowLeft" ? -1 : 1);
   if (targetColumnIndex < 0 || targetColumnIndex > 2) return current.id;
   const connectedIds = new Set<string>();
+  const routeIds = new Set(
+    current.pathSourceId === undefined
+      ? [current.id]
+      : visibleNodes
+          .filter(
+            (node) =>
+              node.parentId === current.pathSourceId &&
+              node.pathSourceId === undefined,
+          )
+          .map((node) => node.id),
+  );
   for (const relationship of relationships) {
-    if (key === "ArrowLeft" && relationship.targetId === current.id) {
+    if (key === "ArrowLeft" && routeIds.has(relationship.targetId)) {
       connectedIds.add(relationship.sourceId);
     }
-    if (key === "ArrowRight" && relationship.sourceId === current.id) {
+    if (key === "ArrowRight" && routeIds.has(relationship.sourceId)) {
       connectedIds.add(relationship.targetId);
     }
   }

@@ -53,6 +53,12 @@ function restoreFocus(target, shouldRestore) {
             : null;
         if (activeDialog !== null && !activeDialog.contains(target))
             return;
+        if (active instanceof HTMLElement &&
+            active !== target &&
+            active !== document.body &&
+            active !== document.documentElement &&
+            active.closest("dialog") === null)
+            return;
         target.focus({ preventScroll: true });
     };
     if (typeof requestAnimationFrame === "function")
@@ -96,7 +102,7 @@ function containTabFocus(dialog, event) {
     }
 }
 /** A controlled native modal with fixed framing and local body scrolling. */
-export function Dialog({ actions, actionsClassName, "aria-describedby": suppliedDescribedBy, "aria-label": ariaLabel, "aria-labelledby": suppliedLabelledBy, bodyClassName, children, className, closeDisabled = false, closeLabel = "Close dialog", description, eyebrow, headerClassName, headingLevel = "h2", initialFocusRef, onClose, open, returnFocusRef, restoreFocusOnClose = true, showCloseButton = true, size = "default", title, ...props }) {
+export function Dialog({ actions, actionsClassName, appearance = "default", "aria-describedby": suppliedDescribedBy, "aria-label": ariaLabel, "aria-labelledby": suppliedLabelledBy, bodyClassName, children, className, closeDisabled = false, closeLabel = "Close dialog", description, eyebrow, headerClassName, headingLevel = "h2", initialFocusRef, onClose, open, returnFocusRef, restoreFocusOnClose = true, showCloseButton = true, size = "default", title, ...props }) {
     const titleId = useId();
     const descriptionId = useId();
     const dialogRef = useRef(null);
@@ -237,7 +243,7 @@ export function Dialog({ actions, actionsClassName, "aria-describedby": supplied
             dialog.removeEventListener("submit", handleSubmit);
         };
     }, [requestClose]);
-    return (_jsx(_Fragment, { children: _jsx("dialog", { ...props, "aria-describedby": describedBy || undefined, "aria-label": ariaLabel, "aria-labelledby": ariaLabel === undefined ? (suppliedLabelledBy ?? titleId) : undefined, className: classes("od-dialog", className), "data-size": size, onCancel: (event) => {
+    return (_jsx(_Fragment, { children: _jsx("dialog", { ...props, "aria-describedby": describedBy || undefined, "aria-label": ariaLabel, "aria-labelledby": ariaLabel === undefined ? (suppliedLabelledBy ?? titleId) : undefined, className: classes("od-dialog", className), "data-appearance": appearance, "data-size": size, onCancel: (event) => {
                 event.preventDefault();
                 requestClose();
             }, onKeyDown: (event) => {

@@ -12,7 +12,7 @@ const repositoryRoot = fileURLToPath(new URL("..", import.meta.url));
 const fixtureSource = String.raw`
 import React, { StrictMode, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
-import { Button, ConfirmationDialog, Dialog, EditableTable, GraphInspector, GraphWorkspace, OperationPlayground, StatusPill } from "./dist/index.js";
+import { AdvancedFieldsDisclosure, Button, ConfirmationDialog, Dialog, EditableTable, FormActions, FormGrid, FormSection, GraphInspector, GraphWorkspace, OperationPlayground, StatusPill, TextControl } from "./dist/index.js";
 
 const emptyState = { status: "empty" };
 const errorState = { status: "error", error: {
@@ -34,6 +34,7 @@ const editableColumns = [{
 
 function Fixture() {
   const [dialog, setDialog] = useState(null);
+  const [formOpen, setFormOpen] = useState(false);
   const [pending, setPending] = useState(false);
   const [request, setRequest] = useState(initialRequest);
   const [lastRun, setLastRun] = useState("none");
@@ -75,7 +76,30 @@ function Fixture() {
       <Button onClick={() => setDialog("narrow")}>Open narrow dialog</Button>
       <Button onClick={() => setDialog("default")}>Open default dialog</Button>
       <Button onClick={() => { setPending(true); setDialog("pending"); }}>Open pending dialog</Button>
+      <Button onClick={() => setFormOpen(true)}>Open edit form</Button>
     </div>
+    <Dialog
+      appearance="form"
+      title="Edit connection"
+      open={formOpen}
+      onClose={() => setFormOpen(false)}
+      actions={<FormActions secondaryActions={<Button variant="quiet">Delete connection</Button>}>
+        <Button variant="quiet" onClick={() => setFormOpen(false)}>Cancel</Button>
+        <Button type="submit" form="edit-connection">Save changes</Button>
+      </FormActions>}
+    >
+      <form id="edit-connection" onSubmit={(event) => { event.preventDefault(); setFormOpen(false); }}>
+        <FormSection legend="Connection" variant="plain">
+          <FormGrid>
+            <TextControl label="Display name" data-dialog-initial-focus defaultValue="Alpha connection" />
+            <TextControl label="API name" readOnly value="alpha-connection" />
+          </FormGrid>
+          <AdvancedFieldsDisclosure summary="Connection details">
+            <TextControl label="Endpoint" defaultValue="https://example.test" />
+          </AdvancedFieldsDisclosure>
+        </FormSection>
+      </form>
+    </Dialog>
     <Dialog
       actions={<Button disabled={pending} onClick={() => setDialog(null)}>Save and close</Button>}
       closeDisabled={pending}
@@ -202,6 +226,106 @@ async function loadFixture(page) {
 
 try {
   await checkMobileNavigation(browser);
+  for (const [width, textScale] of [
+    [1280, 1],
+    [390, 1],
+    [1280, 2],
+  ]) {
+    const context = await browser.newContext({
+      viewport: { width, height: 800 },
+    });
+    const page = await context.newPage();
+    const errors = await loadFixture(page);
+    await page
+      .getByRole("button", { name: "Close inspector", exact: true })
+      .click();
+    if (textScale === 2)
+      await page.addStyleTag({ content: "html{font-size:200%}" });
+    const opener = page.getByRole("button", { name: "Open edit form" });
+    await opener.click();
+    const formDialog = page.getByRole("dialog", { name: "Edit connection" });
+    const nameField = formDialog.getByRole("textbox", {
+      name: "Display name",
+      exact: true,
+    });
+    assert.equal(
+      await nameField.evaluate((element) => element === document.activeElement),
+      true,
+    );
+    const layout = await formDialog.evaluate((element) => {
+      const fields = Array.from(
+        element.querySelectorAll(".od-form-grid > .od-form-field"),
+      );
+      return {
+        overflow: element.scrollWidth > element.clientWidth + 1,
+        fieldTops: fields.map((field) => field.getBoundingClientRect().top),
+        fieldOverflow: fields.some(
+          (field) => field.scrollWidth > field.clientWidth + 1,
+        ),
+      };
+    });
+    assert.equal(
+      layout.overflow,
+      false,
+      "The form dialog must fit its viewport.",
+    );
+    assert.equal(
+      layout.fieldOverflow,
+      false,
+      "Form fields must fit their grid tracks.",
+    );
+    assert.equal(
+      layout.fieldTops[0] === layout.fieldTops[1],
+      width === 1280 && textScale === 1,
+      "Short fields must share a row only when sufficient width is available.",
+    );
+    if (width === 390) {
+      const footer = await formDialog.evaluate((element) => {
+        const actions = element.querySelector(".od-dialog-actions");
+        const main = Array.from(
+          actions.querySelectorAll(".od-form-actions > .od-button"),
+        ).map((button) => button.getBoundingClientRect());
+        const secondary = actions.querySelector(".od-form-actions-secondary");
+        return {
+          height: actions.getBoundingClientRect().height,
+          mainTops: main.map((bounds) => bounds.top),
+          secondaryBottom: secondary.getBoundingClientRect().bottom,
+        };
+      });
+      assert.equal(
+        footer.mainTops[0],
+        footer.mainTops[1],
+        "Phone Cancel and Save actions must share one row.",
+      );
+      assert.ok(
+        footer.secondaryBottom < footer.mainTops[0],
+        "Phone secondary actions must use a separate row.",
+      );
+      assert.ok(
+        footer.height <= 144,
+        "The phone form footer must stay compact.",
+      );
+    }
+    const results = await new AxeBuilder({ page })
+      .include("dialog[open]")
+      .analyze();
+    assert.deepEqual(results.violations, [], "The form dialog must pass Axe.");
+    await formDialog.screenshot({
+      path: `/tmp/opendle-form-dialog-${width}-${textScale}.png`,
+    });
+    await nameField.fill("Edited connection");
+    await formDialog.getByRole("button", { name: "Save changes" }).click();
+    assert.equal(
+      await formDialog.isVisible(),
+      false,
+      "The fixed footer must submit its named form.",
+    );
+    await page.waitForFunction(
+      () => document.activeElement?.textContent?.trim() === "Open edit form",
+    );
+    assert.deepEqual(errors, []);
+    await context.close();
+  }
   const desktopContext = await browser.newContext({
     viewport: { width: 1280, height: 800 },
   });
@@ -376,6 +500,44 @@ try {
       true,
     );
   }
+
+  await desktop.evaluate(() => {
+    const nativeRequest = window.requestAnimationFrame;
+    const nativeCancel = window.cancelAnimationFrame;
+    const callbacks = new Map();
+    let frameId = 0;
+    window.requestAnimationFrame = (callback) => {
+      callbacks.set(++frameId, callback);
+      return frameId;
+    };
+    window.cancelAnimationFrame = (id) => callbacks.delete(id);
+    window.releaseModalFocusFrames = () => {
+      window.requestAnimationFrame = nativeRequest;
+      window.cancelAnimationFrame = nativeCancel;
+      const count = callbacks.size;
+      for (const callback of callbacks.values())
+        callback(window.performance.now());
+      return count;
+    };
+  });
+  await desktop
+    .getByRole("button", { name: "Open default dialog", exact: true })
+    .click();
+  await desktop.keyboard.press("Escape");
+  assert.equal(await dialog.isVisible(), false);
+  const nextControl = desktop.getByRole("button", {
+    name: "Open narrow dialog",
+    exact: true,
+  });
+  await nextControl.focus();
+  assert.ok(
+    (await desktop.evaluate(() => window.releaseModalFocusFrames())) > 0,
+  );
+  assert.equal(
+    await nextControl.evaluate((element) => element === document.activeElement),
+    true,
+    "A delayed modal focus return must preserve a new user focus target.",
+  );
 
   const pendingOpener = desktop.getByRole("button", {
     name: "Open pending dialog",

@@ -1,5 +1,6 @@
 import { type DialogHTMLAttributes, type ReactNode, type RefObject } from "react";
 export type DialogSize = "narrow" | "default" | "wide";
+export type DialogAppearance = "default" | "form";
 export interface DialogProps extends Omit<DialogHTMLAttributes<HTMLDialogElement>, "children" | "onCancel" | "onClick" | "onClose" | "open" | "title"> {
     readonly open: boolean;
     readonly title: ReactNode;
@@ -7,6 +8,8 @@ export interface DialogProps extends Omit<DialogHTMLAttributes<HTMLDialogElement
     readonly eyebrow?: ReactNode;
     readonly children: ReactNode;
     readonly actions?: ReactNode;
+    /** A compact frame for editing forms with fixed footer actions. */
+    readonly appearance?: DialogAppearance;
     readonly headingLevel?: "h2" | "h3";
     readonly size?: DialogSize;
     readonly closeLabel?: string;
@@ -22,5 +25,5 @@ export interface DialogProps extends Omit<DialogHTMLAttributes<HTMLDialogElement
     readonly onClose: () => void;
 }
 /** A controlled native modal with fixed framing and local body scrolling. */
-export declare function Dialog({ actions, actionsClassName, "aria-describedby": suppliedDescribedBy, "aria-label": ariaLabel, "aria-labelledby": suppliedLabelledBy, bodyClassName, children, className, closeDisabled, closeLabel, description, eyebrow, headerClassName, headingLevel, initialFocusRef, onClose, open, returnFocusRef, restoreFocusOnClose, showCloseButton, size, title, ...props }: DialogProps): import("react").JSX.Element;
+export declare function Dialog({ actions, actionsClassName, appearance, "aria-describedby": suppliedDescribedBy, "aria-label": ariaLabel, "aria-labelledby": suppliedLabelledBy, bodyClassName, children, className, closeDisabled, closeLabel, description, eyebrow, headerClassName, headingLevel, initialFocusRef, onClose, open, returnFocusRef, restoreFocusOnClose, showCloseButton, size, title, ...props }: DialogProps): import("react").JSX.Element;
 //# sourceMappingURL=Dialog.d.ts.map

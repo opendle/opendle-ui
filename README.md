@@ -354,12 +354,52 @@ labels and Tab order. A host can omit `onNodeActivate` for selection-only card
 clicks and open the shared `Dialog` from an explicit edit action. The `edit`
 icon is available through `Icon`.
 
+Background pointer actions clear the graph selection. Node controls, fields,
+links, and actions keep their own behavior. Controlled graphs receive
+`onSelectionChange(null)`; uncontrolled graphs clear their internal selection.
+`RelationshipGraphGroup.relatedRows` adds a labelled section after the route
+rows. Supply `relatedRowsLabel` when this section is present. A related row can
+set `pathSourceId` to a source group in its column. Selection, search, and
+keyboard navigation then follow that group's route without more connectors.
+
+`CapabilityTag` supplies a compact label with one host-selected tone. Set
+`direction` to `input` or `output` to place a direction icon before or after
+the label. The complete direction remains in the accessible name. Set
+`onClick` and `pressed` for a filter button. Graph node tags accept the same
+properties and keep these buttons separate from node selection. Hosts own
+capability meaning, tone mapping, and filtering. The `close` icon is available
+for a clear-filter action.
+
 ## Forms and input
 
 `FormField`, `FieldHelp`, and `FieldError` connect a label, help text, an error,
 and one control. `FormSection`, `FormActions`, and
 `AdvancedFieldsDisclosure` supply responsive form structure. The host owns the
 form state, validation rules, submission, and product text.
+
+Use `Dialog appearance="form"` for editing. It uses a compact header, a calm
+body surface, clear field labels, and a fixed footer. Put the main save button
+in `Dialog.actions` and connect it to the form with its native `form` attribute.
+`FormGrid` pairs short fields and wraps them based on available width.
+`FormControls disabled` locks a complete group with a native fieldset during a
+write. It adds no visible frame or section heading.
+`FormSection variant="plain"` groups fields without another box.
+`FormActions.secondaryActions` separates secondary and delete actions from
+Cancel and Save. Keep detailed record facts in `AdvancedFieldsDisclosure` so
+the fields are visible first. Set `data-dialog-initial-focus` on the first
+editable field when the dialog opens.
+
+`OrderedChoiceList` edits a compact ordered selection. The host supplies stable
+item IDs, labels, optional inline details, and searchable options. Selecting
+an unused enabled option adds it immediately. Existing choices are omitted
+from the add menu; loaded repeat values remain editable through distinct IDs.
+The add control is disabled at `maxItems`, when no enabled unused option
+remains, or when the complete editor is disabled. Up and down icon buttons,
+arrow keys on the reorder handle, and dragging change the order. The host
+receives the complete ID order through `onReorder`. Removal moves focus to the
+next item, the previous item, or the add control when the list is empty.
+The component announces additions, removals, and new positions. The host owns
+the selected items, persistence, validation, and product text.
 
 `SearchableSelect` supplies a controlled, filterable combobox. Each option has
 a stable value and label. An option can also have a description, search text,

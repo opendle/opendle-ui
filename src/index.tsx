@@ -1,4 +1,14 @@
+export {
+  OrderedChoiceList,
+  type OrderedChoiceItem,
+  type OrderedChoiceListProps,
+} from "./components/OrderedChoiceList.js";
 export { SkipLink, type SkipLinkProps } from "./components/SkipLink.js";
+export {
+  CapabilityTag,
+  type CapabilityTagProps,
+  type CapabilityTagTone,
+} from "./components/CapabilityTag.js";
 import type { SVGAttributes } from "react";
 
 /** Public package version. Keep this value aligned with package.json. */
@@ -168,7 +178,9 @@ export {
   FieldError,
   FieldHelp,
   FormActions,
+  FormControls,
   FormField,
+  FormGrid,
   FormSection,
   type AdvancedFieldsDisclosureProps,
   type FieldErrorProps,
@@ -176,10 +188,13 @@ export {
   type FieldRequirement,
   type FormActionsAlignment,
   type FormActionsProps,
+  type FormControlsProps,
   type FormFieldOrientation,
   type FormFieldProps,
+  type FormGridProps,
   type FormSectionColumns,
   type FormSectionProps,
+  type FormSectionVariant,
 } from "./components/Form.js";
 export {
   CheckboxControl,
@@ -309,6 +324,7 @@ export {
 } from "./components/ConfirmationDialog.js";
 export {
   Dialog,
+  type DialogAppearance,
   type DialogProps,
   type DialogSize,
 } from "./components/Dialog.js";

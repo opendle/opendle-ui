@@ -3,6 +3,7 @@ import { useCallback, use, useEffect, useId, useLayoutEffect, useMemo, useReduce
 import { assertRelationshipGraphModel, relationshipGraphKeyboardTarget, relationshipGraphPath, relationshipGraphSearch, } from "../RelationshipGraphModel.js";
 import { GraphToolbar, GraphViewportContent, useInspectorReachability, } from "./GraphWorkspace.js";
 import { PageSurfaceEdgeContext } from "../PageSurfaceContext.js";
+import { CapabilityTag } from "./CapabilityTag.js";
 function classes(...values) {
     return values.filter(Boolean).join(" ");
 }
@@ -51,7 +52,7 @@ function flattenRelationshipGraphColumn(column) {
             continue;
         }
         flattened.push({ kind: "group", node: item, order: flattened.length });
-        for (const row of item.rows) {
+        for (const row of [...item.rows, ...(item.relatedRows ?? [])]) {
             flattened.push({
                 group: item,
                 kind: "row",
@@ -72,10 +73,13 @@ function nodeAccessibleName(node, column, connectedLabels, group) {
         ? `Connected to ${connectedLabels.join(", ")}.`
         : "No connected items.";
     const groupLabel = group ? ` Nested in ${group.label}.` : "";
-    const tags = node.tags?.map((tag) => tag.description ?? tag.label).join(". ");
+    const tags = node.tags
+        ?.map((tag) => tag.description ??
+        (tag.direction ? `${tag.direction} ${tag.label}` : tag.label))
+        .join(". ");
     return `${node.label}. ${column.label} column.${groupLabel} ${stateLabel}. ${relationship}${tags ? ` ${tags}.` : ""}`;
 }
-function RelationshipGraphNodeControl({ activeNodeId, activeNodeIds, column, connectedRelationships, directMatchIds, group, kind, node, onActivate, onFocusChange, onHoverChange, onKeyDown, onRegister, preferredTabStop, searchContextLabel, searchIsActive, selectedId, }) {
+function RelationshipGraphNodeControl({ activeNodeId, activeNodeIds, column, connectedRelationships, directMatchIds, group, kind, node, onActivate, onFocusChange, onHoverChange, onKeyDown, onRegister, preferredTabStop, searchContextLabel, searchIsActive, selectedId, related = false, }) {
     const connectedLabels = connectedRelationships.map(({ label }) => label);
     const state = node.state ?? "default";
     const stateLabel = node.stateLabel ?? nodeStateLabels[state];
@@ -83,7 +87,9 @@ function RelationshipGraphNodeControl({ activeNodeId, activeNodeIds, column, con
     const dimmed = activeNodeId !== null && !active;
     const directSearchMatch = directMatchIds.has(node.id);
     const searchContext = searchIsActive && !directSearchMatch;
-    const control = (_jsxs("button", { "aria-label": nodeAccessibleName(node, column, connectedLabels, group), "aria-pressed": selectedId === node.id, className: "od-relationship-graph-node", "data-active": active, "data-dimmed": dimmed, "data-group-id": group?.id, "data-node-id": node.id, "data-node-kind": kind, "data-search-context": searchContext, "data-search-match": directSearchMatch, "data-selected": selectedId === node.id, "data-state": state, onBlur: () => {
+    const hasInteractiveTags = node.tags?.some((tag) => tag.onClick) ?? false;
+    const tags = node.tags?.length ? (_jsx("span", { className: "od-relationship-graph-node-tags", children: node.tags.map((tag) => (_jsx(CapabilityTag, { ...tag }, `${tag.direction ?? ""}-${tag.label}`))) })) : null;
+    const control = (_jsxs("button", { "aria-label": nodeAccessibleName(node, column, connectedLabels, group), "aria-pressed": selectedId === node.id, className: "od-relationship-graph-node", "data-active": active, "data-dimmed": dimmed, "data-group-id": group?.id, "data-node-id": node.id, "data-node-kind": kind, "data-related": related, "data-search-context": searchContext, "data-search-match": directSearchMatch, "data-selected": selectedId === node.id, "data-state": state, onBlur: () => {
             onFocusChange(null);
         }, onClick: (event) => {
             onActivate(node.id, event.currentTarget);
@@ -97,8 +103,8 @@ function RelationshipGraphNodeControl({ activeNodeId, activeNodeIds, column, con
             onHoverChange(null);
         }, ref: (element) => {
             onRegister(node.id, element);
-        }, tabIndex: preferredTabStop === node.id ? 0 : -1, type: "button", children: [_jsxs("span", { className: "od-relationship-graph-node-heading", children: [_jsxs("span", { className: "od-relationship-graph-node-name", children: [_jsx("strong", { children: node.label }), node.inlineDetail ? (_jsx("span", { className: "od-relationship-graph-node-detail", children: node.inlineDetail })) : null] }), node.tags?.length ? (_jsx("span", { className: "od-relationship-graph-node-tags", children: node.tags.map((tag) => (_jsxs("span", { title: tag.description, "aria-label": tag.description, children: [tag.label, tag.description ? _jsx("span", { "aria-hidden": "true", children: " \u24D8" }) : null] }, tag.label))) })) : null, state !== "default" || node.stateLabel !== undefined ? (_jsx("span", { className: "od-relationship-graph-node-state", children: stateLabel })) : null] }), searchContext ? (_jsx("span", { className: "od-relationship-graph-node-context", children: searchContextLabel })) : null, node.detail ? (_jsx("span", { className: "od-relationship-graph-node-detail", children: node.detail })) : null, node.content ? (_jsx("span", { className: "od-relationship-graph-node-content", children: node.content })) : null, connectedRelationships.length > 0 ? (_jsx("span", { className: "od-relationship-graph-node-relationships", children: connectedRelationships.map(({ id, label }) => (_jsx("span", { children: label }, id))) })) : null] }));
-    return node.actions === undefined ? (control) : (_jsxs("div", { className: "od-relationship-graph-node-item", children: [control, _jsx("div", { className: "od-relationship-graph-node-actions", children: node.actions })] }));
+        }, tabIndex: preferredTabStop === node.id ? 0 : -1, type: "button", children: [_jsxs("span", { className: "od-relationship-graph-node-heading", children: [_jsxs("span", { className: "od-relationship-graph-node-name", children: [related ? (_jsx("svg", { "aria-hidden": "true", className: "od-relationship-graph-related-row-icon", viewBox: "0 0 16 16", fill: "none", stroke: "currentColor", strokeWidth: "1.5", strokeLinecap: "round", strokeLinejoin: "round", children: _jsx("path", { d: "M3 2v5a3 3 0 0 0 3 3h7M10 7l3 3-3 3" }) })) : null, _jsx("strong", { children: node.label }), node.inlineDetail ? (_jsx("span", { className: "od-relationship-graph-node-detail", children: node.inlineDetail })) : null] }), hasInteractiveTags ? null : tags, state !== "default" || node.stateLabel !== undefined ? (_jsx("span", { className: "od-relationship-graph-node-state", children: stateLabel })) : null] }), searchContext ? (_jsx("span", { className: "od-relationship-graph-node-context", children: searchContextLabel })) : null, node.detail ? (_jsx("span", { className: "od-relationship-graph-node-detail", children: node.detail })) : null, node.content ? (_jsx("span", { className: "od-relationship-graph-node-content", children: node.content })) : null, connectedRelationships.length > 0 ? (_jsx("span", { className: "od-relationship-graph-node-relationships", children: connectedRelationships.map(({ id, label }) => (_jsx("span", { children: label }, id))) })) : null] }));
+    return node.actions === undefined && !hasInteractiveTags ? (control) : (_jsxs("div", { className: "od-relationship-graph-node-item", "data-interactive-tags": hasInteractiveTags, "data-has-actions": node.actions !== undefined, "data-selected": selectedId === node.id, "data-state": state, children: [control, hasInteractiveTags ? tags : null, node.actions === undefined ? null : (_jsx("div", { className: "od-relationship-graph-node-actions", children: node.actions }))] }));
 }
 function RelationshipGraphGroupSummary({ directMatchIds, group, searchContextLabel, searchIsActive, }) {
     const state = group.state ?? "default";
@@ -142,8 +148,13 @@ function assertRelationshipGraphColumns(columns) {
             if (isRelationshipGraphGroup(node) && !node.rowsLabel.trim()) {
                 throw new Error(`Relationship graph group ${node.id} must have a rows label.`);
             }
+            if (isRelationshipGraphGroup(node) &&
+                node.relatedRows !== undefined &&
+                !node.relatedRowsLabel?.trim()) {
+                throw new Error(`Relationship graph group ${node.id} must have a related-rows label.`);
+            }
             const controls = isRelationshipGraphGroup(node)
-                ? [node, ...node.rows]
+                ? [node, ...node.rows, ...(node.relatedRows ?? [])]
                 : [node];
             for (const control of controls) {
                 const state = control.state ?? "default";
@@ -220,7 +231,7 @@ export function RelationshipGraph({ columns, relationships, selectedNodeId, defa
         return columns.map((column) => {
             const selectedGroup = column.nodes.find((node) => node.id === selectedId ||
                 (isRelationshipGraphGroup(node) &&
-                    node.rows.some((row) => row.id === selectedId)));
+                    [...node.rows, ...(node.relatedRows ?? [])].some((row) => row.id === selectedId)));
             if (!selectedGroup)
                 return column;
             return {
@@ -241,6 +252,9 @@ export function RelationshipGraph({ columns, relationships, selectedNodeId, defa
         kind,
         order,
         ...(group ? { parentId: group.id } : {}),
+        ...(node.pathSourceId !== undefined
+            ? { pathSourceId: node.pathSourceId }
+            : {}),
         searchValue: searchValue(node),
     }))), [orderedColumns]);
     const modelRelationships = useMemo(() => relationships.map(({ id, sourceId, targetId }) => ({
@@ -338,6 +352,19 @@ export function RelationshipGraph({ columns, relationships, selectedNodeId, defa
             add(relationship.targetId, relationship.id, relationship.accessibleLabel
                 ? relationshipLabel
                 : `${source.node.label} by ${relationshipLabel}`);
+        }
+        for (const { node } of nodesById.values()) {
+            if (node.pathSourceId === undefined)
+                continue;
+            const routeLabels = new Map();
+            for (const { node: sourceRow, group } of nodesById.values()) {
+                if (group?.id !== node.pathSourceId || sourceRow.pathSourceId)
+                    continue;
+                for (const value of labels.get(sourceRow.id) ?? []) {
+                    routeLabels.set(value.id, value);
+                }
+            }
+            labels.set(node.id, [...routeLabels.values()]);
         }
         return labels;
     }, [nodesById, relationships]);
@@ -626,7 +653,16 @@ export function RelationshipGraph({ columns, relationships, selectedNodeId, defa
         selectedNodeId,
         onSelectionChange,
     ]);
-    return (_jsxs("section", { ...props, "aria-label": ariaLabel, className: classes("od-relationship-graph", className), "data-edge-to-edge": edgeToEdge, "data-full-page": fullPage, "data-compact": compact, ref: rootRef, children: [_jsx("output", { "aria-live": "polite", className: "od-visually-hidden", children: announcement }), toolbar === undefined ? (searchControls) : (_jsx(GraphToolbar, { actions: toolbar.actions, center: searchControls, className: "od-relationship-graph-toolbar", leading: toolbar.leading })), _jsxs("section", { "aria-label": viewportLabel ?? `${ariaLabel} viewport`, className: "od-relationship-graph-viewport", children: [_jsx(GraphViewportContent, { children: viewportContent }), invalidState !== undefined ? (_jsx("div", { className: "od-relationship-graph-invalid", role: "alert", children: invalidState })) : (_jsxs("div", { className: "od-relationship-graph-board", ref: boardRef, children: [graphIsEmpty ? (_jsx("div", { "aria-live": "polite", className: "od-relationship-graph-empty", children: emptyState ?? "No items are available." })) : noSearchResults ? (_jsxs("div", { "aria-live": "polite", className: "od-relationship-graph-empty", children: [_jsx("strong", { children: partialNoSearchResults
+    return (_jsxs("section", { ...props, "aria-label": ariaLabel, className: classes("od-relationship-graph", className), "data-edge-to-edge": edgeToEdge, "data-full-page": fullPage, "data-compact": compact, ref: rootRef, children: [_jsx("output", { "aria-live": "polite", className: "od-visually-hidden", children: announcement }), toolbar === undefined ? (searchControls) : (_jsx(GraphToolbar, { actions: toolbar.actions, center: searchControls, className: "od-relationship-graph-toolbar", leading: toolbar.leading })), _jsxs("section", { "aria-label": viewportLabel ?? `${ariaLabel} viewport`, className: "od-relationship-graph-viewport", onPointerDown: (event) => {
+                    const target = event.target;
+                    if (!(target instanceof Element) ||
+                        target.closest("button, a, input, select, textarea, summary, label, [role='button'], [role='link'], [contenteditable='true'], [data-node-id], [data-group-header-id]")) {
+                        return;
+                    }
+                    updateState({ focusedNodeId: null, hoveredNodeId: null });
+                    if (selectedId !== null)
+                        selectNode(null);
+                }, children: [_jsx(GraphViewportContent, { children: viewportContent }), invalidState !== undefined ? (_jsx("div", { className: "od-relationship-graph-invalid", role: "alert", children: invalidState })) : (_jsxs("div", { className: "od-relationship-graph-board", ref: boardRef, children: [graphIsEmpty ? (_jsx("div", { "aria-live": "polite", className: "od-relationship-graph-empty", children: emptyState ?? "No items are available." })) : noSearchResults ? (_jsxs("div", { "aria-live": "polite", className: "od-relationship-graph-empty", children: [_jsx("strong", { children: partialNoSearchResults
                                             ? partialNoResultsTitle
                                             : noResultsTitle }), _jsx("div", { children: partialNoSearchResults
                                             ? partialNoResultsDescription
@@ -657,9 +693,10 @@ export function RelationshipGraph({ columns, relationships, selectedNodeId, defa
                                                         return (_jsx(RelationshipGraphNodeControl, { ...nodeControlSharedProps, column: column, connectedRelationships: connectedLabelsById.get(item.id) ?? [], kind: "node", node: item }, item.id));
                                                     }
                                                     const visibleRows = item.rows.filter((row) => searchResult.visibleNodeIds.has(row.id));
+                                                    const visibleRelatedRows = item.relatedRows?.filter((row) => searchResult.visibleNodeIds.has(row.id));
                                                     const rowsHeadingId = `${columnHeadingPrefix}-${String(columnIndex)}-group-${String(itemIndex)}`;
-                                                    return (_jsxs("fieldset", { className: "od-relationship-graph-group", "data-expanded": "true", "data-group-id": item.id, children: [_jsx("legend", { className: "od-visually-hidden", children: item.label }), item.headerActionable === false ? (_jsx(RelationshipGraphGroupSummary, { directMatchIds: searchResult.directMatchIds, group: item, searchContextLabel: searchContextLabel, searchIsActive: query.trim().length > 0 })) : (_jsx(RelationshipGraphNodeControl, { ...nodeControlSharedProps, column: column, connectedRelationships: connectedLabelsById.get(item.id) ?? [], kind: "group", node: item })), _jsx("div", { className: "od-relationship-graph-group-body", children: _jsxs("fieldset", { className: "od-relationship-graph-rows", children: [_jsx("legend", { className: "od-relationship-graph-group-heading", id: rowsHeadingId, children: item.rowsLabel }), visibleRows.map((row) => (_jsx(RelationshipGraphNodeControl, { ...nodeControlSharedProps, column: column, connectedRelationships: connectedLabelsById.get(row.id) ?? [], group: item, kind: "row", node: row }, row.id))), visibleRows.length === 0 ? (_jsx("div", { className: "od-relationship-graph-group-empty", children: item.rowsEmptyState ??
-                                                                                "No nested items in this group." })) : null, item.rowsActions ? (_jsx("div", { className: "od-relationship-graph-group-actions", children: item.rowsActions })) : null] }) })] }, item.id));
+                                                    return (_jsxs("fieldset", { className: "od-relationship-graph-group", "data-expanded": "true", "data-group-id": item.id, children: [_jsx("legend", { className: "od-visually-hidden", children: item.label }), item.headerActionable === false ? (_jsx(RelationshipGraphGroupSummary, { directMatchIds: searchResult.directMatchIds, group: item, searchContextLabel: searchContextLabel, searchIsActive: query.trim().length > 0 })) : (_jsx(RelationshipGraphNodeControl, { ...nodeControlSharedProps, column: column, connectedRelationships: connectedLabelsById.get(item.id) ?? [], kind: "group", node: item })), _jsxs("div", { className: "od-relationship-graph-group-body", children: [_jsxs("fieldset", { className: "od-relationship-graph-rows", children: [_jsx("legend", { className: "od-relationship-graph-group-heading", id: rowsHeadingId, children: item.rowsLabel }), visibleRows.map((row) => (_jsx(RelationshipGraphNodeControl, { ...nodeControlSharedProps, column: column, connectedRelationships: connectedLabelsById.get(row.id) ?? [], group: item, kind: "row", node: row }, row.id))), visibleRows.length === 0 ? (_jsx("div", { className: "od-relationship-graph-group-empty", children: item.rowsEmptyState ??
+                                                                                    "No nested items in this group." })) : null, item.rowsActions ? (_jsx("div", { className: "od-relationship-graph-group-actions", children: item.rowsActions })) : null] }), visibleRelatedRows?.length ? (_jsxs("fieldset", { className: "od-relationship-graph-related-rows", children: [_jsx("legend", { className: "od-relationship-graph-related-rows-heading", children: item.relatedRowsLabel }), visibleRelatedRows.map((row) => (_jsx(RelationshipGraphNodeControl, { ...nodeControlSharedProps, column: column, connectedRelationships: connectedLabelsById.get(row.id) ?? [], group: item, kind: "row", node: row, related: true }, row.id)))] })) : null] })] }, item.id));
                                                 })] })] }, column.id));
                             })] }))] }), activeInspector] }));
 }

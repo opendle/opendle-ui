@@ -11,6 +11,7 @@ import {
 import { Button } from "./Button.js";
 
 export type DialogSize = "narrow" | "default" | "wide";
+export type DialogAppearance = "default" | "form";
 
 const focusableSelector =
   'button:not(:disabled), [href], input:not(:disabled), select:not(:disabled), textarea:not(:disabled), summary, iframe, audio[controls], video[controls], [contenteditable="true"], [tabindex]:not([tabindex="-1"])';
@@ -25,6 +26,8 @@ export interface DialogProps extends Omit<
   readonly eyebrow?: ReactNode;
   readonly children: ReactNode;
   readonly actions?: ReactNode;
+  /** A compact frame for editing forms with fixed footer actions. */
+  readonly appearance?: DialogAppearance;
   readonly headingLevel?: "h2" | "h3";
   readonly size?: DialogSize;
   readonly closeLabel?: string;
@@ -105,6 +108,14 @@ function restoreFocus(
         ? active.closest<HTMLDialogElement>("dialog[open]")
         : null;
     if (activeDialog !== null && !activeDialog.contains(target)) return;
+    if (
+      active instanceof HTMLElement &&
+      active !== target &&
+      active !== document.body &&
+      active !== document.documentElement &&
+      active.closest("dialog") === null
+    )
+      return;
     target.focus({ preventScroll: true });
   };
   if (typeof requestAnimationFrame === "function") requestAnimationFrame(apply);
@@ -166,6 +177,7 @@ function containTabFocus(
 export function Dialog({
   actions,
   actionsClassName,
+  appearance = "default",
   "aria-describedby": suppliedDescribedBy,
   "aria-label": ariaLabel,
   "aria-labelledby": suppliedLabelledBy,
@@ -344,6 +356,7 @@ export function Dialog({
           ariaLabel === undefined ? (suppliedLabelledBy ?? titleId) : undefined
         }
         className={classes("od-dialog", className)}
+        data-appearance={appearance}
         data-size={size}
         onCancel={(event) => {
           event.preventDefault();

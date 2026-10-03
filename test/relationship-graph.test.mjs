@@ -2,7 +2,12 @@ import { strict as assert } from "node:assert";
 import test from "node:test";
 import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
-import { Button, GraphInspector, RelationshipGraph } from "../dist/index.js";
+import {
+  Button,
+  CapabilityTag,
+  GraphInspector,
+  RelationshipGraph,
+} from "../dist/index.js";
 import {
   assertRelationshipGraphModel,
   relationshipGraphKeyboardTarget,
@@ -958,4 +963,233 @@ test("inline names and independent actions keep valid selection controls", () =>
     /<\/button><div class="od-relationship-graph-node-actions"><button/,
   );
   assert.match(markup, /aria-label="Edit model"/);
+});
+
+test("capability tags keep direction text accessible and filter controls independent", () => {
+  const input = renderToStaticMarkup(
+    React.createElement(CapabilityTag, {
+      label: "Image",
+      direction: "input",
+      tone: "violet",
+      onClick() {},
+      pressed: true,
+    }),
+  );
+  const output = renderToStaticMarkup(
+    React.createElement(CapabilityTag, {
+      label: "Audio",
+      direction: "output",
+      tone: "amber",
+    }),
+  );
+  assert.match(input, /<button[^>]*aria-label="Input Image"/);
+  assert.match(input, /aria-pressed="true"/);
+  assert.match(input, /data-tone="violet"/);
+  assert.match(input, /<svg[\s\S]*?<span>Image<\/span>/);
+  assert.match(output, /aria-label="Output Audio"/);
+  assert.match(output, /<span>Audio<\/span><svg/);
+  const columns = graphColumns();
+  columns[0] = {
+    ...columns[0],
+    nodes: [
+      {
+        id: "source-a",
+        label: "Source A",
+        tags: [
+          {
+            label: "Image",
+            direction: "input",
+            tone: "violet",
+            onClick() {},
+          },
+        ],
+      },
+    ],
+  };
+  const markup = renderToStaticMarkup(
+    React.createElement(RelationshipGraph, {
+      "aria-label": "Capability board",
+      columns,
+      relationships: [],
+    }),
+  );
+  assert.match(markup, /data-interactive-tags="true"/);
+  assert.match(
+    markup,
+    /<\/button><span class="od-relationship-graph-node-tags"><button/,
+  );
+});
+
+function relatedRouteNodes() {
+  return [
+    { id: "source", columnIndex: 0, order: 0, searchValue: "Provider" },
+    { id: "model", columnIndex: 1, order: 0, searchValue: "Model" },
+    {
+      id: "group",
+      columnIndex: 2,
+      order: 0,
+      kind: "group",
+      searchValue: "Default",
+    },
+    {
+      id: "chain",
+      columnIndex: 2,
+      order: 1,
+      kind: "row",
+      parentId: "group",
+      searchValue: "Route",
+    },
+    {
+      id: "alias",
+      columnIndex: 2,
+      order: 2,
+      kind: "row",
+      parentId: "group",
+      pathSourceId: "group",
+      searchValue: "Inherited summary",
+    },
+  ];
+}
+const relatedRouteRelationships = [
+  { id: "provider-model", sourceId: "source", targetId: "model" },
+  { id: "model-chain", sourceId: "model", targetId: "chain" },
+];
+
+test("related selections share the source route without duplicate relationships", () => {
+  const routeNodes = relatedRouteNodes();
+  assertRelationshipGraphModel(routeNodes, relatedRouteRelationships);
+  const path = relationshipGraphPath(
+    "alias",
+    routeNodes,
+    relatedRouteRelationships,
+  );
+  assert.deepEqual([...path.nodeIds].sort(), [
+    "alias",
+    "chain",
+    "group",
+    "model",
+    "source",
+  ]);
+  assert.deepEqual([...path.relationshipIds].sort(), [
+    "model-chain",
+    "provider-model",
+  ]);
+  const search = relationshipGraphSearch(
+    "Inherited",
+    routeNodes,
+    relatedRouteRelationships,
+  );
+  assert.deepEqual([...search.directMatchIds], ["alias"]);
+  assert.deepEqual([...search.visibleNodeIds].sort(), [
+    "alias",
+    "chain",
+    "group",
+    "model",
+    "source",
+  ]);
+  assert.equal(
+    relationshipGraphKeyboardTarget(
+      "alias",
+      "ArrowLeft",
+      routeNodes,
+      relatedRouteRelationships,
+    ),
+    "model",
+  );
+  assert.equal(
+    relationshipGraphKeyboardTarget(
+      "chain",
+      "ArrowDown",
+      routeNodes,
+      relatedRouteRelationships,
+    ),
+    "alias",
+  );
+  assert.throws(
+    () =>
+      assertRelationshipGraphModel(
+        routeNodes.map((node) =>
+          node.id === "alias" ? { ...node, pathSourceId: "model" } : node,
+        ),
+        relatedRouteRelationships,
+      ),
+    /source group in its column/,
+  );
+});
+
+test("related rows have their own labelled section after the route rows", () => {
+  const columns = graphColumns();
+  columns[2] = {
+    ...columns[2],
+    nodes: [
+      {
+        id: "target-group",
+        label: "Default",
+        rowsLabel: "Models",
+        rows: [{ id: "chain", label: "Text model" }],
+        relatedRowsLabel: "Inherited assignments",
+        relatedRows: [
+          { id: "alias", label: "Summary", pathSourceId: "target-group" },
+        ],
+      },
+    ],
+  };
+  const markup = renderToStaticMarkup(
+    React.createElement(RelationshipGraph, {
+      "aria-label": "Inheritance board",
+      columns,
+      relationships: [],
+    }),
+  );
+  assert.match(markup, /od-relationship-graph-related-rows/);
+  assert.match(markup, /Inherited assignments<\/legend>/);
+  assert.match(markup, /data-node-id="alias"[^>]*data-related="true"/);
+  assert.match(markup, /od-relationship-graph-related-row-icon/);
+});
+
+test("source selections and searches retain related rows as route context", () => {
+  const routeNodes = [
+    ...relatedRouteNodes(),
+    {
+      id: "unrelated-group",
+      columnIndex: 2,
+      order: 3,
+      kind: "group",
+      searchValue: "Unrelated assignment",
+    },
+    {
+      id: "unrelated-alias",
+      columnIndex: 2,
+      order: 4,
+      kind: "row",
+      parentId: "unrelated-group",
+      pathSourceId: "unrelated-group",
+      searchValue: "Unrelated inherited assignment",
+    },
+  ];
+  const expectedPath = ["alias", "chain", "group", "model", "source"];
+  for (const [activeId, query] of [
+    ["source", "Provider"],
+    ["model", "Model"],
+    ["chain", "Route"],
+  ]) {
+    const path = relationshipGraphPath(
+      activeId,
+      routeNodes,
+      relatedRouteRelationships,
+    );
+    assert.deepEqual([...path.nodeIds].sort(), expectedPath);
+    assert.deepEqual([...path.relationshipIds].sort(), [
+      "model-chain",
+      "provider-model",
+    ]);
+    const search = relationshipGraphSearch(
+      query,
+      routeNodes,
+      relatedRouteRelationships,
+    );
+    assert.deepEqual([...search.directMatchIds], [activeId]);
+    assert.deepEqual([...search.visibleNodeIds].sort(), expectedPath);
+    assert.equal(search.directMatchIds.has("alias"), false);
+  }
 });

@@ -1,4 +1,6 @@
+export { OrderedChoiceList, type OrderedChoiceItem, type OrderedChoiceListProps, } from "./components/OrderedChoiceList.js";
 export { SkipLink, type SkipLinkProps } from "./components/SkipLink.js";
+export { CapabilityTag, type CapabilityTagProps, type CapabilityTagTone, } from "./components/CapabilityTag.js";
 import type { SVGAttributes } from "react";
 /** Public package version. Keep this value aligned with package.json. */
 export declare const OPENDLE_UI_VERSION: "0.2.0";
@@ -58,7 +60,7 @@ export declare const designTokens: {
     };
 };
 export { AutoGrowTextarea, type AutoGrowTextareaProps, } from "./components/AutoGrowTextarea.js";
-export { AdvancedFieldsDisclosure, FieldError, FieldHelp, FormActions, FormField, FormSection, type AdvancedFieldsDisclosureProps, type FieldErrorProps, type FieldHelpProps, type FieldRequirement, type FormActionsAlignment, type FormActionsProps, type FormFieldOrientation, type FormFieldProps, type FormSectionColumns, type FormSectionProps, } from "./components/Form.js";
+export { AdvancedFieldsDisclosure, FieldError, FieldHelp, FormActions, FormControls, FormField, FormGrid, FormSection, type AdvancedFieldsDisclosureProps, type FieldErrorProps, type FieldHelpProps, type FieldRequirement, type FormActionsAlignment, type FormActionsProps, type FormControlsProps, type FormFieldOrientation, type FormFieldProps, type FormGridProps, type FormSectionColumns, type FormSectionProps, type FormSectionVariant, } from "./components/Form.js";
 export { CheckboxControl, NumberControl, SelectControl, SwitchControl, TextareaControl, TextControl, type CheckboxControlProps, type NumberControlProps, type SelectControlProps, type SwitchControlProps, type TextareaControlProps, type TextControlProps, } from "./components/FormControls.js";
 export { CompactCheckboxGroup, type CompactCheckboxGroupOption, type CompactCheckboxGroupProps, } from "./components/CompactCheckboxGroup.js";
 export { DateTime, type DateTimeProps } from "./components/DateTime.js";
@@ -80,7 +82,7 @@ export { CalendarBoard, type CalendarBoardProps, type CalendarEvent, type Calend
 export { Card, type CardProps } from "./components/Card.js";
 export { ChainStep, type ChainStepProps } from "./components/ChainStep.js";
 export { ConfirmationDialog, type ConfirmationDialogProps, } from "./components/ConfirmationDialog.js";
-export { Dialog, type DialogProps, type DialogSize, } from "./components/Dialog.js";
+export { Dialog, type DialogAppearance, type DialogProps, type DialogSize, } from "./components/Dialog.js";
 export { ContextItem, type ContextItemProps, } from "./components/ContextItem.js";
 export { HealthBar, type HealthBarProps } from "./components/HealthBar.js";
 export { PageSurface, type PageSurfaceProps, } from "./components/PageSurface.js";

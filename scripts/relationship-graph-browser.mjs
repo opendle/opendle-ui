@@ -13,7 +13,7 @@ const repositoryRoot = fileURLToPath(new URL("..", import.meta.url));
 const fixtureSource = String.raw`
 import React, { StrictMode, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
-import { Button, FormField, GraphInspector, GraphToolbar, GraphWorkspace, RelationshipGraph, SelectControl } from "./dist/index.js";
+import { Button, FormField, GraphInspector, GraphToolbar, GraphWorkspace, Icon, IconButton, RelationshipGraph, SelectControl } from "./dist/index.js";
 
 const longLabel = "Record Alpha with a deliberately long label that must wrap inside its local node without increasing the page width";
 const longToolbarLabel = "Context-" + "unbroken".repeat(18);
@@ -302,8 +302,55 @@ function ToolbarFormsFixture() {
   </main>;
 }
 
+function InteractionFixture({ controlled = false }) {
+  const [selection, setSelection] = useState(null);
+  const [imageFilter, setImageFilter] = useState(false);
+  const [editCount, setEditCount] = useState(0);
+  const columns = [
+    {id: "providers", label: "Providers", nodes: [{id: "provider", label: "Provider"}]},
+    {id: "models", label: "Models", nodes: [{
+      id: "model", label: "Multimodal model", inlineDetail: "Provider",
+      tags: [
+        {label: "Image", direction: "input", tone: "violet", pressed: imageFilter, onClick: () => setImageFilter(value => !value)},
+        {label: "Audio", direction: "output", tone: "amber", onClick: () => setImageFilter(false)},
+      ],
+      actions: <IconButton aria-label="Edit model" icon={<Icon name="edit" />} onClick={() => setEditCount(value => value + 1)} />,
+    }, {
+      id: "model-long", label: "Multimodal model with a deliberately long name for responsive layout", inlineDetail: "Provider with a long name",
+      tags: [
+        {label: "Text", direction: "input", tone: "blue", onClick() {}},
+        {label: "Structured JSON", direction: "output", tone: "teal", onClick() {}},
+        {label: "Video", direction: "output", tone: "coral", onClick() {}},
+        {label: "Embedding vectors", direction: "output", tone: "amber", onClick() {}},
+        {label: "Streaming", tone: "violet", onClick() {}},
+        {label: "Tool calling", tone: "amber", onClick() {}},
+        {label: "Reasoning", tone: "coral", onClick() {}},
+      ],
+      actions: <IconButton aria-label="Edit long model" icon={<Icon name="edit" />} onClick={() => setEditCount(value => value + 1)} />,
+    }]},
+    {id: "assignments", label: "Assignments", nodes: [{
+      id: "assignment", label: "Default", rowsLabel: "Models", rows: [{id: "assignment-route", label: "Multimodal model"}],
+      relatedRowsLabel: "Inherited assignments", relatedRows: [{id: "inherited", label: "Summary", pathSourceId: "assignment", tags: [{label: "7 days ago"}]}],
+    }]},
+  ];
+  return <main>
+    <h1>Selection and capability filters</h1>
+    <output aria-label="Current selection">{selection ?? "None"}</output>
+    <output aria-label="Edit count">{editCount}</output>
+    <RelationshipGraph aria-label="Interaction graph" compact toolbar={{}}
+      columns={columns} relationships={[
+        {id: "provider-model", sourceId: "provider", targetId: "model"},
+        {id: "model-route", sourceId: "model", targetId: "assignment-route"},
+      ]}
+      {...(controlled ? {selectedNodeId: selection} : {})}
+      onSelectionChange={setSelection}
+    />
+  </main>;
+}
+
 const fixtureRoot = createRoot(document.getElementById("root"));
 fixtureRoot.render(<StrictMode><Fixture /></StrictMode>);
+window.showInteractionGraph = (controlled) => fixtureRoot.render(<StrictMode><InteractionFixture controlled={controlled} /></StrictMode>);
 window.showToolbarForms = () => fixtureRoot.render(<StrictMode><ToolbarFormsFixture /></StrictMode>);
 window.showMultipleRelationshipGraphs = () => fixtureRoot.render(<StrictMode><MultipleGraphsFixture /></StrictMode>);
 window.showEmptyRelationshipGraph = () => fixtureRoot.render(<StrictMode><Fixture empty /></StrictMode>);
@@ -388,6 +435,185 @@ async function assertNoPageOverflow(page, message) {
     true,
     `${message}: ${JSON.stringify(geometry)}`,
   );
+}
+
+async function assertGraphEditGeometry(page) {
+  const geometry = await page
+    .getByRole("button", { name: "Edit long model", exact: true })
+    .evaluate((action) => {
+      const item = action.closest(".od-relationship-graph-node-item");
+      const tags = item.querySelector(".od-relationship-graph-node-tags");
+      const label = item.querySelector(".od-relationship-graph-node-name");
+      const rect = (element) => {
+        const box = element.getBoundingClientRect();
+        return {
+          left: box.left,
+          top: box.top,
+          right: box.right,
+          bottom: box.bottom,
+        };
+      };
+      return {
+        action: rect(action),
+        item: rect(item),
+        tags: rect(tags),
+        label: rect(label),
+        edgeInset:
+          parseFloat(getComputedStyle(document.documentElement).fontSize) *
+            0.5 +
+          1,
+      };
+    });
+  assert.equal(
+    geometry.item.right - geometry.action.right <= geometry.edgeInset,
+    true,
+    "A model edit action must stay on the right edge: " +
+      JSON.stringify(geometry),
+  );
+  assert.equal(
+    geometry.action.top - geometry.item.top <= geometry.edgeInset,
+    true,
+    "A model edit action must stay at the top instead of adding a row: " +
+      JSON.stringify(geometry),
+  );
+  assert.equal(
+    geometry.tags.right <= geometry.action.left - 2,
+    true,
+    "Wrapped capability tags must reserve the edit action's space: " +
+      JSON.stringify(geometry),
+  );
+  assert.equal(
+    geometry.label.right <= geometry.action.left - 2,
+    true,
+    "Long model names must reserve the edit action's space: " +
+      JSON.stringify(geometry),
+  );
+  assert.equal(
+    geometry.item.bottom >= geometry.action.bottom,
+    true,
+    "The complete edit action must stay inside its model card.",
+  );
+}
+
+async function checkGraphInteractions() {
+  for (const controlled of [false, true]) {
+    for (const viewport of [
+      { width: 1440, height: 1000 },
+      { width: 390, height: 844 },
+    ]) {
+      const context = await browser.newContext({ viewport });
+      try {
+        const page = await context.newPage();
+        const errors = await loadFixture(page);
+        await page.evaluate(
+          (value) => window.showInteractionGraph(value),
+          controlled,
+        );
+        await assertGraphEditGeometry(page);
+        await node(page, "model").click();
+        assert.equal(
+          await node(page, "model").getAttribute("aria-pressed"),
+          "true",
+        );
+        await page
+          .getByRole("button", { name: "Input Image", exact: true })
+          .click();
+        assert.equal(
+          await page
+            .getByRole("button", { name: "Input Image", exact: true })
+            .getAttribute("aria-pressed"),
+          "true",
+        );
+        assert.equal(
+          await node(page, "model").getAttribute("aria-pressed"),
+          "true",
+          "A capability filter must not clear selection.",
+        );
+        await page
+          .getByRole("button", { name: "Input Image", exact: true })
+          .press("Enter");
+        assert.equal(
+          await page
+            .getByRole("button", { name: "Input Image", exact: true })
+            .getAttribute("aria-pressed"),
+          "false",
+        );
+        await page
+          .getByRole("button", { name: "Edit model", exact: true })
+          .click();
+        assert.equal(
+          await page.getByRole("status", { name: "Edit count" }).textContent(),
+          "1",
+        );
+        assert.equal(
+          await node(page, "model").getAttribute("aria-pressed"),
+          "true",
+          "An edit action must not clear selection.",
+        );
+        await page
+          .getByRole("heading", { name: "Models", exact: true })
+          .click();
+        assert.equal(
+          await node(page, "model").getAttribute("aria-pressed"),
+          "false",
+          "Background clicks must clear controlled and internal selections.",
+        );
+        assert.equal(
+          await page
+            .getByRole("status", { name: "Current selection" })
+            .textContent(),
+          "None",
+        );
+        await node(page, "inherited").click();
+        assert.equal(
+          await node(page, "inherited").getAttribute("aria-pressed"),
+          "true",
+        );
+        assert.equal(
+          await page
+            .locator('[data-relationship-id="model-route"]')
+            .getAttribute("data-selected"),
+          "true",
+          "An inherited selection must highlight its source route.",
+        );
+        await node(page, "inherited").press("ArrowLeft");
+        assert.equal(
+          await activeElementIs(node(page, "model")),
+          true,
+          "Left arrow from an inherited assignment must follow its source route.",
+        );
+        const search = page.getByRole("searchbox", {
+          name: "Search graph",
+          exact: true,
+        });
+        await search.fill("Summary");
+        await node(page, "model").waitFor();
+        assert.equal(await activeElementIs(search), true);
+        await search.fill("");
+        await assertNoPageOverflow(
+          page,
+          "Capability controls must fit the viewport",
+        );
+        await page.evaluate(() => {
+          document.documentElement.style.fontSize = "200%";
+        });
+        await assertNoPageOverflow(
+          page,
+          "Capability controls must fit at 200% text",
+        );
+        await assertGraphEditGeometry(page);
+        const nestedButtons = await page.locator("button button").count();
+        assert.equal(nestedButtons, 0);
+        assert.deepEqual(
+          (await new AxeBuilder({ page }).analyze()).violations,
+          [],
+        );
+        assert.deepEqual(errors, []);
+      } finally {
+        await context.close();
+      }
+    }
+  }
 }
 
 async function checkToolbarForms() {
@@ -590,6 +816,7 @@ async function checkToolbarForms() {
 }
 
 try {
+  await checkGraphInteractions();
   await checkToolbarForms();
   const desktopContext = await browser.newContext({
     viewport: { width: 1440, height: 900 },

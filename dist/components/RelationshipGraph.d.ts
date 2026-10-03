@@ -1,4 +1,5 @@
 import type { HTMLAttributes, ReactNode } from "react";
+import { type CapabilityTagProps } from "./CapabilityTag.js";
 export type RelationshipGraphNodeState = "default" | "disabled" | "empty" | "enabled" | "error" | "inherited" | "invalid" | "loading" | "partial" | "ready" | "unavailable";
 export interface RelationshipGraphNode {
     readonly id: string;
@@ -10,12 +11,11 @@ export interface RelationshipGraphNode {
     readonly actions?: ReactNode;
     readonly content?: ReactNode;
     readonly searchText?: readonly string[];
+    /** Share a source group's route without creating duplicate relationships. */
+    readonly pathSourceId?: string;
     readonly state?: RelationshipGraphNodeState;
     readonly stateLabel?: string;
-    readonly tags?: readonly {
-        readonly label: string;
-        readonly description?: string;
-    }[];
+    readonly tags?: readonly CapabilityTagProps[];
 }
 /** One labelled compound card whose nested rows are controls. */
 export interface RelationshipGraphGroup extends RelationshipGraphNode {
@@ -25,6 +25,9 @@ export interface RelationshipGraphGroup extends RelationshipGraphNode {
     readonly rows: readonly RelationshipGraphNode[];
     readonly rowsActions?: ReactNode;
     readonly rowsEmptyState?: ReactNode;
+    /** Related selections after the group's route rows. */
+    readonly relatedRows?: readonly RelationshipGraphNode[];
+    readonly relatedRowsLabel?: string;
 }
 export type RelationshipGraphColumnItem = RelationshipGraphGroup | RelationshipGraphNode;
 export interface RelationshipGraphPartialResult {

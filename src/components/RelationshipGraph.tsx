@@ -24,6 +24,7 @@ import {
 } from "./GraphWorkspace.js";
 
 import { PageSurfaceEdgeContext } from "../PageSurfaceContext.js";
+import { CapabilityTag, type CapabilityTagProps } from "./CapabilityTag.js";
 
 function classes(...values: (string | false | null | undefined)[]) {
   return values.filter(Boolean).join(" ");
@@ -56,12 +57,11 @@ export interface RelationshipGraphNode {
   readonly actions?: ReactNode;
   readonly content?: ReactNode;
   readonly searchText?: readonly string[];
+  /** Share a source group's route without creating duplicate relationships. */
+  readonly pathSourceId?: string;
   readonly state?: RelationshipGraphNodeState;
   readonly stateLabel?: string;
-  readonly tags?: readonly {
-    readonly label: string;
-    readonly description?: string;
-  }[];
+  readonly tags?: readonly CapabilityTagProps[];
 }
 
 /** One labelled compound card whose nested rows are controls. */
@@ -72,6 +72,9 @@ export interface RelationshipGraphGroup extends RelationshipGraphNode {
   readonly rows: readonly RelationshipGraphNode[];
   readonly rowsActions?: ReactNode;
   readonly rowsEmptyState?: ReactNode;
+  /** Related selections after the group's route rows. */
+  readonly relatedRows?: readonly RelationshipGraphNode[];
+  readonly relatedRowsLabel?: string;
 }
 
 export type RelationshipGraphColumnItem =
@@ -231,7 +234,7 @@ function flattenRelationshipGraphColumn(column: RelationshipGraphColumn) {
       continue;
     }
     flattened.push({ kind: "group", node: item, order: flattened.length });
-    for (const row of item.rows) {
+    for (const row of [...item.rows, ...(item.relatedRows ?? [])]) {
       flattened.push({
         group: item,
         kind: "row",
@@ -259,7 +262,13 @@ function nodeAccessibleName(
     ? `Connected to ${connectedLabels.join(", ")}.`
     : "No connected items.";
   const groupLabel = group ? ` Nested in ${group.label}.` : "";
-  const tags = node.tags?.map((tag) => tag.description ?? tag.label).join(". ");
+  const tags = node.tags
+    ?.map(
+      (tag) =>
+        tag.description ??
+        (tag.direction ? `${tag.direction} ${tag.label}` : tag.label),
+    )
+    .join(". ");
   return `${node.label}. ${column.label} column.${groupLabel} ${stateLabel}. ${relationship}${tags ? ` ${tags}.` : ""}`;
 }
 
@@ -289,6 +298,7 @@ interface RelationshipGraphNodeControlProps {
   readonly searchContextLabel: string;
   readonly searchIsActive: boolean;
   readonly selectedId: string | null;
+  readonly related?: boolean;
 }
 
 function RelationshipGraphNodeControl({
@@ -309,6 +319,7 @@ function RelationshipGraphNodeControl({
   searchContextLabel,
   searchIsActive,
   selectedId,
+  related = false,
 }: RelationshipGraphNodeControlProps) {
   const connectedLabels = connectedRelationships.map(({ label }) => label);
   const state = node.state ?? "default";
@@ -317,6 +328,14 @@ function RelationshipGraphNodeControl({
   const dimmed = activeNodeId !== null && !active;
   const directSearchMatch = directMatchIds.has(node.id);
   const searchContext = searchIsActive && !directSearchMatch;
+  const hasInteractiveTags = node.tags?.some((tag) => tag.onClick) ?? false;
+  const tags = node.tags?.length ? (
+    <span className="od-relationship-graph-node-tags">
+      {node.tags.map((tag) => (
+        <CapabilityTag key={`${tag.direction ?? ""}-${tag.label}`} {...tag} />
+      ))}
+    </span>
+  ) : null;
   const control = (
     <button
       aria-label={nodeAccessibleName(node, column, connectedLabels, group)}
@@ -327,6 +346,7 @@ function RelationshipGraphNodeControl({
       data-group-id={group?.id}
       data-node-id={node.id}
       data-node-kind={kind}
+      data-related={related}
       data-search-context={searchContext}
       data-search-match={directSearchMatch}
       data-selected={selectedId === node.id}
@@ -357,6 +377,20 @@ function RelationshipGraphNodeControl({
     >
       <span className="od-relationship-graph-node-heading">
         <span className="od-relationship-graph-node-name">
+          {related ? (
+            <svg
+              aria-hidden="true"
+              className="od-relationship-graph-related-row-icon"
+              viewBox="0 0 16 16"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M3 2v5a3 3 0 0 0 3 3h7M10 7l3 3-3 3" />
+            </svg>
+          ) : null}
           <strong>{node.label}</strong>
           {node.inlineDetail ? (
             <span className="od-relationship-graph-node-detail">
@@ -364,20 +398,7 @@ function RelationshipGraphNodeControl({
             </span>
           ) : null}
         </span>
-        {node.tags?.length ? (
-          <span className="od-relationship-graph-node-tags">
-            {node.tags.map((tag) => (
-              <span
-                key={tag.label}
-                title={tag.description}
-                aria-label={tag.description}
-              >
-                {tag.label}
-                {tag.description ? <span aria-hidden="true"> ⓘ</span> : null}
-              </span>
-            ))}
-          </span>
-        ) : null}
+        {hasInteractiveTags ? null : tags}
 
         {state !== "default" || node.stateLabel !== undefined ? (
           <span className="od-relationship-graph-node-state">{stateLabel}</span>
@@ -405,12 +426,21 @@ function RelationshipGraphNodeControl({
       ) : null}
     </button>
   );
-  return node.actions === undefined ? (
+  return node.actions === undefined && !hasInteractiveTags ? (
     control
   ) : (
-    <div className="od-relationship-graph-node-item">
+    <div
+      className="od-relationship-graph-node-item"
+      data-interactive-tags={hasInteractiveTags}
+      data-has-actions={node.actions !== undefined}
+      data-selected={selectedId === node.id}
+      data-state={state}
+    >
       {control}
-      <div className="od-relationship-graph-node-actions">{node.actions}</div>
+      {hasInteractiveTags ? tags : null}
+      {node.actions === undefined ? null : (
+        <div className="od-relationship-graph-node-actions">{node.actions}</div>
+      )}
     </div>
   );
 }
@@ -520,8 +550,17 @@ function assertRelationshipGraphColumns(
           `Relationship graph group ${node.id} must have a rows label.`,
         );
       }
+      if (
+        isRelationshipGraphGroup(node) &&
+        node.relatedRows !== undefined &&
+        !node.relatedRowsLabel?.trim()
+      ) {
+        throw new Error(
+          `Relationship graph group ${node.id} must have a related-rows label.`,
+        );
+      }
       const controls = isRelationshipGraphGroup(node)
-        ? [node, ...node.rows]
+        ? [node, ...node.rows, ...(node.relatedRows ?? [])]
         : [node];
       for (const control of controls) {
         const state = control.state ?? "default";
@@ -677,7 +716,9 @@ export function RelationshipGraph({
         (node) =>
           node.id === selectedId ||
           (isRelationshipGraphGroup(node) &&
-            node.rows.some((row) => row.id === selectedId)),
+            [...node.rows, ...(node.relatedRows ?? [])].some(
+              (row) => row.id === selectedId,
+            )),
       );
       if (!selectedGroup) return column;
       return {
@@ -704,6 +745,9 @@ export function RelationshipGraph({
             kind,
             order,
             ...(group ? { parentId: group.id } : {}),
+            ...(node.pathSourceId !== undefined
+              ? { pathSourceId: node.pathSourceId }
+              : {}),
             searchValue: searchValue(node),
           }),
         ),
@@ -867,6 +911,17 @@ export function RelationshipGraph({
           ? relationshipLabel
           : `${source.node.label} by ${relationshipLabel}`,
       );
+    }
+    for (const { node } of nodesById.values()) {
+      if (node.pathSourceId === undefined) continue;
+      const routeLabels = new Map<string, RelationshipGraphConnectedLabel>();
+      for (const { node: sourceRow, group } of nodesById.values()) {
+        if (group?.id !== node.pathSourceId || sourceRow.pathSourceId) continue;
+        for (const value of labels.get(sourceRow.id) ?? []) {
+          routeLabels.set(value.id, value);
+        }
+      }
+      labels.set(node.id, [...routeLabels.values()]);
     }
     return labels;
   }, [nodesById, relationships]);
@@ -1123,7 +1178,7 @@ export function RelationshipGraph({
     [onSearchQueryChange, searchQuery],
   );
 
-  function selectNode(id: string) {
+  function selectNode(id: string | null) {
     if (selectedNodeId === undefined) updateState({ internalSelection: id });
     onSelectionChange?.(id);
   }
@@ -1261,6 +1316,19 @@ export function RelationshipGraph({
       <section
         aria-label={viewportLabel ?? `${ariaLabel} viewport`}
         className="od-relationship-graph-viewport"
+        onPointerDown={(event) => {
+          const target = event.target;
+          if (
+            !(target instanceof Element) ||
+            target.closest(
+              "button, a, input, select, textarea, summary, label, [role='button'], [role='link'], [contenteditable='true'], [data-node-id], [data-group-header-id]",
+            )
+          ) {
+            return;
+          }
+          updateState({ focusedNodeId: null, hoveredNodeId: null });
+          if (selectedId !== null) selectNode(null);
+        }}
       >
         <GraphViewportContent>{viewportContent}</GraphViewportContent>
         {invalidState !== undefined ? (
@@ -1405,6 +1473,9 @@ export function RelationshipGraph({
                       const visibleRows = item.rows.filter((row) =>
                         searchResult.visibleNodeIds.has(row.id),
                       );
+                      const visibleRelatedRows = item.relatedRows?.filter(
+                        (row) => searchResult.visibleNodeIds.has(row.id),
+                      );
                       const rowsHeadingId = `${columnHeadingPrefix}-${String(columnIndex)}-group-${String(itemIndex)}`;
                       return (
                         <fieldset
@@ -1467,6 +1538,27 @@ export function RelationshipGraph({
                                 </div>
                               ) : null}
                             </fieldset>
+                            {visibleRelatedRows?.length ? (
+                              <fieldset className="od-relationship-graph-related-rows">
+                                <legend className="od-relationship-graph-related-rows-heading">
+                                  {item.relatedRowsLabel}
+                                </legend>
+                                {visibleRelatedRows.map((row) => (
+                                  <RelationshipGraphNodeControl
+                                    key={row.id}
+                                    {...nodeControlSharedProps}
+                                    column={column}
+                                    connectedRelationships={
+                                      connectedLabelsById.get(row.id) ?? []
+                                    }
+                                    group={item}
+                                    kind="row"
+                                    node={row}
+                                    related
+                                  />
+                                ))}
+                              </fieldset>
+                            ) : null}
                           </div>
                         </fieldset>
                       );

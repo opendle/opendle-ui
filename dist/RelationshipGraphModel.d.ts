@@ -5,6 +5,8 @@ export interface RelationshipGraphModelNode {
     readonly order: number;
     readonly actionable?: boolean;
     readonly parentId?: string;
+    /** A related row uses this group's route instead of its own edges. */
+    readonly pathSourceId?: string;
     readonly kind?: RelationshipGraphModelNodeKind;
     readonly searchValue: string;
 }

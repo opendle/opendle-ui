@@ -13,6 +13,7 @@ import {
 type FieldRequirement = "required" | "optional";
 type FormFieldOrientation = "stacked" | "inline";
 type FormSectionColumns = 1 | 2;
+type FormSectionVariant = "default" | "plain";
 type FormActionsAlignment = "start" | "end" | "between";
 
 interface FormControlAccessibilityProps {
@@ -141,12 +142,15 @@ export function FormField({
 export interface FormActionsProps extends HTMLAttributes<HTMLDivElement> {
   readonly alignment?: FormActionsAlignment;
   readonly children: ReactNode;
+  /** Secondary or destructive actions, separate from the main form action. */
+  readonly secondaryActions?: ReactNode;
 }
 
 export function FormActions({
   alignment = "end",
   children,
   className,
+  secondaryActions,
   ...props
 }: FormActionsProps) {
   return (
@@ -154,6 +158,44 @@ export function FormActions({
       {...props}
       className={["od-form-actions", className].filter(Boolean).join(" ")}
       data-alignment={alignment}
+    >
+      {hasContent(secondaryActions) ? (
+        <div className="od-form-actions-secondary">{secondaryActions}</div>
+      ) : null}
+      {children}
+    </div>
+  );
+}
+
+export interface FormGridProps extends HTMLAttributes<HTMLDivElement> {
+  readonly columns?: FormSectionColumns;
+  readonly children: ReactNode;
+}
+
+export type FormControlsProps = FieldsetHTMLAttributes<HTMLFieldSetElement>;
+
+/** Groups form controls without a visible frame; disabled locks the whole group. */
+export function FormControls({ className, ...props }: FormControlsProps) {
+  return (
+    <fieldset
+      {...props}
+      className={["od-form-controls", className].filter(Boolean).join(" ")}
+    />
+  );
+}
+
+/** A responsive field grid without an extra visible container. */
+export function FormGrid({
+  children,
+  className,
+  columns = 2,
+  ...props
+}: FormGridProps) {
+  return (
+    <div
+      {...props}
+      className={["od-form-grid", className].filter(Boolean).join(" ")}
+      data-columns={columns}
     >
       {children}
     </div>
@@ -169,6 +211,7 @@ export interface FormSectionProps extends Omit<
   readonly columns?: FormSectionColumns;
   readonly description?: ReactNode;
   readonly legend: ReactNode;
+  readonly variant?: FormSectionVariant;
 }
 
 export function FormSection({
@@ -178,6 +221,7 @@ export function FormSection({
   columns = 1,
   description,
   legend,
+  variant = "default",
   ...props
 }: FormSectionProps) {
   const descriptionId = useId();
@@ -189,6 +233,7 @@ export function FormSection({
       {...props}
       aria-describedby={describedBy}
       className={["od-form-section", className].filter(Boolean).join(" ")}
+      data-variant={variant}
     >
       <legend>{legend}</legend>
       {description ? (
@@ -241,4 +286,5 @@ export type {
   FormActionsAlignment,
   FormFieldOrientation,
   FormSectionColumns,
+  FormSectionVariant,
 };
