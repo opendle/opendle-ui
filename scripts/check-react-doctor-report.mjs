@@ -18,6 +18,7 @@ if (
   diagnostics.length !== 0 ||
   scores.length !== 1 ||
   scores.some((score) => score !== 100) ||
+  projects.some((project) => (project.skippedChecks ?? []).length !== 0) ||
   report.summary?.totalDiagnosticCount !== 0
 ) {
   console.error(

@@ -38,6 +38,13 @@ Use `PanelHeader` for a card title, description, and related actions. Use
 label-value pairs in a responsive description list. Supply one unique label
 per item. Long values wrap, and narrow containers stack the facts.
 
+Use `SessionPage` and `SignInCard` for an external identity sign-in page.
+`SignInCard` owns one pending action, prevents duplicate starts, announces
+failures with an alert, and enables retry after failure. It keeps the action
+disabled after success while the browser leaves the page. Hosts supply copy,
+`onSignIn`, error mapping, URL validation, and navigation. Authentication,
+authorization, and provider policy stay in the host.
+
 DataTable cards stack each label above its value when the table container is
 `22rem` wide or less. The title then uses its own row above selection and detail
 controls. This layout gives narrow cards the full content width at enlarged
@@ -471,6 +478,12 @@ npm test
 
 The repository check also runs the 14-day dependency policy, dependency audit,
 and React Doctor. React Doctor must report score 100 with zero diagnostics.
+
+The CLI uses React Doctor `0.2.2` to avoid the vulnerable `deslop-js`
+dependency in `0.2.3`. The overrides keep the existing `oxlint` `1.76.0`
+engine and `oxlint-plugin-react-doctor` `0.2.3` rules. The exact `oxc-parser`
+and `oxc-resolver` dependencies supply the native bindings omitted by the
+CLI package. The gate checks these tools and rejects skipped checks.
 
 Read [`AGENTS.md`](AGENTS.md) before work. Use the skills in
 [`.claude/skills/`](.claude/skills/) for design-system work, repository

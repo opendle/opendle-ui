@@ -100,6 +100,14 @@ if node scripts/check-react-doctor-report.mjs >/dev/null 2>&1; then
   echo "The React Doctor missing-input check passed unexpectedly." >&2
   exit 1
 fi
+if node scripts/check-react-doctor-report.mjs scripts/tests/fixtures/react-doctor-skipped.json >/dev/null 2>&1; then
+  echo "The React Doctor skipped-check fixture passed unexpectedly." >&2
+  exit 1
+fi
+if node scripts/check-react-doctor-runtime.mjs unsafe-action >/dev/null 2>&1; then
+  echo "The React Doctor runtime unsafe-input check passed unexpectedly." >&2
+  exit 1
+fi
 
 npm run format:check
 npm run lint
@@ -110,6 +118,7 @@ node scripts/panel-content-browser.mjs
 node scripts/application-shell-focus-browser.mjs
 node scripts/compact-checkbox-group-browser.mjs
 node scripts/radio-group-browser.mjs
+node scripts/sign-in-card-browser.mjs
 node scripts/graph-native-overlay-browser.mjs
 node scripts/graph-viewport-content-browser.mjs
 node scripts/relationship-column-header-browser.mjs

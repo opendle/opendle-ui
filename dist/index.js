@@ -131,6 +131,7 @@ export { PlanCardShell, } from "./components/PlanCardShell.js";
 export { ReviewPlanCard, } from "./components/ReviewPlanCard.js";
 export { ShellErrorBoundary, } from "./components/ShellErrorBoundary.js";
 export { SessionCard, SessionPage, } from "./components/SessionPage.js";
+export { SignInCard } from "./components/SignInCard.js";
 export { StatCard } from "./components/StatCard.js";
 export { StatePanel, } from "./components/StatePanel.js";
 export { StatusDot, } from "./components/StatusDot.js";

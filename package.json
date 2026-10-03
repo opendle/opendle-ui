@@ -57,12 +57,19 @@
     "esbuild": "0.28.2",
     "eslint": "10.8.0",
     "eslint-plugin-react-hooks": "7.1.1",
+    "oxc-parser": "0.132.0",
+    "oxc-resolver": "11.19.1",
     "prettier": "3.9.6",
     "react": "19.2.8",
-    "react-doctor": "0.2.3",
+    "react-doctor": "0.2.2",
     "react-dom": "19.2.8",
     "typescript": "6.0.3",
     "typescript-eslint": "8.65.0"
+  },
+  "overrides": {
+    "brace-expansion": "5.0.12",
+    "oxlint": "1.76.0",
+    "oxlint-plugin-react-doctor": "0.2.3"
   },
   "dependencies": {
     "@codemirror/autocomplete": "6.20.3",

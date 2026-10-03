@@ -1,0 +1,10 @@
+{
+  "projects": [
+    {
+      "diagnostics": [],
+      "score": { "score": 100 },
+      "skippedChecks": ["dead-code"]
+    }
+  ],
+  "summary": { "totalDiagnosticCount": 0 }
+}

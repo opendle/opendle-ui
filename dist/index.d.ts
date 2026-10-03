@@ -101,6 +101,7 @@ export { PlanCardShell, type PlanCardShellProps, } from "./components/PlanCardSh
 export { ReviewPlanCard, type ReviewPlanCardProps, type ReviewPlanDetail, type ReviewPlanState, } from "./components/ReviewPlanCard.js";
 export { ShellErrorBoundary, type ShellErrorBoundaryProps, } from "./components/ShellErrorBoundary.js";
 export { SessionCard, SessionPage, type SessionCardProps, type SessionPageProps, } from "./components/SessionPage.js";
+export { SignInCard, type SignInCardProps } from "./components/SignInCard.js";
 export { StatCard, type StatCardProps } from "./components/StatCard.js";
 export { StatePanel, type StatePanelKind, type StatePanelProps, } from "./components/StatePanel.js";
 export { StatusDot, type StatusDotProps, type StatusTone, } from "./components/StatusDot.js";

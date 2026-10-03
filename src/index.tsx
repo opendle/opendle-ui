@@ -485,6 +485,7 @@ export {
   type SessionCardProps,
   type SessionPageProps,
 } from "./components/SessionPage.js";
+export { SignInCard, type SignInCardProps } from "./components/SignInCard.js";
 export { StatCard, type StatCardProps } from "./components/StatCard.js";
 export {
   StatePanel,
