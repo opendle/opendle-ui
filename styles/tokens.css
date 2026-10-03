@@ -1646,7 +1646,10 @@
   box-shadow: 0 0.75rem 1.75rem rgb(4 8 10 / 30%);
 }
 
-.od-relationship-graph-group > .od-relationship-graph-node {
+.od-relationship-graph-group > .od-relationship-graph-node,
+.od-relationship-graph-group
+  > .od-relationship-graph-node-item
+  > .od-relationship-graph-node {
   border: 0;
   border-bottom: 1px solid #596565;
   border-radius: 0;
@@ -3258,7 +3261,7 @@ samp {
 
 .od-graph-inspector-fact {
   display: grid;
-  grid-template-columns: 5rem minmax(0, 1fr);
+  grid-template-columns: var(--od-fact-label-width, 5rem) minmax(0, 1fr);
   gap: 0.5rem;
   padding: 0.5rem 0.625rem;
   overflow-wrap: anywhere;
@@ -3280,7 +3283,7 @@ samp {
 }
 
 .od-graph-inspector-facts[data-measuring-fit] > .od-graph-inspector-fact {
-  grid-template-columns: 5rem minmax(0, 1fr);
+  grid-template-columns: var(--od-fact-label-width, 5rem) minmax(0, 1fr);
 }
 
 .od-graph-inspector-facts[data-measuring-fit]
@@ -6859,4 +6862,52 @@ samp {
   font-size: 0.875rem;
   line-height: 1.5;
   overflow-wrap: anywhere;
+}
+
+.od-relationship-graph-node-item {
+  position: relative;
+  min-width: 0;
+}
+
+.od-relationship-graph-node-item > .od-relationship-graph-node {
+  padding-inline-end: 3rem;
+}
+
+.od-relationship-graph-node-actions {
+  position: absolute;
+  z-index: 3;
+  inset-block-start: 0.375rem;
+  inset-inline-end: 0.375rem;
+  display: flex;
+  gap: 0.25rem;
+}
+
+.od-relationship-graph-node-name {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  min-width: 0;
+  gap: 0.125rem 0.5rem;
+}
+
+.od-relationship-graph-node-heading {
+  align-items: baseline;
+  flex-wrap: wrap;
+}
+
+.od-relationship-graph-node-tags {
+  margin-inline-start: auto;
+  justify-content: flex-end;
+  max-width: 100%;
+}
+
+.od-relationship-graph[data-compact="true"]
+  .od-relationship-graph-node-item
+  > .od-relationship-graph-node {
+  padding-inline-end: 2.75rem;
+  min-height: 2.625rem;
+}
+
+.od-dialog .od-graph-inspector-facts {
+  --od-fact-label-width: 11rem;
 }

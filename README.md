@@ -334,6 +334,13 @@ place its selected card first. Search covers the full graph and preserves the
 selection. Typing and clearing keep focus in the search input. `Show all`
 requests a null selection; the host keeps its normal unsaved-change guard.
 
+`RelationshipGraphNode.inlineDetail` places secondary text beside the node name.
+Tags align to the right of that line and wrap when needed. Optional `actions`
+render beside the selection control as independent buttons. Hosts supply their
+labels and Tab order. A host can omit `onNodeActivate` for selection-only card
+clicks and open the shared `Dialog` from an explicit edit action. The `edit`
+icon is available through `Icon`.
+
 ## Forms and input
 
 `FormField`, `FieldHelp`, and `FieldError` connect a label, help text, an error,

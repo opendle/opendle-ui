@@ -914,3 +914,48 @@ test("relationship graph keeps legacy selected-node inspector safety", () => {
   assert.match(selectedMarkup, /<dialog/);
   assert.doesNotMatch(missingMarkup, /<dialog/);
 });
+
+test("inline names and independent actions keep valid selection controls", () => {
+  const columns = graphColumns();
+  columns[0] = {
+    ...columns[0],
+    nodes: [
+      {
+        id: "source-a",
+        label: "Model name",
+        inlineDetail: "Provider name",
+        tags: [
+          {
+            label: "7 days ago",
+            description: "Last used on 26 September 2026",
+          },
+        ],
+        actions: React.createElement(
+          Button,
+          { "aria-label": "Edit model" },
+          "Edit",
+        ),
+      },
+    ],
+  };
+  const markup = renderToStaticMarkup(
+    React.createElement(RelationshipGraph, {
+      "aria-label": "Selection board",
+      columns,
+      relationships: [],
+    }),
+  );
+  assert.match(
+    markup,
+    /od-relationship-graph-node-name[\s\S]*?<strong>Model name<\/strong><span class="od-relationship-graph-node-detail">Provider name/,
+  );
+  assert.match(
+    markup,
+    /od-relationship-graph-node-heading[\s\S]*?od-relationship-graph-node-tags/,
+  );
+  assert.match(
+    markup,
+    /<\/button><div class="od-relationship-graph-node-actions"><button/,
+  );
+  assert.match(markup, /aria-label="Edit model"/);
+});

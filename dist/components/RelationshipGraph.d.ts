@@ -4,6 +4,10 @@ export interface RelationshipGraphNode {
     readonly id: string;
     readonly label: string;
     readonly detail?: ReactNode;
+    /** Secondary text beside the name, with wrapping when space is limited. */
+    readonly inlineDetail?: ReactNode;
+    /** Independent controls beside the selection button. Never nested inside it. */
+    readonly actions?: ReactNode;
     readonly content?: ReactNode;
     readonly searchText?: readonly string[];
     readonly state?: RelationshipGraphNodeState;

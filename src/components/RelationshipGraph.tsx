@@ -50,6 +50,10 @@ export interface RelationshipGraphNode {
   readonly id: string;
   readonly label: string;
   readonly detail?: ReactNode;
+  /** Secondary text beside the name, with wrapping when space is limited. */
+  readonly inlineDetail?: ReactNode;
+  /** Independent controls beside the selection button. Never nested inside it. */
+  readonly actions?: ReactNode;
   readonly content?: ReactNode;
   readonly searchText?: readonly string[];
   readonly state?: RelationshipGraphNodeState;
@@ -313,7 +317,7 @@ function RelationshipGraphNodeControl({
   const dimmed = activeNodeId !== null && !active;
   const directSearchMatch = directMatchIds.has(node.id);
   const searchContext = searchIsActive && !directSearchMatch;
-  return (
+  const control = (
     <button
       aria-label={nodeAccessibleName(node, column, connectedLabels, group)}
       aria-pressed={selectedId === node.id}
@@ -352,7 +356,29 @@ function RelationshipGraphNodeControl({
       type="button"
     >
       <span className="od-relationship-graph-node-heading">
-        <strong>{node.label}</strong>
+        <span className="od-relationship-graph-node-name">
+          <strong>{node.label}</strong>
+          {node.inlineDetail ? (
+            <span className="od-relationship-graph-node-detail">
+              {node.inlineDetail}
+            </span>
+          ) : null}
+        </span>
+        {node.tags?.length ? (
+          <span className="od-relationship-graph-node-tags">
+            {node.tags.map((tag) => (
+              <span
+                key={tag.label}
+                title={tag.description}
+                aria-label={tag.description}
+              >
+                {tag.label}
+                {tag.description ? <span aria-hidden="true"> ⓘ</span> : null}
+              </span>
+            ))}
+          </span>
+        ) : null}
+
         {state !== "default" || node.stateLabel !== undefined ? (
           <span className="od-relationship-graph-node-state">{stateLabel}</span>
         ) : null}
@@ -370,20 +396,6 @@ function RelationshipGraphNodeControl({
           {node.content}
         </span>
       ) : null}
-      {node.tags?.length ? (
-        <span className="od-relationship-graph-node-tags">
-          {node.tags.map((tag) => (
-            <span
-              key={tag.label}
-              title={tag.description}
-              aria-label={tag.description}
-            >
-              {tag.label}
-              {tag.description ? <span aria-hidden="true"> ⓘ</span> : null}
-            </span>
-          ))}
-        </span>
-      ) : null}
       {connectedRelationships.length > 0 ? (
         <span className="od-relationship-graph-node-relationships">
           {connectedRelationships.map(({ id, label }) => (
@@ -392,6 +404,14 @@ function RelationshipGraphNodeControl({
         </span>
       ) : null}
     </button>
+  );
+  return node.actions === undefined ? (
+    control
+  ) : (
+    <div className="od-relationship-graph-node-item">
+      {control}
+      <div className="od-relationship-graph-node-actions">{node.actions}</div>
+    </div>
   );
 }
 
