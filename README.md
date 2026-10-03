@@ -38,6 +38,19 @@ Use `PanelHeader` for a card title, description, and related actions. Use
 label-value pairs in a responsive description list. Supply one unique label
 per item. Long values wrap, and narrow containers stack the facts.
 
+Use `ActionButton` for an action with an icon and a short `label`. Both props
+are required. Supply a decorative icon without interactive children. The
+button fills its assigned width and measures its available content width. It
+shows icon and text, then
+text only, then icon only. It measures again when its size, label, icon, or
+font changes. The accessible name and native title retain the full label.
+Native button properties, form submission, disabled state, and a native button
+ref remain available. Use the native fieldset `ActionButtonGroup` for equal-width
+actions that fill one row. It accepts an accessible name and a group disabled
+state. Buttons keep a `2.75rem` minimum target. If even the icon targets
+cannot fit, the row scrolls locally. `ReviewPlanCard` uses these components
+for review, edit, refusal, and restore actions.
+
 Use `SessionPage` and `SignInCard` for an external identity sign-in page.
 `SignInCard` owns one pending action, prevents duplicate starts, announces
 failures with an alert, and enables retry after failure. It keeps the action

@@ -4205,6 +4205,64 @@ samp {
   padding: 0;
 }
 
+.od-action-button-group {
+  box-sizing: border-box;
+  margin: 0;
+  border: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: nowrap;
+  gap: var(--od-space-sm);
+  inline-size: 100%;
+  min-inline-size: 0;
+  overflow-x: auto;
+}
+
+.od-action-button-group > .od-action-button {
+  flex: 1 0 0;
+}
+
+.od-action-button.od-button {
+  position: relative;
+  box-sizing: border-box;
+  inline-size: 100%;
+  min-width: 2.75rem;
+  min-height: 2.75rem;
+  padding-inline: 0.625rem;
+  overflow: clip;
+  white-space: nowrap;
+}
+
+.od-action-button:focus-visible {
+  outline-offset: -3px;
+}
+
+.od-action-button-icon,
+.od-action-button-label {
+  flex: 0 0 auto;
+  inline-size: max-content;
+}
+
+.od-action-button-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: 1.125rem;
+  block-size: 1.125rem;
+}
+
+.od-action-button-icon > * {
+  max-inline-size: 100%;
+  max-block-size: 100%;
+}
+
+.od-action-button[data-presentation="text"] > .od-action-button-icon,
+.od-action-button[data-presentation="icon"] > .od-action-button-label {
+  position: absolute;
+  visibility: hidden;
+  pointer-events: none;
+}
+
 .od-icon-button {
   display: inline-grid;
   width: 2.375rem;
@@ -6097,8 +6155,6 @@ samp {
 }
 
 .od-plan-actions {
-  display: flex;
-  flex-wrap: wrap;
   gap: var(--od-space-sm);
   padding-top: 1rem;
   padding-bottom: var(--od-space-md);

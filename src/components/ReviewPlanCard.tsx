@@ -1,6 +1,8 @@
 import { useId, useState, type ReactNode, type SyntheticEvent } from "react";
 import type { ReactElement } from "react";
 import { AutoGrowTextarea } from "./AutoGrowTextarea.js";
+import { ActionButton, ActionButtonGroup } from "./ActionButton.js";
+import { Icon } from "../index.js";
 
 export type ReviewPlanState = "pending" | "approved" | "rejected";
 
@@ -173,24 +175,25 @@ export function ReviewPlanCard({
                   {draft.length} / {textMaxLength}
                 </small>
               ) : null}
-              <div>
-                <button
-                  type="button"
-                  className="od-button od-button-quiet text-button"
+              <ActionButtonGroup>
+                <ActionButton
+                  label="Cancel"
+                  icon={<Icon name="close" size={16} />}
+                  variant="quiet"
+                  className="text-button"
                   onClick={() => {
                     setMode("idle");
                   }}
-                >
-                  Cancel
-                </button>
-                <button
+                />
+                <ActionButton
+                  label={saveEditLabel}
+                  icon={<Icon name="check" size={16} />}
                   type="submit"
-                  className="od-button od-button-primary primary-button"
+                  variant="primary"
+                  className="primary-button"
                   disabled={!draft.trim()}
-                >
-                  {saveEditLabel}
-                </button>
-              </div>
+                />
+              </ActionButtonGroup>
             </form>
           ) : null}
           {mode === "refuse" ? (
@@ -209,67 +212,66 @@ export function ReviewPlanCard({
                 }}
                 rows={2}
               />
-              <div>
-                <button
-                  type="button"
-                  className="od-button od-button-quiet text-button"
+              <ActionButtonGroup>
+                <ActionButton
+                  label="Cancel"
+                  icon={<Icon name="close" size={16} />}
+                  variant="quiet"
+                  className="text-button"
                   onClick={() => {
                     setMode("idle");
                   }}
-                >
-                  Cancel
-                </button>
-                <button
+                />
+                <ActionButton
+                  label={
+                    feedback.trim() || !refuseEmptyLabel
+                      ? refuseSubmitLabel
+                      : refuseEmptyLabel
+                  }
+                  icon={<Icon name="close" size={16} />}
                   type="submit"
-                  className="od-button od-button-secondary secondary-button"
-                >
-                  {feedback.trim() || !refuseEmptyLabel
-                    ? refuseSubmitLabel
-                    : refuseEmptyLabel}
-                </button>
-              </div>
+                  className="secondary-button"
+                />
+              </ActionButtonGroup>
             </form>
           ) : null}
           {mode === "idle" ? (
-            <div className="od-plan-actions plan-actions">
+            <ActionButtonGroup className="od-plan-actions plan-actions">
               {renderActions?.(actions) ?? (
                 <>
-                  <button
-                    type="button"
-                    className="od-button od-button-secondary secondary-button"
+                  <ActionButton
+                    label="Refuse"
+                    icon={<Icon name="close" size={16} />}
+                    className="secondary-button"
                     onClick={actions.refuse}
-                  >
-                    Refuse
-                  </button>
-                  <button
-                    type="button"
-                    className="od-button od-button-secondary secondary-button"
+                  />
+                  <ActionButton
+                    label="Edit"
+                    icon={<Icon name="edit" size={16} />}
+                    className="secondary-button"
                     onClick={actions.edit}
-                  >
-                    Edit
-                  </button>
-                  <button
-                    type="button"
-                    className="od-button od-button-primary primary-button"
+                  />
+                  <ActionButton
+                    label="Approve"
+                    icon={<Icon name="check" size={16} />}
+                    variant="primary"
+                    className="primary-button"
                     onClick={actions.approve}
-                  >
-                    Approve
-                  </button>
+                  />
                 </>
               )}
-            </div>
+            </ActionButtonGroup>
           ) : null}
         </>
       ) : (
         <div className="od-plan-result plan-result">
           <p>{state === "approved" ? approvedMessage : rejectionMessage}</p>
-          <button
-            type="button"
-            className="od-button od-button-quiet"
+          <ActionButton
+            label="Restore plan"
+            icon={<Icon name="refresh" size={16} />}
+            variant="quiet"
             onClick={onRestore}
-          >
-            Restore plan
-          </button>
+          />
         </div>
       )}
     </article>

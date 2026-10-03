@@ -8,7 +8,9 @@ const iconPaths = {
     audit: "M5 4h14v16H5z M8 8h8 M8 12h8 M8 16h5",
     book: "M4 5.5A2.5 2.5 0 0 1 6.5 3H20v16H6.5A2.5 2.5 0 0 0 4 21z M4 5.5v15",
     chevron: "m6 9 6 6 6-6",
+    check: "m5 12 4 4 10-10",
     clock: "M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z M12 7v5l3 2",
+    close: "M6 6l12 12M6 18 18 6",
     cloud: "M7 18h10a4 4 0 0 0 .5-8A6 6 0 0 0 6 8a5 5 0 0 0 1 10",
     database: "M4 5c0-1.1 3.6-2 8-2s8 .9 8 2-3.6 2-8 2-8-.9-8-2z M4 5v7c0 1.1 3.6 2 8 2s8-.9 8-2V5 M4 12v7c0 1.1 3.6 2 8 2s8-.9 8-2v-7",
     edit: "m16 3 5 5-12 12-6 1 1-6 12-12z M14 5l5 5",
@@ -101,6 +103,7 @@ export { YamlEditor, } from "./components/YamlEditor.js";
 export { SecretRevealPanel, } from "./components/SecretRevealPanel.js";
 export { ApplicationNavigation, ApplicationNavigationGroup, ApplicationShell, ApplicationSidebar, ApplicationTopbar, } from "./components/ApplicationShell.js";
 export { Button, } from "./components/Button.js";
+export { ActionButton, ActionButtonGroup, } from "./components/ActionButton.js";
 export { DataTable, } from "./components/DataTable.js";
 export { EditableTable, } from "./components/EditableTable.js";
 export { AccountMenu, } from "./components/AccountMenu.js";

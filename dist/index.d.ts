@@ -2,7 +2,7 @@ export { SkipLink, type SkipLinkProps } from "./components/SkipLink.js";
 import type { SVGAttributes } from "react";
 /** Public package version. Keep this value aligned with package.json. */
 export declare const OPENDLE_UI_VERSION: "0.2.0";
-export type IconName = "activity" | "arrow-up" | "audit" | "book" | "chevron" | "clock" | "cloud" | "database" | "edit" | "eye" | "file" | "filter" | "grid" | "health" | "key" | "layers" | "list" | "lock" | "logout" | "menu" | "more" | "moon" | "plus" | "refresh" | "search" | "server" | "settings" | "shield" | "spark" | "users" | "warning" | "workspace";
+export type IconName = "activity" | "arrow-up" | "audit" | "book" | "chevron" | "check" | "clock" | "close" | "cloud" | "database" | "edit" | "eye" | "file" | "filter" | "grid" | "health" | "key" | "layers" | "list" | "lock" | "logout" | "menu" | "more" | "moon" | "plus" | "refresh" | "search" | "server" | "settings" | "shield" | "spark" | "users" | "warning" | "workspace";
 export interface IconProps extends SVGAttributes<SVGSVGElement> {
     readonly name: IconName;
     readonly size?: number;
@@ -70,6 +70,7 @@ export { YamlEditor, type YamlEditorCompletionSource, type YamlEditorDiagnostic,
 export { SecretRevealPanel, type SecretRevealPanelProps, } from "./components/SecretRevealPanel.js";
 export { ApplicationNavigation, ApplicationNavigationGroup, ApplicationShell, ApplicationSidebar, ApplicationTopbar, type ApplicationNavigationGroupProps, type ApplicationNavigationProps, type ApplicationShellProps, type ApplicationSidebarProps, type ApplicationTopbarProps, } from "./components/ApplicationShell.js";
 export { Button, type ButtonProps, type ButtonVariant, } from "./components/Button.js";
+export { ActionButton, ActionButtonGroup, type ActionButtonProps, type ActionButtonGroupProps, } from "./components/ActionButton.js";
 export { DataTable, type DataTableAction, type DataTableActionContext, type DataTableCellContext, type DataTableColumn, type DataTableDensity, type DataTableExpansion, type DataTableLoadMore, type DataTableProps, type DataTableSelection, type DataTableSort, type DataTableSortDirection, type DataTableState, } from "./components/DataTable.js";
 export { EditableTable, type EditableTableCellContext, type EditableTableColumn, type EditableTableDeleteConfirmation, type EditableTableProps, type EditableTableReorder, type EditableTableReorderContext, type EditableTableRow, type EditableTableSaveMode, } from "./components/EditableTable.js";
 export { AccountMenu, type AccountMenuProps, } from "./components/AccountMenu.js";
