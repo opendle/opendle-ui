@@ -326,6 +326,14 @@ the host takes focus after a route change. Close the dialog before the host
 moves focus. The phone navigation supplies this handoff. Existing `Dialog`
 and `ConfirmationDialog` callers keep the default focus-return behavior.
 
+`RelationshipGraph.compact` selects small nested rows, quiet icon actions, and
+a toolbar with the graph background. `RelationshipGraphNode.tags` accepts
+labels with optional descriptions shown as information tooltips. Set
+`filterToSelection` to hide unrelated items outside the selected column and
+place its selected card first. Search covers the full graph and preserves the
+selection. Typing and clearing keep focus in the search input. `Show all`
+requests a null selection; the host keeps its normal unsaved-change guard.
+
 ## Forms and input
 
 `FormField`, `FieldHelp`, and `FieldError` connect a label, help text, an error,

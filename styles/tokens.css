@@ -1275,7 +1275,7 @@
 }
 
 .od-relationship-graph-toolbar .od-graph-toolbar-center {
-  width: min(32rem, 100%);
+  width: 100%;
 }
 
 .od-relationship-graph-toolbar .od-relationship-graph-search {
@@ -1287,7 +1287,8 @@
 }
 
 .od-relationship-graph-search-field {
-  width: min(32rem, 100%);
+  flex: 1 1 auto;
+  width: 100%;
   min-width: 0;
   display: grid;
   gap: 0.375rem;
@@ -1346,6 +1347,147 @@
   background: var(--od-color-surface-raised);
   font: inherit;
   font-weight: 700;
+  white-space: nowrap;
+  flex: 0 0 auto;
+}
+
+.od-relationship-graph-node-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+}
+
+.od-relationship-graph-node-tags > span {
+  padding: 0.125rem 0.375rem;
+  border: 1px solid #53615e;
+  border-radius: var(--od-radius-sm);
+  color: #cbd7ce;
+  background: rgb(155 180 94 / 7%);
+  font-size: 0.6875rem;
+  line-height: 1.4;
+}
+
+.od-relationship-graph[data-compact="true"] {
+  gap: 0;
+  color: #e5ebe7;
+  background: #182023;
+}
+
+.od-relationship-graph[data-compact="true"] > .od-relationship-graph-toolbar {
+  grid-template-columns: minmax(10rem, 15rem) minmax(0, 1fr);
+  align-items: end;
+  border-bottom: 1px solid #323c3e;
+  gap: 1rem;
+  z-index: 5;
+}
+
+.od-relationship-graph[data-compact="true"]
+  > .od-relationship-graph-toolbar[data-actions="true"] {
+  grid-template-columns: minmax(10rem, 15rem) minmax(0, 1fr) auto;
+}
+
+.od-relationship-graph[data-compact="true"]
+  > .od-relationship-graph-toolbar[data-leading="false"] {
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.od-relationship-graph[data-compact="true"]
+  > .od-relationship-graph-toolbar[data-leading="false"][data-actions="false"] {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.od-relationship-graph[data-compact="true"] .od-graph-toolbar > div {
+  width: 100%;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.od-relationship-graph[data-compact="true"] .od-graph-toolbar-leading > * {
+  width: 100%;
+}
+
+.od-relationship-graph[data-compact="true"]
+  :is(.od-relationship-graph-search input, .od-searchable-select-input) {
+  color: #e5ebe7;
+  background: #232d30;
+  border-color: #4c5859;
+}
+
+.od-relationship-graph[data-compact="true"]
+  :is(.od-icon-button, .od-relationship-graph-search > button) {
+  color: #d3ded6;
+  background: transparent;
+  border-color: #4c5859;
+  box-shadow: none;
+}
+
+.od-relationship-graph[data-compact="true"] .od-icon-button {
+  width: 2rem;
+  height: 2rem;
+  min-height: 2rem;
+  padding: 0.375rem;
+}
+
+.od-relationship-graph[data-compact="true"]
+  :is(.od-icon-button:hover, .od-relationship-graph-search > button:hover) {
+  color: #f2f5f1;
+  background: #303b3d;
+}
+
+.od-relationship-graph[data-compact="true"] .od-relationship-graph-group-body {
+  gap: 0.25rem;
+  padding: 0.375rem;
+}
+
+.od-relationship-graph[data-compact="true"] .od-relationship-graph-nodes {
+  gap: 0.75rem;
+}
+
+.od-relationship-graph[data-compact="true"] .od-relationship-graph-rows {
+  gap: 0.25rem;
+}
+
+.od-relationship-graph[data-compact="true"]
+  :is(.od-relationship-graph-node, .od-relationship-graph-group) {
+  box-shadow: none;
+}
+
+.od-relationship-graph[data-compact="true"]
+  .od-relationship-graph-node[data-node-kind="row"] {
+  padding: 0.5rem 0.625rem;
+  border-color: transparent;
+  background: transparent;
+}
+
+.od-relationship-graph[data-compact="true"]
+  .od-relationship-graph-node[data-node-kind="row"]:hover {
+  background: #303b3d;
+}
+
+.od-relationship-graph[data-compact="true"]
+  .od-relationship-graph-node[data-selected="true"] {
+  border-color: var(--od-color-lime);
+  box-shadow: inset 3px 0 var(--od-color-lime);
+}
+
+.od-relationship-graph[data-compact="true"]
+  :is(
+    .od-relationship-graph-group-heading,
+    .od-relationship-graph-node-relationships
+  ),
+.od-relationship-graph[data-compact="true"]
+  .od-relationship-graph-node:is([data-state="ready"], [data-state="enabled"])
+  .od-relationship-graph-node-state {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
 
 .od-relationship-graph-viewport {
@@ -1779,6 +1921,35 @@
 }
 
 @media (max-width: 48rem) {
+  .od-relationship-graph[data-compact="true"] > .od-relationship-graph-toolbar,
+  .od-relationship-graph[data-compact="true"]
+    > .od-relationship-graph-toolbar[data-actions],
+  .od-relationship-graph[data-compact="true"]
+    > .od-relationship-graph-toolbar[data-leading] {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.5rem;
+  }
+
+  .od-relationship-graph[data-compact="true"] .od-graph-toolbar-center {
+    grid-column: 1;
+  }
+
+  .od-relationship-graph[data-compact="true"] .od-graph-toolbar-actions {
+    grid-column: 1;
+    justify-self: start;
+  }
+
+  .od-relationship-graph[data-compact="true"] .od-relationship-graph-search {
+    flex-direction: row;
+    align-items: end;
+  }
+
+  .od-relationship-graph[data-compact="true"]
+    .od-relationship-graph-search
+    > button {
+    width: auto;
+  }
+
   .od-relationship-graph-search {
     align-items: stretch;
     flex-direction: column;

@@ -8,6 +8,10 @@ export interface RelationshipGraphNode {
     readonly searchText?: readonly string[];
     readonly state?: RelationshipGraphNodeState;
     readonly stateLabel?: string;
+    readonly tags?: readonly {
+        readonly label: string;
+        readonly description?: string;
+    }[];
 }
 /** One labelled compound card whose nested rows are controls. */
 export interface RelationshipGraphGroup extends RelationshipGraphNode {
@@ -70,6 +74,10 @@ export interface RelationshipGraphProps extends Omit<HTMLAttributes<HTMLElement>
     /** The selected-node inspector. It is removed when the selected node is not in the graph. */
     readonly inspector?: ReactNode;
     readonly fullPage?: boolean;
+    /** Use small rows, quiet actions, and tags for a dense relationship board. */
+    readonly compact?: boolean;
+    /** Hide unrelated items outside the selected column. Search still covers all items. */
+    readonly filterToSelection?: boolean;
     /** The exact local viewport name. Omit to use the graph name plus " viewport". */
     readonly viewportLabel?: string;
     /** Content before the retained board, inside the local viewport. */
@@ -90,5 +98,5 @@ export interface RelationshipGraphProps extends Omit<HTMLAttributes<HTMLElement>
     readonly searchContextLabel?: string;
 }
 /** A host-neutral, responsive relationship graph with three named columns. */
-export declare function RelationshipGraph({ columns, relationships, selectedNodeId, defaultSelectedNodeId, onSelectionChange, onNodeActivate, auxiliaryInspector, inspector, fullPage, viewportLabel, viewportContent, searchLabel, searchPlaceholder, searchQuery, defaultSearchQuery, onSearchQueryChange, toolbar, emptyState, invalidState, noResultsTitle, noResultsDescription, clearSearchLabel, partialNoResultsTitle, partialNoResultsDescription, searchContextLabel, className, "aria-label": ariaLabel, ...props }: RelationshipGraphProps): import("react").JSX.Element;
+export declare function RelationshipGraph({ columns, relationships, selectedNodeId, defaultSelectedNodeId, onSelectionChange, onNodeActivate, auxiliaryInspector, inspector, fullPage, compact, filterToSelection, viewportLabel, viewportContent, searchLabel, searchPlaceholder, searchQuery, defaultSearchQuery, onSearchQueryChange, toolbar, emptyState, invalidState, noResultsTitle, noResultsDescription, clearSearchLabel, partialNoResultsTitle, partialNoResultsDescription, searchContextLabel, className, "aria-label": ariaLabel, ...props }: RelationshipGraphProps): import("react").JSX.Element;
 //# sourceMappingURL=RelationshipGraph.d.ts.map

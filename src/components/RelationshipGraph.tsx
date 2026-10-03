@@ -54,6 +54,10 @@ export interface RelationshipGraphNode {
   readonly searchText?: readonly string[];
   readonly state?: RelationshipGraphNodeState;
   readonly stateLabel?: string;
+  readonly tags?: readonly {
+    readonly label: string;
+    readonly description?: string;
+  }[];
 }
 
 /** One labelled compound card whose nested rows are controls. */
@@ -128,6 +132,10 @@ export interface RelationshipGraphProps extends Omit<
   /** The selected-node inspector. It is removed when the selected node is not in the graph. */
   readonly inspector?: ReactNode;
   readonly fullPage?: boolean;
+  /** Use small rows, quiet actions, and tags for a dense relationship board. */
+  readonly compact?: boolean;
+  /** Hide unrelated items outside the selected column. Search still covers all items. */
+  readonly filterToSelection?: boolean;
   /** The exact local viewport name. Omit to use the graph name plus " viewport". */
   readonly viewportLabel?: string;
   /** Content before the retained board, inside the local viewport. */
@@ -247,7 +255,8 @@ function nodeAccessibleName(
     ? `Connected to ${connectedLabels.join(", ")}.`
     : "No connected items.";
   const groupLabel = group ? ` Nested in ${group.label}.` : "";
-  return `${node.label}. ${column.label} column.${groupLabel} ${stateLabel}. ${relationship}`;
+  const tags = node.tags?.map((tag) => tag.description ?? tag.label).join(". ");
+  return `${node.label}. ${column.label} column.${groupLabel} ${stateLabel}. ${relationship}${tags ? ` ${tags}.` : ""}`;
 }
 
 interface RelationshipGraphConnectedLabel {
@@ -361,6 +370,20 @@ function RelationshipGraphNodeControl({
           {node.content}
         </span>
       ) : null}
+      {node.tags?.length ? (
+        <span className="od-relationship-graph-node-tags">
+          {node.tags.map((tag) => (
+            <span
+              key={tag.label}
+              title={tag.description}
+              aria-label={tag.description}
+            >
+              {tag.label}
+              {tag.description ? <span aria-hidden="true"> ⓘ</span> : null}
+            </span>
+          ))}
+        </span>
+      ) : null}
       {connectedRelationships.length > 0 ? (
         <span className="od-relationship-graph-node-relationships">
           {connectedRelationships.map(({ id, label }) => (
@@ -431,15 +454,6 @@ function editableTarget(target: EventTarget | null) {
     (target instanceof HTMLElement && target.isContentEditable)
   );
 }
-
-const relationshipGraphFocusableActionSelector = [
-  "button:not([disabled])",
-  "a[href]",
-  "input:not([disabled])",
-  "select:not([disabled])",
-  "textarea:not([disabled])",
-  '[tabindex]:not([tabindex="-1"])',
-].join(", ");
 
 function assertRelationshipGraphColumns(
   columns: readonly RelationshipGraphColumn[],
@@ -571,6 +585,8 @@ export function RelationshipGraph({
   auxiliaryInspector,
   inspector,
   fullPage = false,
+  compact = false,
+  filterToSelection = false,
   viewportLabel,
   viewportContent,
   searchLabel = "Search graph",
@@ -628,16 +644,35 @@ export function RelationshipGraph({
     >
   >(new Map());
   const reportedMissingSelectionRef = useRef<string | null>(null);
-  const previousQueryRef = useRef("");
-  const searchOriginSelectionRef = useRef<string | null>(null);
   const onSelectionChangeRef = useRef(onSelectionChange);
   const selectedId =
     selectedNodeId === undefined ? internalSelection : selectedNodeId;
   const query = searchQuery ?? internalQuery;
 
+  const orderedColumns = useMemo(() => {
+    if (!filterToSelection || query.trim() || selectedId === null)
+      return columns;
+    return columns.map((column) => {
+      const selectedGroup = column.nodes.find(
+        (node) =>
+          node.id === selectedId ||
+          (isRelationshipGraphGroup(node) &&
+            node.rows.some((row) => row.id === selectedId)),
+      );
+      if (!selectedGroup) return column;
+      return {
+        ...column,
+        nodes: [
+          selectedGroup,
+          ...column.nodes.filter((node) => node !== selectedGroup),
+        ],
+      };
+    }) as unknown as typeof columns;
+  }, [columns, filterToSelection, query, selectedId]);
+
   const modelNodes = useMemo<readonly RelationshipGraphModelNode[]>(
     () =>
-      columns.flatMap((column, columnIndex) =>
+      orderedColumns.flatMap((column, columnIndex) =>
         flattenRelationshipGraphColumn(column).map(
           ({ group, kind, node, order }) => ({
             actionable:
@@ -653,7 +688,7 @@ export function RelationshipGraph({
           }),
         ),
       ),
-    [columns],
+    [orderedColumns],
   );
   const modelRelationships = useMemo<
     readonly RelationshipGraphModelRelationship[]
@@ -677,7 +712,7 @@ export function RelationshipGraph({
       relationships,
     );
     return new Map(
-      columns.flatMap((column) =>
+      orderedColumns.flatMap((column) =>
         flattenRelationshipGraphColumn(column).map(
           ({ group, node }) =>
             [node.id, { column, ...(group ? { group } : {}), node }] as const,
@@ -690,14 +725,35 @@ export function RelationshipGraph({
     columns,
     modelNodes,
     modelRelationships,
+    orderedColumns,
     relationships,
     searchContextLabel,
     searchLabel,
   ]);
-  const searchResult = useMemo(
-    () => relationshipGraphSearch(query, modelNodes, modelRelationships),
-    [modelNodes, modelRelationships, query],
-  );
+  const searchResult = useMemo(() => {
+    const result = relationshipGraphSearch(
+      query,
+      modelNodes,
+      modelRelationships,
+    );
+    const selected = modelNodes.find((node) => node.id === selectedId);
+    if (!filterToSelection || query.trim() || !selected) return result;
+    const path = relationshipGraphPath(
+      selectedId,
+      modelNodes,
+      modelRelationships,
+    );
+    return {
+      ...result,
+      visibleNodeIds: new Set(
+        modelNodes.flatMap((node) =>
+          node.columnIndex === selected.columnIndex || path.nodeIds.has(node.id)
+            ? [node.id]
+            : [],
+        ),
+      ),
+    };
+  }, [filterToSelection, modelNodes, modelRelationships, query, selectedId]);
   const visibleModelNodes = useMemo(
     () => modelNodes.filter((node) => searchResult.visibleNodeIds.has(node.id)),
     [modelNodes, searchResult.visibleNodeIds],
@@ -863,6 +919,7 @@ export function RelationshipGraph({
       updateState({
         announcement: `${previous?.node.label ?? "The selected item"} is unavailable.`,
       });
+      if (document.activeElement === searchInputRef.current) return;
       const firstNode = nodeRefs.current.get(
         visibleActionableModelNodes[0]?.id ?? "",
       );
@@ -900,6 +957,7 @@ export function RelationshipGraph({
       hoveredNodeId: hoverIsHidden ? null : hoveredNodeId,
     });
     if (!focusIsHidden) return;
+    if (document.activeElement === searchInputRef.current) return;
     const selectedNode =
       selectedId !== null &&
       actionableNodeIds.has(selectedId) &&
@@ -936,96 +994,22 @@ export function RelationshipGraph({
     visibleNodeIds,
   ]);
 
-  useLayoutEffect(() => {
-    const previousQuery = previousQueryRef.current.trim();
-    const currentQuery = query.trim();
-    previousQueryRef.current = query;
-    if (!previousQuery && currentQuery) {
-      searchOriginSelectionRef.current = selectedId;
-    }
-    if (previousQuery && !currentQuery) {
-      const restoreId = searchOriginSelectionRef.current;
-      searchOriginSelectionRef.current = null;
-      const targetId =
-        restoreId !== null && actionableNodeIds.has(restoreId)
-          ? restoreId
-          : (visibleActionableModelNodes[0]?.id ?? null);
-      if (targetId !== null) {
-        if (selectedNodeId === undefined) {
-          updateState({ internalSelection: targetId });
-        }
-        if (selectedId !== targetId) {
-          onSelectionChangeRef.current?.(targetId);
-        }
-        nodeRefs.current.get(targetId)?.focus({ preventScroll: true });
-      } else {
-        if (selectedNodeId === undefined) {
-          updateState({ internalSelection: null });
-        }
-        if (selectedId !== null) {
-          onSelectionChangeRef.current?.(null);
-        }
-        searchInputRef.current?.focus({ preventScroll: true });
-      }
-      return;
-    }
-    if (
-      !currentQuery ||
-      (selectedId !== null &&
-        actionableNodeIds.has(selectedId) &&
-        visibleNodeIds.has(selectedId))
-    ) {
-      return;
-    }
-    const firstDirectMatch = visibleActionableModelNodes.find((node) =>
-      searchResult.directMatchIds.has(node.id),
-    );
-    const firstSearchTarget =
-      firstDirectMatch ?? visibleActionableModelNodes[0];
-    if (searchResult.directMatchIds.size > 0 && firstSearchTarget) {
-      if (selectedNodeId === undefined) {
-        updateState({ internalSelection: firstSearchTarget.id });
-      }
-      onSelectionChangeRef.current?.(firstSearchTarget.id);
-      updateState({
-        announcement: `${String(searchResult.directMatchIds.size)} matching items.`,
-      });
-      const target = nodeRefs.current.get(firstSearchTarget.id);
-      target?.focus({ preventScroll: true });
-      target?.scrollIntoView({ block: "nearest", inline: "nearest" });
-      return;
-    }
-    const firstPartialAction = columns
-      .filter((column) => column.partialResult !== undefined)
-      .map((column) => partialResultRefs.current.get(column.id))
-      .find(
-        (wrapper): wrapper is HTMLDivElement =>
-          wrapper !== undefined &&
-          wrapper.querySelector<HTMLElement>(
-            relationshipGraphFocusableActionSelector,
-          ) !== null,
-      )
-      ?.querySelector<HTMLElement>(relationshipGraphFocusableActionSelector);
+  useEffect(() => {
     updateState({
-      announcement: partialNoSearchResults
-        ? partialNoResultsTitle
-        : noResultsTitle,
-    });
-    (firstPartialAction ?? clearSearchRef.current)?.focus({
-      preventScroll: true,
+      announcement: query.trim()
+        ? searchResult.directMatchIds.size > 0
+          ? `${String(searchResult.directMatchIds.size)} matching items.`
+          : partialNoSearchResults
+            ? partialNoResultsTitle
+            : noResultsTitle
+        : "",
     });
   }, [
-    actionableNodeIds,
-    columns,
-    noResultsTitle,
-    partialNoResultsTitle,
-    partialNoSearchResults,
     query,
-    searchResult.directMatchIds,
-    selectedId,
-    selectedNodeId,
-    visibleActionableModelNodes,
-    visibleNodeIds,
+    searchResult.directMatchIds.size,
+    partialNoSearchResults,
+    partialNoResultsTitle,
+    noResultsTitle,
   ]);
 
   useLayoutEffect(() => {
@@ -1191,10 +1175,23 @@ export function RelationshipGraph({
             <kbd aria-hidden="true">/</kbd>
           </span>
         </span>
+        {filterToSelection && selectedId !== null && !query.trim() ? (
+          <button
+            type="button"
+            onClick={() => {
+              if (selectedNodeId === undefined)
+                updateState({ internalSelection: null });
+              onSelectionChange?.(null);
+            }}
+          >
+            Show all
+          </button>
+        ) : null}
         {query ? (
           <button
             onClick={() => {
               changeQuery("");
+              searchInputRef.current?.focus({ preventScroll: true });
             }}
             ref={clearSearchRef}
             type="button"
@@ -1211,6 +1208,10 @@ export function RelationshipGraph({
       searchInputId,
       searchLabel,
       searchPlaceholder,
+      filterToSelection,
+      selectedId,
+      selectedNodeId,
+      onSelectionChange,
     ],
   );
 
@@ -1221,6 +1222,7 @@ export function RelationshipGraph({
       className={classes("od-relationship-graph", className)}
       data-edge-to-edge={edgeToEdge}
       data-full-page={fullPage}
+      data-compact={compact}
       ref={rootRef}
     >
       <output aria-live="polite" className="od-visually-hidden">
@@ -1266,6 +1268,7 @@ export function RelationshipGraph({
                 <button
                   onClick={() => {
                     changeQuery("");
+                    searchInputRef.current?.focus({ preventScroll: true });
                   }}
                   type="button"
                 >
@@ -1307,7 +1310,7 @@ export function RelationshipGraph({
                 );
               })}
             </svg>
-            {columns.map((column, columnIndex) => {
+            {orderedColumns.map((column, columnIndex) => {
               const visibleNodes = flattenRelationshipGraphColumn(
                 column,
               ).filter(({ node }) => searchResult.visibleNodeIds.has(node.id));

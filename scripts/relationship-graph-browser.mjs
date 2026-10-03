@@ -941,8 +941,8 @@ try {
     "true",
   );
   await search.fill("missing");
-  await desktop.waitForFunction(
-    () => document.activeElement?.textContent === "Load more records",
+  await desktop.waitForFunction(() =>
+    document.activeElement?.matches('input[type="search"]'),
   );
   assert.match(
     await desktop.locator("output.od-visually-hidden").textContent(),
@@ -950,8 +950,8 @@ try {
     "A partial no-match must announce that only loaded records were searched.",
   );
   await desktop.evaluate(() => window.setRelationshipGraphPartial(false));
-  await desktop.waitForFunction(
-    () => document.activeElement?.textContent === "Clear search",
+  await desktop.waitForFunction(() =>
+    document.activeElement?.matches('input[type="search"]'),
   );
   assert.match(
     await desktop.locator("output.od-visually-hidden").textContent(),
@@ -977,9 +977,9 @@ try {
     "true",
   );
   assert.equal(
-    await activeElementIs(node(desktop, "record-a")),
+    await activeElementIs(search),
     true,
-    "Clearing search must restore focus to the prior selected control.",
+    "Clearing search must keep focus in the search input.",
   );
   await desktop.evaluate(() => window.setRelationshipToolbarMode("search"));
   await desktop.waitForFunction(
