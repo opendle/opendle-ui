@@ -41,6 +41,7 @@ required_files=(
   "scripts/relationship-column-header-browser.mjs"
   "scripts/dialog-playground-browser.mjs"
   "scripts/ordered-choice-list-browser.mjs"
+  "scripts/modal-form-controls-browser.mjs"
   "scripts/panel-content-browser.mjs"
   "scripts/build-consumer.mjs"
   "scripts/check-react-doctor-report.mjs"
@@ -77,6 +78,7 @@ node --check scripts/graph-native-overlay-browser.mjs
 node --check scripts/relationship-column-header-browser.mjs
 node --check scripts/dialog-playground-browser.mjs
 node --check scripts/ordered-choice-list-browser.mjs
+node --check scripts/modal-form-controls-browser.mjs
 node --check scripts/panel-content-browser.mjs
 node --check scripts/action-button-browser.mjs
 node --input-type=module -e "import('./dist/index.js').then((shared) => { for (const name of ['AccountMenu', 'AdvancedFieldsDisclosure', 'BoundedDataExplorer', 'ChangeTimeline', 'DateTime', 'Dialog', 'ExplorerWorkspace', 'FileDropZone', 'FormActions', 'FormField', 'FormSection', 'InlineAlert', 'ManagedFileList', 'MetadataBagList', 'OntologyInheritanceTree', 'OperationPlayground', 'PanelContent', 'ReviewPlanCard', 'SavedViewCanvas', 'SearchableSelect', 'SecretRevealPanel', 'WorkspaceSelector']) if (!(name in shared)) throw new Error('Missing shared export: ' + name); })"
@@ -118,6 +120,7 @@ npm run typecheck
 npm test
 npm run test:browser
 node scripts/ordered-choice-list-browser.mjs
+node scripts/modal-form-controls-browser.mjs
 node scripts/action-button-browser.mjs
 node scripts/panel-content-browser.mjs
 node scripts/application-shell-focus-browser.mjs

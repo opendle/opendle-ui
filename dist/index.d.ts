@@ -60,8 +60,8 @@ export declare const designTokens: {
     };
 };
 export { AutoGrowTextarea, type AutoGrowTextareaProps, } from "./components/AutoGrowTextarea.js";
-export { AdvancedFieldsDisclosure, FieldError, FieldHelp, FormActions, FormControls, FormField, FormGrid, FormSection, type AdvancedFieldsDisclosureProps, type FieldErrorProps, type FieldHelpProps, type FieldRequirement, type FormActionsAlignment, type FormActionsProps, type FormControlsProps, type FormFieldOrientation, type FormFieldProps, type FormGridProps, type FormSectionColumns, type FormSectionProps, type FormSectionVariant, } from "./components/Form.js";
-export { CheckboxControl, NumberControl, SelectControl, SwitchControl, TextareaControl, TextControl, type CheckboxControlProps, type NumberControlProps, type SelectControlProps, type SwitchControlProps, type TextareaControlProps, type TextControlProps, } from "./components/FormControls.js";
+export { AdvancedFieldsDisclosure, FieldError, FieldHelp, FormActions, FormControls, FormField, FormGrid, FormSection, type AdvancedFieldsDisclosureProps, type FieldErrorProps, type FieldHelpProps, type FieldRequirement, type FormActionsAlignment, type FormActionsLayout, type FormActionsProps, type FormControlsProps, type FormFieldOrientation, type FormFieldProps, type FormGridProps, type FormSectionColumns, type FormSectionProps, type FormSectionVariant, } from "./components/Form.js";
+export { CheckboxChipGroup, CheckboxControl, NumberControl, SelectControl, SwitchControl, TextareaControl, TextControl, type CheckboxControlProps, type CheckboxChipGroupProps, type NumberControlProps, type SelectControlProps, type SwitchControlProps, type TextareaControlProps, type TextControlProps, } from "./components/FormControls.js";
 export { CompactCheckboxGroup, type CompactCheckboxGroupOption, type CompactCheckboxGroupProps, } from "./components/CompactCheckboxGroup.js";
 export { DateTime, type DateTimeProps } from "./components/DateTime.js";
 export { FileDropZone, type FileDropZoneProps, } from "./components/FileDropZone.js";

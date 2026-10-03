@@ -1,4 +1,4 @@
-import type { AriaAttributes, ChangeEventHandler, InputHTMLAttributes, ReactNode, SelectHTMLAttributes, TextareaHTMLAttributes } from "react";
+import type { AriaAttributes, ChangeEventHandler, FieldsetHTMLAttributes, InputHTMLAttributes, ReactNode, SelectHTMLAttributes, TextareaHTMLAttributes } from "react";
 import { type FieldRequirement } from "./Form.js";
 interface ControlFieldProps {
     readonly className?: string;
@@ -34,10 +34,17 @@ export interface TextareaControlProps extends Omit<TextareaHTMLAttributes<HTMLTe
 export declare function TextareaControl({ className, controlClassName: controlClass, error, help, label, requirement, required, ...props }: TextareaControlProps): import("react").JSX.Element;
 export interface CheckboxControlProps extends Omit<ControlledInputProps, "checked" | "value">, ControlFieldProps {
     readonly checked: boolean;
+    readonly appearance?: "default" | "chip";
     readonly onChange: ChangeEventHandler<HTMLInputElement>;
     readonly value?: string | number | readonly string[];
 }
-export declare function CheckboxControl({ checked, className, controlClassName: controlClass, error, help, label, onChange, requirement, required, ...props }: CheckboxControlProps): import("react").JSX.Element;
+export declare function CheckboxControl({ appearance, checked, className, controlClassName: controlClass, error, help, label, onChange, requirement, required, ...props }: CheckboxControlProps): import("react").JSX.Element;
+export interface CheckboxChipGroupProps extends Omit<FieldsetHTMLAttributes<HTMLFieldSetElement>, "children"> {
+    readonly label: string;
+    readonly children: ReactNode;
+}
+/** A named wrapping group for compact native checkbox choices. */
+export declare function CheckboxChipGroup({ label, children, className, ...props }: CheckboxChipGroupProps): import("react").JSX.Element;
 export interface SwitchControlProps extends Omit<ControlledInputProps, "aria-checked" | "checked" | "role" | "value">, ControlFieldProps {
     readonly checked: boolean;
     readonly onChange: ChangeEventHandler<HTMLInputElement>;

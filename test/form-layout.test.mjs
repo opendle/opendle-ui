@@ -37,6 +37,29 @@ test("form dialogs keep the native modal frame and expose the form appearance", 
   assert.match(markup, /form="connection"/);
 });
 
+test("dialog context actions stay in the header beside close", () => {
+  const markup = renderToStaticMarkup(
+    React.createElement(Dialog, {
+      open: true,
+      title: "Edit assignment",
+      onClose() {},
+      headerActions: React.createElement(
+        "button",
+        { "aria-label": "Play assignment" },
+        "Play",
+      ),
+      children: React.createElement("p", null, "Fields"),
+    }),
+  );
+  assert.match(
+    markup,
+    /class="od-dialog-header-actions"><button aria-label="Play assignment"/,
+  );
+  assert.ok(
+    markup.indexOf("Play assignment") < markup.indexOf("od-dialog-body"),
+  );
+});
+
 test("plain form sections retain their accessible fieldset and responsive grid", () => {
   const markup = renderToStaticMarkup(
     React.createElement(FormSection, {

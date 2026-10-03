@@ -1,6 +1,7 @@
 import type {
   AriaAttributes,
   ChangeEventHandler,
+  FieldsetHTMLAttributes,
   InputHTMLAttributes,
   ReactNode,
   SelectHTMLAttributes,
@@ -196,11 +197,13 @@ export function TextareaControl({
 export interface CheckboxControlProps
   extends Omit<ControlledInputProps, "checked" | "value">, ControlFieldProps {
   readonly checked: boolean;
+  readonly appearance?: "default" | "chip";
   readonly onChange: ChangeEventHandler<HTMLInputElement>;
   readonly value?: string | number | readonly string[];
 }
 
 export function CheckboxControl({
+  appearance = "default",
   checked,
   className,
   controlClassName: controlClass,
@@ -215,6 +218,7 @@ export function CheckboxControl({
   return (
     <FormField
       className={["od-checkbox-control", className].filter(Boolean).join(" ")}
+      data-appearance={appearance}
       error={error}
       help={help}
       label={label}
@@ -230,6 +234,34 @@ export function CheckboxControl({
         type="checkbox"
       />
     </FormField>
+  );
+}
+
+export interface CheckboxChipGroupProps extends Omit<
+  FieldsetHTMLAttributes<HTMLFieldSetElement>,
+  "children"
+> {
+  readonly label: string;
+  readonly children: ReactNode;
+}
+
+/** A named wrapping group for compact native checkbox choices. */
+export function CheckboxChipGroup({
+  label,
+  children,
+  className,
+  ...props
+}: CheckboxChipGroupProps) {
+  return (
+    <fieldset
+      {...props}
+      aria-label={label}
+      className={["od-checkbox-chip-group", className]
+        .filter(Boolean)
+        .join(" ")}
+    >
+      {children}
+    </fieldset>
   );
 }
 

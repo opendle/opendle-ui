@@ -15,6 +15,7 @@ type FormFieldOrientation = "stacked" | "inline";
 type FormSectionColumns = 1 | 2;
 type FormSectionVariant = "default" | "plain";
 type FormActionsAlignment = "start" | "end" | "between";
+type FormActionsLayout = "responsive" | "wrap";
 
 interface FormControlAccessibilityProps {
   readonly id?: string;
@@ -141,6 +142,7 @@ export function FormField({
 
 export interface FormActionsProps extends HTMLAttributes<HTMLDivElement> {
   readonly alignment?: FormActionsAlignment;
+  readonly layout?: FormActionsLayout;
   readonly children: ReactNode;
   /** Secondary or destructive actions, separate from the main form action. */
   readonly secondaryActions?: ReactNode;
@@ -148,6 +150,7 @@ export interface FormActionsProps extends HTMLAttributes<HTMLDivElement> {
 
 export function FormActions({
   alignment = "end",
+  layout = "responsive",
   children,
   className,
   secondaryActions,
@@ -158,6 +161,7 @@ export function FormActions({
       {...props}
       className={["od-form-actions", className].filter(Boolean).join(" ")}
       data-alignment={alignment}
+      data-layout={layout}
     >
       {hasContent(secondaryActions) ? (
         <div className="od-form-actions-secondary">{secondaryActions}</div>
@@ -284,6 +288,7 @@ export function AdvancedFieldsDisclosure({
 export type {
   FieldRequirement,
   FormActionsAlignment,
+  FormActionsLayout,
   FormFieldOrientation,
   FormSectionColumns,
   FormSectionVariant,

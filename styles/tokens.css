@@ -4779,7 +4779,7 @@ samp {
   flex-direction: column;
 }
 
-.od-docked-panel-sheet .od-dialog-header > .od-button {
+.od-docked-panel-sheet .od-dialog-header-actions > .od-button {
   width: 2.75rem;
   min-width: 2.75rem;
 }
@@ -4890,7 +4890,14 @@ samp {
   text-transform: uppercase;
 }
 
-.od-dialog-header > .od-button {
+.od-dialog-header-actions {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: var(--od-space-sm);
+}
+
+.od-dialog-header-actions > .od-button {
   min-width: 2.625rem;
   flex: 0 0 auto;
   padding: 0.375rem;
@@ -4943,6 +4950,7 @@ samp {
 
 .od-dialog[data-appearance="form"] .od-dialog-body {
   display: grid;
+  align-content: start;
   gap: var(--od-space-lg);
   container: od-form-dialog / inline-size;
   background: var(--od-color-surface);
@@ -5387,7 +5395,9 @@ samp {
     transform 120ms ease;
 }
 
-.od-switch-control-input:checked {
+.od-form-field[data-orientation="inline"]
+  .od-form-field-control
+  > .od-switch-control-input:checked {
   border-color: var(--od-color-focus);
   background: var(--od-color-focus);
 }
@@ -5407,6 +5417,70 @@ samp {
 
 .od-form-field[data-orientation="inline"] :is(.od-field-help, .od-field-error) {
   grid-column: 2;
+}
+
+.od-checkbox-chip-group {
+  display: flex;
+  min-inline-size: 0;
+  flex-wrap: wrap;
+  align-items: start;
+  align-content: start;
+  gap: 0.375rem;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.od-checkbox-control[data-appearance="chip"] {
+  position: relative;
+  display: inline-grid;
+  max-inline-size: 100%;
+  min-block-size: 2rem;
+  box-sizing: border-box;
+  padding: 0.3125rem 0.625rem;
+  border: 1px solid var(--od-color-border-strong);
+  border-radius: var(--od-radius-sm);
+  background: var(--od-color-surface-raised);
+  column-gap: 0.375rem;
+}
+
+.od-checkbox-control[data-appearance="chip"] .od-form-field-label {
+  cursor: pointer;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.od-checkbox-control[data-appearance="chip"] .od-form-field-control {
+  position: relative;
+  z-index: 1;
+}
+
+.od-checkbox-control[data-appearance="chip"]:not(
+    :has(.od-field-help, .od-field-error)
+  )
+  .od-form-field-label::before {
+  position: absolute;
+  inset: 0;
+  content: "";
+}
+
+.od-checkbox-control[data-appearance="chip"]:has(input:checked) {
+  border-color: var(--od-color-focus);
+  background: var(--od-color-blue-soft);
+}
+
+.od-checkbox-control[data-appearance="chip"]:has(input:focus-visible) {
+  outline: 3px solid var(--od-color-focus);
+  outline-offset: 2px;
+}
+
+.od-checkbox-control[data-appearance="chip"]:has(input:disabled) {
+  opacity: 0.65;
+}
+
+.od-checkbox-control[data-appearance="chip"]:has(input:disabled)
+  .od-form-field-label {
+  cursor: not-allowed;
 }
 
 .od-field-help,
@@ -5525,6 +5599,16 @@ samp {
   align-items: center;
   gap: var(--od-space-sm);
   margin-inline-end: auto;
+}
+
+.od-form-actions[data-layout="wrap"] {
+  flex-direction: row;
+  align-items: center;
+  margin-top: 0;
+}
+
+.od-form-actions[data-layout="wrap"] > .od-button {
+  width: auto;
 }
 
 @container od-form-dialog (max-width: 36rem) {
@@ -5683,12 +5767,11 @@ samp {
 
 .od-searchable-select-listbox {
   width: 100%;
-  position: absolute;
+  position: fixed;
   z-index: 50;
-  right: 0;
-  left: 0;
+  inset: auto;
   max-height: min(18rem, 50dvh);
-  margin: var(--od-space-xs) 0 0;
+  margin: 0;
   padding: var(--od-space-xs);
   overflow-y: auto;
   overscroll-behavior: contain;
@@ -5697,6 +5780,9 @@ samp {
   background: var(--od-color-surface-raised);
   box-shadow: var(--od-shadow);
   list-style: none;
+  box-sizing: border-box;
+  color: var(--od-color-foreground);
+  font-family: var(--od-font-body);
 }
 
 .od-searchable-select-option {
@@ -6666,14 +6752,14 @@ samp {
     grid-template-columns: minmax(0, 1fr);
   }
 
-  .od-form-actions,
-  .od-form-actions[data-alignment="end"],
-  .od-form-actions[data-alignment="between"] {
+  .od-form-actions:not([data-layout="wrap"]),
+  .od-form-actions[data-alignment="end"]:not([data-layout="wrap"]),
+  .od-form-actions[data-alignment="between"]:not([data-layout="wrap"]) {
     align-items: stretch;
     flex-direction: column;
   }
 
-  .od-form-actions > .od-button,
+  .od-form-actions:not([data-layout="wrap"]) > .od-button,
   .od-inline-alert-actions > .od-button,
   .od-secret-reveal-actions > .od-button {
     width: 100%;
@@ -6714,7 +6800,9 @@ samp {
     padding-bottom: calc(var(--od-space-md) + env(safe-area-inset-bottom));
   }
 
-  .od-dialog[data-appearance="form"] .od-dialog-actions > .od-form-actions {
+  .od-dialog[data-appearance="form"]
+    .od-dialog-actions
+    > .od-form-actions:not([data-layout="wrap"]) {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     align-items: stretch;
@@ -7362,6 +7450,11 @@ button.od-capability-tag:focus-visible {
 }
 .od-ordered-choice-item[data-moving="true"] {
   border-color: var(--od-color-focus);
+  opacity: 0.6;
+}
+.od-ordered-choice-item[data-drop-target="true"] {
+  border-color: var(--od-color-focus);
+  box-shadow: inset 0 0 0 1px var(--od-color-focus);
 }
 .od-ordered-choice-position {
   flex: 0 0 auto;
@@ -7398,6 +7491,8 @@ button.od-capability-tag:focus-visible {
 .od-ordered-choice-handle {
   cursor: grab;
   color: var(--od-color-muted-strong);
+  touch-action: none;
+  user-select: none;
 }
 .od-ordered-choice-handle:active {
   cursor: grabbing;

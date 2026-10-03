@@ -1,12 +1,14 @@
 import {
   useId,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
   type AriaAttributes,
   type KeyboardEvent,
   type ReactNode,
+  type RefObject,
 } from "react";
 
 import { FormField, type FieldRequirement } from "./Form.js";
@@ -117,6 +119,71 @@ function moveEnabledIndex(
   return current;
 }
 
+function useListboxPopover(
+  open: boolean,
+  optionCount: number,
+  inputRef: RefObject<HTMLInputElement | null>,
+  listboxRef: RefObject<HTMLSelectElement | null>,
+) {
+  useLayoutEffect(() => {
+    const input = inputRef.current;
+    const listbox = listboxRef.current;
+    if (!open || !input || !listbox) return;
+    const view = input.ownerDocument.defaultView;
+    if (!view) return;
+    const position = () => {
+      const bounds = input.getBoundingClientRect();
+      const viewport = view.visualViewport;
+      const viewportTop = viewport?.offsetTop ?? 0;
+      const viewportLeft = viewport?.offsetLeft ?? 0;
+      const viewportHeight = viewport?.height ?? view.innerHeight;
+      const viewportWidth = viewport?.width ?? view.innerWidth;
+      const gutter = 8;
+      const below = viewportTop + viewportHeight - bounds.bottom - gutter;
+      const above = bounds.top - viewportTop - gutter;
+      const expectedHeight = Math.min(
+        288,
+        viewportHeight / 2,
+        listbox.size * 44 + 10,
+      );
+      const opensAbove = below < expectedHeight && above > below;
+      const maxHeight = Math.max(
+        0,
+        Math.min(288, viewportHeight / 2, opensAbove ? above : below),
+      );
+      listbox.style.width = `${String(Math.min(bounds.width, viewportWidth - gutter * 2))}px`;
+      listbox.style.left = `${String(Math.max(viewportLeft + gutter, Math.min(bounds.left, viewportLeft + viewportWidth - bounds.width - gutter)))}px`;
+      listbox.style.maxHeight = `${String(maxHeight)}px`;
+      const actualHeight = listbox.matches(":popover-open")
+        ? listbox.getBoundingClientRect().height
+        : expectedHeight;
+      listbox.style.top = `${String(opensAbove ? bounds.top - Math.min(actualHeight, maxHeight) - 4 : bounds.bottom + 4)}px`;
+    };
+    position();
+    listbox.showPopover();
+    position();
+    input.ownerDocument.addEventListener("scroll", position, {
+      capture: true,
+      passive: true,
+    });
+    view.addEventListener("resize", position);
+    view.visualViewport?.addEventListener("resize", position);
+    view.visualViewport?.addEventListener("scroll", position, {
+      passive: true,
+    });
+    const observer = new ResizeObserver(position);
+    observer.observe(input);
+    return () => {
+      observer.disconnect();
+      input.ownerDocument.removeEventListener("scroll", position, true);
+      view.removeEventListener("resize", position);
+      view.visualViewport?.removeEventListener("resize", position);
+      view.visualViewport?.removeEventListener("scroll", position);
+      if (listbox.matches(":popover-open")) listbox.hidePopover();
+    };
+  }, [open, optionCount, inputRef, listboxRef]);
+}
+
 export function SearchableSelect({
   className,
   disabled = false,
@@ -147,6 +214,7 @@ export function SearchableSelect({
   const listboxId = useId();
   const inputId = id ?? generatedInputId;
   const inputRef = useRef<HTMLInputElement>(null);
+  const listboxRef = useRef<HTMLSelectElement>(null);
   const [open, setOpen] = useState(false);
   const [draftQuery, setDraftQuery] = useState<string | null>(null);
   const [activeIndex, setActiveIndex] = useState(-1);
@@ -178,6 +246,8 @@ export function SearchableSelect({
       selectionInvalid ? "Select an option from the list." : "",
     );
   }, [selectionInvalid]);
+
+  useListboxPopover(open, visibleOptions.length, inputRef, listboxRef);
 
   function openList() {
     if (disabled) return;
@@ -244,6 +314,7 @@ export function SearchableSelect({
         commit(activeOption);
       } else if (event.key === "Escape" && open) {
         event.preventDefault();
+        event.stopPropagation();
         closeList();
       }
     }
@@ -312,6 +383,8 @@ export function SearchableSelect({
       ) : null}
       {open ? (
         <select
+          ref={listboxRef}
+          popover="manual"
           aria-labelledby={labelId}
           className="od-searchable-select-listbox"
           id={listboxId}

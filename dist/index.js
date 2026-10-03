@@ -94,7 +94,7 @@ export const designTokens = {
 };
 export { AutoGrowTextarea, } from "./components/AutoGrowTextarea.js";
 export { AdvancedFieldsDisclosure, FieldError, FieldHelp, FormActions, FormControls, FormField, FormGrid, FormSection, } from "./components/Form.js";
-export { CheckboxControl, NumberControl, SelectControl, SwitchControl, TextareaControl, TextControl, } from "./components/FormControls.js";
+export { CheckboxChipGroup, CheckboxControl, NumberControl, SelectControl, SwitchControl, TextareaControl, TextControl, } from "./components/FormControls.js";
 export { CompactCheckboxGroup, } from "./components/CompactCheckboxGroup.js";
 export { DateTime } from "./components/DateTime.js";
 export { FileDropZone, } from "./components/FileDropZone.js";

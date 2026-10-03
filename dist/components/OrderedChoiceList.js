@@ -15,11 +15,14 @@ function ActionIcon({ kind, }) {
 export function OrderedChoiceList({ label, addLabel, addPlaceholder, items, options, disabled = false, maxItems, onAdd, onRemove, onReorder, }) {
     const instructionId = useId();
     const [movingId, setMovingId] = useState(null);
+    const [dropTargetId, setDropTargetId] = useState(null);
     const [announcement, setAnnouncement] = useState("");
     const rowRefs = useRef(new Map());
     const addRef = useRef(null);
     const pendingFocus = useRef(null);
     const pendingAddValue = useRef(null);
+    const pointerDrag = useRef(null);
+    const suppressClick = useRef(false);
     const ids = new Set(items.map((item) => item.id));
     if (ids.size !== items.length ||
         items.some((item) => !item.id.trim() || !item.label.trim()))
@@ -65,28 +68,73 @@ export function OrderedChoiceList({ label, addLabel, addPlaceholder, items, opti
         onReorder(order);
         setAnnouncement(`${items[fromIndex]?.label ?? "Item"} moved to position ${String(targetIndex + 1)}.`);
     }
-    return (_jsxs("div", { className: "od-ordered-choice-list", children: [_jsx("span", { className: "od-visually-hidden", id: instructionId, children: "Use the up and down arrow keys to change the position." }), _jsx("ol", { "aria-label": label, className: "od-ordered-choice-items", children: items.map((item, index) => (_jsxs("li", { className: "od-ordered-choice-item", "data-moving": movingId === item.id, ref: (element) => {
+    return (_jsxs("div", { className: "od-ordered-choice-list", children: [_jsx("span", { className: "od-visually-hidden", id: instructionId, children: "Use the up and down arrow keys to change the position." }), _jsx("ol", { "aria-label": label, className: "od-ordered-choice-items", children: items.map((item, index) => (_jsxs("li", { className: "od-ordered-choice-item", "data-moving": movingId === item.id, "data-drop-target": dropTargetId === item.id, ref: (element) => {
                         if (element)
                             rowRefs.current.set(item.id, element);
                         else
                             rowRefs.current.delete(item.id);
-                    }, onDragOver: (event) => {
-                        if (!disabled && movingId && movingId !== item.id) {
-                            event.preventDefault();
-                            event.dataTransfer.dropEffect = "move";
-                        }
-                    }, onDrop: (event) => {
-                        event.preventDefault();
-                        if (movingId)
-                            move(movingId, index);
-                        setMovingId(null);
-                    }, children: [items.length > 1 ? (_jsx(IconButton, { className: "od-ordered-choice-handle", "aria-label": `Reorder ${item.label}`, "aria-describedby": instructionId, "aria-keyshortcuts": "ArrowUp ArrowDown", title: `Reorder ${item.label}`, icon: _jsx(ActionIcon, { kind: "grip" }), disabled: disabled, draggable: !disabled, onDragStart: (event) => {
-                                setMovingId(item.id);
-                                event.dataTransfer.effectAllowed = "move";
-                                event.dataTransfer.setData("text/plain", item.id);
-                            }, onDragEnd: () => {
+                    }, children: [items.length > 1 ? (_jsx(IconButton, { className: "od-ordered-choice-handle", "aria-label": `Reorder ${item.label}`, "aria-describedby": instructionId, "aria-keyshortcuts": "ArrowUp ArrowDown", title: `Reorder ${item.label}`, icon: _jsx(ActionIcon, { kind: "grip" }), disabled: disabled, onPointerDown: (event) => {
+                                if (disabled || event.button !== 0)
+                                    return;
+                                event.currentTarget.setPointerCapture(event.pointerId);
+                                pointerDrag.current = {
+                                    id: item.id,
+                                    pointerId: event.pointerId,
+                                    startY: event.clientY,
+                                    targetIndex: index,
+                                    started: false,
+                                };
+                            }, onPointerMove: (event) => {
+                                const drag = pointerDrag.current;
+                                if (drag?.pointerId !== event.pointerId || disabled)
+                                    return;
+                                if (!drag.started &&
+                                    Math.abs(event.clientY - drag.startY) < 4)
+                                    return;
+                                drag.started = true;
+                                setMovingId(drag.id);
+                                let nearest = Infinity;
+                                for (const [candidateIndex, candidate] of items.entries()) {
+                                    const bounds = rowRefs.current
+                                        .get(candidate.id)
+                                        ?.getBoundingClientRect();
+                                    if (!bounds)
+                                        continue;
+                                    const distance = Math.abs(event.clientY - (bounds.top + bounds.height / 2));
+                                    if (distance < nearest) {
+                                        nearest = distance;
+                                        drag.targetIndex = candidateIndex;
+                                    }
+                                }
+                                setDropTargetId(items[drag.targetIndex]?.id ?? null);
+                                const scroller = event.currentTarget.closest(".od-dialog-body");
+                                if (scroller) {
+                                    const bounds = scroller.getBoundingClientRect();
+                                    if (event.clientY < bounds.top + 32)
+                                        scroller.scrollTop -= 16;
+                                    else if (event.clientY > bounds.bottom - 32)
+                                        scroller.scrollTop += 16;
+                                }
+                            }, onPointerUp: (event) => {
+                                const drag = pointerDrag.current;
+                                pointerDrag.current = null;
                                 setMovingId(null);
+                                setDropTargetId(null);
+                                if (event.currentTarget.hasPointerCapture(event.pointerId))
+                                    event.currentTarget.releasePointerCapture(event.pointerId);
+                                if (!drag?.started)
+                                    return;
+                                suppressClick.current = true;
+                                move(drag.id, drag.targetIndex);
+                            }, onPointerCancel: () => {
+                                pointerDrag.current = null;
+                                setMovingId(null);
+                                setDropTargetId(null);
                             }, onClick: () => {
+                                if (suppressClick.current) {
+                                    suppressClick.current = false;
+                                    return;
+                                }
                                 setAnnouncement(`${item.label}. Use the up and down arrow keys to change the position.`);
                             }, onKeyDown: (event) => {
                                 if (event.key === "ArrowUp" || event.key === "ArrowDown") {
@@ -96,7 +144,9 @@ export function OrderedChoiceList({ label, addLabel, addPlaceholder, items, opti
                                 else if (event.key === "Escape" && movingId !== null) {
                                     event.preventDefault();
                                     event.stopPropagation();
+                                    pointerDrag.current = null;
                                     setMovingId(null);
+                                    setDropTargetId(null);
                                 }
                             } })) : null, _jsxs("span", { className: "od-ordered-choice-position", "aria-label": `Position ${String(index + 1)}`, children: ["#", index + 1] }), _jsxs("span", { className: "od-ordered-choice-name", children: [_jsx("strong", { children: item.label }), item.detail ? _jsx("span", { children: item.detail }) : null] }), _jsxs("span", { className: "od-ordered-choice-actions", children: [index > 0 ? (_jsx(IconButton, { "aria-label": `Move ${item.label} up`, title: "Move up", icon: _jsx(ActionIcon, { kind: "up" }), disabled: disabled, onClick: () => {
                                         move(item.id, index - 1);

@@ -4,6 +4,7 @@ type FormFieldOrientation = "stacked" | "inline";
 type FormSectionColumns = 1 | 2;
 type FormSectionVariant = "default" | "plain";
 type FormActionsAlignment = "start" | "end" | "between";
+type FormActionsLayout = "responsive" | "wrap";
 interface FormControlAccessibilityProps {
     readonly id?: string;
     readonly "aria-describedby"?: string;
@@ -29,11 +30,12 @@ export interface FormFieldProps extends Omit<HTMLAttributes<HTMLDivElement>, "ch
 export declare function FormField({ children, className, controlId, error, help, label, orientation, requirement, ...props }: FormFieldProps): import("react").JSX.Element;
 export interface FormActionsProps extends HTMLAttributes<HTMLDivElement> {
     readonly alignment?: FormActionsAlignment;
+    readonly layout?: FormActionsLayout;
     readonly children: ReactNode;
     /** Secondary or destructive actions, separate from the main form action. */
     readonly secondaryActions?: ReactNode;
 }
-export declare function FormActions({ alignment, children, className, secondaryActions, ...props }: FormActionsProps): import("react").JSX.Element;
+export declare function FormActions({ alignment, layout, children, className, secondaryActions, ...props }: FormActionsProps): import("react").JSX.Element;
 export interface FormGridProps extends HTMLAttributes<HTMLDivElement> {
     readonly columns?: FormSectionColumns;
     readonly children: ReactNode;
@@ -58,5 +60,5 @@ export interface AdvancedFieldsDisclosureProps extends Omit<DetailsHTMLAttribute
     readonly summary?: ReactNode;
 }
 export declare function AdvancedFieldsDisclosure({ children, className, description, summary, ...props }: AdvancedFieldsDisclosureProps): import("react").JSX.Element;
-export type { FieldRequirement, FormActionsAlignment, FormFieldOrientation, FormSectionColumns, FormSectionVariant, };
+export type { FieldRequirement, FormActionsAlignment, FormActionsLayout, FormFieldOrientation, FormSectionColumns, FormSectionVariant, };
 //# sourceMappingURL=Form.d.ts.map

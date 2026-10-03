@@ -187,6 +187,7 @@ export {
   type FieldHelpProps,
   type FieldRequirement,
   type FormActionsAlignment,
+  type FormActionsLayout,
   type FormActionsProps,
   type FormControlsProps,
   type FormFieldOrientation,
@@ -197,6 +198,7 @@ export {
   type FormSectionVariant,
 } from "./components/Form.js";
 export {
+  CheckboxChipGroup,
   CheckboxControl,
   NumberControl,
   SelectControl,
@@ -204,6 +206,7 @@ export {
   TextareaControl,
   TextControl,
   type CheckboxControlProps,
+  type CheckboxChipGroupProps,
   type NumberControlProps,
   type SelectControlProps,
   type SwitchControlProps,

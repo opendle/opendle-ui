@@ -36,8 +36,8 @@ export function FormField({ children, className, controlId, error, help, label, 
     const control = cloneElement(children, controlAccessibilityProps);
     return (_jsxs("div", { ...props, className: ["od-form-field", className].filter(Boolean).join(" "), "data-orientation": orientation, children: [_jsxs("div", { className: "od-form-field-heading", children: [_jsx("label", { className: "od-form-field-label", htmlFor: id, children: label }), requirement ? (_jsx("span", { "aria-hidden": "true", className: "od-form-field-requirement", children: requirement })) : null] }), _jsx("div", { className: "od-form-field-control", children: control }), helpId ? _jsx(FieldHelp, { id: helpId, children: help }) : null, errorId ? _jsx(FieldError, { id: errorId, children: error }) : null] }));
 }
-export function FormActions({ alignment = "end", children, className, secondaryActions, ...props }) {
-    return (_jsxs("div", { ...props, className: ["od-form-actions", className].filter(Boolean).join(" "), "data-alignment": alignment, children: [hasContent(secondaryActions) ? (_jsx("div", { className: "od-form-actions-secondary", children: secondaryActions })) : null, children] }));
+export function FormActions({ alignment = "end", layout = "responsive", children, className, secondaryActions, ...props }) {
+    return (_jsxs("div", { ...props, className: ["od-form-actions", className].filter(Boolean).join(" "), "data-alignment": alignment, "data-layout": layout, children: [hasContent(secondaryActions) ? (_jsx("div", { className: "od-form-actions-secondary", children: secondaryActions })) : null, children] }));
 }
 /** Groups form controls without a visible frame; disabled locks the whole group. */
 export function FormControls({ className, ...props }) {

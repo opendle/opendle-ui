@@ -26,6 +26,8 @@ export interface DialogProps extends Omit<
   readonly eyebrow?: ReactNode;
   readonly children: ReactNode;
   readonly actions?: ReactNode;
+  /** Context actions next to the close button, outside the scrollable body. */
+  readonly headerActions?: ReactNode;
   /** A compact frame for editing forms with fixed footer actions. */
   readonly appearance?: DialogAppearance;
   readonly headingLevel?: "h2" | "h3";
@@ -189,6 +191,7 @@ export function Dialog({
   description,
   eyebrow,
   headerClassName,
+  headerActions,
   headingLevel = "h2",
   initialFocusRef,
   onClose,
@@ -383,18 +386,21 @@ export function Dialog({
                   </div>
                 )}
               </div>
-              {!showCloseButton ? null : (
-                <Button
-                  aria-label={closeLabel}
-                  data-dialog-close="true"
-                  disabled={closeDisabled}
-                  onClick={requestClose}
-                  type="button"
-                  variant="quiet"
-                >
-                  <span aria-hidden="true">×</span>
-                </Button>
-              )}
+              <div className="od-dialog-header-actions">
+                {headerActions}
+                {!showCloseButton ? null : (
+                  <Button
+                    aria-label={closeLabel}
+                    data-dialog-close="true"
+                    disabled={closeDisabled}
+                    onClick={requestClose}
+                    type="button"
+                    variant="quiet"
+                  >
+                    <span aria-hidden="true">×</span>
+                  </Button>
+                )}
+              </div>
             </header>
             <div className={classes("od-dialog-body", bodyClassName)}>
               {children}

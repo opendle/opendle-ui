@@ -68,11 +68,20 @@ export function OrderedChoiceList({
 }: OrderedChoiceListProps) {
   const instructionId = useId();
   const [movingId, setMovingId] = useState<string | null>(null);
+  const [dropTargetId, setDropTargetId] = useState<string | null>(null);
   const [announcement, setAnnouncement] = useState("");
   const rowRefs = useRef(new Map<string, HTMLLIElement>());
   const addRef = useRef<HTMLDivElement>(null);
   const pendingFocus = useRef<string | null>(null);
   const pendingAddValue = useRef<string | null>(null);
+  const pointerDrag = useRef<{
+    id: string;
+    pointerId: number;
+    startY: number;
+    targetIndex: number;
+    started: boolean;
+  } | null>(null);
+  const suppressClick = useRef(false);
   const ids = new Set(items.map((item) => item.id));
   if (
     ids.size !== items.length ||
@@ -140,21 +149,11 @@ export function OrderedChoiceList({
           <li
             className="od-ordered-choice-item"
             data-moving={movingId === item.id}
+            data-drop-target={dropTargetId === item.id}
             key={item.id}
             ref={(element) => {
               if (element) rowRefs.current.set(item.id, element);
               else rowRefs.current.delete(item.id);
-            }}
-            onDragOver={(event) => {
-              if (!disabled && movingId && movingId !== item.id) {
-                event.preventDefault();
-                event.dataTransfer.dropEffect = "move";
-              }
-            }}
-            onDrop={(event) => {
-              event.preventDefault();
-              if (movingId) move(movingId, index);
-              setMovingId(null);
             }}
           >
             {items.length > 1 ? (
@@ -166,16 +165,73 @@ export function OrderedChoiceList({
                 title={`Reorder ${item.label}`}
                 icon={<ActionIcon kind="grip" />}
                 disabled={disabled}
-                draggable={!disabled}
-                onDragStart={(event) => {
-                  setMovingId(item.id);
-                  event.dataTransfer.effectAllowed = "move";
-                  event.dataTransfer.setData("text/plain", item.id);
+                onPointerDown={(event) => {
+                  if (disabled || event.button !== 0) return;
+                  event.currentTarget.setPointerCapture(event.pointerId);
+                  pointerDrag.current = {
+                    id: item.id,
+                    pointerId: event.pointerId,
+                    startY: event.clientY,
+                    targetIndex: index,
+                    started: false,
+                  };
                 }}
-                onDragEnd={() => {
+                onPointerMove={(event) => {
+                  const drag = pointerDrag.current;
+                  if (drag?.pointerId !== event.pointerId || disabled) return;
+                  if (
+                    !drag.started &&
+                    Math.abs(event.clientY - drag.startY) < 4
+                  )
+                    return;
+                  drag.started = true;
+                  setMovingId(drag.id);
+                  let nearest = Infinity;
+                  for (const [candidateIndex, candidate] of items.entries()) {
+                    const bounds = rowRefs.current
+                      .get(candidate.id)
+                      ?.getBoundingClientRect();
+                    if (!bounds) continue;
+                    const distance = Math.abs(
+                      event.clientY - (bounds.top + bounds.height / 2),
+                    );
+                    if (distance < nearest) {
+                      nearest = distance;
+                      drag.targetIndex = candidateIndex;
+                    }
+                  }
+                  setDropTargetId(items[drag.targetIndex]?.id ?? null);
+                  const scroller =
+                    event.currentTarget.closest<HTMLElement>(".od-dialog-body");
+                  if (scroller) {
+                    const bounds = scroller.getBoundingClientRect();
+                    if (event.clientY < bounds.top + 32)
+                      scroller.scrollTop -= 16;
+                    else if (event.clientY > bounds.bottom - 32)
+                      scroller.scrollTop += 16;
+                  }
+                }}
+                onPointerUp={(event) => {
+                  const drag = pointerDrag.current;
+                  pointerDrag.current = null;
                   setMovingId(null);
+                  setDropTargetId(null);
+                  if (event.currentTarget.hasPointerCapture(event.pointerId))
+                    event.currentTarget.releasePointerCapture(event.pointerId);
+                  if (!drag?.started) return;
+                  suppressClick.current = true;
+                  move(drag.id, drag.targetIndex);
+                }}
+                onPointerCancel={() => {
+                  pointerDrag.current = null;
+                  setMovingId(null);
+                  setDropTargetId(null);
                 }}
                 onClick={() => {
+                  if (suppressClick.current) {
+                    suppressClick.current = false;
+                    return;
+                  }
                   setAnnouncement(
                     `${item.label}. Use the up and down arrow keys to change the position.`,
                   );
@@ -187,7 +243,9 @@ export function OrderedChoiceList({
                   } else if (event.key === "Escape" && movingId !== null) {
                     event.preventDefault();
                     event.stopPropagation();
+                    pointerDrag.current = null;
                     setMovingId(null);
+                    setDropTargetId(null);
                   }
                 }}
               />

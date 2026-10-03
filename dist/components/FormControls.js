@@ -24,8 +24,14 @@ export function SelectControl({ children, className, controlClassName: controlCl
 export function TextareaControl({ className, controlClassName: controlClass, error, help, label, requirement, required, ...props }) {
     return (_jsx(FormField, { className: ["od-textarea-control", className].filter(Boolean).join(" "), error: error, help: help, label: label, ...requirementProps(required, requirement), children: _jsx("textarea", { ...props, className: controlClassName("od-textarea-control-input", controlClass), required: isControlRequired(required, requirement) }) }));
 }
-export function CheckboxControl({ checked, className, controlClassName: controlClass, error, help, label, onChange, requirement, required, ...props }) {
-    return (_jsx(FormField, { className: ["od-checkbox-control", className].filter(Boolean).join(" "), error: error, help: help, label: label, orientation: "inline", ...requirementProps(required, requirement), children: _jsx("input", { ...props, checked: checked, className: controlClassName("od-checkbox-control-input", controlClass), onChange: onChange, required: isControlRequired(required, requirement), type: "checkbox" }) }));
+export function CheckboxControl({ appearance = "default", checked, className, controlClassName: controlClass, error, help, label, onChange, requirement, required, ...props }) {
+    return (_jsx(FormField, { className: ["od-checkbox-control", className].filter(Boolean).join(" "), "data-appearance": appearance, error: error, help: help, label: label, orientation: "inline", ...requirementProps(required, requirement), children: _jsx("input", { ...props, checked: checked, className: controlClassName("od-checkbox-control-input", controlClass), onChange: onChange, required: isControlRequired(required, requirement), type: "checkbox" }) }));
+}
+/** A named wrapping group for compact native checkbox choices. */
+export function CheckboxChipGroup({ label, children, className, ...props }) {
+    return (_jsx("fieldset", { ...props, "aria-label": label, className: ["od-checkbox-chip-group", className]
+            .filter(Boolean)
+            .join(" "), children: children }));
 }
 export function SwitchControl({ checked, className, controlClassName: controlClass, error, help, label, onChange, requirement, required, ...props }) {
     return (_jsx(FormField, { className: ["od-switch-control", className].filter(Boolean).join(" "), error: error, help: help, label: label, orientation: "inline", ...requirementProps(required, requirement), children: _jsx("input", { ...props, "aria-checked": checked, checked: checked, className: controlClassName("od-switch-control-input", controlClass), onChange: onChange, required: isControlRequired(required, requirement), role: "switch", type: "checkbox" }) }));

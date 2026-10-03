@@ -388,6 +388,14 @@ write. It adds no visible frame or section heading.
 Cancel and Save. Keep detailed record facts in `AdvancedFieldsDisclosure` so
 the fields are visible first. Set `data-dialog-initial-focus` on the first
 editable field when the dialog opens.
+`Dialog.headerActions` puts context actions beside Close in the fixed header.
+
+Use `CheckboxChipGroup label="Requirements"` with
+`CheckboxControl appearance="chip"` for compact wrapping choices. Each choice
+keeps a native checkbox, its field label, keyboard focus, and validation state.
+Set `disabled` on the group to lock all choices during a write.
+`FormActions layout="wrap"` keeps short context actions in a wrapping row on
+all screen sizes. Its buttons keep their natural width.
 
 `OrderedChoiceList` edits a compact ordered selection. The host supplies stable
 item IDs, labels, optional inline details, and searchable options. Selecting
@@ -400,11 +408,18 @@ receives the complete ID order through `onReorder`. Removal moves focus to the
 next item, the previous item, or the add control when the list is empty.
 The component announces additions, removals, and new positions. The host owns
 the selected items, persistence, validation, and product text.
+The handle uses pointer capture for mouse, pen, and touch drags, including
+inside native modal dialogs. A destination border shows where the item will
+move. Escape cancels an active drag.
 
 `SearchableSelect` supplies a controlled, filterable combobox. Each option has
 a stable value and label. An option can also have a description, search text,
 or a disabled state. The component supports arrow keys, Home, End, Enter, and
 Escape. The host owns the current value and receives each committed option.
+Its option list uses a native popover in the browser top layer. It follows the
+input and opens above it when the space below is too small. Modal body and
+footer bounds do not clip the options or gain extra scroll height. Focus stays
+on the search field after a pointer selection. Escape closes the options first.
 
 `InlineAlert` supplies a compact message for one form or action.
 `SecretRevealPanel` supplies the show-once layout and copy interaction. The
