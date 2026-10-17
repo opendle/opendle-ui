@@ -248,8 +248,13 @@ export function Dialog({ actions, actionsClassName, appearance = "default", "ari
                 requestClose();
             }, onKeyDown: (event) => {
                 props.onKeyDown?.(event);
-                if (event.key === "Escape")
-                    event.stopPropagation();
+                if (event.key !== "Escape")
+                    return;
+                event.stopPropagation();
+                // Chrome ignores a prevented cancel on a repeated Escape without
+                // user activation. A prevented keydown never requests the close.
+                if (closeDisabled)
+                    event.preventDefault();
             }, ref: dialogRef, tabIndex: props.tabIndex ?? -1, children: open ? (_jsxs(_Fragment, { children: [_jsxs("header", { className: classes("od-dialog-header", headerClassName), children: [_jsxs("div", { children: [eyebrow === undefined ? null : (_jsx("p", { className: "od-dialog-eyebrow", children: eyebrow })), _jsx(Heading, { id: titleId, children: title }), description === undefined ? null : (_jsx("div", { className: "od-dialog-description", id: descriptionId, children: description }))] }), _jsxs("div", { className: "od-dialog-header-actions", children: [headerActions, !showCloseButton ? null : (_jsx(Button, { "aria-label": closeLabel, "data-dialog-close": "true", disabled: closeDisabled, onClick: requestClose, type: "button", variant: "quiet", children: _jsx("span", { "aria-hidden": "true", children: "\u00D7" }) }))] })] }), _jsx("div", { className: classes("od-dialog-body", bodyClassName), children: children }), actions === undefined ? null : (_jsx("footer", { className: classes("od-dialog-actions", actionsClassName), children: actions }))] })) : null }) }));
 }
 //# sourceMappingURL=Dialog.js.map

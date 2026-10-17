@@ -543,8 +543,15 @@ try {
     name: "Open pending dialog",
   });
   await pendingOpener.click();
-  await desktop.keyboard.press("Escape");
+  // Chrome closes a modal on a repeated Escape without user activation unless
+  // the keydown default is prevented.
+  for (let press = 0; press < 5; press++)
+    await desktop.keyboard.press("Escape");
   assert.equal(await dialog.isVisible(), true);
+  assert.equal(
+    await dialog.evaluate((element) => element.matches(":modal")),
+    true,
+  );
   await desktop.mouse.click(1, 1);
   assert.equal(await dialog.isVisible(), true);
   await dialog.getByRole("button", { name: "Try native close" }).click();

@@ -367,7 +367,11 @@ export function Dialog({
         }}
         onKeyDown={(event) => {
           props.onKeyDown?.(event);
-          if (event.key === "Escape") event.stopPropagation();
+          if (event.key !== "Escape") return;
+          event.stopPropagation();
+          // Chrome ignores a prevented cancel on a repeated Escape without
+          // user activation. A prevented keydown never requests the close.
+          if (closeDisabled) event.preventDefault();
         }}
         ref={dialogRef}
         tabIndex={props.tabIndex ?? -1}
