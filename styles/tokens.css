@@ -7339,6 +7339,15 @@ button.od-capability-tag:focus-visible {
   background: #2a3336;
 }
 
+/* A tagged group header uses the same flat header as other groups. */
+.od-relationship-graph-group
+  > .od-relationship-graph-node-item[data-interactive-tags="true"] {
+  padding: 0.5rem;
+  border: 0;
+  border-bottom: 1px solid #596565;
+  border-radius: 0;
+}
+
 .od-relationship-graph-node-item[data-interactive-tags="true"][data-selected="true"] {
   border-color: var(--od-color-lime);
   box-shadow: 0 0 0 2px rgb(215 243 106 / 13%);
