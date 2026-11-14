@@ -240,19 +240,30 @@ try {
           4,
           "the entries of 12:30 are in the second half of the hour",
         );
-        // The period controls sit on the bottom of the title.
-        const bottoms = await page.evaluate(() =>
-          [
-            ".od-calendar-header h1",
-            ".od-calendar-header-navigation .od-button",
-          ].map(
-            (selector) =>
-              document.querySelector(selector).getBoundingClientRect().bottom,
-          ),
-        );
+        assert.ok(heights.every((height) => height >= 32));
+        // The bottom of the period controls is on the baseline of the title.
+        const edges = await page.evaluate(() => {
+          const title = document.querySelector(".od-calendar-header h1");
+          const probe = document.createElement("span");
+          probe.style.cssText = "display:inline-block;width:0;height:0";
+          title.append(probe);
+          const baseline = probe.getBoundingClientRect().bottom;
+          probe.remove();
+          return [
+            baseline,
+            ...[
+              ".od-calendar-header-navigation .od-button",
+              ".od-calendar-header-navigation .od-icon-button",
+            ].map(
+              (selector) =>
+                document.querySelector(selector).getBoundingClientRect().bottom,
+            ),
+          ];
+        });
         assert.ok(
-          Math.abs(bottoms[0] - bottoms[1]) <= 6,
-          JSON.stringify(bottoms),
+          Math.abs(edges[0] - edges[1]) <= 1.5 &&
+            Math.abs(edges[0] - edges[2]) <= 1.5,
+          JSON.stringify(edges),
         );
       }
       await audit(page, `${name}-week`);

@@ -9573,12 +9573,20 @@ html:has(.od-dialog:modal) {
 
 /* The period controls sit on the bottom of the title. */
 
-.od-calendar-header-navigation {
-  margin-bottom: 3px;
+/* 0.16em of the title is the space below its baseline. */
+.od-calendar-header-navigation,
+.od-calendar-header-views {
+  margin-bottom: 6px;
 }
 
-.od-calendar-header-views {
-  margin-bottom: 3px;
+@media (max-width: 720px) {
+  .od-calendar-header-navigation {
+    margin-bottom: 4px;
+  }
+
+  .od-calendar-header-views {
+    margin-bottom: 0;
+  }
 }
 
 /* Week against a time axis */
@@ -9595,7 +9603,7 @@ html:has(.od-dialog:modal) {
 }
 
 .od-calendar-week thead th {
-  padding: 12px 10px 8px;
+  padding: 12px 10px 12px;
   font-weight: 500;
   text-align: left;
 }
@@ -9606,7 +9614,7 @@ html:has(.od-dialog:modal) {
 }
 
 .od-calendar-week tbody td {
-  height: 12px;
+  height: 17px;
   padding: 0 4px;
   border-top: 1px solid var(--od-color-border-strong);
   border-left: 1px solid var(--od-color-border);
@@ -9640,10 +9648,6 @@ html:has(.od-dialog:modal) {
 .od-calendar-week-hour time {
   display: block;
   translate: 0 -50%;
-}
-
-.od-calendar-week tbody tr:first-child .od-calendar-week-hour time {
-  translate: 0 -2px;
 }
 
 /* The large tick of the hour and the thin tick of the half hour. */
