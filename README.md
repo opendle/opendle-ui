@@ -5,6 +5,39 @@ OpenDLE UI is the shared React framework and design system for the
 [ontology](https://github.com/tubededentifrice/ontology), and
 [xbot](https://github.com/tubededentifrice/xbot) projects.
 
+## Paper design system
+
+Paper is the current design system. New work uses it. Import the components
+from `@opendle/ui/paper` and import `@opendle/ui/paper.css` one time in the
+host. The style sheet contains the tokens (`--pp-*`), the self-hosted DM Sans
+and Playfair Display fonts, the base rules, and the component rules. It has a
+light and a dark theme that follow `prefers-color-scheme`.
+
+| Area                  | Components                                                                                                |
+| --------------------- | --------------------------------------------------------------------------------------------------------- |
+| Frame                 | `SidebarLayout`, `SidebarItem`, `SidebarAccount`, `PageHeading`, `Section`, `Card`, `ItemList`, `ItemRow` |
+| Controls              | `Button`, `IconButton`, `TagChip`, `Tabs`, `TabPanel`, `TextField`, `AutoGrowTextarea`                    |
+| Overlays and feedback | `Dialog`, `ConfirmDialog`, `InlineAlert`, `ToastStack`, `useToastQueue`, `SecretReveal`                   |
+| Identity              | `PasskeySignIn`, `PasskeyList`, `ApiTokenList`, `AvatarUpload`, `Avatar`                                  |
+| Marks                 | `Icon`, `NetworkIcon`, `DateTime`                                                                         |
+
+`SidebarLayout` is a left sidebar with icons. It becomes an icon rail below
+1100 px and a bottom bar below 720 px. The host owns routes: give each
+`SidebarItem` an `href` and handle the click in the host router.
+
+`PasskeyList`, `ApiTokenList` and `AvatarUpload` own their dialogs, pending
+states and error display. The host supplies the data and the asynchronous
+actions. Each has a `labels` property with English defaults.
+
+The components exported from `@opendle/ui` and `styles.css` are the legacy
+layer. They keep their structure and fonts and take the Paper palette. They
+have no dark theme. Version 0.3.0 changes their colours; this is the breaking
+change of that version.
+
+`src/paper/iconData.ts` is generated from lucide (ISC) and simple-icons
+(CC0-1.0). The fonts in `styles/fonts/` use the SIL Open Font License 1.1; the
+license texts are next to them.
+
 ## Scope
 
 This repository owns shared design tokens, accessible React primitives,
@@ -225,10 +258,11 @@ locally. Existing `Panel` callers keep their natural height.
 
 ```tsx
 <Panel>
-  <PanelHeader title="Record details" actions={<Button onClick={close}>Close</Button>} />
-  <PanelContent aria-label="Record content">
-    {content}
-  </PanelContent>
+  <PanelHeader
+    title="Record details"
+    actions={<Button onClick={close}>Close</Button>}
+  />
+  <PanelContent aria-label="Record content">{content}</PanelContent>
 </Panel>
 ```
 
@@ -532,9 +566,8 @@ search of the sibling repositories found no production consumer. Use
 configuration graph in its host. This removal is the breaking change in
 OpenDLE UI 0.2.0.
 
-Typography uses the Xbot design as the source of truth: Aptos for body text,
-Aptos Display for headings, and Aptos Mono with system fallbacks for technical
-text. Use the `--od-*` tokens instead of adding a host-specific font system.
+Legacy typography stays on Aptos for body text, Aptos Display for headings,
+and Aptos Mono with system fallbacks for technical text.
 
 The three host applications use the `main` branch of this Git repository. This
 keeps all apps on the current shared package without release coordination or

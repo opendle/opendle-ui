@@ -1,25 +1,29 @@
+/*
+ * Legacy component layer. It takes the Paper palette.
+ * New work uses the Paper components and `paper.css`.
+ */
 :root {
-  --od-color-background: #f3f1eb;
-  --od-color-foreground: #171d21;
-  --od-color-muted: #6d7476;
-  --od-color-muted-strong: #4d5659;
-  --od-color-border: #dddcd6;
-  --od-color-border-strong: #c9cbc6;
-  --od-color-surface: #fbfaf6;
+  --od-color-background: #f7f5ef;
+  --od-color-foreground: #242b30;
+  --od-color-muted: #636b68;
+  --od-color-muted-strong: #4f5754;
+  --od-color-border: #e3e2d9;
+  --od-color-border-strong: #c4bcab;
+  --od-color-surface: #fdfcf8;
   --od-color-surface-raised: #ffffff;
-  --od-color-sidebar: #151b1e;
-  --od-color-sidebar-muted: #96a0a2;
-  --od-color-lime: #d7f36a;
-  --od-color-lime-strong: #b9dc3f;
+  --od-color-sidebar: #242b30;
+  --od-color-sidebar-muted: #a9b0ab;
+  --od-color-lime: #ecc3a6;
+  --od-color-lime-strong: #dfa680;
   --od-color-coral: #ff7b66;
   --od-color-coral-strong: #9f493c;
   --od-color-blue: #8bbef5;
   --od-color-purple: #8e76cf;
-  --od-color-focus: #4669f2;
+  --od-color-focus: #a75931;
   --od-color-amber: #efb55e;
   --od-color-amber-strong: #8f590f;
   --od-color-accent: var(--od-color-lime);
-  --od-color-lime-soft: #eef7cb;
+  --od-color-lime-soft: #f3e4d8;
   --od-color-blue-soft: #e7f2ff;
   --od-color-purple-soft: #f0ecff;
   --od-color-coral-soft: #ffebe7;
@@ -4370,7 +4374,7 @@ samp {
 }
 
 .od-status-lime {
-  color: #68802d;
+  color: #8f4a26;
   background: var(--od-color-lime-soft);
 }
 .od-status-amber {
@@ -4382,8 +4386,8 @@ samp {
   background: var(--od-color-blue-soft);
 }
 .od-status-green {
-  color: #587134;
-  background: var(--od-color-lime-soft);
+  color: #39705a;
+  background: #e9f0e7;
 }
 .od-status-red {
   color: var(--od-color-coral-strong);

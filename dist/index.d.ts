@@ -3,7 +3,7 @@ export { SkipLink, type SkipLinkProps } from "./components/SkipLink.js";
 export { CapabilityTag, type CapabilityTagProps, type CapabilityTagTone, } from "./components/CapabilityTag.js";
 import type { SVGAttributes } from "react";
 /** Public package version. Keep this value aligned with package.json. */
-export declare const OPENDLE_UI_VERSION: "0.2.0";
+export declare const OPENDLE_UI_VERSION: "0.3.0";
 export type IconName = "activity" | "arrow-up" | "audit" | "book" | "chevron" | "check" | "clock" | "close" | "cloud" | "database" | "edit" | "eye" | "file" | "filter" | "grid" | "health" | "key" | "layers" | "list" | "lock" | "logout" | "menu" | "more" | "moon" | "plus" | "refresh" | "search" | "server" | "settings" | "shield" | "spark" | "users" | "warning" | "workspace";
 export interface IconProps extends SVGAttributes<SVGSVGElement> {
     readonly name: IconName;

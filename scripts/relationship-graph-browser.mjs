@@ -778,18 +778,18 @@ async function checkToolbarForms() {
           assert.deepEqual(
             styles,
             {
-              label: "rgb(77, 86, 89)",
-              help: "rgb(77, 86, 89)",
-              requirement: "rgb(77, 86, 89)",
+              label: "rgb(79, 87, 84)",
+              help: "rgb(79, 87, 84)",
+              requirement: "rgb(79, 87, 84)",
               error: "rgb(159, 73, 60)",
               value: {
-                color: "rgb(23, 29, 33)",
+                color: "rgb(36, 43, 48)",
                 background: "rgb(255, 255, 255)",
                 opacity: "1",
               },
               disabled: {
-                color: "rgb(77, 86, 89)",
-                background: "rgb(251, 250, 246)",
+                color: "rgb(79, 87, 84)",
+                background: "rgb(253, 252, 248)",
                 opacity: "0.72",
               },
             },

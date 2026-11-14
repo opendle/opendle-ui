@@ -34,6 +34,9 @@ required_files=(
   "dist/index.js"
   "dist/index.d.ts"
   "styles/tokens.css"
+  "styles/paper.css"
+  "dist/paper/index.js"
+  "scripts/paper-browser.mjs"
   "scripts/ontology-explorer-browser.mjs"
   "scripts/form-controls-browser.mjs"
   "scripts/graph-edge-browser.mjs"
@@ -81,6 +84,7 @@ node --check scripts/ordered-choice-list-browser.mjs
 node --check scripts/modal-form-controls-browser.mjs
 node --check scripts/panel-content-browser.mjs
 node --check scripts/action-button-browser.mjs
+node --check scripts/paper-browser.mjs
 node --input-type=module -e "import('./dist/index.js').then((shared) => { for (const name of ['AccountMenu', 'AdvancedFieldsDisclosure', 'BoundedDataExplorer', 'ChangeTimeline', 'DateTime', 'Dialog', 'ExplorerWorkspace', 'FileDropZone', 'FormActions', 'FormField', 'FormSection', 'InlineAlert', 'ManagedFileList', 'MetadataBagList', 'OntologyInheritanceTree', 'OperationPlayground', 'PanelContent', 'ReviewPlanCard', 'SavedViewCanvas', 'SearchableSelect', 'SecretRevealPanel', 'WorkspaceSelector']) if (!(name in shared)) throw new Error('Missing shared export: ' + name); })"
 
 grep -qx "min-release-age=14" .npmrc
@@ -130,6 +134,7 @@ node scripts/sign-in-card-browser.mjs
 node scripts/graph-native-overlay-browser.mjs
 node scripts/graph-viewport-content-browser.mjs
 node scripts/relationship-column-header-browser.mjs
+node scripts/paper-browser.mjs
 npm run security
 ./scripts/react-doctor-gate.sh
 

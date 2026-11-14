@@ -3,7 +3,7 @@ export { OrderedChoiceList, } from "./components/OrderedChoiceList.js";
 export { SkipLink } from "./components/SkipLink.js";
 export { CapabilityTag, } from "./components/CapabilityTag.js";
 /** Public package version. Keep this value aligned with package.json. */
-export const OPENDLE_UI_VERSION = "0.2.0";
+export const OPENDLE_UI_VERSION = "0.3.0";
 const iconPaths = {
     activity: "M3 12h4l2-7 4 14 2-7h6",
     "arrow-up": "M12 19V5m-5 5 5-5 5 5",
