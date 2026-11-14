@@ -67,7 +67,7 @@ const bundle = await build({
   write: false,
 });
 const css = await readFile(
-  fileURLToPath(import.meta.resolve("@opendle/ui/styles.css")),
+  new URL("../styles/tokens.css", import.meta.url),
   "utf8",
 );
 const evidenceDirectory = await mkdtemp(

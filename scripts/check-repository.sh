@@ -34,9 +34,10 @@ required_files=(
   "dist/index.js"
   "dist/index.d.ts"
   "styles/tokens.css"
-  "styles/paper.css"
-  "dist/paper/index.js"
-  "scripts/paper-browser.mjs"
+  "scripts/core-browser.mjs"
+  "scripts/calendar-browser.mjs"
+  "styles/index.css"
+  "styles/fonts.css"
   "scripts/ontology-explorer-browser.mjs"
   "scripts/form-controls-browser.mjs"
   "scripts/graph-edge-browser.mjs"
@@ -84,8 +85,9 @@ node --check scripts/ordered-choice-list-browser.mjs
 node --check scripts/modal-form-controls-browser.mjs
 node --check scripts/panel-content-browser.mjs
 node --check scripts/action-button-browser.mjs
-node --check scripts/paper-browser.mjs
-node --input-type=module -e "import('./dist/index.js').then((shared) => { for (const name of ['AccountMenu', 'AdvancedFieldsDisclosure', 'BoundedDataExplorer', 'ChangeTimeline', 'DateTime', 'Dialog', 'ExplorerWorkspace', 'FileDropZone', 'FormActions', 'FormField', 'FormSection', 'InlineAlert', 'ManagedFileList', 'MetadataBagList', 'OntologyInheritanceTree', 'OperationPlayground', 'PanelContent', 'ReviewPlanCard', 'SavedViewCanvas', 'SearchableSelect', 'SecretRevealPanel', 'WorkspaceSelector']) if (!(name in shared)) throw new Error('Missing shared export: ' + name); })"
+node --check scripts/core-browser.mjs
+node --check scripts/calendar-browser.mjs
+node --input-type=module -e "import('./dist/index.js').then((shared) => { for (const name of ['AccountMenu', 'AdvancedFieldsDisclosure', 'BoundedDataExplorer', 'ChangeTimeline', 'DateTime', 'Dialog', 'ExplorerWorkspace', 'FileDropZone', 'FormActions', 'FormField', 'FormSection', 'InlineAlert', 'ManagedFileList', 'MetadataBagList', 'OntologyInheritanceTree', 'OperationPlayground', 'PanelContent', 'CalendarBoard', 'PasskeyList', 'PostDetailDialog', 'ReviewPlanCard', 'SavedViewCanvas', 'TagFilterBar', 'SearchableSelect', 'SecretRevealPanel', 'WorkspaceSelector']) if (!(name in shared)) throw new Error('Missing shared export: ' + name); })"
 
 grep -qx "min-release-age=14" .npmrc
 grep -q 'OPENDLE_UI_DEPENDENCY_MIN_AGE_DAYS:-14' scripts/dependency-age-gate.sh
@@ -127,14 +129,14 @@ node scripts/ordered-choice-list-browser.mjs
 node scripts/modal-form-controls-browser.mjs
 node scripts/action-button-browser.mjs
 node scripts/panel-content-browser.mjs
-node scripts/application-shell-focus-browser.mjs
 node scripts/compact-checkbox-group-browser.mjs
 node scripts/radio-group-browser.mjs
 node scripts/sign-in-card-browser.mjs
 node scripts/graph-native-overlay-browser.mjs
 node scripts/graph-viewport-content-browser.mjs
 node scripts/relationship-column-header-browser.mjs
-node scripts/paper-browser.mjs
+node scripts/core-browser.mjs
+node scripts/calendar-browser.mjs
 npm run security
 ./scripts/react-doctor-gate.sh
 

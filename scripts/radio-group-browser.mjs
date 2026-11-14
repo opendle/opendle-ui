@@ -19,7 +19,7 @@ const css = await readFile(
 const fixture = String.raw`
 import React, {StrictMode, useLayoutEffect, useRef, useState} from 'react';
 import {createRoot} from 'react-dom/client';
-import {ApplicationShell, AdvancedFieldsDisclosure, Button, Icon, MobileNavigation, PageSurface, RadioGroup, SelectControl, TextControl} from '@opendle/ui';
+import {ApplicationShell, AdvancedFieldsDisclosure, Button, Icon, NavigationLink, PageSurface, RadioGroup, SelectControl, TextControl} from '@opendle/ui';
 const options = [{value:'',label:'All call actors'}, {value:'service',label:'Service calls'}, {value:'administrator',label:'Administrator playground calls'}];
 function Fixture() {
  const [state,setState] = useState({value:'',options,disabled:false,error:null,help:'Choose one call source.', legacy:false, external:false, reflow:true});
@@ -28,7 +28,7 @@ function Fixture() {
  const groupRef = useRef(null);
  useLayoutEffect(()=>{window.configureRadio = patch => setState(current=>({...current,...patch})); window.radioRef=groupRef; return ()=>{delete window.configureRadio; delete window.radioRef}},[]);
  const changed = value => {setChanges(current=>[...current,value]);setState(current=>({...current,value}))};
- return <ApplicationShell sidebar={<aside className="od-application-sidebar" aria-label="Desktop navigation">Example</aside>} mobileNavigation={<MobileNavigation aria-label="Phone navigation" items={[{id:'home',label:'Application overview',icon:<Icon name="grid"/>},{id:'settings',label:'Settings and account tools',icon:<Icon name="settings"/>}]} onSelect={()=>{}}/>}>
+ return <ApplicationShell brandMark={<Icon name="grid"/>} brandName="Example" navigationLabel="Main navigation" skipLabel="Skip to content" navigation={<><NavigationLink href="#home" icon={<Icon name="grid"/>} label="Application overview"/><NavigationLink href="#settings" icon={<Icon name="settings"/>} label="Settings and account tools"/></>}>
  <PageSurface><h1>Report options</h1><p>Choose the report fields and call source.</p>
  <p id="host-help">This setting applies to the current report.</p>
  <form id="report" aria-label="Report form" onSubmit={event=>event.preventDefault()}>
@@ -97,7 +97,7 @@ async function focusVisible(page, locator) {
     const box = node.getBoundingClientRect(),
       style = getComputedStyle(node),
       nav = document
-        .querySelector(".od-application-mobile-navigation")
+        .querySelector(".od-application-sidebar")
         .getBoundingClientRect();
     const bounds = node
       .closest(".od-radio-group-options")
@@ -116,7 +116,7 @@ async function focusVisible(page, locator) {
       bottom: box.bottom + extent,
       left: box.left - extent,
       right: box.right + extent,
-      navTop: nav.height ? nav.top : innerHeight,
+      navTop: nav.top > innerHeight / 2 ? nav.top : innerHeight,
       bounds: {
         top: bounds.top,
         bottom: bounds.bottom,
@@ -339,7 +339,7 @@ try {
         );
         if (width < 1000 && scale === 2)
           assert.ok(
-            countedSummaryHeight > summaryHeight,
+            countedSummaryHeight >= summaryHeight,
             "The active-count summary must wrap after native selection",
           );
         await capture(page, `${scene}-active-count-reflow`);

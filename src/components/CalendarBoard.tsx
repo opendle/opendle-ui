@@ -1,422 +1,433 @@
-import type { CSSProperties, DragEvent, ReactNode } from "react";
+import {
+  useCallback,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  type CSSProperties,
+} from "react";
 
-export type CalendarMode = "week" | "month" | "timeline";
-export type CalendarEventState = "planned" | "completed";
-
-export interface CalendarEvent {
-  readonly id: string;
-  readonly title: string;
-  readonly detail: string;
-  readonly date: string;
-  readonly start: string;
-  readonly end: string;
-  readonly kind: string;
-  readonly state: CalendarEventState;
-  readonly channel?: string;
-  readonly editable: boolean;
-}
+import {
+  calendarDayDate,
+  calendarDayKey,
+  calendarGridDays,
+  type CalendarMode,
+} from "./calendarDates.js";
+import {
+  calendarBoardLabels,
+  calendarItemState,
+  type CalendarBoardLabels,
+  type CalendarItem,
+  type CalendarItemState,
+} from "./calendarItems.js";
+import { classes } from "./classes.js";
+import { Icon, NetworkIcon, type IconName } from "./Icon.js";
 
 export interface CalendarBoardProps {
   readonly mode: CalendarMode;
-  readonly items: readonly CalendarEvent[];
-  readonly weekDates: readonly string[];
-  readonly weekHours: readonly string[];
+  /** A `YYYY-MM-DD` day in the month or week to show. */
+  readonly anchor: string;
+  /** The current `YYYY-MM-DD` day. */
   readonly today: string;
-  readonly selectedId: string | null;
-  readonly draggedId: string | null;
-  readonly dropDate: string | null;
-  readonly onSelect: (item: CalendarEvent) => void;
-  readonly onDragStart: (
-    event: DragEvent<HTMLElement>,
-    item: CalendarEvent,
-  ) => void;
-  readonly onDragEnd: () => void;
-  readonly onAllowDrop: (event: DragEvent<HTMLElement>, date: string) => void;
-  readonly onClearDrop: (event: DragEvent<HTMLElement>) => void;
-  readonly onMove: (event: DragEvent<HTMLElement>, date: string) => void;
-  readonly currentTimeLabel?: string;
-  readonly renderChannel?: (channel: string) => ReactNode;
+  readonly items: readonly CalendarItem[];
+  readonly onSelect: (item: CalendarItem) => void;
+  /** Timeline: more entries exist before the first one. */
+  readonly hasEarlier?: boolean;
+  /** Timeline: more entries exist after the last one. */
+  readonly hasLater?: boolean;
+  /** Timeline: called when the reader comes near the start. */
+  readonly onLoadEarlier?: () => void;
+  /** Timeline: called when the reader comes near the end. */
+  readonly onLoadLater?: () => void;
+  readonly locale?: string;
+  readonly labels?: CalendarBoardLabels;
+  readonly className?: string;
 }
 
-const monthDayFormatter = new Intl.DateTimeFormat("en-GB", {
-  weekday: "long",
-  day: "numeric",
-  month: "long",
-  year: "numeric",
-  timeZone: "UTC",
-});
-const monthLabelFormatter = new Intl.DateTimeFormat("en-GB", {
-  month: "long",
-  year: "numeric",
-  timeZone: "UTC",
-});
-const weekdayFormatter = new Intl.DateTimeFormat("en-GB", {
-  weekday: "short",
-  timeZone: "UTC",
-});
+const stateIcons: Record<CalendarItemState, IconName> = {
+  scheduled: "clock",
+  publishing: "retry",
+  published: "check",
+  failed: "alert",
+  cancelled: "close",
+};
 
-function parseDate(date: string) {
-  return new Date(`${date}T12:00:00Z`);
+interface DayGroup {
+  readonly day: string;
+  readonly items: readonly CalendarItem[];
+  /** The first shown day of its month. */
+  readonly startsMonth: boolean;
 }
 
-function eventDuration(item: CalendarEvent) {
-  const [startHour = 0, startMinute = 0] = item.start.split(":").map(Number);
-  const [endHour = 0, endMinute = 0] = item.end.split(":").map(Number);
-  return endHour * 60 + endMinute - (startHour * 60 + startMinute);
-}
-
-function eventStyle(item: CalendarEvent): CSSProperties {
-  const [hour = 0, minute = 0] = item.start.split(":").map(Number);
-  const [endHour = 0, endMinute = 0] = item.end.split(":").map(Number);
-  return {
-    "--calendar-event-top": `${String(Math.max(0, hour * 60 + minute - 8 * 60))}px`,
-    "--calendar-event-height": `${String(Math.max(38, endHour * 60 + endMinute - (hour * 60 + minute)))}px`,
-  } as CSSProperties;
-}
-
-function monthDays(year: number, monthIndex: number) {
-  const monthStart = new Date(Date.UTC(year, monthIndex, 1, 12));
-  const mondayOffset = (monthStart.getUTCDay() + 6) % 7;
-  const gridStart = new Date(monthStart);
-  gridStart.setUTCDate(monthStart.getUTCDate() - mondayOffset);
-  return Array.from({ length: 42 }, (_, index) => {
-    const date = new Date(gridStart);
-    date.setUTCDate(gridStart.getUTCDate() + index);
-    return {
-      date: date.toISOString().slice(0, 10),
-      day: date.getUTCDate(),
-      inMonth: date.getUTCMonth() === monthIndex,
-    };
-  });
-}
-
-function ChannelMark({
-  channel,
-  renderChannel,
-}: {
-  channel: string;
-  renderChannel: ((channel: string) => ReactNode) | undefined;
-}) {
-  return (
-    renderChannel?.(channel) ?? (
-      <span
-        className="calendar-event-channel"
-        data-calendar-network={channel.toLowerCase()}
-        title={`${channel} channel`}
-        aria-hidden="true"
-      >
-        {channel.slice(0, 1).toUpperCase()}
-      </span>
-    )
+function groupByDay(
+  items: readonly CalendarItem[],
+): Map<string, CalendarItem[]> {
+  const groups = new Map<string, CalendarItem[]>();
+  const sorted = items.toSorted(
+    (first, second) => Date.parse(first.start) - Date.parse(second.start),
   );
+  for (const item of sorted) {
+    const day = calendarDayKey(new Date(item.start));
+    const group = groups.get(day);
+    if (group === undefined) groups.set(day, [item]);
+    else group.push(item);
+  }
+  return groups;
 }
 
-function EventButton({
-  item,
-  compact,
-  selected,
-  dragging,
-  onSelect,
-  onDragStart,
-  onDragEnd,
-  renderChannel,
-}: {
-  item: CalendarEvent;
-  compact?: boolean;
-  selected: boolean;
-  dragging: boolean;
-  onSelect: (item: CalendarEvent) => void;
-  onDragStart: (event: DragEvent<HTMLElement>, item: CalendarEvent) => void;
-  onDragEnd: () => void;
-  renderChannel: ((channel: string) => ReactNode) | undefined;
-}) {
-  const singleLine = !compact && eventDuration(item) <= 45;
-  const itemLabel = `${item.channel ? `${item.channel}, ` : ""}${item.title}, ${item.start} to ${item.end}, ${item.state}`;
-  const classes = [
-    "calendar-event",
-    `calendar-event-${item.kind}`,
-    `calendar-event-${item.state}`,
-    compact ? "calendar-event-month-chip" : "",
-    singleLine ? "calendar-event-short" : "",
-  ]
-    .filter(Boolean)
-    .join(" ");
+interface Formats {
+  readonly time: Intl.DateTimeFormat;
+  readonly weekday: Intl.DateTimeFormat;
+  readonly fullDay: Intl.DateTimeFormat;
+  readonly month: Intl.DateTimeFormat;
+}
+
+interface ItemButtonProps {
+  readonly item: CalendarItem;
+  readonly formats: Formats;
+  readonly labels: CalendarBoardLabels;
+  readonly onSelect: (item: CalendarItem) => void;
+}
+
+function ItemButton({ formats, item, labels, onSelect }: ItemButtonProps) {
+  const state = calendarItemState(item);
+  const time = formats.time.format(new Date(item.start));
+  const style =
+    item.color === undefined
+      ? undefined
+      : ({ "--od-calendar-item-color": item.color } as CSSProperties);
   return (
     <button
-      className={classes}
-      data-calendar-channel={item.channel?.toLowerCase()}
-      data-calendar-layout={
-        compact ? "month-chip" : singleLine ? "single-line" : "timed"
-      }
-      data-selected={selected}
-      data-dragging={dragging}
-      draggable={item.editable}
-      style={compact ? undefined : eventStyle(item)}
-      title={`${item.start} · ${item.title}`}
-      type="button"
-      aria-label={itemLabel}
+      aria-label={[time, item.kind, item.title, labels.states[state]]
+        .filter(Boolean)
+        .join(", ")}
+      className="od-calendar-item"
+      data-state={state}
       onClick={() => {
         onSelect(item);
       }}
-      onDragStart={(event) => {
-        onDragStart(event, item);
-      }}
-      onDragEnd={onDragEnd}
+      style={style}
+      type="button"
     >
-      {compact ? (
-        <span className="calendar-event-compact-line">
-          {item.channel ? (
-            <ChannelMark channel={item.channel} renderChannel={renderChannel} />
-          ) : null}
-          <strong>{item.title}</strong>
+      <span className="od-calendar-item-bar" />
+      <span className="od-calendar-item-top">
+        <time dateTime={item.start}>{time}</time>
+        {item.kind ? (
+          <span className="od-calendar-item-kind">{item.kind}</span>
+        ) : null}
+        <span className="od-calendar-item-state" title={labels.states[state]}>
+          <Icon name={stateIcons[state]} size={13} />
         </span>
-      ) : singleLine ? (
-        <span className="calendar-event-single-line">
-          <span className="calendar-event-time">{item.start}</span>
-          {item.channel ? (
-            <ChannelMark channel={item.channel} renderChannel={renderChannel} />
-          ) : null}
-          <strong>{item.title}</strong>
-        </span>
-      ) : (
-        <>
-          <span className="calendar-event-time">{item.start}</span>
-          <strong>{item.title}</strong>
-          <span className="calendar-event-meta">
-            {item.kind === "agent-stage" ? (
-              "Agent stage"
-            ) : item.channel ? (
-              <ChannelMark
-                channel={item.channel}
-                renderChannel={renderChannel}
-              />
-            ) : (
-              item.kind.replace("-", " ")
-            )}
-          </span>
-        </>
-      )}
-      {item.editable ? (
-        <span className="calendar-event-grip" aria-hidden="true">
-          ⋮
-        </span>
-      ) : (
-        <span className="calendar-event-check" aria-hidden="true">
-          ✓
-        </span>
-      )}
+      </span>
+      <span className="od-calendar-item-title">{item.title}</span>
+      <span className="od-calendar-item-networks">
+        {item.targets.map((target) => (
+          <NetworkIcon
+            badge
+            className="od-calendar-item-network"
+            data-state={target.state}
+            key={target.id}
+            network={target.network}
+          />
+        ))}
+      </span>
     </button>
   );
 }
 
-export function CalendarBoard({
+interface GridProps {
+  readonly mode: "month" | "week";
+  readonly anchor: string;
+  readonly today: string;
+  readonly groups: Map<string, CalendarItem[]>;
+  readonly formats: Formats;
+  readonly labels: CalendarBoardLabels;
+  readonly onSelect: (item: CalendarItem) => void;
+}
+
+function Grid({
+  anchor,
+  formats,
+  groups,
+  labels,
   mode,
-  items,
-  weekDates,
-  weekHours,
-  today,
-  selectedId,
-  draggedId,
-  dropDate,
   onSelect,
-  onDragStart,
-  onDragEnd,
-  onAllowDrop,
-  onClearDrop,
-  onMove,
-  currentTimeLabel,
-  renderChannel,
-}: CalendarBoardProps) {
-  if (mode === "timeline") {
-    const sortedItems = items
-      .slice()
-      .sort((a, b) =>
-        `${a.date}T${a.start}`.localeCompare(`${b.date}T${b.start}`),
-      );
-    return (
-      <div
-        className="calendar-timeline"
-        aria-label="Canonical activity timeline"
-      >
-        {sortedItems.map((item) => (
-          <button
-            type="button"
-            key={item.id}
-            data-selected={selectedId === item.id}
-            onClick={() => {
-              onSelect(item);
-            }}
-          >
-            <time dateTime={`${item.date}T${item.start}:00Z`}>
-              {item.date}
-              <span>{item.start} UTC</span>
-            </time>
-            <i aria-hidden="true" />
-            <span>
-              <small>
-                {item.kind.replace("-", " ")} · {item.state}
-              </small>
-              <strong>{item.title}</strong>
-              <p>{item.detail}</p>
-            </span>
-            {item.channel ? (
-              <ChannelMark
-                channel={item.channel}
-                renderChannel={renderChannel}
-              />
-            ) : null}
-          </button>
-        ))}
-      </div>
-    );
-  }
-  if (mode === "month") {
-    const monthDate = parseDate(today);
-    const monthYear = monthDate.getUTCFullYear();
-    const monthIndex = monthDate.getUTCMonth();
-    const days = monthDays(monthYear, monthIndex);
-    const monthLabel = monthLabelFormatter.format(monthDate);
-    return (
-      <div
-        className="calendar-month"
-        data-calendar-week-count="6"
-        aria-label={`${monthLabel} month view`}
-      >
-        {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((day) => (
-          <div className="calendar-month-weekday" key={day}>
-            {day}
-          </div>
-        ))}
-        {days.map((day, index) => {
-          const dayItems = items
-            .filter((item) => item.date === day.date)
-            .sort((a, b) => a.start.localeCompare(b.start));
-          const past = day.date < today;
-          return (
-            <div
-              className="calendar-month-day"
-              data-calendar-week={Math.floor(index / 7) + 1}
-              data-drop-active={dropDate === day.date}
-              data-calendar-event-count={dayItems.length}
-              data-in-month={day.inMonth}
-              data-past={past}
-              data-today={day.date === today}
-              key={day.date}
-              aria-label={`${monthDayFormatter.format(parseDate(day.date))}, ${String(dayItems.length)} ${dayItems.length === 1 ? "event" : "events"}`}
-              onDragEnter={(event) => {
-                onAllowDrop(event, day.date);
-              }}
-              onDragOver={(event) => {
-                onAllowDrop(event, day.date);
-              }}
-              onDragLeave={onClearDrop}
-              onDrop={(event) => {
-                onMove(event, day.date);
-              }}
-            >
-              <div className="calendar-month-date">
-                <span>{day.day}</span>
-                {day.date === today ? <small>Today</small> : null}
-                {past && dayItems.length ? (
-                  <span aria-label="Read-only">🔒</span>
-                ) : null}
-              </div>
-              <div className="calendar-month-events">
-                {dayItems.map((item) => (
-                  <EventButton
-                    compact
-                    item={item}
-                    selected={selectedId === item.id}
-                    dragging={draggedId === item.id}
-                    key={item.id}
-                    onSelect={onSelect}
-                    onDragStart={onDragStart}
-                    onDragEnd={onDragEnd}
-                    renderChannel={renderChannel}
-                  />
-                ))}
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    );
-  }
+  today,
+}: GridProps) {
+  const days = calendarGridDays(mode, anchor);
+  const anchorMonth = anchor.slice(0, 7);
+  const hasItems = days.some((day) => groups.has(day));
   return (
-    <div className="calendar-week-scroll">
-      <div className="calendar-week" aria-label="Calendar week">
-        <div className="calendar-week-corner" />
-        {weekDates.map((date) => (
-          <div
-            className="calendar-day-heading"
-            data-today={date === today}
-            key={date}
-          >
-            <span>{weekdayFormatter.format(parseDate(date))}</span>
-            <strong>{parseDate(date).getUTCDate()}</strong>
-            {date === today ? <small>Today</small> : null}
-          </div>
+    <>
+      <div aria-hidden="true" className="od-calendar-weekdays">
+        {days.slice(0, 7).map((day) => (
+          <span key={day}>{formats.weekday.format(calendarDayDate(day))}</span>
         ))}
-        <div className="calendar-time-axis" aria-hidden="true">
-          {weekHours.map((hour) => (
-            <span key={hour}>{hour}</span>
-          ))}
-        </div>
-        {weekDates.map((date) => {
-          const dayItems = items
-            .filter((item) => item.date === date)
-            .sort((a, b) => a.start.localeCompare(b.start));
-          const past = date < today;
+      </div>
+      <ol className="od-calendar-grid">
+        {days.map((day) => {
+          const date = calendarDayDate(day);
+          const items = groups.get(day) ?? [];
           return (
-            <div
-              className="calendar-day-column"
-              data-drop-active={dropDate === date}
-              data-past={past}
-              data-today={date === today}
-              key={date}
-              onDragEnter={(event) => {
-                onAllowDrop(event, date);
-              }}
-              onDragOver={(event) => {
-                onAllowDrop(event, date);
-              }}
-              onDragLeave={onClearDrop}
-              onDrop={(event) => {
-                onMove(event, date);
-              }}
+            <li
+              className="od-calendar-day"
+              data-empty={items.length === 0}
+              data-outside={mode === "month" && day.slice(0, 7) !== anchorMonth}
+              data-today={day === today}
+              key={day}
             >
-              <div className="calendar-hour-lines" aria-hidden="true">
-                {weekHours.map((hour) => (
-                  <i key={hour} />
-                ))}
-              </div>
-              {date === today ? (
-                <div
-                  className="calendar-now-line"
-                  aria-label={`Current time${currentTimeLabel ? `, ${currentTimeLabel}` : ""}`}
-                >
-                  <span>{currentTimeLabel ?? "Now"}</span>
-                </div>
-              ) : null}
-              {dayItems.map((item) => (
-                <EventButton
+              <time
+                aria-current={day === today ? "date" : undefined}
+                aria-label={formats.fullDay.format(date)}
+                className="od-calendar-day-head"
+                dateTime={day}
+              >
+                <span className="od-calendar-day-weekday">
+                  {formats.weekday.format(date)}
+                </span>
+                <span className="od-calendar-day-number">{date.getDate()}</span>
+              </time>
+              {items.map((item) => (
+                <ItemButton
+                  formats={formats}
                   item={item}
-                  selected={selectedId === item.id}
-                  dragging={draggedId === item.id}
                   key={item.id}
+                  labels={labels}
                   onSelect={onSelect}
-                  onDragStart={onDragStart}
-                  onDragEnd={onDragEnd}
-                  renderChannel={renderChannel}
                 />
               ))}
-              {past ? (
-                <span className="calendar-past-label">🔒 Read-only</span>
-              ) : null}
-            </div>
+            </li>
           );
         })}
-      </div>
+      </ol>
+      {hasItems ? null : <p className="od-calendar-empty">{labels.empty}</p>}
+    </>
+  );
+}
+
+interface TimelineProps {
+  readonly today: string;
+  readonly groups: Map<string, CalendarItem[]>;
+  readonly formats: Formats;
+  readonly labels: CalendarBoardLabels;
+  readonly onSelect: (item: CalendarItem) => void;
+  readonly hasEarlier: boolean;
+  readonly hasLater: boolean;
+  readonly onLoadEarlier: (() => void) | undefined;
+  readonly onLoadLater: (() => void) | undefined;
+}
+
+function Timeline({
+  formats,
+  groups,
+  hasEarlier,
+  hasLater,
+  labels,
+  onLoadEarlier,
+  onLoadLater,
+  onSelect,
+  today,
+}: TimelineProps) {
+  const days = useMemo<readonly DayGroup[]>(() => {
+    const keys = new Set(groups.keys());
+    keys.add(today);
+    return [...keys].toSorted().map((day, index, sorted) => ({
+      day,
+      items: groups.get(day) ?? [],
+      startsMonth: sorted[index - 1]?.slice(0, 7) !== day.slice(0, 7),
+    }));
+  }, [groups, today]);
+
+  const rootRef = useRef<HTMLDivElement>(null);
+  const opened = useRef(false);
+  const previous = useRef<{ first: string; height: number } | null>(null);
+  const firstDay = days[0]?.day ?? today;
+
+  // Open at the present. Then keep the reader in place when earlier days
+  // appear above.
+  useLayoutEffect(() => {
+    const root = rootRef.current;
+    if (root === null) return;
+    const scroller = root.ownerDocument.documentElement;
+    if (!opened.current) {
+      opened.current = true;
+      root
+        .querySelector<HTMLElement>('[data-today="true"]')
+        ?.scrollIntoView({ block: "start" });
+    } else if (previous.current !== null && previous.current.first > firstDay) {
+      root.ownerDocument.defaultView?.scrollBy(
+        0,
+        scroller.scrollHeight - previous.current.height,
+      );
+    }
+    previous.current = { first: firstDay, height: scroller.scrollHeight };
+  }, [days, firstDay]);
+
+  const observe = useCallback(
+    (load: (() => void) | undefined) => (button: HTMLButtonElement | null) => {
+      if (button === null || load === undefined) return undefined;
+      if (typeof IntersectionObserver === "undefined") return undefined;
+      const observer = new IntersectionObserver(
+        (entries) => {
+          if (entries.some((entry) => entry.isIntersecting)) load();
+        },
+        { rootMargin: "400px 0px" },
+      );
+      observer.observe(button);
+      return () => {
+        observer.disconnect();
+      };
+    },
+    [],
+  );
+  const earlierRef = useMemo(
+    () => observe(onLoadEarlier),
+    [observe, onLoadEarlier],
+  );
+  const laterRef = useMemo(() => observe(onLoadLater), [observe, onLoadLater]);
+
+  return (
+    <div className="od-calendar-timeline" ref={rootRef}>
+      {hasEarlier ? (
+        <button
+          className="od-calendar-more"
+          onClick={onLoadEarlier}
+          ref={earlierRef}
+          type="button"
+        >
+          {labels.earlier}
+        </button>
+      ) : null}
+      <ol className="od-calendar-timeline-days">
+        {days.map(({ day, items, startsMonth }) => {
+          const date = calendarDayDate(day);
+          return (
+            <li
+              className="od-calendar-timeline-day"
+              data-empty={items.length === 0}
+              data-past={day < today}
+              data-today={day === today}
+              key={day}
+            >
+              {startsMonth ? (
+                <h2 className="od-calendar-timeline-month">
+                  {formats.month.format(date)}
+                </h2>
+              ) : null}
+              <time
+                aria-current={day === today ? "date" : undefined}
+                aria-label={formats.fullDay.format(date)}
+                className="od-calendar-day-head"
+                dateTime={day}
+              >
+                <span className="od-calendar-day-weekday">
+                  {formats.weekday.format(date)}
+                </span>
+                <span className="od-calendar-day-number">{date.getDate()}</span>
+              </time>
+              <div className="od-calendar-timeline-items">
+                {items.length === 0 ? (
+                  <span className="od-calendar-timeline-now">
+                    {labels.today}
+                  </span>
+                ) : (
+                  items.map((item) => (
+                    <ItemButton
+                      formats={formats}
+                      item={item}
+                      key={item.id}
+                      labels={labels}
+                      onSelect={onSelect}
+                    />
+                  ))
+                )}
+              </div>
+            </li>
+          );
+        })}
+      </ol>
+      {hasLater ? (
+        <button
+          className="od-calendar-more"
+          onClick={onLoadLater}
+          ref={laterRef}
+          type="button"
+        >
+          {labels.later}
+        </button>
+      ) : null}
     </div>
+  );
+}
+
+/**
+ * A calendar of entries that go to one or more networks. It has a month
+ * view, a week view and a continuous timeline. The host owns the data.
+ */
+export function CalendarBoard({
+  anchor,
+  className,
+  hasEarlier = false,
+  hasLater = false,
+  items,
+  labels = calendarBoardLabels,
+  locale,
+  mode,
+  onLoadEarlier,
+  onLoadLater,
+  onSelect,
+  today,
+}: CalendarBoardProps) {
+  const formats = useMemo<Formats>(
+    () => ({
+      time: new Intl.DateTimeFormat(locale, {
+        hour: "2-digit",
+        minute: "2-digit",
+        hourCycle: "h23",
+      }),
+      weekday: new Intl.DateTimeFormat(locale, { weekday: "short" }),
+      fullDay: new Intl.DateTimeFormat(locale, {
+        weekday: "long",
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+      }),
+      month: new Intl.DateTimeFormat(locale, {
+        month: "long",
+        year: "numeric",
+      }),
+    }),
+    [locale],
+  );
+  const groups = useMemo(() => groupByDay(items), [items]);
+  return (
+    <section
+      aria-label={labels.board}
+      className={classes("od-calendar", className)}
+      data-mode={mode}
+    >
+      {mode === "timeline" ? (
+        <Timeline
+          formats={formats}
+          groups={groups}
+          hasEarlier={hasEarlier}
+          hasLater={hasLater}
+          labels={labels}
+          onLoadEarlier={onLoadEarlier}
+          onLoadLater={onLoadLater}
+          onSelect={onSelect}
+          today={today}
+        />
+      ) : (
+        <Grid
+          anchor={anchor}
+          formats={formats}
+          groups={groups}
+          labels={labels}
+          mode={mode}
+          onSelect={onSelect}
+          today={today}
+        />
+      )}
+    </section>
   );
 }

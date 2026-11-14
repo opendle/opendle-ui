@@ -1,6 +1,6 @@
 {
   "name": "@opendle/ui",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Shared React design system and frontend primitives for OpenDLE projects.",
   "type": "module",
   "files": [
@@ -18,12 +18,7 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
     },
-    "./paper": {
-      "types": "./dist/paper/index.d.ts",
-      "import": "./dist/paper/index.js"
-    },
-    "./styles.css": "./styles/tokens.css",
-    "./paper.css": "./styles/paper.css",
+    "./styles.css": "./styles/index.css",
     "./scripts/build-consumer.mjs": "./scripts/build-consumer.mjs",
     "./package.json": "./package.json"
   },

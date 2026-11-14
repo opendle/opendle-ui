@@ -1,0 +1,65 @@
+import type { NetworkName } from "./networks.js";
+
+export type CalendarItemState =
+  "scheduled" | "publishing" | "published" | "failed" | "cancelled";
+
+export interface CalendarItemTarget {
+  readonly id: string;
+  readonly network: NetworkName;
+  readonly state: CalendarItemState;
+}
+
+/** One entry of the calendar. It can go to several networks. */
+/** One entry of the calendar. It can go to several networks. */
+export interface CalendarItem {
+  readonly id: string;
+  /** The ISO 8601 instant of the entry. */
+  readonly start: string;
+  readonly title: string;
+  /** A short type, for example "Reel". */
+  readonly kind?: string;
+  /** A CSS colour for the bar at the start of the entry. */
+  readonly color?: string;
+  readonly targets: readonly CalendarItemTarget[];
+}
+
+export interface CalendarBoardLabels {
+  readonly board: string;
+  readonly today: string;
+  readonly empty: string;
+  readonly earlier: string;
+  readonly later: string;
+  readonly states: Readonly<Record<CalendarItemState, string>>;
+}
+
+export const calendarBoardLabels: CalendarBoardLabels = {
+  board: "Calendar",
+  today: "Today",
+  empty: "No posts",
+  earlier: "Earlier",
+  later: "Later",
+  states: {
+    scheduled: "Scheduled",
+    publishing: "Publishing",
+    published: "Published",
+    failed: "Failed",
+    cancelled: "Cancelled",
+  },
+};
+
+const statePriority: readonly CalendarItemState[] = [
+  "failed",
+  "publishing",
+  "scheduled",
+  "published",
+  "cancelled",
+];
+
+/** The state of an entry: the most urgent state of its networks. */
+export function calendarItemState(item: CalendarItem): CalendarItemState {
+  return (
+    statePriority.find((state) =>
+      item.targets.some((target) => target.state === state),
+    ) ?? "scheduled"
+  );
+}

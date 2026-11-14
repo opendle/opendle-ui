@@ -544,7 +544,7 @@ try {
           if (oversized) {
             await configure(page, { state: "omitted" });
             await viewport.evaluate((element) => {
-              element.scrollLeft = 200;
+              element.scrollLeft = 24;
               element.scrollTop = 0;
             });
             const scrollBefore = await viewport.evaluate(

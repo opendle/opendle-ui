@@ -24,6 +24,7 @@ export function AutoGrowTextarea({
   maxHeight = 240,
   onInput,
   rows = 2,
+  className,
   style,
   value,
   defaultValue,
@@ -58,6 +59,7 @@ export function AutoGrowTextarea({
   return (
     <textarea
       {...props}
+      className={["od-auto-grow-textarea", className].filter(Boolean).join(" ")}
       ref={textareaRef}
       rows={rows}
       value={value}

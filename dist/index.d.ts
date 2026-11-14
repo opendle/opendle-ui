@@ -1,15 +1,10 @@
 export { OrderedChoiceList, type OrderedChoiceItem, type OrderedChoiceListProps, } from "./components/OrderedChoiceList.js";
 export { SkipLink, type SkipLinkProps } from "./components/SkipLink.js";
 export { CapabilityTag, type CapabilityTagProps, type CapabilityTagTone, } from "./components/CapabilityTag.js";
-import type { SVGAttributes } from "react";
 /** Public package version. Keep this value aligned with package.json. */
-export declare const OPENDLE_UI_VERSION: "0.3.0";
-export type IconName = "activity" | "arrow-up" | "audit" | "book" | "chevron" | "check" | "clock" | "close" | "cloud" | "database" | "edit" | "eye" | "file" | "filter" | "grid" | "health" | "key" | "layers" | "list" | "lock" | "logout" | "menu" | "more" | "moon" | "plus" | "refresh" | "search" | "server" | "settings" | "shield" | "spark" | "users" | "warning" | "workspace";
-export interface IconProps extends SVGAttributes<SVGSVGElement> {
-    readonly name: IconName;
-    readonly size?: number;
-}
-export declare function Icon({ name, size, ...props }: IconProps): import("react").JSX.Element;
+export declare const OPENDLE_UI_VERSION: "0.4.0";
+export { Icon, NetworkIcon, type IconName, type IconProps, type NetworkIconProps, } from "./components/Icon.js";
+export { networkLabel, networkNames, type NetworkName, } from "./components/networks.js";
 /** Shared token names. Values are defined in styles/tokens.css. */
 export declare const designTokens: {
     readonly color: {
@@ -18,6 +13,18 @@ export declare const designTokens: {
         readonly muted: "--od-color-muted";
         readonly mutedStrong: "--od-color-muted-strong";
         readonly accent: "--od-color-accent";
+        readonly brand: "--od-color-brand";
+        readonly onBrand: "--od-color-on-brand";
+        readonly brandSoft: "--od-color-brand-soft";
+        readonly brandText: "--od-color-brand-text";
+        readonly sunken: "--od-color-sunken";
+        readonly hover: "--od-color-hover";
+        readonly success: "--od-color-success";
+        readonly successSoft: "--od-color-success-soft";
+        readonly danger: "--od-color-danger";
+        readonly dangerSoft: "--od-color-danger-soft";
+        readonly warning: "--od-color-warning";
+        readonly warningSoft: "--od-color-warning-soft";
         readonly border: "--od-color-border";
         readonly borderStrong: "--od-color-border-strong";
         readonly surface: "--od-color-surface";
@@ -70,7 +77,20 @@ export { SearchableSelect, type SearchableSelectOption, type SearchableSelectPro
 export { AsyncSearchableSelect, type AsyncSearchableSelectPage, type AsyncSearchableSelectProps, type AsyncSearchableSelectRequest, } from "./components/AsyncSearchableSelect.js";
 export { YamlEditor, type YamlEditorCompletionSource, type YamlEditorDiagnostic, type YamlEditorHandle, type YamlEditorProps, } from "./components/YamlEditor.js";
 export { SecretRevealPanel, type SecretRevealPanelProps, } from "./components/SecretRevealPanel.js";
-export { ApplicationNavigation, ApplicationNavigationGroup, ApplicationShell, ApplicationSidebar, ApplicationTopbar, type ApplicationNavigationGroupProps, type ApplicationNavigationProps, type ApplicationShellProps, type ApplicationSidebarProps, type ApplicationTopbarProps, } from "./components/ApplicationShell.js";
+export { ApplicationShell, type ApplicationShellProps, } from "./components/ApplicationShell.js";
+export { ApiTokenList, type ApiTokenItem, type ApiTokenListProps, } from "./components/ApiTokenList.js";
+export { Avatar, type AvatarProps } from "./components/Avatar.js";
+export { AvatarUpload, type AvatarUploadProps, } from "./components/AvatarUpload.js";
+export { apiTokenListLabels, avatarUploadLabels, passkeyListLabels, type ApiTokenListLabels, type AvatarUploadLabels, type PasskeyListLabels, } from "./components/identityLabels.js";
+export { InlineEditableText, type InlineEditableTextProps, } from "./components/InlineEditableText.js";
+export { ItemList, type ItemListProps } from "./components/ItemList.js";
+export { ItemRow, type ItemRowProps } from "./components/ItemRow.js";
+export { Section, type SectionProps } from "./components/Section.js";
+export { PasskeyList, type PasskeyItem, type PasskeyListProps, } from "./components/PasskeyList.js";
+export { SecretValue, type SecretValueProps, } from "./components/SecretValue.js";
+export { squarePicture } from "./components/squarePicture.js";
+export { TabPanel, Tabs, type TabItem, type TabPanelProps, type TabsProps, } from "./components/Tabs.js";
+export { TagChip, type TagChipProps } from "./components/TagChip.js";
 export { Button, type ButtonProps, type ButtonVariant, } from "./components/Button.js";
 export { ActionButton, ActionButtonGroup, type ActionButtonProps, type ActionButtonGroupProps, } from "./components/ActionButton.js";
 export { DataTable, type DataTableAction, type DataTableActionContext, type DataTableCellContext, type DataTableColumn, type DataTableDensity, type DataTableExpansion, type DataTableLoadMore, type DataTableProps, type DataTableSelection, type DataTableSort, type DataTableSortDirection, type DataTableState, } from "./components/DataTable.js";
@@ -78,7 +98,14 @@ export { EditableTable, type EditableTableCellContext, type EditableTableColumn,
 export { AccountMenu, type AccountMenuProps, } from "./components/AccountMenu.js";
 export { AgentSidebar, type AgentSidebarProps, } from "./components/AgentSidebar.js";
 export { AttentionRow, type AttentionRowProps, type AttentionTone, } from "./components/AttentionRow.js";
-export { CalendarBoard, type CalendarBoardProps, type CalendarEvent, type CalendarEventState, type CalendarMode, } from "./components/CalendarBoard.js";
+export { CalendarBoard, type CalendarBoardProps, } from "./components/CalendarBoard.js";
+export { calendarBoardLabels, calendarItemState, type CalendarBoardLabels, type CalendarItem, type CalendarItemState, type CalendarItemTarget, } from "./components/calendarItems.js";
+export { calendarDayDate, calendarDayKey, calendarGridDays, calendarPeriod, calendarTitle, shiftCalendarAnchor, type CalendarMode, type CalendarPeriod, } from "./components/calendarDates.js";
+export { CalendarHeader, type CalendarHeaderProps, } from "./components/CalendarHeader.js";
+export { calendarHeaderLabels, emptyTagFilter, postDetailLabels, tagFilterLabels, type CalendarHeaderLabels, type PostDetailLabels, type TagFilterChannel, type TagFilterLabels, type TagFilterMatch, type TagFilterValue, } from "./components/calendarLabels.js";
+export { PostDetailDialog, type PostDetailDialogProps, type PostDetailMedia, type PostDetailTarget, } from "./components/PostDetailDialog.js";
+export { SegmentedControl, type SegmentedControlProps, type SegmentedOption, } from "./components/SegmentedControl.js";
+export { TagFilterBar, type TagFilterBarProps, } from "./components/TagFilterBar.js";
 export { Card, type CardProps } from "./components/Card.js";
 export { ChainStep, type ChainStepProps } from "./components/ChainStep.js";
 export { ConfirmationDialog, type ConfirmationDialogProps, } from "./components/ConfirmationDialog.js";
@@ -94,7 +121,6 @@ export { clampGraphPosition, clampGraphViewport, fitGraphViewport, graphPosition
 export { IconButton, type IconButtonProps } from "./components/IconButton.js";
 export { NavigationItem, type NavigationItemProps, } from "./components/NavigationItem.js";
 export { NavigationLink, type NavigationLinkProps, } from "./components/NavigationLink.js";
-export { MobileNavigation, type MobileNavigationDestination, type MobileNavigationSurface, type MobileNavigationItem, type MobileNavigationProps, } from "./components/MobileNavigation.js";
 export { MediaLightbox, type MediaLightboxProps, } from "./components/MediaLightbox.js";
 export { PageHeading, type PageHeadingProps, } from "./components/PageHeading.js";
 export { Panel, PanelHeader, PanelBody, SummaryFacts, type SummaryFactsProps, type PanelHeaderProps, type PanelProps, } from "./components/Panel.js";
@@ -109,7 +135,7 @@ export { StatCard, type StatCardProps } from "./components/StatCard.js";
 export { StatePanel, type StatePanelKind, type StatePanelProps, } from "./components/StatePanel.js";
 export { StatusDot, type StatusDotProps, type StatusTone, } from "./components/StatusDot.js";
 export { StatusPill, type StatusPillProps } from "./components/StatusPill.js";
-export { Toast, type ToastProps } from "./components/Toast.js";
+export { Toast, useToastQueue, type ToastMessage, type ToastProps, type ToastQueue, type ToastTone, } from "./components/Toast.js";
 export { WorkspaceSelector, type WorkspaceSelectorProps, } from "./components/WorkspaceSelector.js";
 export { BoundedDataExplorer, OntologyLabelList, type BoundedDataExplorerProps, type OntologyLabelListProps, } from "./components/BoundedDataExplorer.js";
 export { ChangeTimeline, type ChangeTimelineProps, type OntologyChangeItem, } from "./components/ChangeTimeline.js";

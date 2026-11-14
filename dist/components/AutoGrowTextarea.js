@@ -9,7 +9,7 @@ function resizeTextarea(textarea, maxHeight) {
     textarea.style.overflowY =
         textarea.scrollHeight > maxHeight ? "auto" : "hidden";
 }
-export function AutoGrowTextarea({ maxHeight = 240, onInput, rows = 2, style, value, defaultValue, ...props }) {
+export function AutoGrowTextarea({ maxHeight = 240, onInput, rows = 2, className, style, value, defaultValue, ...props }) {
     const textareaRef = useRef(null);
     useLayoutEffect(() => {
         resizeTextarea(textareaRef.current, maxHeight);
@@ -34,7 +34,7 @@ export function AutoGrowTextarea({ maxHeight = 240, onInput, rows = 2, style, va
         resizeTextarea(event.currentTarget, maxHeight);
         onInput?.(event);
     }
-    return (_jsx("textarea", { ...props, ref: textareaRef, rows: rows, value: value, defaultValue: defaultValue, onInput: resizeForContent, style: {
+    return (_jsx("textarea", { ...props, className: ["od-auto-grow-textarea", className].filter(Boolean).join(" "), ref: textareaRef, rows: rows, value: value, defaultValue: defaultValue, onInput: resizeForContent, style: {
             ...style,
             height: "auto",
             minHeight: 0,

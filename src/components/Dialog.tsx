@@ -8,7 +8,8 @@ import {
   type RefObject,
 } from "react";
 
-import { Button } from "./Button.js";
+import { Icon } from "./Icon.js";
+import { IconButton } from "./IconButton.js";
 
 export type DialogSize = "narrow" | "default" | "wide";
 export type DialogAppearance = "default" | "form";
@@ -393,16 +394,13 @@ export function Dialog({
               <div className="od-dialog-header-actions">
                 {headerActions}
                 {!showCloseButton ? null : (
-                  <Button
-                    aria-label={closeLabel}
+                  <IconButton
                     data-dialog-close="true"
                     disabled={closeDisabled}
+                    icon={<Icon name="close" />}
+                    label={closeLabel}
                     onClick={requestClose}
-                    type="button"
-                    variant="quiet"
-                  >
-                    <span aria-hidden="true">×</span>
-                  </Button>
+                  />
                 )}
               </div>
             </header>

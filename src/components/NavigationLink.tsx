@@ -1,19 +1,23 @@
 import type { AnchorHTMLAttributes, ReactNode } from "react";
 
+import { classes } from "./classes.js";
+
 export interface NavigationLinkProps extends Omit<
   AnchorHTMLAttributes<HTMLAnchorElement>,
   "children" | "title"
 > {
   readonly icon: ReactNode;
-  readonly label: ReactNode;
+  readonly label: string;
   readonly active?: boolean;
-  readonly count?: ReactNode;
+  /** A count badge, for example unread messages. Zero shows no badge. */
+  readonly count?: number;
 }
 
+/** One destination of the application sidebar, as a link. */
 export function NavigationLink({
   active = false,
   className,
-  count,
+  count = 0,
   icon,
   label,
   ...props
@@ -22,12 +26,12 @@ export function NavigationLink({
     <a
       {...props}
       aria-current={active ? "page" : undefined}
-      className={["od-navigation-item", className].filter(Boolean).join(" ")}
-      data-active={active}
+      className={classes("od-navigation-item", className)}
+      title={label}
     >
       {icon}
-      <span>{label}</span>
-      {count !== undefined && count !== null ? <b>{count}</b> : null}
+      <span className="od-navigation-label">{label}</span>
+      {count > 0 ? <span className="od-count">{count}</span> : null}
     </a>
   );
 }

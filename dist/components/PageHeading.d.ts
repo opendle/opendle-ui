@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 export interface PageHeadingProps {
-    readonly eyebrow: ReactNode;
+    readonly eyebrow?: ReactNode;
     readonly title: ReactNode;
     readonly description?: ReactNode;
     readonly actions?: ReactNode;

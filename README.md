@@ -5,36 +5,55 @@ OpenDLE UI is the shared React framework and design system for the
 [ontology](https://github.com/tubededentifrice/ontology), and
 [xbot](https://github.com/tubededentifrice/xbot) projects.
 
-## Paper design system
+## Design system
 
-Paper is the current design system. New work uses it. Import the components
-from `@opendle/ui/paper` and import `@opendle/ui/paper.css` one time in the
-host. The style sheet contains the tokens (`--pp-*`), the self-hosted DM Sans
-and Playfair Display fonts, the base rules, and the component rules. It has a
+The package has one entry and one style sheet. Import the components from
+`@opendle/ui` and import `@opendle/ui/styles.css` one time in the host. The
+style sheet contains the tokens (`--od-*`), the self-hosted DM Sans and
+Playfair Display fonts, the base rules, and the component rules. It has a
 light and a dark theme that follow `prefers-color-scheme`.
 
-| Area                  | Components                                                                                                |
-| --------------------- | --------------------------------------------------------------------------------------------------------- |
-| Frame                 | `SidebarLayout`, `SidebarItem`, `SidebarAccount`, `PageHeading`, `Section`, `Card`, `ItemList`, `ItemRow` |
-| Controls              | `Button`, `IconButton`, `TagChip`, `Tabs`, `TabPanel`, `TextField`, `AutoGrowTextarea`                    |
-| Overlays and feedback | `Dialog`, `ConfirmDialog`, `InlineAlert`, `ToastStack`, `useToastQueue`, `SecretReveal`                   |
-| Identity              | `PasskeySignIn`, `PasskeyList`, `ApiTokenList`, `AvatarUpload`, `Avatar`                                  |
-| Marks                 | `Icon`, `NetworkIcon`, `DateTime`                                                                         |
+| Area                  | Components                                                                                                                         |
+| --------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| Frame                 | `ApplicationShell`, `NavigationLink`, `NavigationItem`, `AccountMenu`, `PageHeading`, `Section`, `Card`, `ItemList`, `ItemRow`     |
+| Controls              | `Button`, `IconButton`, `SegmentedControl`, `TagChip`, `Tabs`, `TabPanel`, `TextControl`, `AutoGrowTextarea`, `InlineEditableText` |
+| Overlays and feedback | `Dialog`, `ConfirmationDialog`, `InlineAlert`, `Toast`, `useToastQueue`, `SecretValue`, `SecretRevealPanel`                        |
+| Identity              | `SessionPage`, `SignInCard`, `PasskeyList`, `ApiTokenList`, `AvatarUpload`, `Avatar`                                               |
+| Calendar              | `CalendarHeader`, `CalendarBoard`, `TagFilterBar`, `PostDetailDialog`, `calendarPeriod`, `calendarTitle`, `shiftCalendarAnchor`    |
+| Marks                 | `Icon`, `NetworkIcon`, `DateTime`                                                                                                  |
 
-`SidebarLayout` is a left sidebar with icons. It becomes an icon rail below
+`ApplicationShell` is a left sidebar with icons. It becomes an icon rail below
 1100 px and a bottom bar below 720 px. The host owns routes: give each
-`SidebarItem` an `href` and handle the click in the host router.
+`NavigationLink` an `href` and handle the click in the host router.
 
 `PasskeyList`, `ApiTokenList` and `AvatarUpload` own their dialogs, pending
 states and error display. The host supplies the data and the asynchronous
-actions. Each has a `labels` property with English defaults.
+actions. Each has a `labels` property with English defaults. With `onRename`,
+a double click or the Enter key edits a passkey name in place.
 
-The components exported from `@opendle/ui` and `styles.css` are the legacy
-layer. They keep their structure and fonts and take the Paper palette. They
-have no dark theme. Version 0.3.0 changes their colours; this is the breaking
-change of that version.
+`Toast` shows above all content, also above an open dialog. `useToastQueue`
+holds one message: a new message replaces the old one.
 
-`src/paper/iconData.ts` is generated from lucide (ISC) and simple-icons
+`CalendarBoard` shows entries in a month view, a week view or a continuous
+timeline. One entry can go to several networks and shows one badge for each.
+The timeline opens at the present and asks for earlier or later entries
+through `onLoadEarlier` and `onLoadLater`. `TagFilterBar` holds the channel,
+channel tag and post tag selection with the AND or OR logic. The host owns
+the data and the requests.
+
+Version 0.4.0 is a breaking version:
+
+- The `@opendle/ui/paper` and `@opendle/ui/paper.css` entries do not exist.
+- `ApplicationShell` has a new sidebar API. `ApplicationSidebar`,
+  `ApplicationTopbar`, `ApplicationNavigation`, `ApplicationNavigationGroup`
+  and `MobileNavigation` do not exist.
+- `CalendarBoard` has a new API without the hour grid and drag and drop.
+- `AccountMenu`, `NavigationItem` and `NavigationLink` have new properties.
+- `Button` and form controls have new sizes. Dialog sizes are smaller.
+- The style sheet has base rules: `box-sizing`, zero margins for headings and
+  paragraphs, and inherited fonts for controls.
+
+`src/components/iconData.ts` is generated from lucide (ISC) and simple-icons
 (CC0-1.0). The fonts in `styles/fonts/` use the SIL Open Font License 1.1; the
 license texts are next to them.
 
@@ -296,73 +315,9 @@ URL unchanged can supply `onClick`, call `event.preventDefault()`, and focus
 its own target. The host must check modifier keys and the mouse button before
 it cancels native navigation. `SkipLink` does not select a route or target.
 
-`MobileNavigation` keeps the existing `items` and `onSelect(id)` button API.
-An item with `href` uses a native `NavigationLink`. Set `active` for the
-current destination. The phone row and optional surface show its active
-state and `aria-current="page"`.
-
-Supply `surface` to add one button that opens ordered destinations and
-account actions. The host supplies all copy and identity values. The context
-has no Tab stop. Links keep the supplied order, followed by account actions
-and the close button. The first destination receives initial focus. Close and
-Escape return focus to the opening button when it is available. The surface
-uses one scroll region so long labels and account actions stay reachable. It
-stays open and visible when the window changes to a desktop width.
-
-```tsx
-<MobileNavigation
-  aria-label="Phone navigation"
-  items={destinations.slice(0, 2)}
-  onNavigate={(destination, event) => {
-    event.preventDefault();
-    navigate(destination.href);
-  }}
-  surface={{
-    label: "All destinations",
-    icon: <Icon name="menu" />,
-    applicationName: "Example application",
-    context: { label: "Administrator", value: displayName },
-    accountActions: <Button onClick={signOut}>Sign out</Button>,
-    closeLabel: "Close navigation",
-    items: destinations,
-  }}
-/>
-```
-
-Each destination has `id`, `label`, `icon`, and `href`, with optional `active`
-and `badge`. `onNavigate(destination, event)` runs only for an unmodified
-primary activation. It runs after the native dialog closes and disables its
-later focus return. Call `event.preventDefault()` for client navigation. Omit
-`onNavigate` for normal browser navigation. Modified and middle clicks keep
-native browser behavior and leave the surface open. The host owns URLs,
-query policy, route readiness, and focus on the destination heading. Put the
-heading in the programmatic focus order with `tabIndex={-1}`. Account actions
-remain host-owned. Supply noninteractive labels and icons, and put account
-controls only in `accountActions`.
-
-`ApplicationShell` uses the dynamic viewport and measures the actual bottom
-row, including wrapped labels and the bottom safe area. It reserves that
-height once and exposes `--od-application-navigation-height` to route content.
-A bounded full-page route can use
-`height: calc(100dvh - var(--od-application-navigation-height, 0px))` when it
-omits a top bar. Subtract any route-owned controls within the route layout.
-The measured value is zero while the phone row is hidden on desktop.
-Navigation resize measurements run before the next layout. They update the
-reserved height and focus clearance in one frame, outside resize delivery.
-This lets full-page graph hosts settle when text size changes. Pending
-measurement and focus work is canceled when the shell is removed.
-After native focus moves, the shell uses the available scroll range to show
-the focused page control and its outline within the viewport and above the
-phone row. The full radio choice stays visible after a controlled update
-changes the surrounding layout. It checks again when the shell, navigation,
-or viewport changes size. Each nested scroll region keeps the complete focus
-target within its own bounds when it fits, even when the target fits the page
-viewport. At the end of an unbounded page, the shell reserves only the missing
-scroll space for the focused control. It releases this space when focus
-leaves that control. Bounded full-page routes keep their size. Dialogs and fixed
-panels keep control of their focus and scroll. The shell does not move focus or
-change document styles. When a control cannot fit, the shell does not scroll
-its top farther above the viewport or its local scroll boundary.
+`ApplicationShell` renders its own skip link to the main region. On a phone,
+the sidebar is a fixed bottom bar; the style sheet keeps a focused control
+above it with `scroll-padding-bottom`.
 
 If a focused Dialog control is disabled or removed during a pending action,
 focus moves to an enabled control in that dialog, or to the dialog itself when
@@ -370,7 +325,7 @@ no enabled control remains. A nested dialog keeps its own focus.
 
 `Dialog.restoreFocusOnClose` defaults to `true`. Set it to `false` only when
 the host takes focus after a route change. Close the dialog before the host
-moves focus. The phone navigation supplies this handoff. Existing `Dialog`
+moves focus. Existing `Dialog`
 and `ConfirmationDialog` callers keep the default focus-return behavior.
 
 `RelationshipGraph.compact` selects small nested rows, quiet icon actions, and

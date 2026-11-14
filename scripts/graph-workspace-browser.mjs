@@ -373,7 +373,7 @@ function Fixture() {
           >
             Service saved
           </Toast>
-          <Toast aria-label="Sync status" role="status">
+          <Toast aria-label="Sync status" role="status" style={{ bottom: "10rem" }}>
             Workspace synced
           </Toast>
         </>

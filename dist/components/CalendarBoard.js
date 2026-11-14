@@ -1,113 +1,128 @@
 import { jsx as _jsx, jsxs as _jsxs, Fragment as _Fragment } from "react/jsx-runtime";
-const monthDayFormatter = new Intl.DateTimeFormat("en-GB", {
-    weekday: "long",
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-    timeZone: "UTC",
-});
-const monthLabelFormatter = new Intl.DateTimeFormat("en-GB", {
-    month: "long",
-    year: "numeric",
-    timeZone: "UTC",
-});
-const weekdayFormatter = new Intl.DateTimeFormat("en-GB", {
-    weekday: "short",
-    timeZone: "UTC",
-});
-function parseDate(date) {
-    return new Date(`${date}T12:00:00Z`);
+import { useCallback, useLayoutEffect, useMemo, useRef, } from "react";
+import { calendarDayDate, calendarDayKey, calendarGridDays, } from "./calendarDates.js";
+import { calendarBoardLabels, calendarItemState, } from "./calendarItems.js";
+import { classes } from "./classes.js";
+import { Icon, NetworkIcon } from "./Icon.js";
+const stateIcons = {
+    scheduled: "clock",
+    publishing: "retry",
+    published: "check",
+    failed: "alert",
+    cancelled: "close",
+};
+function groupByDay(items) {
+    const groups = new Map();
+    const sorted = items.toSorted((first, second) => Date.parse(first.start) - Date.parse(second.start));
+    for (const item of sorted) {
+        const day = calendarDayKey(new Date(item.start));
+        const group = groups.get(day);
+        if (group === undefined)
+            groups.set(day, [item]);
+        else
+            group.push(item);
+    }
+    return groups;
 }
-function eventDuration(item) {
-    const [startHour = 0, startMinute = 0] = item.start.split(":").map(Number);
-    const [endHour = 0, endMinute = 0] = item.end.split(":").map(Number);
-    return endHour * 60 + endMinute - (startHour * 60 + startMinute);
-}
-function eventStyle(item) {
-    const [hour = 0, minute = 0] = item.start.split(":").map(Number);
-    const [endHour = 0, endMinute = 0] = item.end.split(":").map(Number);
-    return {
-        "--calendar-event-top": `${String(Math.max(0, hour * 60 + minute - 8 * 60))}px`,
-        "--calendar-event-height": `${String(Math.max(38, endHour * 60 + endMinute - (hour * 60 + minute)))}px`,
-    };
-}
-function monthDays(year, monthIndex) {
-    const monthStart = new Date(Date.UTC(year, monthIndex, 1, 12));
-    const mondayOffset = (monthStart.getUTCDay() + 6) % 7;
-    const gridStart = new Date(monthStart);
-    gridStart.setUTCDate(monthStart.getUTCDate() - mondayOffset);
-    return Array.from({ length: 42 }, (_, index) => {
-        const date = new Date(gridStart);
-        date.setUTCDate(gridStart.getUTCDate() + index);
-        return {
-            date: date.toISOString().slice(0, 10),
-            day: date.getUTCDate(),
-            inMonth: date.getUTCMonth() === monthIndex,
-        };
-    });
-}
-function ChannelMark({ channel, renderChannel, }) {
-    return (renderChannel?.(channel) ?? (_jsx("span", { className: "calendar-event-channel", "data-calendar-network": channel.toLowerCase(), title: `${channel} channel`, "aria-hidden": "true", children: channel.slice(0, 1).toUpperCase() })));
-}
-function EventButton({ item, compact, selected, dragging, onSelect, onDragStart, onDragEnd, renderChannel, }) {
-    const singleLine = !compact && eventDuration(item) <= 45;
-    const itemLabel = `${item.channel ? `${item.channel}, ` : ""}${item.title}, ${item.start} to ${item.end}, ${item.state}`;
-    const classes = [
-        "calendar-event",
-        `calendar-event-${item.kind}`,
-        `calendar-event-${item.state}`,
-        compact ? "calendar-event-month-chip" : "",
-        singleLine ? "calendar-event-short" : "",
-    ]
-        .filter(Boolean)
-        .join(" ");
-    return (_jsxs("button", { className: classes, "data-calendar-channel": item.channel?.toLowerCase(), "data-calendar-layout": compact ? "month-chip" : singleLine ? "single-line" : "timed", "data-selected": selected, "data-dragging": dragging, draggable: item.editable, style: compact ? undefined : eventStyle(item), title: `${item.start} · ${item.title}`, type: "button", "aria-label": itemLabel, onClick: () => {
+function ItemButton({ formats, item, labels, onSelect }) {
+    const state = calendarItemState(item);
+    const time = formats.time.format(new Date(item.start));
+    const style = item.color === undefined
+        ? undefined
+        : { "--od-calendar-item-color": item.color };
+    return (_jsxs("button", { "aria-label": [time, item.kind, item.title, labels.states[state]]
+            .filter(Boolean)
+            .join(", "), className: "od-calendar-item", "data-state": state, onClick: () => {
             onSelect(item);
-        }, onDragStart: (event) => {
-            onDragStart(event, item);
-        }, onDragEnd: onDragEnd, children: [compact ? (_jsxs("span", { className: "calendar-event-compact-line", children: [item.channel ? (_jsx(ChannelMark, { channel: item.channel, renderChannel: renderChannel })) : null, _jsx("strong", { children: item.title })] })) : singleLine ? (_jsxs("span", { className: "calendar-event-single-line", children: [_jsx("span", { className: "calendar-event-time", children: item.start }), item.channel ? (_jsx(ChannelMark, { channel: item.channel, renderChannel: renderChannel })) : null, _jsx("strong", { children: item.title })] })) : (_jsxs(_Fragment, { children: [_jsx("span", { className: "calendar-event-time", children: item.start }), _jsx("strong", { children: item.title }), _jsx("span", { className: "calendar-event-meta", children: item.kind === "agent-stage" ? ("Agent stage") : item.channel ? (_jsx(ChannelMark, { channel: item.channel, renderChannel: renderChannel })) : (item.kind.replace("-", " ")) })] })), item.editable ? (_jsx("span", { className: "calendar-event-grip", "aria-hidden": "true", children: "\u22EE" })) : (_jsx("span", { className: "calendar-event-check", "aria-hidden": "true", children: "\u2713" }))] }));
+        }, style: style, type: "button", children: [_jsx("span", { className: "od-calendar-item-bar" }), _jsxs("span", { className: "od-calendar-item-top", children: [_jsx("time", { dateTime: item.start, children: time }), item.kind ? (_jsx("span", { className: "od-calendar-item-kind", children: item.kind })) : null, _jsx("span", { className: "od-calendar-item-state", title: labels.states[state], children: _jsx(Icon, { name: stateIcons[state], size: 13 }) })] }), _jsx("span", { className: "od-calendar-item-title", children: item.title }), _jsx("span", { className: "od-calendar-item-networks", children: item.targets.map((target) => (_jsx(NetworkIcon, { badge: true, className: "od-calendar-item-network", "data-state": target.state, network: target.network }, target.id))) })] }));
 }
-export function CalendarBoard({ mode, items, weekDates, weekHours, today, selectedId, draggedId, dropDate, onSelect, onDragStart, onDragEnd, onAllowDrop, onClearDrop, onMove, currentTimeLabel, renderChannel, }) {
-    if (mode === "timeline") {
-        const sortedItems = items
-            .slice()
-            .sort((a, b) => `${a.date}T${a.start}`.localeCompare(`${b.date}T${b.start}`));
-        return (_jsx("div", { className: "calendar-timeline", "aria-label": "Canonical activity timeline", children: sortedItems.map((item) => (_jsxs("button", { type: "button", "data-selected": selectedId === item.id, onClick: () => {
-                    onSelect(item);
-                }, children: [_jsxs("time", { dateTime: `${item.date}T${item.start}:00Z`, children: [item.date, _jsxs("span", { children: [item.start, " UTC"] })] }), _jsx("i", { "aria-hidden": "true" }), _jsxs("span", { children: [_jsxs("small", { children: [item.kind.replace("-", " "), " \u00B7 ", item.state] }), _jsx("strong", { children: item.title }), _jsx("p", { children: item.detail })] }), item.channel ? (_jsx(ChannelMark, { channel: item.channel, renderChannel: renderChannel })) : null] }, item.id))) }));
-    }
-    if (mode === "month") {
-        const monthDate = parseDate(today);
-        const monthYear = monthDate.getUTCFullYear();
-        const monthIndex = monthDate.getUTCMonth();
-        const days = monthDays(monthYear, monthIndex);
-        const monthLabel = monthLabelFormatter.format(monthDate);
-        return (_jsxs("div", { className: "calendar-month", "data-calendar-week-count": "6", "aria-label": `${monthLabel} month view`, children: [["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((day) => (_jsx("div", { className: "calendar-month-weekday", children: day }, day))), days.map((day, index) => {
-                    const dayItems = items
-                        .filter((item) => item.date === day.date)
-                        .sort((a, b) => a.start.localeCompare(b.start));
-                    const past = day.date < today;
-                    return (_jsxs("div", { className: "calendar-month-day", "data-calendar-week": Math.floor(index / 7) + 1, "data-drop-active": dropDate === day.date, "data-calendar-event-count": dayItems.length, "data-in-month": day.inMonth, "data-past": past, "data-today": day.date === today, "aria-label": `${monthDayFormatter.format(parseDate(day.date))}, ${String(dayItems.length)} ${dayItems.length === 1 ? "event" : "events"}`, onDragEnter: (event) => {
-                            onAllowDrop(event, day.date);
-                        }, onDragOver: (event) => {
-                            onAllowDrop(event, day.date);
-                        }, onDragLeave: onClearDrop, onDrop: (event) => {
-                            onMove(event, day.date);
-                        }, children: [_jsxs("div", { className: "calendar-month-date", children: [_jsx("span", { children: day.day }), day.date === today ? _jsx("small", { children: "Today" }) : null, past && dayItems.length ? (_jsx("span", { "aria-label": "Read-only", children: "\uD83D\uDD12" })) : null] }), _jsx("div", { className: "calendar-month-events", children: dayItems.map((item) => (_jsx(EventButton, { compact: true, item: item, selected: selectedId === item.id, dragging: draggedId === item.id, onSelect: onSelect, onDragStart: onDragStart, onDragEnd: onDragEnd, renderChannel: renderChannel }, item.id))) })] }, day.date));
-                })] }));
-    }
-    return (_jsx("div", { className: "calendar-week-scroll", children: _jsxs("div", { className: "calendar-week", "aria-label": "Calendar week", children: [_jsx("div", { className: "calendar-week-corner" }), weekDates.map((date) => (_jsxs("div", { className: "calendar-day-heading", "data-today": date === today, children: [_jsx("span", { children: weekdayFormatter.format(parseDate(date)) }), _jsx("strong", { children: parseDate(date).getUTCDate() }), date === today ? _jsx("small", { children: "Today" }) : null] }, date))), _jsx("div", { className: "calendar-time-axis", "aria-hidden": "true", children: weekHours.map((hour) => (_jsx("span", { children: hour }, hour))) }), weekDates.map((date) => {
-                    const dayItems = items
-                        .filter((item) => item.date === date)
-                        .sort((a, b) => a.start.localeCompare(b.start));
-                    const past = date < today;
-                    return (_jsxs("div", { className: "calendar-day-column", "data-drop-active": dropDate === date, "data-past": past, "data-today": date === today, onDragEnter: (event) => {
-                            onAllowDrop(event, date);
-                        }, onDragOver: (event) => {
-                            onAllowDrop(event, date);
-                        }, onDragLeave: onClearDrop, onDrop: (event) => {
-                            onMove(event, date);
-                        }, children: [_jsx("div", { className: "calendar-hour-lines", "aria-hidden": "true", children: weekHours.map((hour) => (_jsx("i", {}, hour))) }), date === today ? (_jsx("div", { className: "calendar-now-line", "aria-label": `Current time${currentTimeLabel ? `, ${currentTimeLabel}` : ""}`, children: _jsx("span", { children: currentTimeLabel ?? "Now" }) })) : null, dayItems.map((item) => (_jsx(EventButton, { item: item, selected: selectedId === item.id, dragging: draggedId === item.id, onSelect: onSelect, onDragStart: onDragStart, onDragEnd: onDragEnd, renderChannel: renderChannel }, item.id))), past ? (_jsx("span", { className: "calendar-past-label", children: "\uD83D\uDD12 Read-only" })) : null] }, date));
-                })] }) }));
+function Grid({ anchor, formats, groups, labels, mode, onSelect, today, }) {
+    const days = calendarGridDays(mode, anchor);
+    const anchorMonth = anchor.slice(0, 7);
+    const hasItems = days.some((day) => groups.has(day));
+    return (_jsxs(_Fragment, { children: [_jsx("div", { "aria-hidden": "true", className: "od-calendar-weekdays", children: days.slice(0, 7).map((day) => (_jsx("span", { children: formats.weekday.format(calendarDayDate(day)) }, day))) }), _jsx("ol", { className: "od-calendar-grid", children: days.map((day) => {
+                    const date = calendarDayDate(day);
+                    const items = groups.get(day) ?? [];
+                    return (_jsxs("li", { className: "od-calendar-day", "data-empty": items.length === 0, "data-outside": mode === "month" && day.slice(0, 7) !== anchorMonth, "data-today": day === today, children: [_jsxs("time", { "aria-current": day === today ? "date" : undefined, "aria-label": formats.fullDay.format(date), className: "od-calendar-day-head", dateTime: day, children: [_jsx("span", { className: "od-calendar-day-weekday", children: formats.weekday.format(date) }), _jsx("span", { className: "od-calendar-day-number", children: date.getDate() })] }), items.map((item) => (_jsx(ItemButton, { formats: formats, item: item, labels: labels, onSelect: onSelect }, item.id)))] }, day));
+                }) }), hasItems ? null : _jsx("p", { className: "od-calendar-empty", children: labels.empty })] }));
+}
+function Timeline({ formats, groups, hasEarlier, hasLater, labels, onLoadEarlier, onLoadLater, onSelect, today, }) {
+    const days = useMemo(() => {
+        const keys = new Set(groups.keys());
+        keys.add(today);
+        return [...keys].toSorted().map((day, index, sorted) => ({
+            day,
+            items: groups.get(day) ?? [],
+            startsMonth: sorted[index - 1]?.slice(0, 7) !== day.slice(0, 7),
+        }));
+    }, [groups, today]);
+    const rootRef = useRef(null);
+    const opened = useRef(false);
+    const previous = useRef(null);
+    const firstDay = days[0]?.day ?? today;
+    // Open at the present. Then keep the reader in place when earlier days
+    // appear above.
+    useLayoutEffect(() => {
+        const root = rootRef.current;
+        if (root === null)
+            return;
+        const scroller = root.ownerDocument.documentElement;
+        if (!opened.current) {
+            opened.current = true;
+            root
+                .querySelector('[data-today="true"]')
+                ?.scrollIntoView({ block: "start" });
+        }
+        else if (previous.current !== null && previous.current.first > firstDay) {
+            root.ownerDocument.defaultView?.scrollBy(0, scroller.scrollHeight - previous.current.height);
+        }
+        previous.current = { first: firstDay, height: scroller.scrollHeight };
+    }, [days, firstDay]);
+    const observe = useCallback((load) => (button) => {
+        if (button === null || load === undefined)
+            return undefined;
+        if (typeof IntersectionObserver === "undefined")
+            return undefined;
+        const observer = new IntersectionObserver((entries) => {
+            if (entries.some((entry) => entry.isIntersecting))
+                load();
+        }, { rootMargin: "400px 0px" });
+        observer.observe(button);
+        return () => {
+            observer.disconnect();
+        };
+    }, []);
+    const earlierRef = useMemo(() => observe(onLoadEarlier), [observe, onLoadEarlier]);
+    const laterRef = useMemo(() => observe(onLoadLater), [observe, onLoadLater]);
+    return (_jsxs("div", { className: "od-calendar-timeline", ref: rootRef, children: [hasEarlier ? (_jsx("button", { className: "od-calendar-more", onClick: onLoadEarlier, ref: earlierRef, type: "button", children: labels.earlier })) : null, _jsx("ol", { className: "od-calendar-timeline-days", children: days.map(({ day, items, startsMonth }) => {
+                    const date = calendarDayDate(day);
+                    return (_jsxs("li", { className: "od-calendar-timeline-day", "data-empty": items.length === 0, "data-past": day < today, "data-today": day === today, children: [startsMonth ? (_jsx("h2", { className: "od-calendar-timeline-month", children: formats.month.format(date) })) : null, _jsxs("time", { "aria-current": day === today ? "date" : undefined, "aria-label": formats.fullDay.format(date), className: "od-calendar-day-head", dateTime: day, children: [_jsx("span", { className: "od-calendar-day-weekday", children: formats.weekday.format(date) }), _jsx("span", { className: "od-calendar-day-number", children: date.getDate() })] }), _jsx("div", { className: "od-calendar-timeline-items", children: items.length === 0 ? (_jsx("span", { className: "od-calendar-timeline-now", children: labels.today })) : (items.map((item) => (_jsx(ItemButton, { formats: formats, item: item, labels: labels, onSelect: onSelect }, item.id)))) })] }, day));
+                }) }), hasLater ? (_jsx("button", { className: "od-calendar-more", onClick: onLoadLater, ref: laterRef, type: "button", children: labels.later })) : null] }));
+}
+/**
+ * A calendar of entries that go to one or more networks. It has a month
+ * view, a week view and a continuous timeline. The host owns the data.
+ */
+export function CalendarBoard({ anchor, className, hasEarlier = false, hasLater = false, items, labels = calendarBoardLabels, locale, mode, onLoadEarlier, onLoadLater, onSelect, today, }) {
+    const formats = useMemo(() => ({
+        time: new Intl.DateTimeFormat(locale, {
+            hour: "2-digit",
+            minute: "2-digit",
+            hourCycle: "h23",
+        }),
+        weekday: new Intl.DateTimeFormat(locale, { weekday: "short" }),
+        fullDay: new Intl.DateTimeFormat(locale, {
+            weekday: "long",
+            day: "numeric",
+            month: "long",
+            year: "numeric",
+        }),
+        month: new Intl.DateTimeFormat(locale, {
+            month: "long",
+            year: "numeric",
+        }),
+    }), [locale]);
+    const groups = useMemo(() => groupByDay(items), [items]);
+    return (_jsx("section", { "aria-label": labels.board, className: classes("od-calendar", className), "data-mode": mode, children: mode === "timeline" ? (_jsx(Timeline, { formats: formats, groups: groups, hasEarlier: hasEarlier, hasLater: hasLater, labels: labels, onLoadEarlier: onLoadEarlier, onLoadLater: onLoadLater, onSelect: onSelect, today: today })) : (_jsx(Grid, { anchor: anchor, formats: formats, groups: groups, labels: labels, mode: mode, onSelect: onSelect, today: today })) }));
 }
 //# sourceMappingURL=CalendarBoard.js.map

@@ -1,10 +1,23 @@
-import { useLayoutEffect, useRef, useState, useSyncExternalStore } from "react";
+import {
+  useCallback,
+  useLayoutEffect,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from "react";
 import type { HTMLAttributes, ReactNode } from "react";
 import { createPortal } from "react-dom";
+
+import { classes } from "./classes.js";
+import { Icon } from "./Icon.js";
+
+export type ToastTone = "neutral" | "success" | "error";
 
 export interface ToastProps extends HTMLAttributes<HTMLOutputElement> {
   readonly children: ReactNode;
   readonly onDismiss?: () => void;
+  /** `success` and `error` add an icon. */
+  readonly tone?: ToastTone;
 }
 
 type ModalSubscriber = () => void;
@@ -126,17 +139,24 @@ export function Toast({
   children,
   className,
   onDismiss,
+  tone = "neutral",
   ...props
 }: ToastProps) {
   const activeDialog = useActiveModalDialog();
   const hasHydrated = useHasHydrated();
   const inlineHostRef = useRef<HTMLSpanElement>(null);
   const [portalContainer] = useState(createToastPortalContainer);
+  // The top layer keeps the toast above a dialog and outside its clip.
   const toast = (
     <output
       {...props}
-      className={["od-toast", className].filter(Boolean).join(" ")}
+      className={classes("od-toast", className)}
+      data-tone={tone}
+      popover={hasHydrated ? "manual" : undefined}
     >
+      {tone === "neutral" ? null : (
+        <Icon name={tone === "error" ? "alert" : "check"} size={16} />
+      )}
       <span>{children}</span>
       {onDismiss ? (
         <button type="button" aria-label="Dismiss message" onClick={onDismiss}>
@@ -151,6 +171,15 @@ export function Toast({
     const target = activeDialog ?? inlineHostRef.current;
     if (portalContainer === null || target === null) return;
     target.append(portalContainer);
+    // A move in the document closes a popover, so show it again.
+    const output = portalContainer.querySelector<HTMLElement>(".od-toast");
+    if (
+      output?.isConnected === true &&
+      typeof output.showPopover === "function" &&
+      !output.matches(":popover-open")
+    ) {
+      output.showPopover();
+    }
   }, [activeDialog, hasHydrated, portalContainer]);
 
   useLayoutEffect(
@@ -167,4 +196,37 @@ export function Toast({
       {createPortal(toast, portalContainer)}
     </>
   );
+}
+
+export interface ToastMessage {
+  readonly id: number;
+  readonly message: string;
+  readonly tone: ToastTone;
+}
+
+export interface ToastQueue {
+  /** The one visible message, or `null`. */
+  readonly toast: ToastMessage | null;
+  readonly showToast: (message: string, tone?: ToastTone) => void;
+}
+
+/**
+ * Hold one message for `duration` milliseconds. A new message replaces the
+ * old one, so only one toast shows at a time. Render it as
+ * `<Toast key={toast.id}>`.
+ */
+export function useToastQueue(duration = 4000): ToastQueue {
+  const [toast, setToast] = useState<ToastMessage | null>(null);
+  const nextId = useRef(1);
+  const showToast = useCallback(
+    (message: string, tone: ToastTone = "success") => {
+      const id = nextId.current++;
+      setToast({ id, message, tone });
+      setTimeout(() => {
+        setToast((current) => (current?.id === id ? null : current));
+      }, duration);
+    },
+    [duration],
+  );
+  return { toast, showToast };
 }

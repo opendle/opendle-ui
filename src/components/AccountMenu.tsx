@@ -1,39 +1,35 @@
-import type { ButtonHTMLAttributes, ReactNode } from "react";
+import type { AnchorHTMLAttributes, ReactNode } from "react";
+
+import { classes } from "./classes.js";
 
 export interface AccountMenuProps extends Omit<
-  ButtonHTMLAttributes<HTMLButtonElement>,
-  "children" | "name"
+  AnchorHTMLAttributes<HTMLAnchorElement>,
+  "children" | "title"
 > {
+  readonly href: string;
+  /** An `Avatar` element. */
   readonly avatar: ReactNode;
-  readonly name: ReactNode;
-  readonly detail?: ReactNode;
-  readonly end?: ReactNode;
-  readonly compact?: boolean;
+  readonly name: string;
+  readonly active?: boolean;
 }
 
+/** The signed-in person at the end of the application sidebar. */
 export function AccountMenu({
+  active = false,
   avatar,
   className,
-  detail,
-  end,
   name,
-  compact = false,
-  type = "button",
   ...props
 }: AccountMenuProps) {
   return (
-    <button
+    <a
       {...props}
-      className={["od-account-menu", className].filter(Boolean).join(" ")}
-      data-compact={compact}
-      type={type}
+      aria-current={active ? "page" : undefined}
+      className={classes("od-account-menu", className)}
+      title={name}
     >
-      <span className="od-account-avatar">{avatar}</span>
-      <span className="od-account-copy" data-hidden={compact}>
-        <strong>{name}</strong>
-        {detail ? <small>{detail}</small> : null}
-      </span>
-      {end ? <span className="od-account-end">{end}</span> : null}
-    </button>
+      {avatar}
+      <span className="od-navigation-label">{name}</span>
+    </a>
   );
 }

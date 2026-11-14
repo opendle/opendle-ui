@@ -1,6 +1,7 @@
 import { jsx as _jsx, jsxs as _jsxs, Fragment as _Fragment } from "react/jsx-runtime";
 import { useCallback, useId, useLayoutEffect, useRef, } from "react";
-import { Button } from "./Button.js";
+import { Icon } from "./Icon.js";
+import { IconButton } from "./IconButton.js";
 const focusableSelector = 'button:not(:disabled), [href], input:not(:disabled), select:not(:disabled), textarea:not(:disabled), summary, iframe, audio[controls], video[controls], [contenteditable="true"], [tabindex]:not([tabindex="-1"])';
 function classes(...values) {
     return values.filter(Boolean).join(" ");
@@ -255,6 +256,6 @@ export function Dialog({ actions, actionsClassName, appearance = "default", "ari
                 // user activation. A prevented keydown never requests the close.
                 if (closeDisabled)
                     event.preventDefault();
-            }, ref: dialogRef, tabIndex: props.tabIndex ?? -1, children: open ? (_jsxs(_Fragment, { children: [_jsxs("header", { className: classes("od-dialog-header", headerClassName), children: [_jsxs("div", { children: [eyebrow === undefined ? null : (_jsx("p", { className: "od-dialog-eyebrow", children: eyebrow })), _jsx(Heading, { id: titleId, children: title }), description === undefined ? null : (_jsx("div", { className: "od-dialog-description", id: descriptionId, children: description }))] }), _jsxs("div", { className: "od-dialog-header-actions", children: [headerActions, !showCloseButton ? null : (_jsx(Button, { "aria-label": closeLabel, "data-dialog-close": "true", disabled: closeDisabled, onClick: requestClose, type: "button", variant: "quiet", children: _jsx("span", { "aria-hidden": "true", children: "\u00D7" }) }))] })] }), _jsx("div", { className: classes("od-dialog-body", bodyClassName), children: children }), actions === undefined ? null : (_jsx("footer", { className: classes("od-dialog-actions", actionsClassName), children: actions }))] })) : null }) }));
+            }, ref: dialogRef, tabIndex: props.tabIndex ?? -1, children: open ? (_jsxs(_Fragment, { children: [_jsxs("header", { className: classes("od-dialog-header", headerClassName), children: [_jsxs("div", { children: [eyebrow === undefined ? null : (_jsx("p", { className: "od-dialog-eyebrow", children: eyebrow })), _jsx(Heading, { id: titleId, children: title }), description === undefined ? null : (_jsx("div", { className: "od-dialog-description", id: descriptionId, children: description }))] }), _jsxs("div", { className: "od-dialog-header-actions", children: [headerActions, !showCloseButton ? null : (_jsx(IconButton, { "data-dialog-close": "true", disabled: closeDisabled, icon: _jsx(Icon, { name: "close" }), label: closeLabel, onClick: requestClose }))] })] }), _jsx("div", { className: classes("od-dialog-body", bodyClassName), children: children }), actions === undefined ? null : (_jsx("footer", { className: classes("od-dialog-actions", actionsClassName), children: actions }))] })) : null }) }));
 }
 //# sourceMappingURL=Dialog.js.map

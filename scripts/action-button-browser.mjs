@@ -139,7 +139,7 @@ try {
 
   for (let pass = 0; pass < 2; pass++) {
     await width(600, "full");
-    await width(300, "text");
+    await width(360, "text");
     await width(180, "icon");
   }
   await first.press("Enter");

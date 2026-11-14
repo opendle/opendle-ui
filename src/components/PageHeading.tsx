@@ -1,7 +1,7 @@
 import type { ElementType, ReactNode } from "react";
 
 export interface PageHeadingProps {
-  readonly eyebrow: ReactNode;
+  readonly eyebrow?: ReactNode;
   readonly title: ReactNode;
   readonly description?: ReactNode;
   readonly actions?: ReactNode;
@@ -21,7 +21,7 @@ export function PageHeading({
   return (
     <div className={["od-page-heading", className].filter(Boolean).join(" ")}>
       <div>
-        <p className="od-eyebrow">{eyebrow}</p>
+        {eyebrow ? <p className="od-eyebrow">{eyebrow}</p> : null}
         <Heading>{title}</Heading>
         {description ? (
           <p className="od-page-description">{description}</p>

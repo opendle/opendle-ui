@@ -4,18 +4,13 @@ import test from "node:test";
 import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import {
-  ApplicationNavigation,
-  ApplicationNavigationGroup,
   ApplicationShell,
-  ApplicationSidebar,
-  ApplicationTopbar,
   AutoGrowTextarea,
   AccountMenu,
   AgentSidebar,
   AttentionRow,
   Button,
   Card,
-  CalendarBoard,
   ConfirmationDialog,
   ContextItem,
   DockedPanelLayout,
@@ -41,7 +36,6 @@ import {
   IconButton,
   NavigationItem,
   NavigationLink,
-  MobileNavigation,
   MediaLightbox,
   OperationPlayground,
   PageSurface,
@@ -103,6 +97,7 @@ test("Toast keeps semantic fallback markup and a labelled dismiss action", () =>
   );
   assert.match(markup, /<output[^>]*aria-label="Save status"/);
   assert.match(markup, /class="od-toast host-toast"/);
+  assert.match(markup, /data-tone="neutral"/);
   assert.match(markup, /role="status"/);
   assert.match(markup, /aria-label="Dismiss message"/);
   assert.match(markup, />Service saved<\/span>/);
@@ -266,7 +261,7 @@ test("shared composition components expose semantic classes and content", () => 
       React.createElement(Button, { variant: "secondary" }, "Continue"),
     ),
   );
-  assert.match(markup, /class="od-card"/);
+  assert.match(markup, /class="od-card" data-padded="false"/);
   assert.match(markup, /class="od-page-heading"/);
   assert.match(markup, /class="od-context-item"/);
   assert.match(markup, /class="od-stat-card stat-card"/);
@@ -275,71 +270,37 @@ test("shared composition components expose semantic classes and content", () => 
   assert.match(markup, />Continue<\/button>/);
 });
 
-test("application shell components keep caller-owned content in semantic slots", () => {
-  const sidebar = React.createElement(ApplicationSidebar, {
-    brand: React.createElement("strong", null, "Example"),
-    context: React.createElement(WorkspaceSelector, {
-      avatar: "EX",
-      detail: "Workspace",
-      name: "Example scope",
-    }),
-    footer: React.createElement("small", null, "Session active"),
-    navigation: React.createElement(
-      ApplicationNavigation,
-      { "aria-label": "Primary navigation" },
-      React.createElement(
-        ApplicationNavigationGroup,
-        { label: "Manage" },
-        React.createElement(NavigationItem, {
-          active: true,
-          icon: React.createElement(Icon, { name: "grid" }),
-          label: "Overview",
-        }),
-      ),
-    ),
-  });
-  const topbar = React.createElement(ApplicationTopbar, {
-    actions: React.createElement(Button, null, "Refresh"),
-    leading: React.createElement(Icon, { name: "menu" }),
-    title: React.createElement("strong", null, "Overview"),
-  });
-  const mobileNavigation = React.createElement(MobileNavigation, {
-    "aria-label": "Mobile navigation",
-    items: [
-      {
-        active: true,
-        icon: React.createElement(Icon, { name: "grid" }),
-        id: "overview",
-        label: "Overview",
-      },
-    ],
-    onSelect: () => undefined,
-  });
+test("the application shell keeps caller-owned content in semantic slots", () => {
   const markup = renderToStaticMarkup(
     React.createElement(
       ApplicationShell,
       {
-        mainProps: { id: "main-content", "aria-label": "Current page" },
-        mobileNavigation,
-        sidebar,
-        topbar,
+        account: React.createElement(AccountMenu, {
+          avatar: "VL",
+          href: "/settings",
+          name: "Vincent",
+        }),
+        brandMark: React.createElement("strong", null, "E"),
+        brandName: "Example",
+        mainProps: { "aria-label": "Current page" },
+        navigation: React.createElement(NavigationItem, {
+          active: true,
+          icon: React.createElement(Icon, { name: "grid" }),
+          label: "Overview",
+        }),
+        navigationLabel: "Primary navigation",
+        skipLabel: "Skip to content",
       },
       React.createElement("h1", null, "Application content"),
     ),
   );
   assert.match(markup, /class="od-application-shell"/);
-  assert.match(markup, /<aside[^>]*class="od-application-sidebar"/);
-  assert.match(markup, /<nav[^>]*aria-label="Primary navigation"/);
-  assert.match(markup, /<section[^>]*class="od-application-navigation-group"/);
-  assert.match(markup, /aria-labelledby="[^"]+"/);
-  assert.match(markup, /<header[^>]*class="od-application-topbar"/);
-  assert.match(
-    markup,
-    /<main[^>]*id="main-content"[^>]*aria-label="Current page"/,
-  );
+  assert.match(markup, /<a class="od-skip-link" href="#od-main">/);
+  assert.match(markup, /<aside class="od-application-sidebar"/);
+  assert.match(markup, /<nav aria-label="Primary navigation"/);
+  assert.match(markup, /<main aria-label="Current page"[^>]*id="od-main"/);
   assert.match(markup, /<h1>Application content<\/h1>/);
-  assert.match(markup, /class="od-application-mobile-navigation"/);
-  assert.match(markup, /aria-label="Mobile navigation"/);
+  assert.match(markup, /class="od-account-menu"/);
 });
 
 test("page surfaces own one full-width responsive gutter mode", () => {
@@ -1413,11 +1374,12 @@ test("shared shell controls expose semantic labels and states", () => {
       }),
       React.createElement(AccountMenu, {
         avatar: "VL",
-        detail: "Administrator",
+        href: "/settings",
         name: "Vincent",
       }),
       React.createElement(NavigationItem, {
         active: true,
+        count: 3,
         icon: React.createElement(Icon, { name: "grid" }),
         label: "Overview",
       }),
@@ -1426,19 +1388,6 @@ test("shared shell controls expose semantic labels and states", () => {
         href: "/audit",
         icon: React.createElement(Icon, { name: "audit" }),
         label: "Audit",
-      }),
-      React.createElement(MobileNavigation, {
-        "aria-label": "Mobile navigation",
-        items: [
-          {
-            id: "home",
-            label: "Home",
-            icon: React.createElement(Icon, { name: "grid" }),
-            active: true,
-            badge: 2,
-          },
-        ],
-        onSelect: () => undefined,
       }),
       React.createElement(
         Panel,
@@ -1465,79 +1414,27 @@ test("shared shell controls expose semantic labels and states", () => {
   assert.match(markup, /<progress[^>]*max="100"/);
   assert.match(markup, /<progress[^>]*value="88"/);
   assert.match(markup, /od-attention-row/);
-  assert.match(markup, /<output class="od-toast"/);
-  assert.match(markup, /od-mobile-navigation/);
+  assert.match(markup, /<output class="od-toast" data-tone="neutral"/);
+  assert.match(markup, /<span class="od-count">3<\/span>/);
+  assert.equal(markup.match(/od-count/g)?.length, 1);
 });
 
-test("ReviewPlanCard and CalendarBoard provide generic interactive views", () => {
-  const items = [
-    {
-      id: "event-1",
-      title: "Review",
-      detail: "Check",
-      date: "2026-08-12",
-      start: "10:00",
-      end: "10:30",
-      kind: "reminder",
-      state: "planned",
-      editable: true,
-    },
-  ];
+test("ReviewPlanCard provides a generic review view", () => {
   const markup = renderToStaticMarkup(
-    React.createElement(
-      "div",
-      null,
-      React.createElement(ReviewPlanCard, {
-        ariaLabel: "Review plan",
-        meta: "Needs review",
-        state: "pending",
-        text: "Check the release.",
-        title: "Review",
-        onApprove: () => undefined,
-        onEdit: () => undefined,
-        onRefuse: () => undefined,
-        onRestore: () => undefined,
-      }),
-      React.createElement(CalendarBoard, {
-        mode: "week",
-        items,
-        weekDates: ["2026-08-12"],
-        weekHours: ["10:00"],
-        today: "2026-08-12",
-        selectedId: null,
-        draggedId: null,
-        dropDate: null,
-        onSelect: () => undefined,
-        onDragStart: () => undefined,
-        onDragEnd: () => undefined,
-        onAllowDrop: () => undefined,
-        onClearDrop: () => undefined,
-        onMove: () => undefined,
-      }),
-    ),
-  );
-  const monthMarkup = renderToStaticMarkup(
-    React.createElement(CalendarBoard, {
-      mode: "month",
-      items,
-      weekDates: [],
-      weekHours: [],
-      today: "2027-02-10",
-      selectedId: null,
-      draggedId: null,
-      dropDate: null,
-      onSelect: () => undefined,
-      onDragStart: () => undefined,
-      onDragEnd: () => undefined,
-      onAllowDrop: () => undefined,
-      onClearDrop: () => undefined,
-      onMove: () => undefined,
+    React.createElement(ReviewPlanCard, {
+      ariaLabel: "Review plan",
+      meta: "Needs review",
+      state: "pending",
+      text: "Check the release.",
+      title: "Review",
+      onApprove: () => undefined,
+      onEdit: () => undefined,
+      onRefuse: () => undefined,
+      onRestore: () => undefined,
     }),
   );
   assert.match(markup, /od-plan-card/);
-  assert.match(markup, /calendar-week/);
   assert.match(markup, /Review/);
-  assert.match(monthMarkup, /February 2027 month view/);
 });
 
 test("ShellErrorBoundary renders its children when no error exists", () => {

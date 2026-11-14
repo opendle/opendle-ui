@@ -24,7 +24,6 @@ const requiredExports = [
   "ConfirmationDialog",
   "Dialog",
   "HealthBar",
-  "MobileNavigation",
   "MediaLightbox",
   "NavigationItem",
   "NavigationLink",

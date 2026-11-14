@@ -8,6 +8,7 @@ import {
 } from "react";
 
 import { Button } from "./Button.js";
+import { InlineAlert } from "./InlineAlert.js";
 import { Dialog } from "./Dialog.js";
 
 export interface ConfirmationDialogProps extends Omit<
@@ -19,6 +20,9 @@ export interface ConfirmationDialogProps extends Omit<
   readonly description: ReactNode;
   readonly confirmLabel: ReactNode;
   readonly cancelLabel?: ReactNode;
+  /** A failure of the last attempt. It shows in the dialog body. */
+  readonly error?: ReactNode;
+  readonly tone?: "default" | "danger";
   readonly impactStatement?: string;
   readonly impactLabel?: ReactNode;
   readonly pending?: boolean;
@@ -41,6 +45,8 @@ function ConfirmationState({
   className,
   confirmLabel,
   description,
+  error,
+  tone = "default",
   impactLabel = "Enter the impact statement to continue",
   impactStatement,
   onCancel,
@@ -78,6 +84,7 @@ function ConfirmationState({
             onConfirm={onConfirm}
             pending={pending}
             pendingLabel={pendingLabel}
+            tone={tone}
           />
         </>
       }
@@ -96,6 +103,9 @@ function ConfirmationState({
       size="narrow"
       title={title}
     >
+      {error === undefined || error === null ? null : (
+        <InlineAlert tone="error">{error}</InlineAlert>
+      )}
       {impactStatement === undefined ? null : (
         <label className="od-confirmation-dialog-impact">
           <span>{impactLabel}</span>
@@ -126,6 +136,7 @@ interface ConfirmationButtonProps {
   readonly onConfirm: () => void;
   readonly pending: boolean;
   readonly pendingLabel: ReactNode;
+  readonly tone: "default" | "danger";
 }
 
 function ConfirmationButton({
@@ -134,6 +145,7 @@ function ConfirmationButton({
   onConfirm,
   pending,
   pendingLabel,
+  tone,
 }: ConfirmationButtonProps) {
   const submittedRef = useRef(false);
   return (
@@ -150,6 +162,7 @@ function ConfirmationButton({
         }
       }}
       type="button"
+      variant={tone === "danger" ? "danger" : "primary"}
     >
       {pending ? pendingLabel : confirmLabel}
     </Button>

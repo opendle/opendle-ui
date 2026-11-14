@@ -1,6 +1,8 @@
 import { jsx as _jsx, jsxs as _jsxs, Fragment as _Fragment } from "react/jsx-runtime";
-import { useLayoutEffect, useRef, useState, useSyncExternalStore } from "react";
+import { useCallback, useLayoutEffect, useRef, useState, useSyncExternalStore, } from "react";
 import { createPortal } from "react-dom";
+import { classes } from "./classes.js";
+import { Icon } from "./Icon.js";
 const modalSubscribers = new Set();
 let activeModalDialog = null;
 let modalObserver = null;
@@ -93,12 +95,13 @@ function createToastPortalContainer() {
     container.dataset.odToastPortalHost = "";
     return container;
 }
-export function Toast({ children, className, onDismiss, ...props }) {
+export function Toast({ children, className, onDismiss, tone = "neutral", ...props }) {
     const activeDialog = useActiveModalDialog();
     const hasHydrated = useHasHydrated();
     const inlineHostRef = useRef(null);
     const [portalContainer] = useState(createToastPortalContainer);
-    const toast = (_jsxs("output", { ...props, className: ["od-toast", className].filter(Boolean).join(" "), children: [_jsx("span", { children: children }), onDismiss ? (_jsx("button", { type: "button", "aria-label": "Dismiss message", onClick: onDismiss, children: "\u00D7" })) : null] }));
+    // The top layer keeps the toast above a dialog and outside its clip.
+    const toast = (_jsxs("output", { ...props, className: classes("od-toast", className), "data-tone": tone, popover: hasHydrated ? "manual" : undefined, children: [tone === "neutral" ? null : (_jsx(Icon, { name: tone === "error" ? "alert" : "check", size: 16 })), _jsx("span", { children: children }), onDismiss ? (_jsx("button", { type: "button", "aria-label": "Dismiss message", onClick: onDismiss, children: "\u00D7" })) : null] }));
     useLayoutEffect(() => {
         if (!hasHydrated)
             return;
@@ -106,6 +109,13 @@ export function Toast({ children, className, onDismiss, ...props }) {
         if (portalContainer === null || target === null)
             return;
         target.append(portalContainer);
+        // A move in the document closes a popover, so show it again.
+        const output = portalContainer.querySelector(".od-toast");
+        if (output?.isConnected === true &&
+            typeof output.showPopover === "function" &&
+            !output.matches(":popover-open")) {
+            output.showPopover();
+        }
     }, [activeDialog, hasHydrated, portalContainer]);
     useLayoutEffect(() => () => {
         portalContainer?.remove();
@@ -113,5 +123,22 @@ export function Toast({ children, className, onDismiss, ...props }) {
     if (!hasHydrated || portalContainer === null)
         return toast;
     return (_jsxs(_Fragment, { children: [_jsx("span", { "data-od-toast-inline-host": "", ref: inlineHostRef }), createPortal(toast, portalContainer)] }));
+}
+/**
+ * Hold one message for `duration` milliseconds. A new message replaces the
+ * old one, so only one toast shows at a time. Render it as
+ * `<Toast key={toast.id}>`.
+ */
+export function useToastQueue(duration = 4000) {
+    const [toast, setToast] = useState(null);
+    const nextId = useRef(1);
+    const showToast = useCallback((message, tone = "success") => {
+        const id = nextId.current++;
+        setToast({ id, message, tone });
+        setTimeout(() => {
+            setToast((current) => (current?.id === id ? null : current));
+        }, duration);
+    }, [duration]);
+    return { toast, showToast };
 }
 //# sourceMappingURL=Toast.js.map

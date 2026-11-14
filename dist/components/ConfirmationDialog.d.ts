@@ -5,6 +5,9 @@ export interface ConfirmationDialogProps extends Omit<DialogHTMLAttributes<HTMLD
     readonly description: ReactNode;
     readonly confirmLabel: ReactNode;
     readonly cancelLabel?: ReactNode;
+    /** A failure of the last attempt. It shows in the dialog body. */
+    readonly error?: ReactNode;
+    readonly tone?: "default" | "danger";
     readonly impactStatement?: string;
     readonly impactLabel?: ReactNode;
     readonly pending?: boolean;

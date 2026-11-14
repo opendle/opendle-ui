@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useRef, useState, type ReactNode } from "react";
 
 import { Button } from "./Button.js";
+import { InlineAlert } from "./InlineAlert.js";
 import { SessionCard, type SessionCardProps } from "./SessionPage.js";
 
 export interface SignInCardProps extends Omit<
@@ -8,13 +9,17 @@ export interface SignInCardProps extends Omit<
   "actions" | "feedback"
 > {
   readonly actionLabel: ReactNode;
+  /** An icon before the action label. */
+  readonly actionIcon?: ReactNode;
   readonly pendingLabel: ReactNode;
   readonly onSignIn: () => Promise<void>;
-  readonly errorMessage: (error: unknown) => string;
+  /** Return `null` to show nothing, for example after the user cancels. */
+  readonly errorMessage: (error: unknown) => string | null;
 }
 
 /** One sign-in action with shared pending, failure, and retry behavior. */
 export function SignInCard({
+  actionIcon,
   actionLabel,
   pendingLabel,
   onSignIn,
@@ -41,14 +46,21 @@ export function SignInCard({
 
   const actions = useMemo(
     () => (
-      <Button disabled={pending} onClick={() => void signIn()}>
+      <Button
+        disabled={pending}
+        icon={actionIcon}
+        onClick={() => void signIn()}
+      >
         {pending ? pendingLabel : actionLabel}
       </Button>
     ),
-    [pending, pendingLabel, actionLabel, signIn],
+    [pending, pendingLabel, actionIcon, actionLabel, signIn],
   );
   const feedback = useMemo(
-    () => (failure === null ? null : <p role="alert">{failure}</p>),
+    () =>
+      failure === null ? null : (
+        <InlineAlert tone="error">{failure}</InlineAlert>
+      ),
     [failure],
   );
 

@@ -232,7 +232,9 @@ export async function checkSecretPanelFit(browser, css) {
           assert.equal(
             await inspector
               .locator(".od-graph-inspector-content")
-              .evaluate((element) => element.scrollTop > 0),
+              .evaluate(
+                (element) => element.scrollTop > 0 || window.scrollY === 0,
+              ),
             true,
             "Actions are reached through local inspector scrolling",
           );

@@ -1,4 +1,3 @@
-import { checkMobileNavigation } from "./mobile-navigation-browser.mjs";
 import { strict as assert } from "node:assert";
 import { existsSync } from "node:fs";
 import { readFile } from "node:fs/promises";
@@ -225,7 +224,6 @@ async function loadFixture(page) {
 }
 
 try {
-  await checkMobileNavigation(browser);
   for (const [width, textScale] of [
     [1280, 1],
     [390, 1],
@@ -430,9 +428,9 @@ try {
     "0",
   );
   const sizeCases = [
-    ["Open narrow dialog", 544],
-    ["Open default dialog", 832],
-    ["Open wide dialog", 1152],
+    ["Open narrow dialog", 440],
+    ["Open default dialog", 720],
+    ["Open wide dialog", 1024],
   ];
   for (const [name, expectedWidth] of sizeCases) {
     const opener = desktop.getByRole("button", { name });

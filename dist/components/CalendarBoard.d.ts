@@ -1,35 +1,28 @@
-import type { DragEvent, ReactNode } from "react";
-export type CalendarMode = "week" | "month" | "timeline";
-export type CalendarEventState = "planned" | "completed";
-export interface CalendarEvent {
-    readonly id: string;
-    readonly title: string;
-    readonly detail: string;
-    readonly date: string;
-    readonly start: string;
-    readonly end: string;
-    readonly kind: string;
-    readonly state: CalendarEventState;
-    readonly channel?: string;
-    readonly editable: boolean;
-}
+import { type CalendarMode } from "./calendarDates.js";
+import { type CalendarBoardLabels, type CalendarItem } from "./calendarItems.js";
 export interface CalendarBoardProps {
     readonly mode: CalendarMode;
-    readonly items: readonly CalendarEvent[];
-    readonly weekDates: readonly string[];
-    readonly weekHours: readonly string[];
+    /** A `YYYY-MM-DD` day in the month or week to show. */
+    readonly anchor: string;
+    /** The current `YYYY-MM-DD` day. */
     readonly today: string;
-    readonly selectedId: string | null;
-    readonly draggedId: string | null;
-    readonly dropDate: string | null;
-    readonly onSelect: (item: CalendarEvent) => void;
-    readonly onDragStart: (event: DragEvent<HTMLElement>, item: CalendarEvent) => void;
-    readonly onDragEnd: () => void;
-    readonly onAllowDrop: (event: DragEvent<HTMLElement>, date: string) => void;
-    readonly onClearDrop: (event: DragEvent<HTMLElement>) => void;
-    readonly onMove: (event: DragEvent<HTMLElement>, date: string) => void;
-    readonly currentTimeLabel?: string;
-    readonly renderChannel?: (channel: string) => ReactNode;
+    readonly items: readonly CalendarItem[];
+    readonly onSelect: (item: CalendarItem) => void;
+    /** Timeline: more entries exist before the first one. */
+    readonly hasEarlier?: boolean;
+    /** Timeline: more entries exist after the last one. */
+    readonly hasLater?: boolean;
+    /** Timeline: called when the reader comes near the start. */
+    readonly onLoadEarlier?: () => void;
+    /** Timeline: called when the reader comes near the end. */
+    readonly onLoadLater?: () => void;
+    readonly locale?: string;
+    readonly labels?: CalendarBoardLabels;
+    readonly className?: string;
 }
-export declare function CalendarBoard({ mode, items, weekDates, weekHours, today, selectedId, draggedId, dropDate, onSelect, onDragStart, onDragEnd, onAllowDrop, onClearDrop, onMove, currentTimeLabel, renderChannel, }: CalendarBoardProps): import("react").JSX.Element;
+/**
+ * A calendar of entries that go to one or more networks. It has a month
+ * view, a week view and a continuous timeline. The host owns the data.
+ */
+export declare function CalendarBoard({ anchor, className, hasEarlier, hasLater, items, labels, locale, mode, onLoadEarlier, onLoadLater, onSelect, today, }: CalendarBoardProps): import("react").JSX.Element;
 //# sourceMappingURL=CalendarBoard.d.ts.map

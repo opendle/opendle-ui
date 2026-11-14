@@ -1,21 +1,23 @@
 import type { ButtonHTMLAttributes, ReactNode } from "react";
 
+import { classes } from "./classes.js";
+
 export interface NavigationItemProps extends Omit<
   ButtonHTMLAttributes<HTMLButtonElement>,
-  "children"
+  "children" | "title"
 > {
   readonly icon: ReactNode;
-  readonly label: ReactNode;
+  readonly label: string;
   readonly active?: boolean;
-  readonly count?: ReactNode;
-  readonly alert?: boolean;
+  /** A count badge, for example unread messages. Zero shows no badge. */
+  readonly count?: number;
 }
 
+/** One destination of the application sidebar, as a button. */
 export function NavigationItem({
   active = false,
-  alert = false,
   className,
-  count,
+  count = 0,
   icon,
   label,
   type = "button",
@@ -25,15 +27,13 @@ export function NavigationItem({
     <button
       {...props}
       aria-current={active ? "page" : undefined}
-      className={["od-navigation-item", className].filter(Boolean).join(" ")}
-      data-active={active}
+      className={classes("od-navigation-item", className)}
+      title={label}
       type={type}
     >
       {icon}
-      <span>{label}</span>
-      {count !== undefined && count !== null ? (
-        <b className={alert ? "od-navigation-alert" : undefined}>{count}</b>
-      ) : null}
+      <span className="od-navigation-label">{label}</span>
+      {count > 0 ? <span className="od-count">{count}</span> : null}
     </button>
   );
 }
