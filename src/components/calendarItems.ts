@@ -29,6 +29,7 @@ export interface CalendarBoardLabels {
   readonly empty: string;
   readonly earlier: string;
   readonly later: string;
+  readonly time: string;
   readonly states: Readonly<Record<CalendarItemState, string>>;
 }
 
@@ -38,6 +39,7 @@ export const calendarBoardLabels: CalendarBoardLabels = {
   empty: "No posts",
   earlier: "Earlier",
   later: "Later",
+  time: "Time",
   states: {
     scheduled: "Scheduled",
     publishing: "Publishing",

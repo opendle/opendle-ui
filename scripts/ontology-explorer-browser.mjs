@@ -509,13 +509,13 @@ try {
   const phoneDialog = phone.getByRole("dialog", {
     name: "Confirm record deletion",
   });
-  assert.deepEqual(
-    await phoneDialog.evaluate((element) => {
-      const bounds = element.getBoundingClientRect();
-      return { width: bounds.width, height: bounds.height };
-    }),
-    { width: 390, height: 844 },
-  );
+  // A confirmation floats on a phone, with a margin on each side.
+  const phoneDialogSize = await phoneDialog.evaluate((element) => {
+    const bounds = element.getBoundingClientRect();
+    return { width: bounds.width, height: bounds.height };
+  });
+  assert.equal(phoneDialogSize.width, 358);
+  assert.ok(phoneDialogSize.height < 500, JSON.stringify(phoneDialogSize));
   await phone.keyboard.press("Escape");
   await phone.getByRole("button", { name: "Preview managed file" }).tap();
   assert.deepEqual(

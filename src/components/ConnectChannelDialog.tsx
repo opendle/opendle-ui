@@ -90,6 +90,7 @@ export function ConnectChannelDialog({
           </>
         )
       }
+      className="od-connect-dialog"
       closeDisabled={connect.pending}
       closeLabel={labels.close}
       onClose={close}

@@ -2,6 +2,7 @@ import { jsx as _jsx, jsxs as _jsxs, Fragment as _Fragment } from "react/jsx-run
 import { useCallback, useLayoutEffect, useMemo, useRef } from "react";
 import { calendarDayDate, calendarDayKey, calendarGridDays, } from "./calendarDates.js";
 import { CalendarEntry } from "./CalendarEntry.js";
+import { CalendarWeek } from "./CalendarWeek.js";
 import { calendarBoardLabels, } from "./calendarItems.js";
 import { classes } from "./classes.js";
 function groupByDay(items) {
@@ -104,6 +105,6 @@ export function CalendarBoard({ anchor, className, hasEarlier = false, hasLater 
         }),
     }), [locale]);
     const groups = useMemo(() => groupByDay(items), [items]);
-    return (_jsx("section", { "aria-label": labels.board, className: classes("od-calendar", className), "data-mode": mode, children: mode === "timeline" ? (_jsx(Timeline, { formats: formats, groups: groups, hasEarlier: hasEarlier, hasLater: hasLater, labels: labels, onLoadEarlier: onLoadEarlier, onLoadLater: onLoadLater, onSelect: onSelect, today: today })) : (_jsx(Grid, { anchor: anchor, formats: formats, groups: groups, labels: labels, mode: mode, onSelect: onSelect, today: today })) }));
+    return (_jsx("section", { "aria-label": labels.board, className: classes("od-calendar", className), "data-mode": mode, children: mode === "timeline" ? (_jsx(Timeline, { formats: formats, groups: groups, hasEarlier: hasEarlier, hasLater: hasLater, labels: labels, onLoadEarlier: onLoadEarlier, onLoadLater: onLoadLater, onSelect: onSelect, today: today })) : (_jsxs(_Fragment, { children: [mode === "week" ? (_jsx(CalendarWeek, { anchor: anchor, formats: formats, groups: groups, labels: labels, onSelect: onSelect, today: today })) : null, _jsx(Grid, { anchor: anchor, formats: formats, groups: groups, labels: labels, mode: mode, onSelect: onSelect, today: today })] })) }));
 }
 //# sourceMappingURL=CalendarBoard.js.map

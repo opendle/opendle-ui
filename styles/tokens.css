@@ -482,10 +482,10 @@ span.od-tag {
 .od-account-menu {
   position: relative;
   display: flex;
-  min-height: 38px;
+  min-height: 44px;
   align-items: center;
-  gap: 11px;
-  padding: 0 10px;
+  gap: 12px;
+  padding: 0 12px;
   border-radius: var(--od-radius-md);
   color: var(--od-color-muted);
   font-weight: 500;
@@ -8277,7 +8277,7 @@ html:has(.od-dialog:modal) {
 .od-calendar-header {
   display: flex;
   flex-wrap: wrap;
-  align-items: center;
+  align-items: flex-end;
   gap: 14px;
   margin-bottom: 16px;
 }
@@ -9555,4 +9555,175 @@ html:has(.od-dialog:modal) {
 
 .od-metric-change[data-trend="down"] {
   color: var(--od-color-danger);
+}
+
+/* Sidebar rows have room: the list is short. */
+
+.od-application-navigation {
+  gap: 4px;
+}
+
+.od-account-menu {
+  min-height: 48px;
+}
+
+.od-navigation-item[data-nested="true"] {
+  min-height: 36px;
+}
+
+/* The period controls sit on the bottom of the title. */
+
+.od-calendar-header-navigation {
+  margin-bottom: 3px;
+}
+
+.od-calendar-header-views {
+  margin-bottom: 3px;
+}
+
+/* Week against a time axis */
+
+.od-calendar-week {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.od-calendar-week thead .od-calendar-week-corner {
+  width: 64px;
+  padding: 0;
+}
+
+.od-calendar-week thead th {
+  padding: 12px 10px 8px;
+  font-weight: 500;
+  text-align: left;
+}
+
+.od-calendar-week-weekday {
+  color: var(--od-color-muted);
+  font-size: 0.78125rem;
+}
+
+.od-calendar-week tbody td {
+  height: 12px;
+  padding: 0 4px;
+  border-top: 1px solid var(--od-color-border-strong);
+  border-left: 1px solid var(--od-color-border);
+  vertical-align: top;
+}
+
+.od-calendar-week tbody tr[data-half="true"] td {
+  border-top: 1px dashed var(--od-color-border);
+}
+
+.od-calendar-week tbody td[data-today="true"] {
+  background: color-mix(in srgb, var(--od-color-brand-soft) 35%, transparent);
+}
+
+.od-calendar-week tbody td > .od-calendar-item {
+  margin-block: 4px;
+}
+
+.od-calendar-week-hour {
+  position: relative;
+  padding: 0 12px 0 0;
+  border-top: 1px solid transparent;
+  color: var(--od-color-muted);
+  font-size: 0.71875rem;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  vertical-align: top;
+}
+
+.od-calendar-week-hour time {
+  display: block;
+  translate: 0 -50%;
+}
+
+.od-calendar-week tbody tr:first-child .od-calendar-week-hour time {
+  translate: 0 -2px;
+}
+
+/* The large tick of the hour and the thin tick of the half hour. */
+.od-calendar-week-hour::before,
+.od-calendar-week-hour::after {
+  position: absolute;
+  right: 0;
+  height: 1px;
+  background: var(--od-color-border-strong);
+  content: "";
+}
+
+.od-calendar-week-hour::before {
+  top: -1px;
+  width: 8px;
+}
+
+.od-calendar-week-hour::after {
+  top: 50%;
+  width: 4px;
+}
+
+.od-calendar-week tbody tr:last-child td {
+  border-bottom: 1px solid var(--od-color-border-strong);
+}
+
+@media (min-width: 721px) {
+  .od-calendar[data-mode="week"] {
+    border-top: 0;
+  }
+
+  .od-calendar[data-mode="week"] :is(.od-calendar-weekdays, .od-calendar-grid) {
+    display: none;
+  }
+
+  .od-calendar[data-mode="week"] .od-calendar-empty {
+    display: none;
+  }
+}
+
+@media (max-width: 720px) {
+  .od-calendar-week {
+    display: none;
+  }
+}
+
+@media (max-width: 1100px) and (min-width: 721px) {
+  .od-calendar-week .od-calendar-item-kind {
+    display: none;
+  }
+
+  .od-calendar-week .od-calendar-item-title {
+    white-space: normal;
+  }
+}
+
+/* The small dialogs float on each width. The post dialog fills a phone only. */
+@media (width <= 48rem) {
+  .od-dialog:is(
+    .od-confirmation-dialog,
+    .od-application-list,
+    .od-connect-dialog,
+    .od-token-dialog
+  ) {
+    width: min(var(--od-dialog-width), calc(100vw - 2rem));
+    height: fit-content;
+    max-height: calc(100dvh - 2rem);
+    margin: auto;
+    border: 1px solid var(--od-color-border);
+    border-radius: var(--od-radius-lg);
+  }
+}
+
+@media (721px <= width <= 48rem) {
+  .od-dialog.od-post-detail {
+    width: min(var(--od-dialog-width), calc(100vw - 2rem));
+    height: fit-content;
+    max-height: calc(100dvh - 2rem);
+    margin: auto;
+    border: 1px solid var(--od-color-border);
+    border-radius: var(--od-radius-lg);
+  }
 }

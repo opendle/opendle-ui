@@ -97,6 +97,7 @@ export function CreateTokenDialog({
   return (
     <Dialog
       actions={actions}
+      className="od-token-dialog"
       closeDisabled={pending}
       closeLabel={labels.close}
       onClose={close}

@@ -7,6 +7,7 @@ import {
   type CalendarMode,
 } from "./calendarDates.js";
 import { CalendarEntry } from "./CalendarEntry.js";
+import { CalendarWeek } from "./CalendarWeek.js";
 import {
   calendarBoardLabels,
   type CalendarBoardLabels,
@@ -349,15 +350,27 @@ export function CalendarBoard({
           today={today}
         />
       ) : (
-        <Grid
-          anchor={anchor}
-          formats={formats}
-          groups={groups}
-          labels={labels}
-          mode={mode}
-          onSelect={onSelect}
-          today={today}
-        />
+        <>
+          {mode === "week" ? (
+            <CalendarWeek
+              anchor={anchor}
+              formats={formats}
+              groups={groups}
+              labels={labels}
+              onSelect={onSelect}
+              today={today}
+            />
+          ) : null}
+          <Grid
+            anchor={anchor}
+            formats={formats}
+            groups={groups}
+            labels={labels}
+            mode={mode}
+            onSelect={onSelect}
+            today={today}
+          />
+        </>
       )}
     </section>
   );

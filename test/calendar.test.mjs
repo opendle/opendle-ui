@@ -117,7 +117,11 @@ test("the week view shows seven days", () => {
     onSelect: () => undefined,
   });
   assert.equal(markup.match(/class="od-calendar-day"/g).length, 7);
-  assert.equal(markup.match(/class="od-calendar-item"/g).length, 1);
+  // One time in the table with the time axis, one time in the phone list.
+  assert.equal(markup.match(/class="od-calendar-item"/g).length, 2);
+  assert.equal(markup.match(/class="od-calendar-week-hour"/g).length, 24);
+  assert.equal(markup.match(/<tr data-half=/g).length, 48);
+  assert.match(markup, /<time>09:00<\/time>/);
 });
 
 test("the timeline shows the days with entries and marks the present", () => {

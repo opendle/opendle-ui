@@ -4,6 +4,7 @@ export const calendarBoardLabels = {
     empty: "No posts",
     earlier: "Earlier",
     later: "Later",
+    time: "Time",
     states: {
         scheduled: "Scheduled",
         publishing: "Publishing",

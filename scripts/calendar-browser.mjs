@@ -221,7 +221,40 @@ try {
       await views.getByRole("button", { name: "Week" }).click();
       await page.getByRole("heading", { name: /9.*15 Nov 2026/ }).waitFor();
       assert.equal(await page.locator(".od-calendar-day").count(), 7);
-      assert.equal(await page.locator(".od-calendar-item").count(), 7);
+      assert.equal(await page.locator(".od-calendar-item:visible").count(), 7);
+      if (width !== 390) {
+        // All 24 hours show. An hour with an entry is taller than one without.
+        const hours = page.locator(".od-calendar-week-hour");
+        assert.equal(await hours.count(), 24);
+        const heights = await hours.evaluateAll((cells) =>
+          cells.map((cell) => cell.getBoundingClientRect().height),
+        );
+        assert.ok(heights.every((height) => height >= 20));
+        assert.ok(heights[12] > heights[3] * 2, JSON.stringify(heights));
+        assert.equal(
+          await page
+            .locator(".od-calendar-week tbody tr")
+            .nth(25)
+            .locator(".od-calendar-item")
+            .count(),
+          4,
+          "the entries of 12:30 are in the second half of the hour",
+        );
+        // The period controls sit on the bottom of the title.
+        const bottoms = await page.evaluate(() =>
+          [
+            ".od-calendar-header h1",
+            ".od-calendar-header-navigation .od-button",
+          ].map(
+            (selector) =>
+              document.querySelector(selector).getBoundingClientRect().bottom,
+          ),
+        );
+        assert.ok(
+          Math.abs(bottoms[0] - bottoms[1]) <= 6,
+          JSON.stringify(bottoms),
+        );
+      }
       await audit(page, `${name}-week`);
 
       // The timeline opens at the present and loads earlier days on demand.
