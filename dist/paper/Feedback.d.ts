@@ -23,6 +23,6 @@ export interface ToastQueue {
     readonly toasts: readonly ToastMessage[];
     readonly showToast: (message: string, tone?: ToastMessage["tone"]) => void;
 }
-/** Hold toast messages and remove each one after `duration` milliseconds. */
+/** Hold the current toast and remove it after `duration` milliseconds. */
 export declare function useToastQueue(duration?: number): ToastQueue;
 //# sourceMappingURL=Feedback.d.ts.map

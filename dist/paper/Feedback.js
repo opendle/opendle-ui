@@ -28,13 +28,14 @@ export function ToastStack({ label, toasts }) {
     }, [newest]);
     return (_jsx("section", { "aria-label": label, className: "pp-toasts", popover: "manual", ref: regionRef, children: toasts.map((toast) => (_jsxs("output", { className: "pp-toast", "data-tone": toast.tone, children: [_jsx(Icon, { name: toast.tone === "error" ? "alert" : "check", size: 16 }), toast.message] }, toast.id))) }));
 }
-/** Hold toast messages and remove each one after `duration` milliseconds. */
+/** Hold the current toast and remove it after `duration` milliseconds. */
 export function useToastQueue(duration = 4000) {
     const [toasts, setToasts] = useState([]);
     const nextId = useRef(1);
     const showToast = useCallback((message, tone = "success") => {
         const id = nextId.current++;
-        setToasts((current) => [...current.slice(-2), { id, message, tone }]);
+        // One message at a time: a new message replaces the old one.
+        setToasts([{ id, message, tone }]);
         setTimeout(() => {
             setToasts((current) => current.filter((toast) => toast.id !== id));
         }, duration);

@@ -89,14 +89,15 @@ export interface ToastQueue {
   readonly showToast: (message: string, tone?: ToastMessage["tone"]) => void;
 }
 
-/** Hold toast messages and remove each one after `duration` milliseconds. */
+/** Hold the current toast and remove it after `duration` milliseconds. */
 export function useToastQueue(duration = 4000): ToastQueue {
   const [toasts, setToasts] = useState<readonly ToastMessage[]>([]);
   const nextId = useRef(1);
   const showToast = useCallback(
     (message: string, tone: ToastMessage["tone"] = "success") => {
       const id = nextId.current++;
-      setToasts((current) => [...current.slice(-2), { id, message, tone }]);
+      // One message at a time: a new message replaces the old one.
+      setToasts([{ id, message, tone }]);
       setTimeout(() => {
         setToasts((current) => current.filter((toast) => toast.id !== id));
       }, duration);
