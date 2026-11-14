@@ -5,7 +5,7 @@ export interface ChartSeries {
     readonly label: string;
     /**
      * The colour slot, from 0. A series keeps its slot when a filter changes
-     * the list. A slot of 7 or more shows in the last colour.
+     * the list. A slot of 9 or more has no colour of its own.
      */
     readonly slot: number;
     /** The total of the series, already formatted. It shows in the legend. */
@@ -14,9 +14,9 @@ export interface ChartSeries {
     readonly values: readonly (number | null)[];
 }
 /** The number of colours of a chart. */
-export declare const chartSlots = 8;
+export declare const chartSlots = 9;
 /**
- * At most eight series: the series of the last slots become one series, so
+ * The series with a colour, then one neutral series for all the others, so
  * no colour repeats.
  */
 export declare function foldSeries(series: readonly ChartSeries[], otherLabel: string): readonly ChartSeries[];

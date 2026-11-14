@@ -4,6 +4,7 @@ import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import {
   Conversation,
+  ChartLegend,
   InboxList,
   StackedBarChart,
   chartTicks,
@@ -106,25 +107,26 @@ test("chart ticks are round and include the maximum", () => {
   assert.deepEqual(chartTicks(820), [0, 250, 500, 750, 1000]);
 });
 
-test("a ninth series folds into one last series and keeps the colours", () => {
-  const series = Array.from({ length: 9 }, (_, slot) => ({
+test("the series without a colour become one neutral series", () => {
+  const series = Array.from({ length: 11 }, (_, slot) => ({
     id: `s${String(slot)}`,
     label: `S${String(slot)}`,
     slot,
     values: [slot, null],
   }));
+  assert.equal(foldSeries(series.slice(0, 9), "Other").length, 9);
   const folded = foldSeries(series, "Other");
-  assert.equal(folded.length, 8);
-  assert.deepEqual(folded[7], {
+  assert.equal(folded.length, 10);
+  assert.deepEqual(folded[9], {
     id: "other",
     label: "Other",
-    slot: 7,
-    values: [15, null],
+    slot: 9,
+    values: [19, null],
   });
   // A filter that removes a series does not move the colours of the others.
   assert.deepEqual(
     foldSeries([series[3], series[8]], "Other").map((entry) => entry.slot),
-    [3, 7],
+    [3, 8],
   );
 });
 
@@ -140,6 +142,20 @@ test("StackedBarChart has a legend and a table with all values", () => {
   assert.match(markup, /<svg aria-label="Views"/);
   assert.equal(markup.match(/class="od-chart-bar"/g).length, 3);
   assert.match(markup, /YouTube<b>30<\/b>/);
+  // One line between two segments of a bar, and none on a short segment.
+  assert.equal(markup.match(/class="od-chart-separator"/g).length, 1);
+  assert.doesNotMatch(
+    render(StackedBarChart, {
+      label: "Views",
+      legend: false,
+      days: ["2026-11-14"],
+      series: [
+        { id: "a", label: "YouTube", slot: 0, values: [10] },
+        { id: "b", label: "X", slot: 1, values: [5] },
+      ],
+    }),
+    /od-chart-legend/,
+  );
   assert.match(
     markup,
     /<th scope="row">2026-11-14<\/th><td>20<\/td><td>5<\/td><td>25<\/td>/,
@@ -155,4 +171,13 @@ test("a preset range ends at the current day", () => {
     from: "2026-03-01",
     to: "2026-03-01",
   });
+});
+
+test("ChartLegend names each series with its colour slot", () => {
+  const markup = render(ChartLegend, {
+    label: "Channels",
+    items: [{ id: "a", label: "YouTube", slot: 2 }],
+  });
+  assert.match(markup, /<ul aria-label="Channels"/);
+  assert.match(markup, /data-slot="2"><\/i>YouTube<\/li>/);
 });

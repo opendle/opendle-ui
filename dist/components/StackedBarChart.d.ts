@@ -12,6 +12,8 @@ export interface StackedBarChartProps {
     readonly dayLabel?: string;
     readonly locale?: string;
     readonly height?: number;
+    /** Set false when one legend of the page names the series. */
+    readonly legend?: boolean;
     readonly className?: string;
 }
 /**
@@ -19,5 +21,5 @@ export interface StackedBarChartProps {
  * each series, a pointer or the arrow keys give the values of one day, and a
  * table has all values for assistive technology.
  */
-export declare function StackedBarChart({ className, dayLabel, days, formatValue, height, label, locale, otherLabel, series, totalLabel, }: StackedBarChartProps): import("react").JSX.Element;
+export declare function StackedBarChart({ className, dayLabel, days, formatValue, height, label, legend, locale, otherLabel, series, totalLabel, }: StackedBarChartProps): import("react").JSX.Element;
 //# sourceMappingURL=StackedBarChart.d.ts.map

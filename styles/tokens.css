@@ -10181,29 +10181,36 @@ button.od-message-action:hover {
   }
 }
 
-/* Charts. The eight colours are a checked set: keep their order. */
+/*
+ * Charts. The nine colours are a checked set for colour-blind separation on
+ * the light and the dark surface: keep their order and their steps.
+ */
 
 :root {
-  --od-chart-1: #2a78d6;
-  --od-chart-2: #eb6834;
-  --od-chart-3: #1baf7a;
-  --od-chart-4: #eda100;
-  --od-chart-5: #e87ba4;
-  --od-chart-6: #008300;
-  --od-chart-7: #6250d6;
-  --od-chart-8: #e34948;
+  --od-chart-1: #b56c4a;
+  --od-chart-2: #6cacec;
+  --od-chart-3: #7ea455;
+  --od-chart-4: #ac6896;
+  --od-chart-5: #8c6d0f;
+  --od-chart-6: #0095aa;
+  --od-chart-7: #a34d50;
+  --od-chart-8: #a895e0;
+  --od-chart-9: #00815c;
+  --od-chart-other: #a3a299;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --od-chart-1: #3987e5;
-    --od-chart-2: #d95926;
-    --od-chart-3: #199e70;
-    --od-chart-4: #c98500;
-    --od-chart-5: #d55181;
-    --od-chart-6: #0ca30c;
-    --od-chart-7: #9085e9;
-    --od-chart-8: #e66767;
+    --od-chart-1: #a05937;
+    --od-chart-2: #3170ac;
+    --od-chart-3: #779c4e;
+    --od-chart-4: #bd77a6;
+    --od-chart-5: #7e5f00;
+    --od-chart-6: #009eb3;
+    --od-chart-7: #b45c5d;
+    --od-chart-8: #8774bd;
+    --od-chart-9: #00845f;
+    --od-chart-other: #6f7773;
   }
 }
 
@@ -10273,8 +10280,38 @@ button.od-message-action:hover {
   --od-chart-color: var(--od-chart-8);
 }
 
+.od-chart [data-slot="8"] {
+  --od-chart-color: var(--od-chart-9);
+}
+
+.od-chart [data-slot="9"] {
+  --od-chart-color: var(--od-chart-other);
+}
+
 .od-chart-bar {
   fill: var(--od-chart-color);
+}
+
+.od-chart-separator {
+  stroke: var(--od-color-surface);
+}
+
+.od-chart-key-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  color: var(--od-color-foreground);
+  font-size: 0.78125rem;
+}
+
+.od-chart-key-list li {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.od-chart-key-list .od-network {
+  --od-network-size: 14px;
 }
 
 .od-chart-swatch,
@@ -10382,18 +10419,33 @@ button.od-message-action:hover {
 }
 
 .od-date-range input {
-  height: 28px;
-  padding: 0 8px;
-  border: 1px solid var(--od-color-border);
-  border-radius: 14px;
-  background: transparent;
+  height: var(--od-control-height);
+  padding: 0 12px;
+  border: 0;
+  border-radius: 20px;
+  background: var(--od-color-sunken);
   color: var(--od-color-foreground);
-  font-size: 0.78125rem;
+  font: 500 0.75rem / 1 var(--od-font-body);
+  letter-spacing: 0.02em;
   font-variant-numeric: tabular-nums;
 }
 
 .od-date-range input:hover {
-  border-color: var(--od-color-border-strong);
+  background: color-mix(
+    in srgb,
+    var(--od-color-sunken) 80%,
+    var(--od-color-border-strong)
+  );
+}
+
+.od-date-range input::-webkit-calendar-picker-indicator {
+  margin-left: 2px;
+  opacity: 0.55;
+  cursor: pointer;
+}
+
+.od-date-range input::-webkit-datetime-edit-fields-wrapper {
+  padding: 0;
 }
 
 /* Record table */

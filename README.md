@@ -47,7 +47,8 @@ reply box (`ReplyComposer`: suggestions, a textarea that grows, emoji, a
 character counter; Enter sends and Shift+Enter adds a line). `InboxList` lists
 messages as links. `StackedBarChart` shows one value for each day, stacked by
 series; a series keeps its colour slot when a filter changes the list, and
-the ninth and later series become one. `DateRangeControl` and `RecordTable`
+the tenth and later series become one neutral series. `ChartLegend` is one
+legend for several charts. `DateRangeControl` and `RecordTable`
 complete an analytics view.
 
 `Toast` shows above all content, also above an open dialog. `useToastQueue`

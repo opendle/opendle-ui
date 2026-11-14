@@ -22,13 +22,16 @@ export interface StackedBarChartProps {
   readonly dayLabel?: string;
   readonly locale?: string;
   readonly height?: number;
+  /** Set false when one legend of the page names the series. */
+  readonly legend?: boolean;
   readonly className?: string;
 }
 
 const left = 44;
 const top = 8;
 const bottom = 22;
-const gap = 2;
+/** A segment of this height or more has a line between it and the next. */
+const separatorHeight = 6;
 const compact = new Intl.NumberFormat(undefined, {
   notation: "compact",
   maximumFractionDigits: 1,
@@ -52,6 +55,7 @@ export function StackedBarChart({
   formatValue = defaultFormat,
   height = 200,
   label,
+  legend = true,
   locale,
   otherLabel = "Other",
   series,
@@ -183,24 +187,37 @@ export function StackedBarChart({
                     y={top}
                   />
                 ) : null}
-                {shown.map((entry) => {
+                {shown.map((entry, order) => {
                   const value = entry.values[index] ?? 0;
                   if (value <= 0) return null;
                   const from = y(base);
                   base += value;
                   const to = y(base);
-                  const size = from - to - gap;
-                  return size <= 0 ? null : (
-                    <rect
-                      className="od-chart-bar"
-                      data-slot={entry.slot}
-                      height={size}
-                      key={entry.id}
-                      rx={Math.min(2, size / 2)}
-                      width={bar}
-                      x={x}
-                      y={to}
-                    />
+                  const size = from - to;
+                  const last = !shown.some(
+                    (later, place) =>
+                      place > order && (later.values[index] ?? 0) > 0,
+                  );
+                  // Only the top of the complete bar is round.
+                  const radius = last ? Math.min(3, bar / 2, size) : 0;
+                  return (
+                    <g key={entry.id}>
+                      <path
+                        className="od-chart-bar"
+                        d={`M${String(x)} ${String(from)}V${String(to + radius)}Q${String(x)} ${String(to)} ${String(x + radius)} ${String(to)}H${String(x + bar - radius)}Q${String(x + bar)} ${String(to)} ${String(x + bar)} ${String(to + radius)}V${String(from)}Z`}
+                        data-slot={entry.slot}
+                        data-top={last}
+                      />
+                      {last || size < separatorHeight ? null : (
+                        <line
+                          className="od-chart-separator"
+                          x1={x}
+                          x2={x + bar}
+                          y1={to}
+                          y2={to}
+                        />
+                      )}
+                    </g>
                   );
                 })}
                 {index % labelEvery === 0 ? (
@@ -242,7 +259,7 @@ export function StackedBarChart({
           </div>
         )}
       </div>
-      {shown.length < 2 ? null : (
+      {!legend || shown.length < 2 ? null : (
         <figcaption className="od-chart-legend">
           {shown.map((entry) => (
             <span key={entry.id}>

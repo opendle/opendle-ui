@@ -20,7 +20,7 @@ export interface ChartSeries {
   readonly label: string;
   /**
    * The colour slot, from 0. A series keeps its slot when a filter changes
-   * the list. A slot of 7 or more shows in the last colour.
+   * the list. A slot of 9 or more has no colour of its own.
    */
   readonly slot: number;
   /** The total of the series, already formatted. It shows in the legend. */
@@ -30,31 +30,26 @@ export interface ChartSeries {
 }
 
 /** The number of colours of a chart. */
-export const chartSlots = 8;
+export const chartSlots = 9;
 
 /**
- * At most eight series: the series of the last slots become one series, so
+ * The series with a colour, then one neutral series for all the others, so
  * no colour repeats.
  */
 export function foldSeries(
   series: readonly ChartSeries[],
   otherLabel: string,
 ): readonly ChartSeries[] {
-  const kept = series.filter((entry) => entry.slot < chartSlots - 1);
-  const rest = series.filter((entry) => entry.slot >= chartSlots - 1);
-  if (rest.length <= 1) {
-    return [
-      ...kept,
-      ...rest.map((entry) => ({ ...entry, slot: chartSlots - 1 })),
-    ];
-  }
+  const kept = series.filter((entry) => entry.slot < chartSlots);
+  const rest = series.filter((entry) => entry.slot >= chartSlots);
+  if (rest.length === 0) return kept;
   const length = Math.max(...rest.map((entry) => entry.values.length));
   return [
     ...kept,
     {
       id: "other",
       label: otherLabel,
-      slot: chartSlots - 1,
+      slot: chartSlots,
       values: Array.from({ length }, (_, day) => {
         const values = rest.flatMap((entry) => entry.values[day] ?? []);
         return values.length === 0

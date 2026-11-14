@@ -114,6 +114,7 @@ export { chartSlots, chartTicks, foldSeries, } from "./components/chartScale.js"
 export { DateRangeControl, } from "./components/DateRangeControl.js";
 export { lastDays, } from "./components/dateRange.js";
 export { RecordTable, } from "./components/RecordTable.js";
+export { ChartLegend, } from "./components/ChartLegend.js";
 export { StackedBarChart, } from "./components/StackedBarChart.js";
 export { calendarBoardLabels, calendarItemState, } from "./components/calendarItems.js";
 export { calendarDayDate, calendarDayKey, calendarGridDays, calendarPeriod, calendarTitle, shiftCalendarAnchor, } from "./components/calendarDates.js";

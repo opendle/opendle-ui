@@ -5,7 +5,8 @@ import { classes } from "./classes.js";
 const left = 44;
 const top = 8;
 const bottom = 22;
-const gap = 2;
+/** A segment of this height or more has a line between it and the next. */
+const separatorHeight = 6;
 const compact = new Intl.NumberFormat(undefined, {
     notation: "compact",
     maximumFractionDigits: 1,
@@ -20,7 +21,7 @@ function dayDate(day) {
  * each series, a pointer or the arrow keys give the values of one day, and a
  * table has all values for assistive technology.
  */
-export function StackedBarChart({ className, dayLabel = "Day", days, formatValue = defaultFormat, height = 200, label, locale, otherLabel = "Other", series, totalLabel = "Total", }) {
+export function StackedBarChart({ className, dayLabel = "Day", days, formatValue = defaultFormat, height = 200, label, legend = true, locale, otherLabel = "Other", series, totalLabel = "Total", }) {
     const [width, setWidth] = useState(640);
     const [active, setActive] = useState(null);
     const measure = useCallback((plot) => {
@@ -85,15 +86,18 @@ export function StackedBarChart({ className, dayLabel = "Day", days, formatValue
                         }, onPointerMove: pointer, role: "img", tabIndex: 0, viewBox: `0 0 ${String(width)} ${String(height)}`, children: [ticks.map((tick) => (_jsxs("g", { children: [_jsx("line", { className: tick === 0 ? "od-chart-axis" : "od-chart-grid", x1: left, x2: width, y1: y(tick), y2: y(tick) }), _jsx("text", { className: "od-chart-tick", dy: "0.32em", textAnchor: "end", x: left - 8, y: y(tick), children: formatValue(tick) })] }, tick))), days.map((day, index) => {
                                 const x = left + band * index + (band - bar) / 2;
                                 let base = 0;
-                                return (_jsxs("g", { "data-active": index === active, children: [index === active ? (_jsx("rect", { className: "od-chart-band", height: plotHeight, width: band, x: left + band * index, y: top })) : null, shown.map((entry) => {
+                                return (_jsxs("g", { "data-active": index === active, children: [index === active ? (_jsx("rect", { className: "od-chart-band", height: plotHeight, width: band, x: left + band * index, y: top })) : null, shown.map((entry, order) => {
                                             const value = entry.values[index] ?? 0;
                                             if (value <= 0)
                                                 return null;
                                             const from = y(base);
                                             base += value;
                                             const to = y(base);
-                                            const size = from - to - gap;
-                                            return size <= 0 ? null : (_jsx("rect", { className: "od-chart-bar", "data-slot": entry.slot, height: size, rx: Math.min(2, size / 2), width: bar, x: x, y: to }, entry.id));
+                                            const size = from - to;
+                                            const last = !shown.some((later, place) => place > order && (later.values[index] ?? 0) > 0);
+                                            // Only the top of the complete bar is round.
+                                            const radius = last ? Math.min(3, bar / 2, size) : 0;
+                                            return (_jsxs("g", { children: [_jsx("path", { className: "od-chart-bar", d: `M${String(x)} ${String(from)}V${String(to + radius)}Q${String(x)} ${String(to)} ${String(x + radius)} ${String(to)}H${String(x + bar - radius)}Q${String(x + bar)} ${String(to)} ${String(x + bar)} ${String(to + radius)}V${String(from)}Z`, "data-slot": entry.slot, "data-top": last }), last || size < separatorHeight ? null : (_jsx("line", { className: "od-chart-separator", x1: x, x2: x + bar, y1: to, y2: to }))] }, entry.id));
                                         }), index % labelEvery === 0 ? (_jsx("text", { className: "od-chart-tick", textAnchor: "middle", x: left + band * index + band / 2, y: height - 5, children: formats.axis.format(dayDate(day)) })) : null] }, day));
                             })] }), active === null || activeDay === undefined ? null : (_jsxs("div", { className: "od-chart-tooltip", "data-side": active > days.length / 2 ? "left" : "right", style: {
                             [active > days.length / 2 ? "right" : "left"]: active > days.length / 2
@@ -102,6 +106,6 @@ export function StackedBarChart({ className, dayLabel = "Day", days, formatValue
                         }, children: [_jsx("strong", { children: formats.full.format(dayDate(activeDay)) }), shown.map((entry) => {
                                 const value = entry.values[active];
                                 return value === null || value === undefined ? null : (_jsxs("span", { className: "od-chart-tooltip-row", children: [_jsx("i", { className: "od-chart-key", "data-slot": entry.slot }), _jsx("b", { children: formatValue(value) }), entry.label] }, entry.id));
-                            })] }))] }), shown.length < 2 ? null : (_jsx("figcaption", { className: "od-chart-legend", children: shown.map((entry) => (_jsxs("span", { children: [_jsx("i", { className: "od-chart-swatch", "data-slot": entry.slot }), entry.label, entry.total === undefined ? null : _jsx("b", { children: entry.total })] }, entry.id))) })), _jsx("div", { className: "od-visually-hidden", children: _jsxs("table", { children: [_jsx("caption", { children: label }), _jsx("thead", { children: _jsxs("tr", { children: [_jsx("th", { scope: "col", children: dayLabel }), shown.map((entry) => (_jsx("th", { scope: "col", children: entry.label }, entry.id))), _jsx("th", { scope: "col", children: totalLabel })] }) }), _jsx("tbody", { children: days.map((day, index) => (_jsxs("tr", { children: [_jsx("th", { scope: "row", children: day }), shown.map((entry) => (_jsx("td", { children: entry.values[index] ?? "" }, entry.id))), _jsx("td", { children: totals[index] })] }, day))) })] }) })] }));
+                            })] }))] }), !legend || shown.length < 2 ? null : (_jsx("figcaption", { className: "od-chart-legend", children: shown.map((entry) => (_jsxs("span", { children: [_jsx("i", { className: "od-chart-swatch", "data-slot": entry.slot }), entry.label, entry.total === undefined ? null : _jsx("b", { children: entry.total })] }, entry.id))) })), _jsx("div", { className: "od-visually-hidden", children: _jsxs("table", { children: [_jsx("caption", { children: label }), _jsx("thead", { children: _jsxs("tr", { children: [_jsx("th", { scope: "col", children: dayLabel }), shown.map((entry) => (_jsx("th", { scope: "col", children: entry.label }, entry.id))), _jsx("th", { scope: "col", children: totalLabel })] }) }), _jsx("tbody", { children: days.map((day, index) => (_jsxs("tr", { children: [_jsx("th", { scope: "row", children: day }), shown.map((entry) => (_jsx("td", { children: entry.values[index] ?? "" }, entry.id))), _jsx("td", { children: totals[index] })] }, day))) })] }) })] }));
 }
 //# sourceMappingURL=StackedBarChart.js.map

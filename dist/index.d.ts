@@ -114,6 +114,7 @@ export { chartSlots, chartTicks, foldSeries, type ChartSeries, } from "./compone
 export { DateRangeControl, type DateRangeControlProps, } from "./components/DateRangeControl.js";
 export { lastDays, type DateRange, type DateRangePreset, } from "./components/dateRange.js";
 export { RecordTable, type RecordTableColumn, type RecordTableProps, type RecordTableRow, } from "./components/RecordTable.js";
+export { ChartLegend, type ChartLegendItem, type ChartLegendProps, } from "./components/ChartLegend.js";
 export { StackedBarChart, type StackedBarChartProps, } from "./components/StackedBarChart.js";
 export { calendarBoardLabels, calendarItemState, type CalendarBoardLabels, type CalendarItem, type CalendarItemState, type CalendarItemTarget, } from "./components/calendarItems.js";
 export { calendarDayDate, calendarDayKey, calendarGridDays, calendarPeriod, calendarTitle, shiftCalendarAnchor, type CalendarMode, type CalendarPeriod, } from "./components/calendarDates.js";

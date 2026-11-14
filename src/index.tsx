@@ -338,6 +338,11 @@ export {
   type RecordTableRow,
 } from "./components/RecordTable.js";
 export {
+  ChartLegend,
+  type ChartLegendItem,
+  type ChartLegendProps,
+} from "./components/ChartLegend.js";
+export {
   StackedBarChart,
   type StackedBarChartProps,
 } from "./components/StackedBarChart.js";

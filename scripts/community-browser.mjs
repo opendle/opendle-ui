@@ -16,7 +16,7 @@ import React, {useState} from "react";
 import {createRoot} from "react-dom/client";
 import {
   Card, Conversation, ConversationPost, DateRangeControl, InboxList,
-  RecordTable, Section, StackedBarChart, lastDays,
+  RecordTable, Section, StackedBarChart, ChartLegend, lastDays,
 } from "./dist/index.js";
 
 const base = {avatarUrl: null, createdAt: "2026-11-14T09:00:00Z", own: false, liked: false, likeCount: null, state: "new", canReply: true, canLike: true, depth: 0};
@@ -28,7 +28,7 @@ const start = [
   {...base, id: "m5", authorName: "driftwood.audio", authorHandle: "@driftwood.audio", when: "25 min", text: "Who mixed this? The low end is so clean.", state: "ignored"},
 ];
 const days = Array.from({length: 30}, (_, index) => new Date(Date.UTC(2026, 9, 16 + index)).toISOString().slice(0, 10));
-const names = ["Instagram", "TikTok", "YouTube", "Facebook", "Threads", "X", "Bluesky", "Pinterest", "Tumblr"];
+const names = ["Instagram", "TikTok", "YouTube", "Facebook", "Threads", "X", "Bluesky", "Pinterest", "Tumblr", "Mastodon", "LinkedIn"];
 const series = names.map((label, slot) => ({id: label, label, slot, total: String((slot + 1) * 310),
   values: days.map((_, day) => (slot === 2 && day < 4 ? null : Math.round(40 + 30 * Math.sin(day / 3 + slot) + slot * 6)))}));
 
@@ -61,6 +61,7 @@ function App() {
       </Card>
       <Section title="Views" actions={<DateRangeControl label="Period" fromLabel="From" toLabel="To" today="2026-11-14" value={range} onChange={setRange}
         presets={[{days: 7, label: "7 days"}, {days: 30, label: "30 days"}, {days: 90, label: "90 days"}]}/>}>
+        <ChartLegend label="Channels" items={series.slice(0, 9).map(({id, label, slot}) => ({id, label, slot}))}/>
         <Card padded><StackedBarChart label="Views by channel" days={days} series={series} locale="en-GB"/></Card>
         <p id="range">{range.from} {range.to}</p>
       </Section>
@@ -212,11 +213,33 @@ try {
       const chart = page.getByRole("img", { name: "Views by channel" });
       await chart.scrollIntoViewIfNeeded();
       assert.equal(
-        await page.locator(".od-chart-legend span").count(),
-        8,
-        "the ninth series folds into Other",
+        await page.locator("figure .od-chart-legend span").count(),
+        10,
+        "the tenth and later series are one Other series",
       );
-      await page.locator(".od-chart-legend").getByText("Other").waitFor();
+      await page
+        .locator("figure .od-chart-legend")
+        .getByText("Other")
+        .waitFor();
+      assert.equal(
+        await page
+          .getByRole("list", { name: "Channels" })
+          .getByRole("listitem")
+          .count(),
+        9,
+      );
+      // Nine different colours and one neutral colour.
+      const fills = await page
+        .locator("figure .od-chart-swatch")
+        .evaluateAll((marks) =>
+          marks.map((mark) => getComputedStyle(mark).backgroundColor),
+        );
+      assert.equal(new Set(fills).size, 10);
+      // Each day has one top segment. Only it is round.
+      assert.equal(
+        await page.locator('.od-chart-bar[data-top="true"]').count(),
+        30,
+      );
       const plot = await chart.boundingBox();
       assert.ok(
         Math.abs(
@@ -227,7 +250,7 @@ try {
       await page.mouse.move(plot.x + plot.width / 3, plot.y + plot.height / 2);
       const tip = page.locator(".od-chart-tooltip");
       await tip.waitFor();
-      assert.equal(await tip.locator(".od-chart-tooltip-row").count(), 8);
+      assert.equal(await tip.locator(".od-chart-tooltip-row").count(), 10);
       const tipBox = await tip.boundingBox();
       assert.ok(tipBox.x >= 0 && tipBox.x + tipBox.width <= width);
       await audit(page, `${name}-chart`);
@@ -237,7 +260,7 @@ try {
       await tip.getByText("16 Oct 2026").waitFor();
       assert.equal(
         await tip.locator(".od-chart-tooltip-row").count(),
-        7,
+        9,
         "a series without a value for the day is not in the tooltip",
       );
       await page.keyboard.press("Escape");
