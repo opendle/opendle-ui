@@ -95,10 +95,15 @@ export { Button, type ButtonProps, type ButtonVariant, } from "./components/Butt
 export { ActionButton, ActionButtonGroup, type ActionButtonProps, type ActionButtonGroupProps, } from "./components/ActionButton.js";
 export { DataTable, type DataTableAction, type DataTableActionContext, type DataTableCellContext, type DataTableColumn, type DataTableDensity, type DataTableExpansion, type DataTableLoadMore, type DataTableProps, type DataTableSelection, type DataTableSort, type DataTableSortDirection, type DataTableState, } from "./components/DataTable.js";
 export { EditableTable, type EditableTableCellContext, type EditableTableColumn, type EditableTableDeleteConfirmation, type EditableTableProps, type EditableTableReorder, type EditableTableReorderContext, type EditableTableRow, type EditableTableSaveMode, } from "./components/EditableTable.js";
-export { AccountMenu, type AccountMenuProps, } from "./components/AccountMenu.js";
+export { AccountMenu, type AccountMenuItem, type AccountMenuProps, type AccountMenuSection, } from "./components/AccountMenu.js";
 export { AgentSidebar, type AgentSidebarProps, } from "./components/AgentSidebar.js";
 export { AttentionRow, type AttentionRowProps, type AttentionTone, } from "./components/AttentionRow.js";
 export { CalendarBoard, type CalendarBoardProps, } from "./components/CalendarBoard.js";
+export { CalendarEntry, type CalendarEntryProps, } from "./components/CalendarEntry.js";
+export { ChannelList, type ChannelListProps, } from "./components/ChannelList.js";
+export { channelListLabels, type ChannelItem, type ChannelListLabels, type ChannelNetwork, type ChannelSwitch, } from "./components/channelLabels.js";
+export { TagInput, type TagInputProps } from "./components/TagInput.js";
+export { MetricTile, type MetricTileProps } from "./components/MetricTile.js";
 export { calendarBoardLabels, calendarItemState, type CalendarBoardLabels, type CalendarItem, type CalendarItemState, type CalendarItemTarget, } from "./components/calendarItems.js";
 export { calendarDayDate, calendarDayKey, calendarGridDays, calendarPeriod, calendarTitle, shiftCalendarAnchor, type CalendarMode, type CalendarPeriod, } from "./components/calendarDates.js";
 export { CalendarHeader, type CalendarHeaderProps, } from "./components/CalendarHeader.js";

@@ -31,6 +31,17 @@ states and error display. The host supplies the data and the asynchronous
 actions. Each has a `labels` property with English defaults. With `onRename`,
 a double click or the Enter key edits a passkey name in place.
 
+`ApplicationShell` takes a second list (`secondaryNavigation`), for example
+the channels. It scrolls in the sidebar and opens from one button of the
+bottom bar on a phone. With `onCollapsedChange`, a button next to the account
+collapses the sidebar to icons; the host stores the state. `AccountMenu` is a
+menu button with sections of actions and choices.
+
+`ChannelList` shows connected accounts: name edited in place, tags
+(`TagInput`), switches, the warning for an ended authorization, connect and
+disconnect. `MetricTile` in a `dl.od-metrics` shows a key number with its
+change. `CalendarEntry` is one calendar entry for a list outside the board.
+
 `Toast` shows above all content, also above an open dialog. `useToastQueue`
 holds one message: a new message replaces the old one.
 

@@ -1,4 +1,4 @@
-import type { HTMLAttributes, ReactNode } from "react";
+import { type HTMLAttributes, type ReactNode } from "react";
 export interface ApplicationShellProps extends Omit<HTMLAttributes<HTMLDivElement>, "children"> {
     /** The product mark, shown before the product name. */
     readonly brandMark: ReactNode;
@@ -7,15 +7,28 @@ export interface ApplicationShellProps extends Omit<HTMLAttributes<HTMLDivElemen
     /** `NavigationLink` or `NavigationItem` elements. */
     readonly navigation: ReactNode;
     readonly navigationLabel: string;
+    /**
+     * A second, longer list below the main one, for example the channels. It
+     * scrolls. On a phone it opens from one button of the bottom bar.
+     */
+    readonly secondaryNavigation?: ReactNode;
+    readonly secondaryNavigationLabel?: string;
     /** An `AccountMenu` element at the end of the sidebar. */
     readonly account?: ReactNode;
+    /** Show the sidebar as an icon rail. */
+    readonly collapsed?: boolean;
+    /** With it, a button next to the account collapses the sidebar. */
+    readonly onCollapsedChange?: (collapsed: boolean) => void;
+    readonly collapseLabel?: string;
+    readonly expandLabel?: string;
+    readonly closeLabel?: string;
     readonly skipLabel: string;
     readonly children: ReactNode;
     readonly mainProps?: HTMLAttributes<HTMLElement>;
 }
 /**
  * The application frame: a left sidebar that becomes an icon rail on a medium
- * window and a bottom bar on a phone.
+ * window, or when the user collapses it, and a bottom bar on a phone.
  */
-export declare function ApplicationShell({ account, brandHref, brandMark, brandName, children, className, mainProps, navigation, navigationLabel, skipLabel, ...props }: ApplicationShellProps): import("react").JSX.Element;
+export declare function ApplicationShell({ account, brandHref, brandMark, brandName, children, className, closeLabel, collapsed, collapseLabel, expandLabel, mainProps, navigation, navigationLabel, onCollapsedChange, secondaryNavigation, secondaryNavigationLabel, skipLabel, ...props }: ApplicationShellProps): import("react").JSX.Element;
 //# sourceMappingURL=ApplicationShell.d.ts.map

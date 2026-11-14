@@ -255,7 +255,9 @@ export {
 } from "./components/EditableTable.js";
 export {
   AccountMenu,
+  type AccountMenuItem,
   type AccountMenuProps,
+  type AccountMenuSection,
 } from "./components/AccountMenu.js";
 export {
   AgentSidebar,
@@ -270,6 +272,23 @@ export {
   CalendarBoard,
   type CalendarBoardProps,
 } from "./components/CalendarBoard.js";
+export {
+  CalendarEntry,
+  type CalendarEntryProps,
+} from "./components/CalendarEntry.js";
+export {
+  ChannelList,
+  type ChannelListProps,
+} from "./components/ChannelList.js";
+export {
+  channelListLabels,
+  type ChannelItem,
+  type ChannelListLabels,
+  type ChannelNetwork,
+  type ChannelSwitch,
+} from "./components/channelLabels.js";
+export { TagInput, type TagInputProps } from "./components/TagInput.js";
+export { MetricTile, type MetricTileProps } from "./components/MetricTile.js";
 export {
   calendarBoardLabels,
   calendarItemState,

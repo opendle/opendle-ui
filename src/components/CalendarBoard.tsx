@@ -1,10 +1,4 @@
-import {
-  useCallback,
-  useLayoutEffect,
-  useMemo,
-  useRef,
-  type CSSProperties,
-} from "react";
+import { useCallback, useLayoutEffect, useMemo, useRef } from "react";
 
 import {
   calendarDayDate,
@@ -12,15 +6,13 @@ import {
   calendarGridDays,
   type CalendarMode,
 } from "./calendarDates.js";
+import { CalendarEntry } from "./CalendarEntry.js";
 import {
   calendarBoardLabels,
-  calendarItemState,
   type CalendarBoardLabels,
   type CalendarItem,
-  type CalendarItemState,
 } from "./calendarItems.js";
 import { classes } from "./classes.js";
-import { Icon, NetworkIcon, type IconName } from "./Icon.js";
 
 export interface CalendarBoardProps {
   readonly mode: CalendarMode;
@@ -42,14 +34,6 @@ export interface CalendarBoardProps {
   readonly labels?: CalendarBoardLabels;
   readonly className?: string;
 }
-
-const stateIcons: Record<CalendarItemState, IconName> = {
-  scheduled: "clock",
-  publishing: "retry",
-  published: "check",
-  failed: "alert",
-  cancelled: "close",
-};
 
 interface DayGroup {
   readonly day: string;
@@ -79,59 +63,6 @@ interface Formats {
   readonly weekday: Intl.DateTimeFormat;
   readonly fullDay: Intl.DateTimeFormat;
   readonly month: Intl.DateTimeFormat;
-}
-
-interface ItemButtonProps {
-  readonly item: CalendarItem;
-  readonly formats: Formats;
-  readonly labels: CalendarBoardLabels;
-  readonly onSelect: (item: CalendarItem) => void;
-}
-
-function ItemButton({ formats, item, labels, onSelect }: ItemButtonProps) {
-  const state = calendarItemState(item);
-  const time = formats.time.format(new Date(item.start));
-  const style =
-    item.color === undefined
-      ? undefined
-      : ({ "--od-calendar-item-color": item.color } as CSSProperties);
-  return (
-    <button
-      aria-label={[time, item.kind, item.title, labels.states[state]]
-        .filter(Boolean)
-        .join(", ")}
-      className="od-calendar-item"
-      data-state={state}
-      onClick={() => {
-        onSelect(item);
-      }}
-      style={style}
-      type="button"
-    >
-      <span className="od-calendar-item-bar" />
-      <span className="od-calendar-item-top">
-        <time dateTime={item.start}>{time}</time>
-        {item.kind ? (
-          <span className="od-calendar-item-kind">{item.kind}</span>
-        ) : null}
-        <span className="od-calendar-item-state" title={labels.states[state]}>
-          <Icon name={stateIcons[state]} size={13} />
-        </span>
-      </span>
-      <span className="od-calendar-item-title">{item.title}</span>
-      <span className="od-calendar-item-networks">
-        {item.targets.map((target) => (
-          <NetworkIcon
-            badge
-            className="od-calendar-item-network"
-            data-state={target.state}
-            key={target.id}
-            network={target.network}
-          />
-        ))}
-      </span>
-    </button>
-  );
 }
 
 interface GridProps {
@@ -187,12 +118,12 @@ function Grid({
                 <span className="od-calendar-day-number">{date.getDate()}</span>
               </time>
               {items.map((item) => (
-                <ItemButton
-                  formats={formats}
+                <CalendarEntry
                   item={item}
                   key={item.id}
-                  labels={labels}
                   onSelect={onSelect}
+                  stateLabels={labels.states}
+                  time={formats.time.format(new Date(item.start))}
                 />
               ))}
             </li>
@@ -331,12 +262,12 @@ function Timeline({
                   </span>
                 ) : (
                   items.map((item) => (
-                    <ItemButton
-                      formats={formats}
+                    <CalendarEntry
                       item={item}
                       key={item.id}
-                      labels={labels}
                       onSelect={onSelect}
+                      stateLabels={labels.states}
+                      time={formats.time.format(new Date(item.start))}
                     />
                   ))
                 )}

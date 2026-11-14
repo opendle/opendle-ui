@@ -3,7 +3,11 @@ import test from "node:test";
 import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import {
+  AccountMenu,
   CalendarBoard,
+  ChannelList,
+  MetricTile,
+  TagInput,
   CalendarHeader,
   PostDetailDialog,
   SegmentedControl,
@@ -97,7 +101,7 @@ test("the month view groups one entry with a badge for each network", () => {
   assert.equal(markup.match(/class="od-calendar-item"/g).length, 2);
   assert.match(
     markup,
-    /aria-label="18:30, Reel, Take Me With You, Failed" class="od-calendar-item" data-state="failed"/,
+    /aria-label="18:30, Reel, Take Me With You, Failed" class="od-calendar-item" data-layout="card" data-state="failed"/,
   );
   assert.match(markup, /data-state="failed"[^>]*data-network="pinterest"/);
   assert.match(markup, /aria-current="date"[^>]*dateTime="2026-11-14"/i);
@@ -266,4 +270,83 @@ test("PostDetailDialog has a tab for each network when the text differs", () => 
   assert.match(markup, /role="tablist"/);
   assert.equal(markup.match(/role="tab"/g).length, 2);
   assert.doesNotMatch(markup, />Retry<\/button>/);
+});
+
+test("AccountMenu is a closed menu button until a press", () => {
+  const markup = render(AccountMenu, {
+    avatar: "V",
+    name: "Vincent",
+    sections: [
+      {
+        id: "a",
+        items: [{ id: "s", label: "Settings", onSelect: () => undefined }],
+      },
+    ],
+  });
+  assert.match(markup, /aria-expanded="false" aria-haspopup="menu"/);
+  assert.doesNotMatch(markup, /role="menu"/);
+});
+
+test("TagInput shows each tag with a remove button, or as text only", () => {
+  const props = {
+    value: ["short"],
+    onChange: () => undefined,
+    label: "Tags",
+    removeLabel: "Remove tag",
+  };
+  const editable = render(TagInput, props);
+  assert.match(editable, /aria-label="Remove tag: short"/);
+  assert.match(editable, /<input aria-label="Tags"/);
+  const fixed = render(TagInput, { ...props, disabled: true });
+  assert.doesNotMatch(fixed, /<button|<input/);
+});
+
+test("ChannelList warns about an ended authorization and hides writes", () => {
+  const props = {
+    items: [
+      {
+        id: "c1",
+        network: "youtube",
+        name: "tubededentifrice",
+        handle: "@tube",
+        tags: ["long"],
+        needsReconnect: true,
+        switches: [{ id: "publish", label: "Publish", on: true }],
+      },
+    ],
+    networks: [
+      { network: "youtube", label: "YouTube", href: "/oauth/youtube/start" },
+      { network: "bluesky", label: "Bluesky" },
+    ],
+    onRename: async () => undefined,
+    onTagsChange: async () => undefined,
+    onSwitchChange: async () => undefined,
+    onDisconnect: async () => undefined,
+    onPasswordConnect: async () => undefined,
+    errorMessage: () => "Failed",
+  };
+  const markup = render(ChannelList, props);
+  assert.match(markup, /Authorization ended/);
+  assert.match(markup, /href="\/oauth\/youtube\/start"[^>]*>Reconnect</);
+  assert.match(markup, /aria-label="Rename: tubededentifrice"/);
+  assert.match(markup, /aria-label="Disconnect: tubededentifrice"/);
+  assert.match(markup, /aria-pressed="true"[^>]*>Publish</);
+  const readOnly = render(ChannelList, { ...props, readOnly: true });
+  assert.doesNotMatch(readOnly, /Rename:|Disconnect:|Reconnect<|>Connect</);
+  assert.match(readOnly, /Authorization ended/);
+});
+
+test("MetricTile shows the change only when it has one", () => {
+  const plain = render(MetricTile, { label: "Views", value: "1,204" });
+  assert.match(plain, /<dt class="od-metric-label">Views<\/dt>/);
+  assert.doesNotMatch(plain, /od-metric-change/);
+  assert.match(
+    render(MetricTile, {
+      label: "Views",
+      value: "1",
+      change: "+12%",
+      trend: "up",
+    }),
+    /<span class="od-metric-change" data-trend="up">\+12%<\/span>/,
+  );
 });

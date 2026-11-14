@@ -8523,7 +8523,6 @@ html:has(.od-dialog:modal) {
 
 .od-calendar-timeline {
   display: grid;
-  max-width: 760px;
   overflow-anchor: none;
 }
 
@@ -8969,4 +8968,591 @@ html:has(.od-dialog:modal) {
       color 0.12s,
       opacity 0.12s;
   }
+}
+
+/* Application shell: second list, collapse, account menu. */
+
+.od-application-sidebar {
+  min-height: 0;
+}
+
+.od-application-secondary {
+  min-height: 0;
+  flex: 1;
+  align-content: start;
+  margin: 8px -12px 0;
+  padding: 8px 12px;
+  overflow: hidden auto;
+  border-top: 1px solid var(--od-color-border);
+  scrollbar-width: thin;
+}
+
+.od-application-list-button {
+  display: none;
+}
+
+.od-navigation-item {
+  border: 0;
+  background: none;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.od-navigation-item > .od-network {
+  --od-network-size: 22px;
+}
+
+.od-navigation-item[data-nested="true"] {
+  min-height: 32px;
+  margin-left: 16px;
+  font-size: 0.8125rem;
+}
+
+.od-navigation-item[data-nested="true"] .od-icon {
+  width: 16px;
+  height: 16px;
+}
+
+.od-application-footer {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  margin-top: auto;
+}
+
+.od-account {
+  position: relative;
+  min-width: 0;
+  flex: 1;
+}
+
+.od-account-menu {
+  width: 100%;
+  margin-top: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.od-account-menu[aria-expanded="true"] {
+  background: var(--od-color-hover);
+}
+
+.od-account-menu .od-navigation-label {
+  flex: 1;
+}
+
+.od-account-chevron {
+  color: var(--od-color-muted);
+  rotate: 180deg;
+}
+
+.od-account-popup {
+  position: absolute;
+  z-index: 30;
+  bottom: calc(100% + 6px);
+  left: 0;
+  display: grid;
+  min-width: 208px;
+  max-width: min(320px, calc(100vw - 24px));
+  padding: 4px;
+  border: 1px solid var(--od-color-border);
+  border-radius: var(--od-radius-lg);
+  background: var(--od-color-surface);
+  box-shadow: var(--od-shadow);
+  outline: 0;
+}
+
+.od-account-section {
+  display: grid;
+  min-width: 0;
+  margin: 0;
+  padding: 2px 0;
+  border: 0;
+}
+
+.od-account-section + .od-account-section {
+  margin-top: 2px;
+  padding-top: 4px;
+  border-top: 1px solid var(--od-color-border);
+  border-radius: 0;
+}
+
+.od-account-section-label {
+  padding: 6px 10px 2px;
+  color: var(--od-color-muted);
+  font-size: 0.75rem;
+}
+
+.od-account-item {
+  display: flex;
+  min-height: 36px;
+  align-items: center;
+  gap: 10px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: var(--od-radius-md);
+  background: none;
+  color: var(--od-color-foreground);
+  font: inherit;
+  font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+}
+
+.od-account-item > span {
+  min-width: 0;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.od-account-item > .od-icon:first-child {
+  color: var(--od-color-muted);
+}
+
+.od-account-item:is(:hover, :focus-visible) {
+  background: var(--od-color-hover);
+  outline: 0;
+}
+
+.od-account-item-check {
+  color: var(--od-color-brand);
+}
+
+.od-application-collapse {
+  flex: none;
+}
+
+.od-application-list .od-dialog-body {
+  padding: 8px 12px 16px;
+}
+
+/* The icon rail, by the choice of the user on a wide window. */
+@media (min-width: 1101px) {
+  .od-application-shell[data-collapsed="true"] {
+    --od-sidebar-width: 64px;
+  }
+
+  .od-application-shell[data-collapsed="true"] .od-application-sidebar {
+    align-items: center;
+    padding-inline: 10px;
+  }
+
+  .od-application-shell[data-collapsed="true"] .od-application-brand {
+    padding-inline: 0;
+  }
+
+  .od-application-shell[data-collapsed="true"]
+    :is(.od-navigation-label, .od-application-brand-name, .od-account-chevron) {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+
+  .od-application-shell[data-collapsed="true"] .od-navigation-item {
+    width: 44px;
+    justify-content: center;
+    margin-left: 0;
+    padding: 0;
+  }
+
+  .od-application-shell[data-collapsed="true"] .od-navigation-item .od-count {
+    position: absolute;
+    top: 2px;
+    right: 0;
+    min-width: 16px;
+    height: 16px;
+    padding: 0 4px;
+    font-size: 0.625rem;
+  }
+
+  .od-application-shell[data-collapsed="true"] .od-application-secondary {
+    margin-inline: -10px;
+    padding-inline: 10px;
+    scrollbar-width: none;
+  }
+
+  .od-application-shell[data-collapsed="true"] .od-application-footer {
+    flex-direction: column;
+  }
+
+  .od-application-shell[data-collapsed="true"] .od-account-menu {
+    justify-content: center;
+    padding: 8px;
+  }
+}
+
+@media (max-width: 1100px) {
+  .od-account-chevron {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+
+  .od-navigation-item[data-nested="true"] {
+    margin-left: 0;
+  }
+
+  .od-application-secondary {
+    margin-inline: -10px;
+    padding-inline: 10px;
+    scrollbar-width: none;
+  }
+
+  .od-application-footer {
+    flex-direction: column;
+  }
+
+  .od-account-menu {
+    justify-content: center;
+  }
+
+  .od-application-collapse {
+    display: none;
+  }
+}
+
+@media (max-width: 720px) {
+  .od-application-secondary {
+    display: none;
+  }
+
+  .od-application-list-button {
+    display: flex;
+  }
+
+  .od-application-footer {
+    margin: 0;
+    flex-direction: row;
+  }
+
+  .od-account {
+    flex: none;
+  }
+
+  .od-account-popup {
+    right: 0;
+    left: auto;
+  }
+
+  .od-application-list .od-navigation-item {
+    width: auto;
+    justify-content: flex-start;
+    padding: 0 10px;
+  }
+
+  .od-application-list .od-navigation-label {
+    position: static;
+    width: auto;
+    height: auto;
+    clip-path: none;
+  }
+
+  .od-application-list .od-navigation-item[data-nested="true"] {
+    margin-left: 16px;
+  }
+}
+
+/* Calendar entry on one line, in a timeline or in a list of posts. */
+
+.od-calendar-item[data-layout="row"] {
+  grid-template-columns: auto minmax(104px, auto) minmax(0, 1fr) auto;
+  grid-template-areas: "bar top title networks";
+  align-items: center;
+  gap: 0 12px;
+  padding: 9px 12px 9px 8px;
+}
+
+.od-calendar-item[data-layout="row"] .od-calendar-item-bar {
+  height: 22px;
+}
+
+.od-calendar-item[data-layout="row"] .od-calendar-item-state {
+  margin-left: 0;
+}
+
+.od-calendar-item[data-layout="row"] .od-calendar-item-title {
+  font-size: 0.875rem;
+}
+
+.od-calendar-item[data-layout="row"] .od-calendar-item-networks {
+  margin-top: 0;
+}
+
+@container (max-width: 520px) {
+  .od-calendar-item[data-layout="row"] {
+    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-areas: "bar top" "bar title" "networks networks";
+    align-items: stretch;
+    gap: 1px 8px;
+    padding: 6px 8px;
+  }
+
+  .od-calendar-item[data-layout="row"] .od-calendar-item-bar {
+    height: auto;
+  }
+
+  .od-calendar-item[data-layout="row"] .od-calendar-item-state {
+    margin-left: auto;
+  }
+
+  .od-calendar-item[data-layout="row"] .od-calendar-item-networks {
+    margin-top: 5px;
+  }
+}
+
+.od-entry-list {
+  display: grid;
+  gap: 6px;
+  container-type: inline-size;
+}
+
+/* Tag input */
+
+.od-tag-input {
+  display: flex;
+  min-width: 0;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.od-tag-input-tag {
+  height: 26px;
+  gap: 2px;
+  padding-right: 3px;
+}
+
+.od-tag-input-remove {
+  display: grid;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  background: none;
+  color: var(--od-color-muted);
+  cursor: pointer;
+}
+
+.od-tag-input-remove:hover {
+  background: var(--od-color-hover);
+  color: var(--od-color-foreground);
+}
+
+.od-tag-input-field {
+  min-width: 0;
+  height: 26px;
+  padding: 0 8px;
+  border: 1px dashed var(--od-color-border-strong);
+  border-radius: 13px;
+  background: none;
+  color: var(--od-color-foreground);
+  font-size: 0.78125rem;
+}
+
+.od-tag-input-field::placeholder {
+  color: var(--od-color-muted);
+  opacity: 1;
+}
+
+.od-tag-input-field:focus {
+  border-style: solid;
+  border-color: var(--od-color-brand);
+  outline: 0;
+}
+
+/* Channel list */
+
+.od-channel-list {
+  margin: 0;
+  padding: 4px 0;
+  list-style: none;
+  container-type: inline-size;
+}
+
+.od-channel-row {
+  display: grid;
+  grid-template-columns: auto minmax(140px, 1.2fr) minmax(0, 2fr) auto auto;
+  align-items: center;
+  gap: 8px 16px;
+  padding: 12px 12px 12px 20px;
+}
+
+.od-channel-row + .od-channel-row {
+  border-top: 1px solid var(--od-color-border);
+}
+
+.od-channel-mark {
+  --od-network-size: 34px;
+}
+
+.od-channel-identity {
+  display: grid;
+  min-width: 0;
+  gap: 1px;
+}
+
+.od-channel-name {
+  min-width: 0;
+  font-weight: 500;
+}
+
+.od-channel-handle {
+  overflow: hidden;
+  color: var(--od-color-muted);
+  font-size: 0.78125rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.od-channel-warning {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--od-color-danger);
+  font-weight: 500;
+}
+
+.od-channel-switches,
+.od-channel-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.od-channel-actions {
+  justify-content: flex-end;
+}
+
+.od-channel-actions a.od-button {
+  text-decoration: none;
+}
+
+@container (max-width: 860px) {
+  .od-channel-row {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    padding-left: 16px;
+  }
+
+  .od-channel-tags,
+  .od-channel-switches {
+    grid-column: 2 / -1;
+  }
+
+  .od-channel-actions {
+    grid-row: 1;
+    grid-column: 3;
+  }
+}
+
+/* Connect a channel */
+
+.od-connect-options {
+  display: grid;
+  margin: 0 -10px;
+  padding: 0;
+  list-style: none;
+}
+
+.od-connect-option {
+  display: flex;
+  width: 100%;
+  min-height: 46px;
+  align-items: center;
+  gap: 12px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: var(--od-radius-md);
+  background: none;
+  color: var(--od-color-foreground);
+  font: inherit;
+  font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+}
+
+.od-connect-option > span {
+  flex: 1;
+}
+
+.od-connect-option > .od-icon {
+  color: var(--od-color-muted);
+}
+
+.od-connect-option:hover {
+  background: var(--od-color-hover);
+}
+
+.od-connect-option .od-network {
+  --od-network-size: 30px;
+}
+
+.od-connect-form {
+  display: grid;
+  gap: 14px;
+}
+
+/* Key numbers */
+
+.od-metrics {
+  display: grid;
+  margin: 0;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px;
+}
+
+.od-metric {
+  display: grid;
+  gap: 4px;
+  padding: 14px 18px 16px;
+  border: 1px solid var(--od-color-border);
+  border-radius: var(--od-radius-lg);
+  background: var(--od-color-surface);
+}
+
+.od-metric-label {
+  color: var(--od-color-muted);
+  font-size: 0.78125rem;
+  font-weight: 500;
+}
+
+.od-metric-value {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 10px;
+  margin: 0;
+  font-family: var(--od-font-display);
+  font-size: 1.75rem;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+  font-variant-numeric: tabular-nums;
+}
+
+.od-metric-change {
+  color: var(--od-color-muted);
+  font-family: var(--od-font-body);
+  font-size: 0.78125rem;
+  font-weight: 500;
+  letter-spacing: 0;
+}
+
+.od-metric-change[data-trend="up"] {
+  color: var(--od-color-success);
+}
+
+.od-metric-change[data-trend="down"] {
+  color: var(--od-color-danger);
 }

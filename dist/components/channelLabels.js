@@ -1,0 +1,21 @@
+export const channelListLabels = {
+    title: "Channels",
+    connect: "Connect",
+    connectTitle: "Connect a channel",
+    empty: "No channels",
+    rename: "Rename",
+    tags: "Tags",
+    addTag: "Add tag",
+    removeTag: "Remove tag",
+    reconnect: "Reconnect",
+    reconnectNeeded: "Authorization ended",
+    disconnect: "Disconnect",
+    disconnectTitle: "Disconnect this channel?",
+    handle: "Handle",
+    password: "App password",
+    submit: "Connect",
+    back: "Back",
+    cancel: "Cancel",
+    close: "Close",
+};
+//# sourceMappingURL=channelLabels.js.map

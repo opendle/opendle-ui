@@ -3,6 +3,9 @@ import { iconShapes } from "./iconData.js";
 import type { NetworkName } from "./networks.js";
 /** Icons drawn as one path. A generated icon of the same name replaces one. */
 declare const extraIconPaths: {
+    readonly home: "M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z";
+    readonly "panel-left": "M5 3h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z M9 3v18";
+    readonly link: "M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7 M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7";
     readonly activity: "M3 12h4l2-7 4 14 2-7h6";
     readonly "arrow-up": "M12 19V5m-5 5 5-5 5 5";
     readonly audit: "M5 4h14v16H5z M8 8h8 M8 12h8 M8 16h5";

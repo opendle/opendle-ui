@@ -277,8 +277,8 @@ test("the application shell keeps caller-owned content in semantic slots", () =>
       {
         account: React.createElement(AccountMenu, {
           avatar: "VL",
-          href: "/settings",
           name: "Vincent",
+          sections: [],
         }),
         brandMark: React.createElement("strong", null, "E"),
         brandName: "Example",
@@ -1374,8 +1374,8 @@ test("shared shell controls expose semantic labels and states", () => {
       }),
       React.createElement(AccountMenu, {
         avatar: "VL",
-        href: "/settings",
         name: "Vincent",
+        sections: [],
       }),
       React.createElement(NavigationItem, {
         active: true,

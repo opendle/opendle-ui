@@ -15,7 +15,7 @@ const fixture = `
 import React, {useState} from "react";
 import {createRoot} from "react-dom/client";
 import {
-  AccountMenu, ApiTokenList, ApplicationShell, AutoGrowTextarea, Avatar,
+  AccountMenu, ApiTokenList, ChannelList, MetricTile, ApplicationShell, AutoGrowTextarea, Avatar,
   AvatarUpload, Button, Card, Icon, InlineAlert, NavigationLink, NetworkIcon,
   PageHeading, PasskeyList, Section, SessionPage, SignInCard, TabPanel, Tabs,
   TagChip, Toast, networkNames, useToastQueue,
@@ -27,11 +27,19 @@ function Mark() {
 }
 function App() {
   const [tab, setTab] = useState("inbox");
+  const [collapsed, setCollapsed] = useState(false);
   const [pressed, setPressed] = useState(false);
   const [passkeys, setPasskeys] = useState([
     {id: "a", label: "MacBook", createdAt: "2026-11-02T10:00:00Z", lastUsedAt: "2026-11-14T08:00:00Z"},
   ]);
   const [tokens, setTokens] = useState([]);
+  const [channels, setChannels] = useState([
+    {id: "c1", network: "youtube", name: "tubededentifrice", handle: "@tubededentifrice", tags: ["long"], needsReconnect: false,
+      switches: [{id: "publish", label: "Publish", on: true}, {id: "community", label: "Community", on: true}, {id: "analytics", label: "Analytics", on: false}]},
+    {id: "c2", network: "pinterest", name: "Vincent Music", handle: "@vincent", tags: [], needsReconnect: true,
+      switches: [{id: "publish", label: "Publish", on: true}, {id: "community", label: "Community", on: false}, {id: "analytics", label: "Analytics", on: false}]},
+  ]);
+  const patch = (id, change) => setChannels((list) => list.map((c) => c.id === id ? {...c, ...change(c)} : c));
   const {toast, showToast} = useToastQueue(60000);
   if (location.hash === "#sign-in") {
     return <SessionPage><SignInCard icon={<Mark/>} title="Poster" actionLabel="Sign in with a passkey"
@@ -43,9 +51,25 @@ function App() {
       navigation={<>
         <NavigationLink href="#calendar" icon={<Icon name="calendar"/>} label="Calendar"/>
         <NavigationLink href="#community" icon={<Icon name="message"/>} label="Community" count={12}/>
-        <NavigationLink href="#settings" icon={<Icon name="settings"/>} label="Settings" active/>
+        <NavigationLink href="#settings" icon={<Icon name="settings"/>} label="Overview"/>
       </>}
-      account={<AccountMenu href="#settings" avatar={<Avatar name="Vincent"/>} name="Vincent"/>}>
+      account={<AccountMenu avatar={<Avatar name="Vincent"/>} name="Vincent" sections={[
+        {id: "account", items: [
+          {id: "settings", label: "Settings", icon: <Icon name="settings"/>, onSelect: () => { window.menuChoice = "settings"; }},
+          {id: "sign-out", label: "Sign out", icon: <Icon name="sign-out"/>, onSelect: () => { window.menuChoice = "sign-out"; }},
+        ]},
+        {id: "workspaces", label: "Workspaces", items: [
+          {id: "w1", label: "Vincent Music", current: true, onSelect: () => {}},
+          {id: "w2", label: "Side project", current: false, onSelect: () => { window.menuChoice = "w2"; }},
+        ]},
+      ]}/>}
+      collapsed={collapsed} onCollapsedChange={setCollapsed}
+      secondaryNavigationLabel="Channels"
+      secondaryNavigation={<>
+        <NavigationLink href="#c1" icon={<NetworkIcon badge network="youtube"/>} label="tubededentifrice"/>
+        <NavigationLink href="#c2" icon={<NetworkIcon badge network="instagram"/>} label="vincent.music" active/>
+        <NavigationLink nested href="#c2-calendar" icon={<Icon name="calendar"/>} label="Calendar"/>
+      </>}>
       <PageHeading title="Settings" actions={<Button variant="quiet" icon={<Icon name="sign-out" size={15}/>}>Sign out</Button>}/>
       <PasskeyList items={passkeys} errorMessage={message}
         onAdd={async () => { setPasskeys((p) => [...p, {id: "b", label: "", createdAt: "2026-11-14T09:00:00Z"}]); showToast("Passkey added"); }}
@@ -55,6 +79,18 @@ function App() {
       <ApiTokenList items={tokens} errorMessage={message}
         onCreate={async (name) => { setTokens((t) => [...t, {id: name, name, createdAt: "2026-11-14T09:00:00Z"}]); return "pst_3f9a7c2e41b85d06c9e1f4a7b2d8"; }}
         onRevoke={async (id) => { setTokens((t) => t.filter((k) => k.id !== id)); }}/>
+      <ChannelList items={channels} errorMessage={message}
+        networks={[{network: "youtube", label: "YouTube", href: "#oauth-youtube"}, {network: "pinterest", label: "Pinterest", href: "#oauth-pinterest"}, {network: "bluesky", label: "Bluesky"}]}
+        onRename={async (id, name) => patch(id, () => ({name}))}
+        onTagsChange={async (id, tags) => patch(id, () => ({tags}))}
+        onSwitchChange={async (id, switchId, on) => patch(id, (c) => ({switches: c.switches.map((s) => s.id === switchId ? {...s, on} : s)}))}
+        onDisconnect={async (id) => setChannels((list) => list.filter((c) => c.id !== id))}
+        onPasswordConnect={async (network, handle) => { if (handle === "bad") throw new Error("no"); setChannels((list) => [...list, {id: "c3", network, name: handle, handle, tags: [], needsReconnect: false, switches: []}]); }}/>
+      <dl className="od-metrics" style={{marginTop: 36}}>
+        <MetricTile label="Views" value="18.4K" change="+12%" trend="up"/>
+        <MetricTile label="Likes" value="1,204" change="-3%" trend="down"/>
+        <MetricTile label="Comments" value="37"/>
+      </dl>
       <Section title="Primitives">
         <Card padded>
           <Tabs idBase="demo" label="Messages" value={tab} onChange={setTab}
@@ -133,8 +169,10 @@ try {
       const sidebar = await page
         .locator(".od-application-sidebar")
         .boundingBox();
-      const settings = page.getByRole("link", { name: "Settings" }).first();
-      assert.equal(await settings.getAttribute("aria-current"), "page");
+      const current = page.getByRole("link", { name: "vincent.music" });
+      if (width !== 390) {
+        assert.equal(await current.getAttribute("aria-current"), "page");
+      }
       if (width === 1440) assert.equal(sidebar.width, 216);
       if (width === 1000) assert.equal(sidebar.width, 64);
       if (width === 390) {
@@ -147,6 +185,78 @@ try {
         "the rail keeps the accessible name",
       );
       await audit(page, `${name}-page`);
+
+      // The account menu: arrow keys move, Escape closes, a choice runs.
+      const account = page.getByRole("button", {
+        name: "Vincent",
+        exact: true,
+      });
+      await account.click();
+      const menu = page.getByRole("menu", { name: "Vincent" });
+      await menu.waitFor();
+      const settingsItem = menu.getByRole("menuitem", { name: "Settings" });
+      assert.equal(
+        await settingsItem.evaluate((item) => item === document.activeElement),
+        true,
+        "the first entry has the focus",
+      );
+      assert.equal(
+        await menu
+          .getByRole("menuitemradio", { name: "Vincent Music" })
+          .getAttribute("aria-checked"),
+        "true",
+      );
+      const menuBox = await menu.boundingBox();
+      assert.ok(
+        menuBox.x >= 0 && menuBox.x + menuBox.width <= width && menuBox.y >= 0,
+        "the menu stays in the window",
+      );
+      await audit(page, `${name}-menu`);
+      await page.keyboard.press("Escape");
+      await menu.waitFor({ state: "detached" });
+      assert.equal(
+        await account.evaluate((button) => button === document.activeElement),
+        true,
+        "Escape returns the focus to the account button",
+      );
+      await account.click();
+      await page.keyboard.press("ArrowDown");
+      await page.keyboard.press("Enter");
+      assert.equal(await page.evaluate(() => window.menuChoice), "sign-out");
+      await menu.waitFor({ state: "detached" });
+      await account.click();
+      await page.mouse.click(width - 5, 5);
+      await menu.waitFor({ state: "detached" });
+
+      // The collapse button changes the sidebar to icons on a wide window.
+      const collapse = page.getByRole("button", {
+        name: "Collapse the sidebar",
+      });
+      if (width === 1440) {
+        await collapse.click();
+        assert.equal(
+          (await page.locator(".od-application-sidebar").boundingBox()).width,
+          64,
+        );
+        await audit(page, `${name}-collapsed`);
+        await page.getByRole("button", { name: "Expand the sidebar" }).click();
+        assert.equal(
+          (await page.locator(".od-application-sidebar").boundingBox()).width,
+          216,
+        );
+      } else {
+        assert.equal(await collapse.isVisible(), false);
+      }
+
+      // On a phone, one button opens the second list in a sheet.
+      if (width === 390) {
+        await page.getByRole("button", { name: "Channels" }).click();
+        const sheet = page.getByRole("dialog", { name: "Channels" });
+        await sheet.getByRole("link", { name: "tubededentifrice" }).waitFor();
+        await audit(page, `${name}-channels`);
+        await sheet.getByRole("link", { name: "tubededentifrice" }).click();
+        await sheet.waitFor({ state: "hidden" });
+      }
 
       // One passkey has no remove button. A second passkey shows it.
       assert.equal(
@@ -213,6 +323,68 @@ try {
       assert.equal(await again.isVisible(), true, "a failed save stays open");
       await page.keyboard.press("Escape");
       await audit(page, `${name}-renamed`);
+
+      // Channels: rename in place, tags, switches, connect, disconnect.
+      const channelsRegion = page.getByRole("region", { name: "Channels" });
+      await channelsRegion
+        .getByRole("button", { name: "Rename: tubededentifrice" })
+        .dblclick();
+      await page
+        .getByRole("textbox", { name: "Rename: tubededentifrice" })
+        .fill("Main channel");
+      await page.keyboard.press("Enter");
+      await channelsRegion
+        .getByRole("button", { name: "Rename: Main channel" })
+        .waitFor();
+      const tagField = channelsRegion.getByRole("textbox", {
+        name: "Tags: Main channel",
+      });
+      await tagField.fill("#Short Form");
+      await page.keyboard.press("Enter");
+      await channelsRegion.getByText("#short-form").waitFor();
+      await channelsRegion
+        .getByRole("button", { name: "Remove tag: long" })
+        .click();
+      assert.equal(await channelsRegion.getByText("#long").count(), 0);
+      const analytics = channelsRegion
+        .getByRole("button", { name: "Analytics" })
+        .first();
+      await analytics.click();
+      assert.equal(await analytics.getAttribute("aria-pressed"), "true");
+      await channelsRegion.getByText("Authorization ended").waitFor();
+      assert.equal(
+        await channelsRegion
+          .getByRole("link", { name: "Reconnect" })
+          .getAttribute("href"),
+        "#oauth-pinterest",
+      );
+      await audit(page, `${name}-channels-list`);
+      await channelsRegion
+        .getByRole("button", { name: "Connect", exact: true })
+        .click();
+      const connect = page.getByRole("dialog", { name: "Connect a channel" });
+      await connect.getByRole("link", { name: "YouTube" }).waitFor();
+      await audit(page, `${name}-connect`);
+      await connect.getByRole("button", { name: "Bluesky" }).click();
+      const form = page.getByRole("dialog", { name: "Bluesky" });
+      await form.getByLabel("Handle").fill("bad");
+      await form.getByLabel("App password").fill("abcd-efgh");
+      await page.keyboard.press("Enter");
+      await form.getByRole("alert").waitFor();
+      await form.getByLabel("Handle").fill("vincent.bsky.social");
+      await page.keyboard.press("Enter");
+      await form.waitFor({ state: "hidden" });
+      await channelsRegion.getByText("vincent.bsky.social").first().waitFor();
+      await channelsRegion
+        .getByRole("button", { name: "Disconnect: vincent.bsky.social" })
+        .click();
+      await page
+        .getByRole("dialog", { name: "Disconnect this channel?" })
+        .getByRole("button", { name: "Disconnect" })
+        .click();
+      await channelsRegion
+        .getByRole("button", { name: "Disconnect: vincent.bsky.social" })
+        .waitFor({ state: "detached" });
 
       // A token shows its secret one time.
       await page.getByText("No tokens").waitFor();

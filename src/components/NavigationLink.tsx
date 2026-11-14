@@ -11,6 +11,8 @@ export interface NavigationLinkProps extends Omit<
   readonly active?: boolean;
   /** A count badge, for example unread messages. Zero shows no badge. */
   readonly count?: number;
+  /** Indent the link below the link before it. */
+  readonly nested?: boolean;
 }
 
 /** One destination of the application sidebar, as a link. */
@@ -20,6 +22,7 @@ export function NavigationLink({
   count = 0,
   icon,
   label,
+  nested = false,
   ...props
 }: NavigationLinkProps) {
   return (
@@ -27,6 +30,7 @@ export function NavigationLink({
       {...props}
       aria-current={active ? "page" : undefined}
       className={classes("od-navigation-item", className)}
+      data-nested={nested}
       title={label}
     >
       {icon}
