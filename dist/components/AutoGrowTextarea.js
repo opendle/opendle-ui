@@ -1,5 +1,5 @@
 import { jsx as _jsx } from "react/jsx-runtime";
-import { useLayoutEffect, useRef } from "react";
+import { useCallback, useLayoutEffect, useRef } from "react";
 function resizeTextarea(textarea, maxHeight) {
     if (!textarea)
         return;
@@ -9,8 +9,15 @@ function resizeTextarea(textarea, maxHeight) {
     textarea.style.overflowY =
         textarea.scrollHeight > maxHeight ? "auto" : "hidden";
 }
-export function AutoGrowTextarea({ maxHeight = 240, onInput, rows = 2, className, style, value, defaultValue, ...props }) {
+export function AutoGrowTextarea({ maxHeight = 240, onInput, rows = 2, className, style, value, defaultValue, ref, ...props }) {
     const textareaRef = useRef(null);
+    const setRefs = useCallback((textarea) => {
+        textareaRef.current = textarea;
+        if (typeof ref === "function")
+            ref(textarea);
+        else if (ref)
+            ref.current = textarea;
+    }, [ref]);
     useLayoutEffect(() => {
         resizeTextarea(textareaRef.current, maxHeight);
     }, [defaultValue, maxHeight, value]);
@@ -34,7 +41,7 @@ export function AutoGrowTextarea({ maxHeight = 240, onInput, rows = 2, className
         resizeTextarea(event.currentTarget, maxHeight);
         onInput?.(event);
     }
-    return (_jsx("textarea", { ...props, className: ["od-auto-grow-textarea", className].filter(Boolean).join(" "), ref: textareaRef, rows: rows, value: value, defaultValue: defaultValue, onInput: resizeForContent, style: {
+    return (_jsx("textarea", { ...props, className: ["od-auto-grow-textarea", className].filter(Boolean).join(" "), ref: setRefs, rows: rows, value: value, defaultValue: defaultValue, onInput: resizeForContent, style: {
             ...style,
             height: "auto",
             minHeight: 0,

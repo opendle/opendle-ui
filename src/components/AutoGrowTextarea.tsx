@@ -1,11 +1,13 @@
-import { useLayoutEffect, useRef } from "react";
+import { useCallback, useLayoutEffect, useRef } from "react";
 import type {
   InputEvent as ReactInputEvent,
+  Ref,
   TextareaHTMLAttributes,
 } from "react";
 
 export interface AutoGrowTextareaProps extends TextareaHTMLAttributes<HTMLTextAreaElement> {
   readonly maxHeight?: number;
+  readonly ref?: Ref<HTMLTextAreaElement>;
 }
 
 function resizeTextarea(
@@ -28,9 +30,18 @@ export function AutoGrowTextarea({
   style,
   value,
   defaultValue,
+  ref,
   ...props
 }: AutoGrowTextareaProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const setRefs = useCallback(
+    (textarea: HTMLTextAreaElement | null) => {
+      textareaRef.current = textarea;
+      if (typeof ref === "function") ref(textarea);
+      else if (ref) ref.current = textarea;
+    },
+    [ref],
+  );
 
   useLayoutEffect(() => {
     resizeTextarea(textareaRef.current, maxHeight);
@@ -60,7 +71,7 @@ export function AutoGrowTextarea({
     <textarea
       {...props}
       className={["od-auto-grow-textarea", className].filter(Boolean).join(" ")}
-      ref={textareaRef}
+      ref={setRefs}
       rows={rows}
       value={value}
       defaultValue={defaultValue}

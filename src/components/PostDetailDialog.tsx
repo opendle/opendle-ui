@@ -20,6 +20,11 @@ export interface PostDetailMedia {
   readonly duration?: string | null;
 }
 
+export interface PostDetailMetric {
+  readonly label: string;
+  readonly value: string;
+}
+
 /** One network that the post goes to. */
 export interface PostDetailTarget {
   readonly id: string;
@@ -47,10 +52,15 @@ export interface PostDetailDialogProps {
   /** Send a failed network again. Without it, there is no retry button. */
   readonly onRetry?: (targetId: string) => Promise<void>;
   readonly errorMessage: (error: unknown) => string | null;
+  /** Key numbers of the post, already formatted. */
+  readonly metrics?: readonly PostDetailMetric[];
+  /** More content at the end, for example the comments of the post. */
+  readonly children?: ReactNode;
   readonly labels?: PostDetailLabels;
 }
 
 const noTags: readonly string[] = [];
+const noMetrics: readonly PostDetailMetric[] = [];
 
 const stateOrder: readonly CalendarItemState[] = [
   "published",
@@ -173,9 +183,11 @@ function TargetRow({ labels, onRetry, pending, target }: TargetRowProps) {
  * differs between networks, each network has a tab.
  */
 export function PostDetailDialog({
+  children,
   errorMessage,
   labels = postDetailLabels,
   media = null,
+  metrics = noMetrics,
   onClose,
   onRetry,
   open,
@@ -237,6 +249,16 @@ export function PostDetailDialog({
             </span>
           ))}
         </p>
+        {metrics.length === 0 ? null : (
+          <dl className="od-post-detail-metrics">
+            {metrics.map((metric) => (
+              <div key={metric.label}>
+                <dt>{metric.label}</dt>
+                <dd>{metric.value}</dd>
+              </div>
+            ))}
+          </dl>
+        )}
       </div>
     </div>
   );
@@ -298,6 +320,9 @@ export function PostDetailDialog({
           />
         ))}
       </ul>
+      {children === undefined || children === null ? null : (
+        <div className="od-post-detail-extra">{children}</div>
+      )}
     </Dialog>
   );
 }

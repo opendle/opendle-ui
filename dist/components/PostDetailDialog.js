@@ -9,6 +9,7 @@ import { TabPanel, Tabs } from "./Tabs.js";
 import { TagChip } from "./TagChip.js";
 import { useAsyncAction } from "./useAsyncAction.js";
 const noTags = [];
+const noMetrics = [];
 const stateOrder = [
     "published",
     "publishing",
@@ -45,7 +46,7 @@ function TargetRow({ labels, onRetry, pending, target }) {
  * network and a link to each published post. When the text or the time
  * differs between networks, each network has a tab.
  */
-export function PostDetailDialog({ errorMessage, labels = postDetailLabels, media = null, onClose, onRetry, open, tags = noTags, targets, title, }) {
+export function PostDetailDialog({ children, errorMessage, labels = postDetailLabels, media = null, metrics = noMetrics, onClose, onRetry, open, tags = noTags, targets, title, }) {
     const retry = useAsyncAction(errorMessage);
     const [selected, setSelected] = useState(null);
     const first = targets[0];
@@ -64,7 +65,7 @@ export function PostDetailDialog({ errorMessage, labels = postDetailLabels, medi
     const body = (_jsxs("div", { className: "od-post-detail-main", "data-media": media !== null, children: [media === null ? null : (_jsx(MediaTile, { media: media, playLabel: labels.play }, media.src)), _jsxs("div", { className: "od-post-detail-text", children: [(shown?.text ?? "")
                         .split(/\n+/)
                         .filter((line) => line.trim() !== "")
-                        .map((line, index) => (_jsx("p", { children: line }, `${String(index)}:${line}`))), tags.length === 0 ? null : (_jsx("div", { className: "od-post-detail-tags", children: tags.map((tag) => (_jsxs(TagChip, { children: ["#", tag] }, tag))) })), _jsx("p", { className: "od-post-detail-states", children: counts.map(({ count, state }) => (_jsxs("span", { className: "od-post-detail-pill", "data-tone": stateTones[state], children: [state === "published" ? _jsx(Icon, { name: "check", size: 13 }) : null, state === "failed" ? _jsx(Icon, { name: "alert", size: 13 }) : null, state === "scheduled" ? _jsx(Icon, { name: "clock", size: 13 }) : null, count, " ", labels.states[state]] }, state))) })] })] }));
+                        .map((line, index) => (_jsx("p", { children: line }, `${String(index)}:${line}`))), tags.length === 0 ? null : (_jsx("div", { className: "od-post-detail-tags", children: tags.map((tag) => (_jsxs(TagChip, { children: ["#", tag] }, tag))) })), _jsx("p", { className: "od-post-detail-states", children: counts.map(({ count, state }) => (_jsxs("span", { className: "od-post-detail-pill", "data-tone": stateTones[state], children: [state === "published" ? _jsx(Icon, { name: "check", size: 13 }) : null, state === "failed" ? _jsx(Icon, { name: "alert", size: 13 }) : null, state === "scheduled" ? _jsx(Icon, { name: "clock", size: 13 }) : null, count, " ", labels.states[state]] }, state))) }), metrics.length === 0 ? null : (_jsx("dl", { className: "od-post-detail-metrics", children: metrics.map((metric) => (_jsxs("div", { children: [_jsx("dt", { children: metric.label }), _jsx("dd", { children: metric.value })] }, metric.label))) }))] })] }));
     return (_jsxs(Dialog, { bodyClassName: "od-post-detail-body", className: "od-post-detail", closeLabel: labels.close, description: shown?.when, onClose: close, open: open, title: title, children: [differs && shown !== undefined ? (_jsxs(_Fragment, { children: [_jsx(Tabs, { className: "od-post-detail-tabs", idBase: "od-post-detail", items: targets.map((target) => ({
                             id: target.id,
                             label: (_jsxs(_Fragment, { children: [_jsx(NetworkIcon, { network: target.network }), target.name] })),
@@ -72,6 +73,6 @@ export function PostDetailDialog({ errorMessage, labels = postDetailLabels, medi
                         ? null
                         : (targetId) => {
                             void retry.run(() => onRetry(targetId));
-                        }, pending: retry.pending, target: target }, target.id))) })] }));
+                        }, pending: retry.pending, target: target }, target.id))) }), children === undefined || children === null ? null : (_jsx("div", { className: "od-post-detail-extra", children: children }))] }));
 }
 //# sourceMappingURL=PostDetailDialog.js.map

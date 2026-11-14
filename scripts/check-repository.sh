@@ -36,6 +36,7 @@ required_files=(
   "styles/tokens.css"
   "scripts/core-browser.mjs"
   "scripts/calendar-browser.mjs"
+  "scripts/community-browser.mjs"
   "styles/index.css"
   "styles/fonts.css"
   "scripts/ontology-explorer-browser.mjs"
@@ -87,6 +88,7 @@ node --check scripts/panel-content-browser.mjs
 node --check scripts/action-button-browser.mjs
 node --check scripts/core-browser.mjs
 node --check scripts/calendar-browser.mjs
+node --check scripts/community-browser.mjs
 node --input-type=module -e "import('./dist/index.js').then((shared) => { for (const name of ['AccountMenu', 'AdvancedFieldsDisclosure', 'BoundedDataExplorer', 'ChangeTimeline', 'DateTime', 'Dialog', 'ExplorerWorkspace', 'FileDropZone', 'FormActions', 'FormField', 'FormSection', 'InlineAlert', 'ManagedFileList', 'MetadataBagList', 'OntologyInheritanceTree', 'OperationPlayground', 'PanelContent', 'CalendarBoard', 'PasskeyList', 'PostDetailDialog', 'ReviewPlanCard', 'SavedViewCanvas', 'TagFilterBar', 'SearchableSelect', 'SecretRevealPanel', 'WorkspaceSelector']) if (!(name in shared)) throw new Error('Missing shared export: ' + name); })"
 
 grep -qx "min-release-age=14" .npmrc
@@ -137,6 +139,7 @@ node scripts/graph-viewport-content-browser.mjs
 node scripts/relationship-column-header-browser.mjs
 node scripts/core-browser.mjs
 node scripts/calendar-browser.mjs
+node scripts/community-browser.mjs
 npm run security
 ./scripts/react-doctor-gate.sh
 

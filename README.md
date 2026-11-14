@@ -42,6 +42,14 @@ menu button with sections of actions and choices.
 disconnect. `MetricTile` in a `dl.od-metrics` shows a key number with its
 change. `CalendarEntry` is one calendar entry for a list outside the board.
 
+`Conversation` shows the comments of a post in thread order with one open
+reply box (`ReplyComposer`: suggestions, a textarea that grows, emoji, a
+character counter; Enter sends and Shift+Enter adds a line). `InboxList` lists
+messages as links. `StackedBarChart` shows one value for each day, stacked by
+series; a series keeps its colour slot when a filter changes the list, and
+the ninth and later series become one. `DateRangeControl` and `RecordTable`
+complete an analytics view.
+
 `Toast` shows above all content, also above an open dialog. `useToastQueue`
 holds one message: a new message replaces the old one.
 

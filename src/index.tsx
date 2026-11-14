@@ -288,7 +288,59 @@ export {
   type ChannelSwitch,
 } from "./components/channelLabels.js";
 export { TagInput, type TagInputProps } from "./components/TagInput.js";
+export {
+  Conversation,
+  type ConversationProps,
+} from "./components/Conversation.js";
+export {
+  conversationEmoji,
+  conversationLabels,
+  type ConversationLabels,
+  type ConversationMessage,
+} from "./components/conversationLabels.js";
+export {
+  ConversationPost,
+  type ConversationPostProps,
+} from "./components/ConversationPost.js";
+export {
+  EmojiPicker,
+  type EmojiPickerProps,
+} from "./components/EmojiPicker.js";
+export {
+  InboxList,
+  type InboxEntry,
+  type InboxListProps,
+} from "./components/InboxList.js";
+export {
+  ReplyComposer,
+  type ReplyComposerProps,
+} from "./components/ReplyComposer.js";
 export { MetricTile, type MetricTileProps } from "./components/MetricTile.js";
+export {
+  chartSlots,
+  chartTicks,
+  foldSeries,
+  type ChartSeries,
+} from "./components/chartScale.js";
+export {
+  DateRangeControl,
+  type DateRangeControlProps,
+} from "./components/DateRangeControl.js";
+export {
+  lastDays,
+  type DateRange,
+  type DateRangePreset,
+} from "./components/dateRange.js";
+export {
+  RecordTable,
+  type RecordTableColumn,
+  type RecordTableProps,
+  type RecordTableRow,
+} from "./components/RecordTable.js";
+export {
+  StackedBarChart,
+  type StackedBarChartProps,
+} from "./components/StackedBarChart.js";
 export {
   calendarBoardLabels,
   calendarItemState,
@@ -327,6 +379,7 @@ export {
   PostDetailDialog,
   type PostDetailDialogProps,
   type PostDetailMedia,
+  type PostDetailMetric,
   type PostDetailTarget,
 } from "./components/PostDetailDialog.js";
 export {

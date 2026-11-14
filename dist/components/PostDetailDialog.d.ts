@@ -10,6 +10,10 @@ export interface PostDetailMedia {
     /** The length of a video, for example "0:38". */
     readonly duration?: string | null;
 }
+export interface PostDetailMetric {
+    readonly label: string;
+    readonly value: string;
+}
 /** One network that the post goes to. */
 export interface PostDetailTarget {
     readonly id: string;
@@ -36,6 +40,10 @@ export interface PostDetailDialogProps {
     /** Send a failed network again. Without it, there is no retry button. */
     readonly onRetry?: (targetId: string) => Promise<void>;
     readonly errorMessage: (error: unknown) => string | null;
+    /** Key numbers of the post, already formatted. */
+    readonly metrics?: readonly PostDetailMetric[];
+    /** More content at the end, for example the comments of the post. */
+    readonly children?: ReactNode;
     readonly labels?: PostDetailLabels;
 }
 /**
@@ -43,5 +51,5 @@ export interface PostDetailDialogProps {
  * network and a link to each published post. When the text or the time
  * differs between networks, each network has a tab.
  */
-export declare function PostDetailDialog({ errorMessage, labels, media, onClose, onRetry, open, tags, targets, title, }: PostDetailDialogProps): import("react").JSX.Element;
+export declare function PostDetailDialog({ children, errorMessage, labels, media, metrics, onClose, onRetry, open, tags, targets, title, }: PostDetailDialogProps): import("react").JSX.Element;
 //# sourceMappingURL=PostDetailDialog.d.ts.map

@@ -1,0 +1,23 @@
+import { type ChartSeries } from "./chartScale.js";
+export interface StackedBarChartProps {
+    /** The accessible name, for example the metric. */
+    readonly label: string;
+    /** The `YYYY-MM-DD` days of the horizontal axis. */
+    readonly days: readonly string[];
+    readonly series: readonly ChartSeries[];
+    readonly formatValue?: (value: number) => string;
+    /** The name of the series that holds the series without a colour. */
+    readonly otherLabel?: string;
+    readonly totalLabel?: string;
+    readonly dayLabel?: string;
+    readonly locale?: string;
+    readonly height?: number;
+    readonly className?: string;
+}
+/**
+ * One value for each day, stacked by series. The legend gives the total of
+ * each series, a pointer or the arrow keys give the values of one day, and a
+ * table has all values for assistive technology.
+ */
+export declare function StackedBarChart({ className, dayLabel, days, formatValue, height, label, locale, otherLabel, series, totalLabel, }: StackedBarChartProps): import("react").JSX.Element;
+//# sourceMappingURL=StackedBarChart.d.ts.map

@@ -71,7 +71,12 @@ export function CalendarEntry({
           <Icon name={stateIcons[state]} size={13} />
         </span>
       </span>
-      <span className="od-calendar-item-title">{item.title}</span>
+      <span className="od-calendar-item-title">
+        {item.title}
+        {item.summary ? (
+          <span className="od-calendar-item-summary">{item.summary}</span>
+        ) : null}
+      </span>
       <span className="od-calendar-item-networks">
         {item.targets.map((target) => (
           <NetworkIcon

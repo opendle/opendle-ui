@@ -20,6 +20,8 @@ export interface CalendarItem {
   readonly kind?: string;
   /** A CSS colour for the bar at the start of the entry. */
   readonly color?: string;
+  /** A short line of facts, for example "18.4K views · 37 comments". */
+  readonly summary?: string;
   readonly targets: readonly CalendarItemTarget[];
 }
 
