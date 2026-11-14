@@ -364,6 +364,8 @@ try {
         .click();
       const connect = page.getByRole("dialog", { name: "Connect a channel" });
       await connect.getByRole("link", { name: "YouTube" }).waitFor();
+      const mark = await connect.locator(".od-network").first().boundingBox();
+      assert.equal(mark.width, mark.height, "a network mark is round");
       await audit(page, `${name}-connect`);
       await connect.getByRole("button", { name: "Bluesky" }).click();
       const form = page.getByRole("dialog", { name: "Bluesky" });

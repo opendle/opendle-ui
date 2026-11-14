@@ -9483,7 +9483,7 @@ html:has(.od-dialog:modal) {
   cursor: pointer;
 }
 
-.od-connect-option > span {
+.od-connect-option > span:not(.od-network) {
   flex: 1;
 }
 
