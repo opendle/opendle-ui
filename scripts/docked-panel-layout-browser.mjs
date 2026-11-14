@@ -202,6 +202,11 @@ try {
   assert.equal(geometry.workspaceRight, geometry.innerLeft);
   assert.equal(geometry.innerRight, geometry.outerLeft);
   assert.equal(geometry.outerRight, geometry.layoutRight);
+  assert.equal(await innerPanel.getByLabel("Property name").isVisible(), true);
+  assert.equal(
+    await outerPanel.getByRole("textbox", { name: "YAML source" }).isVisible(),
+    true,
+  );
   const desktopCloseBounds = await outerPanel
     .getByRole("button", { name: "Close YAML source" })
     .boundingBox();
@@ -242,6 +247,19 @@ try {
   const lastYamlControl = yamlSheet.getByRole("button", {
     name: "Last YAML control",
   });
+  assert.equal(
+    await isActive(
+      yamlSheet.getByRole("button", { name: "Close YAML source" }),
+    ),
+    true,
+    "The phone sheet must move initial focus to its close action.",
+  );
+  await page.keyboard.press("Shift+Tab");
+  assert.equal(
+    await isActive(lastYamlControl),
+    true,
+    "Shift+Tab must wrap to the last sheet control.",
+  );
   await lastYamlControl.focus();
   await page.keyboard.press("Tab");
   assert.equal(
@@ -278,6 +296,26 @@ try {
     ),
     true,
     "The phone sheet must not add horizontal overflow at 200-percent text.",
+  );
+  const lastPropertyControl = propertySheet.getByRole("button", {
+    name: "Show YAML when property closes",
+  });
+  await lastPropertyControl.scrollIntoViewIfNeeded();
+  await lastPropertyControl.focus();
+  assert.equal(
+    await isActive(lastPropertyControl),
+    true,
+    "The last sheet action must stay keyboard reachable at 200-percent text.",
+  );
+  const zoomedPropertyBounds = await lastPropertyControl.boundingBox();
+  assert.ok(zoomedPropertyBounds);
+  assert.equal(
+    zoomedPropertyBounds.x >= 0 &&
+      zoomedPropertyBounds.x + zoomedPropertyBounds.width <= 390 &&
+      zoomedPropertyBounds.y >= 0 &&
+      zoomedPropertyBounds.y + zoomedPropertyBounds.height <= 844,
+    true,
+    "The active sheet action must stay visible at 200-percent text.",
   );
   assert.deepEqual(
     (await new AxeBuilder({ page }).analyze()).violations,

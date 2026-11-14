@@ -477,7 +477,7 @@ const css = await readFile(
   new URL("../styles/tokens.css", import.meta.url),
   "utf8",
 );
-const html = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Form control checks</title><style>${css}main{display:grid;width:min(100% - 2rem,64rem);margin:2rem auto;gap:1rem}.yaml-browser-panel{display:grid;min-width:0;height:30rem;gap:.75rem}.yaml-browser-actions{display:flex;flex-wrap:wrap;gap:.5rem}</style></head><body><div id="root"></div></body></html>`;
+const html = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Form control checks</title><style>${css}main{display:grid;width:min(100% - 2rem,64rem);margin:2rem auto;gap:1rem}.yaml-browser-panel{display:grid;min-width:0;min-height:30rem;gap:.75rem}.yaml-browser-actions{display:flex;flex-wrap:wrap;gap:.5rem}</style></head><body><div id="root"></div></body></html>`;
 const browser = await chromium.launch({
   executablePath: existsSync("/usr/bin/google-chrome")
     ? "/usr/bin/google-chrome"
@@ -1174,6 +1174,17 @@ try {
       "Each shared control must have a visible focus outline.",
     );
   }
+  await sharedControls[0].focus();
+  for (const nextControl of sharedControls.slice(1)) {
+    await desktop.keyboard.press("Tab");
+    assert.equal(
+      await nextControl.evaluate(
+        (element) => element === document.activeElement,
+      ),
+      true,
+      `Shared controls must keep DOM focus order; active element is ${await desktop.evaluate(() => document.activeElement?.outerHTML)}.`,
+    );
+  }
 
   await sharedControls[0].fill("Changed text");
   await sharedControls[1].fill("8");
@@ -1349,6 +1360,9 @@ try {
     await desktop.getByRole("button", { name: "Copied" }).isVisible(),
     true,
   );
+  const secretCopyStatus = desktop.locator(".od-secret-reveal-copy-status");
+  assert.equal(await secretCopyStatus.getAttribute("aria-live"), "polite");
+  assert.equal(await secretCopyStatus.textContent(), "Copied");
   await desktop.getByRole("button", { name: "Replace secret" }).click();
   assert.equal(
     await desktop.getByRole("button", { name: "Copy secret" }).isVisible(),
@@ -1445,6 +1459,71 @@ try {
     fieldWidths.every((width) => Math.abs(width - sectionWidth + 32) < 3),
     true,
     "Phone form controls must use one column inside the section padding.",
+  );
+  await phone.keyboard.press("Escape");
+  await phone.evaluate(() => {
+    document.documentElement.style.fontSize = "200%";
+  });
+  assert.equal(
+    await phone.evaluate(
+      () =>
+        document.documentElement.scrollWidth <=
+        document.documentElement.clientWidth,
+    ),
+    true,
+    "The form page must not add horizontal overflow at 200-percent text.",
+  );
+  const textZoomCombobox = phone.getByRole("combobox", {
+    name: "Asynchronous service",
+    exact: true,
+  });
+  await textZoomCombobox.scrollIntoViewIfNeeded();
+  await textZoomCombobox.focus();
+  await phone.keyboard.press("ArrowDown");
+  await phone.getByRole("option", { name: "Alpha service" }).waitFor();
+  await phone.keyboard.press("ArrowDown");
+  await phone.keyboard.press("Enter");
+  assert.equal(
+    await phone
+      .getByRole("status", { name: "Selected asynchronous service" })
+      .textContent(),
+    "beta-service",
+    "The asynchronous selector must stay keyboard usable at 200-percent text.",
+  );
+  const textZoomYamlAction = phone.getByRole("button", {
+    name: "Focus YAML editor",
+  });
+  await textZoomYamlAction.scrollIntoViewIfNeeded();
+  await textZoomYamlAction.click();
+  assert.equal(
+    await phoneYamlTextbox.evaluate(
+      (element) => element === document.activeElement,
+    ),
+    true,
+    "The YAML editor action must stay pointer usable at 200-percent text.",
+  );
+  const textZoomContinue = phone.getByRole("button", { name: "Continue" });
+  await textZoomContinue.scrollIntoViewIfNeeded();
+  const textZoomContinueBounds = await textZoomContinue.boundingBox();
+  assert.ok(textZoomContinueBounds);
+  assert.equal(
+    textZoomContinueBounds.x >= 0 &&
+      textZoomContinueBounds.x + textZoomContinueBounds.width <= 390,
+    true,
+    "Form actions must stay inside the phone viewport at 200-percent text.",
+  );
+  await textZoomContinue.focus();
+  assert.equal(
+    await textZoomContinue.evaluate(
+      (element) => element === document.activeElement,
+    ),
+    true,
+    "A form action must stay keyboard reachable at 200-percent text.",
+  );
+  assert.equal(
+    await phoneYamlTextbox.getAttribute("tabindex"),
+    "0",
+    "The scrollable YAML document must stay in the phone tab order.",
   );
   const phoneAxe = await new AxeBuilder({ page: phone }).analyze();
   assert.deepEqual(phoneAxe.violations, []);

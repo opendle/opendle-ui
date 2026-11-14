@@ -198,6 +198,7 @@ function configurationExtensions(
     "aria-multiline": "true",
     id,
     spellcheck: "false",
+    tabindex: "0",
   };
   if (describedBy) attributes["aria-describedby"] = describedBy;
   if (disabled) {

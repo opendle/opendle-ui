@@ -216,7 +216,7 @@ function Fixture() {
         </GraphWorkspace>
       </PageSurface>
       <PageSurface data-testid="guttered-surface">
-        <h1>Graph workspace browser check</h1>
+        <h1 id="fixture-target" tabIndex={-1}>Graph workspace browser check</h1>
         <GraphWorkspace
           aria-label="Centered service tree"
           inspector={panel}
@@ -459,7 +459,13 @@ async function captureReviewScreenshot(page, name) {
   await page.screenshot({ path: `${directory}/${name}.png` });
 }
 
-async function verifyInspector(page, opener, title, phone) {
+async function verifyInspector(
+  page,
+  opener,
+  title,
+  phone,
+  checkAccessibility = false,
+) {
   await opener.click();
   const inspector = page.getByRole("dialog", { name: title });
   await inspector.waitFor();
@@ -476,10 +482,17 @@ async function verifyInspector(page, opener, title, phone) {
   assert.ok(workspaceBounds && inspectorBounds);
   if (phone) {
     const viewport = page.viewportSize();
+    const inspectorInset = await page.evaluate(
+      () =>
+        Number.parseFloat(getComputedStyle(document.documentElement).fontSize) *
+        0.75,
+    );
     assert.ok(viewport);
     assert.equal(
       Math.abs(
-        viewport.height - (inspectorBounds.y + inspectorBounds.height) - 12,
+        viewport.height -
+          (inspectorBounds.y + inspectorBounds.height) -
+          inspectorInset,
       ) < 3,
       true,
       `${title} must use the viewport-bottom slot on a phone: ${JSON.stringify({ inspectorBounds, viewport })}`,
@@ -517,6 +530,14 @@ async function verifyInspector(page, opener, title, phone) {
       inspectorBounds.x > workspaceBounds.x + workspaceBounds.width / 2,
       true,
       `${title} must use the shared right-side slot on a desktop.`,
+    );
+  }
+  if (checkAccessibility) {
+    assert.deepEqual(
+      (await new AxeBuilder({ page }).include(".od-graph-inspector").analyze())
+        .violations,
+      [],
+      `${title} must have no automated accessibility violations while it is open.`,
     );
   }
   await page.keyboard.press("Escape");
@@ -760,6 +781,22 @@ try {
       controlBounds.width >= 44 && controlBounds.height >= 44,
       true,
       "Each compact graph action must keep a 44 CSS pixel pointer target.",
+    );
+  }
+  const graphActionTabOrder = [
+    desktop.getByRole("button", { name: "Zoom out" }),
+    desktop.getByRole("button", { name: "Zoom in" }),
+    desktop.getByRole("button", { name: "Fit view" }),
+    desktop.getByRole("button", { name: "Automatic layout" }),
+    desktop.getByRole("button", { name: "Place at center" }),
+  ];
+  await graphActionTabOrder[0].focus();
+  for (const nextAction of graphActionTabOrder.slice(1)) {
+    await desktop.keyboard.press("Tab");
+    assert.equal(
+      await activeElementIs(nextAction),
+      true,
+      `Graph actions must keep DOM focus order; active element is ${await desktop.evaluate(() => document.activeElement?.outerHTML)}.`,
     );
   }
   await nodeAction.click();
@@ -1411,6 +1448,7 @@ try {
     desktop.getByRole("button", { name: "Create service" }),
     "Create service",
     false,
+    true,
   );
   const guardedOpener = desktop.getByRole("button", {
     name: "Open guarded inspector",
@@ -1761,6 +1799,26 @@ try {
     textOverflow.fits,
     true,
     `The graph page must reflow without page overflow at 200% text: ${JSON.stringify(textOverflow)}`,
+  );
+  const textZoomViewport = phone.getByRole("status", {
+    name: "Controlled viewport value",
+  });
+  const textZoomBefore = JSON.parse(await textZoomViewport.textContent()).zoom;
+  const textZoomAction = phone.getByRole("button", { name: "Zoom in" });
+  await textZoomAction.scrollIntoViewIfNeeded();
+  await textZoomAction.focus();
+  await phone.keyboard.press("Enter");
+  assert.equal(
+    JSON.parse(await textZoomViewport.textContent()).zoom > textZoomBefore,
+    true,
+    "A graph action must stay keyboard usable at 200-percent text.",
+  );
+  await verifyInspector(
+    phone,
+    phone.getByRole("button", { name: "Create service" }),
+    "Create service",
+    true,
+    true,
   );
   assert.deepEqual(
     (await new AxeBuilder({ page: phone }).analyze()).violations,

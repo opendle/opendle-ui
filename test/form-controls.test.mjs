@@ -450,6 +450,7 @@ test("SecretRevealPanel shows a selectable host-owned secret and actions", () =>
   assert.match(markup, /<code>secret-value<\/code>/);
   assert.match(markup, />Copy secret<\/button>/);
   assert.match(markup, />I stored the secret<\/button>/);
+  assert.match(markup, /aria-live="polite"/);
 });
 
 test("FileDropZone keeps one accessible native file input", () => {
