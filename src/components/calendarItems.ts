@@ -9,7 +9,13 @@ export interface CalendarItemTarget {
   readonly state: CalendarItemState;
 }
 
-/** One entry of the calendar. It can go to several networks. */
+/** A comment or a like that follows the post on one network. */
+export interface CalendarFollowUp {
+  readonly id: string;
+  readonly kind: "comment" | "like";
+  readonly state: CalendarItemState;
+}
+
 /** One entry of the calendar. It can go to several networks. */
 export interface CalendarItem {
   readonly id: string;
@@ -26,6 +32,13 @@ export interface CalendarItem {
   /** A short line of facts, for example "18.4K views · 37 comments". */
   readonly summary?: string;
   readonly targets: readonly CalendarItemTarget[];
+  /** The comments and likes after the publication, on all networks. */
+  readonly followUps?: readonly CalendarFollowUp[];
+}
+
+export interface CalendarFollowUpLabels {
+  readonly comment: string;
+  readonly like: string;
 }
 
 export interface CalendarBoardLabels {
@@ -36,6 +49,7 @@ export interface CalendarBoardLabels {
   readonly later: string;
   readonly time: string;
   readonly states: Readonly<Record<CalendarItemState, string>>;
+  readonly followUps: CalendarFollowUpLabels;
 }
 
 export const calendarBoardLabels: CalendarBoardLabels = {
@@ -52,6 +66,7 @@ export const calendarBoardLabels: CalendarBoardLabels = {
     failed: "Failed",
     cancelled: "Cancelled",
   },
+  followUps: { comment: "Comments", like: "Like" },
 };
 
 const statePriority: readonly CalendarItemState[] = [
@@ -62,11 +77,14 @@ const statePriority: readonly CalendarItemState[] = [
   "cancelled",
 ];
 
+/** The most urgent state of a list of states. */
+export function urgentState(
+  states: readonly CalendarItemState[],
+): CalendarItemState {
+  return statePriority.find((state) => states.includes(state)) ?? "scheduled";
+}
+
 /** The state of an entry: the most urgent state of its networks. */
 export function calendarItemState(item: CalendarItem): CalendarItemState {
-  return (
-    statePriority.find((state) =>
-      item.targets.some((target) => target.state === state),
-    ) ?? "scheduled"
-  );
+  return urgentState(item.targets.map((target) => target.state));
 }

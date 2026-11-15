@@ -3,6 +3,8 @@ import type { CSSProperties } from "react";
 import {
   calendarBoardLabels,
   calendarItemState,
+  urgentState,
+  type CalendarFollowUpLabels,
   type CalendarItem,
   type CalendarItemState,
 } from "./calendarItems.js";
@@ -19,7 +21,38 @@ export interface CalendarEntryProps {
   /** `row` puts all parts on one line when the width permits. */
   readonly layout?: "card" | "row";
   readonly stateLabels?: Readonly<Record<CalendarItemState, string>>;
+  readonly followUpLabels?: CalendarFollowUpLabels;
   readonly className?: string;
+}
+
+interface FollowUpMark {
+  readonly kind: "comment" | "like";
+  readonly count: number;
+  readonly state: CalendarItemState;
+}
+
+/** One mark per kind of follow-up, with its count and its most urgent state. */
+function followUpMarks(item: CalendarItem): readonly FollowUpMark[] {
+  // A cancelled comment or like does not count.
+  const states: Record<FollowUpMark["kind"], CalendarItemState[]> = {
+    comment: [],
+    like: [],
+  };
+  for (const followUp of item.followUps ?? []) {
+    if (followUp.state !== "cancelled")
+      states[followUp.kind].push(followUp.state);
+  }
+  return (["comment", "like"] as const).flatMap((kind) =>
+    states[kind].length === 0
+      ? []
+      : [
+          {
+            kind,
+            count: states[kind].length,
+            state: urgentState(states[kind]),
+          },
+        ],
+  );
 }
 
 const stateIcons: Record<CalendarItemState, IconName> = {
@@ -35,19 +68,29 @@ export function CalendarEntry({
   className,
   date,
   item,
+  followUpLabels = calendarBoardLabels.followUps,
   layout = "card",
   onSelect,
   stateLabels = calendarBoardLabels.states,
   time,
 }: CalendarEntryProps) {
   const state = calendarItemState(item);
+  const marks = followUpMarks(item);
   const style =
     item.color === undefined
       ? undefined
       : ({ "--od-calendar-item-color": item.color } as CSSProperties);
   return (
     <button
-      aria-label={[date, time, item.title, stateLabels[state]]
+      aria-label={[
+        date,
+        time,
+        item.title,
+        stateLabels[state],
+        ...marks.map(
+          (mark) => `${followUpLabels[mark.kind]}: ${stateLabels[mark.state]}`,
+        ),
+      ]
         .filter(Boolean)
         .join(", ")}
       className={classes("od-calendar-item", className)}
@@ -79,6 +122,20 @@ export function CalendarEntry({
               />
             ))}
           </span>
+          {marks.map((mark) => (
+            <span
+              className="od-calendar-item-follow-up"
+              data-state={mark.state}
+              key={mark.kind}
+              title={`${followUpLabels[mark.kind]}: ${stateLabels[mark.state]}`}
+            >
+              <Icon
+                name={mark.kind === "comment" ? "message" : "heart"}
+                size={12}
+              />
+              {mark.count > 1 ? mark.count : null}
+            </span>
+          ))}
         </span>
         <span className="od-calendar-item-title">
           {item.title}

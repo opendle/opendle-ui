@@ -468,6 +468,22 @@ try {
           true,
           "in a row, the marks are on the line of the time",
         );
+        assert.equal(
+          await page
+            .locator(".od-calendar-timeline .od-calendar-item")
+            .first()
+            .evaluate((card) => {
+              const top = card
+                .querySelector(".od-calendar-item-top")
+                .getBoundingClientRect();
+              const title = card
+                .querySelector(".od-calendar-item-title")
+                .getBoundingClientRect();
+              return title.left >= top.right - 1;
+            }),
+          true,
+          "in a row, the title comes after the time and the marks",
+        );
       }
       await todayRow.scrollIntoViewIfNeeded();
       await page.evaluate(() => window.scrollTo(0, 0));

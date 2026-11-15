@@ -126,6 +126,7 @@ function Grid({
                   item={item}
                   key={item.id}
                   onSelect={onSelect}
+                  followUpLabels={labels.followUps}
                   stateLabels={labels.states}
                   time={formats.time.format(new Date(item.start))}
                 />
@@ -271,6 +272,7 @@ function Timeline({
                       layout="row"
                       key={item.id}
                       onSelect={onSelect}
+                      followUpLabels={labels.followUps}
                       stateLabels={labels.states}
                       time={formats.time.format(new Date(item.start))}
                     />

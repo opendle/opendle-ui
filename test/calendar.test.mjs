@@ -120,6 +120,40 @@ test("the month view groups one entry with a badge for each network", () => {
   assert.match(markup, /data-outside="true"[^>]*data-today="false"/);
 });
 
+test("an entry shows its comments and like with their most urgent state", () => {
+  const markup = render(CalendarBoard, {
+    mode: "month",
+    anchor: "2026-11-14",
+    today: "2026-11-14",
+    items: [
+      {
+        ...items[1],
+        followUps: [
+          { id: "c1", kind: "comment", state: "published" },
+          { id: "c2", kind: "comment", state: "failed" },
+          { id: "c3", kind: "comment", state: "cancelled" },
+          { id: "l1", kind: "like", state: "scheduled" },
+        ],
+      },
+    ],
+    locale: "en-GB",
+    onSelect: () => undefined,
+  });
+  assert.match(
+    markup,
+    /aria-label="15:00, Low Tide, Scheduled, Comments: Failed, Like: Scheduled"/,
+  );
+  // A cancelled comment does not count.
+  assert.match(
+    markup,
+    /class="od-calendar-item-follow-up" data-state="failed" title="Comments: Failed"><svg[^]*?<\/svg>2<\/span>/,
+  );
+  assert.match(
+    markup,
+    /class="od-calendar-item-follow-up" data-state="scheduled" title="Like: Scheduled"><svg[^]*?<\/svg><\/span>/,
+  );
+});
+
 test("the week view shows seven days", () => {
   const markup = render(CalendarBoard, {
     mode: "week",

@@ -124,6 +124,7 @@ export function CalendarWeek({
                             item={item}
                             key={item.id}
                             onSelect={onSelect}
+                            followUpLabels={labels.followUps}
                             stateLabels={labels.states}
                             time={formats.time.format(new Date(item.start))}
                           />

@@ -354,6 +354,8 @@ export {
   calendarBoardLabels,
   calendarItemState,
   type CalendarBoardLabels,
+  type CalendarFollowUp,
+  type CalendarFollowUpLabels,
   type CalendarItem,
   type CalendarItemState,
   type CalendarItemTarget,

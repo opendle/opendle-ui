@@ -12,6 +12,7 @@ export const calendarBoardLabels = {
         failed: "Failed",
         cancelled: "Cancelled",
     },
+    followUps: { comment: "Comments", like: "Like" },
 };
 const statePriority = [
     "failed",
@@ -20,8 +21,12 @@ const statePriority = [
     "published",
     "cancelled",
 ];
+/** The most urgent state of a list of states. */
+export function urgentState(states) {
+    return statePriority.find((state) => states.includes(state)) ?? "scheduled";
+}
 /** The state of an entry: the most urgent state of its networks. */
 export function calendarItemState(item) {
-    return (statePriority.find((state) => item.targets.some((target) => target.state === state)) ?? "scheduled");
+    return urgentState(item.targets.map((target) => target.state));
 }
 //# sourceMappingURL=calendarItems.js.map

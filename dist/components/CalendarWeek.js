@@ -33,7 +33,7 @@ export function CalendarWeek({ anchor, formats, groups, labels, now, onSelect, t
                                         ? {
                                             "--od-calendar-now": `${String(Math.round(nowPart * 1000) / 10)}%`,
                                         }
-                                        : undefined, children: entries.length === 0 ? null : (_jsx("div", { className: "od-calendar-week-cell", children: entries.map((item) => (_jsx(CalendarEntry, { item: item, onSelect: onSelect, stateLabels: labels.states, time: formats.time.format(new Date(item.start)) }, item.id))) })) }, day));
+                                        : undefined, children: entries.length === 0 ? null : (_jsx("div", { className: "od-calendar-week-cell", children: entries.map((item) => (_jsx(CalendarEntry, { item: item, onSelect: onSelect, followUpLabels: labels.followUps, stateLabels: labels.states, time: formats.time.format(new Date(item.start)) }, item.id))) })) }, day));
                             })] }, slot));
                 }) })] }));
 }

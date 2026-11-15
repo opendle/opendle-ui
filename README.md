@@ -64,6 +64,8 @@ holds one message: a new message replaces the old one.
 timeline. One entry can go to several networks and shows one badge for each.
 An entry shows its state, its time and the network marks on the first line,
 then its title, and a square preview of its media when the host gives one.
+`followUps` adds one mark for the comments and one for the like after the
+publication, each with its most urgent state. A cancelled one does not show.
 In a page header (`PageHeading`, `CalendarHeader`) the text of each control
 is on the baseline of the title. The past has thin diagonal lines: the days before today in the month view,
 and the time to the present minute in the week view, with a line at the

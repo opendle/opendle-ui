@@ -117,7 +117,7 @@ export { lastDays, type DateRange, type DateRangePreset, } from "./components/da
 export { RecordTable, type RecordTableColumn, type RecordTableProps, type RecordTableRow, } from "./components/RecordTable.js";
 export { ChartLegend, type ChartLegendItem, type ChartLegendProps, } from "./components/ChartLegend.js";
 export { StackedBarChart, type StackedBarChartProps, } from "./components/StackedBarChart.js";
-export { calendarBoardLabels, calendarItemState, type CalendarBoardLabels, type CalendarItem, type CalendarItemState, type CalendarItemTarget, } from "./components/calendarItems.js";
+export { calendarBoardLabels, calendarItemState, type CalendarBoardLabels, type CalendarFollowUp, type CalendarFollowUpLabels, type CalendarItem, type CalendarItemState, type CalendarItemTarget, } from "./components/calendarItems.js";
 export { calendarDayDate, calendarDayKey, calendarGridDays, calendarPeriod, calendarTitle, shiftCalendarAnchor, type CalendarMode, type CalendarPeriod, } from "./components/calendarDates.js";
 export { CalendarHeader, type CalendarHeaderProps, } from "./components/CalendarHeader.js";
 export { calendarHeaderLabels, emptyTagFilter, postDetailLabels, tagFilterLabels, type CalendarHeaderLabels, type PostDetailLabels, type TagColors, type TagFilterChannel, type TagFilterLabels, type TagFilterMatch, type TagFilterValue, } from "./components/calendarLabels.js";

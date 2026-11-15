@@ -10655,6 +10655,22 @@ button.od-tag[data-color][aria-pressed="true"] {
   flex: none;
 }
 
+/* A comment or a like after the publication, with its most urgent state. */
+.od-calendar-item-follow-up {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 2px;
+}
+
+.od-calendar-item-follow-up[data-state="published"] {
+  color: var(--od-color-success);
+}
+
+.od-calendar-item-follow-up[data-state="failed"] {
+  color: var(--od-color-danger);
+}
+
 .od-calendar-item-title {
   display: -webkit-box;
   overflow: hidden;
@@ -10765,6 +10781,12 @@ button.od-tag[data-color][aria-pressed="true"] {
   grid-template-columns: minmax(0, auto) minmax(0, 1fr);
   align-items: center;
   column-gap: 16px;
+}
+
+/* The areas of a card do not exist in a row: each part takes the next cell. */
+.od-calendar-item[data-layout="row"]
+  :is(.od-calendar-item-top, .od-calendar-item-title) {
+  grid-area: auto;
 }
 
 .od-calendar-item[data-layout="row"] .od-calendar-item-top {
