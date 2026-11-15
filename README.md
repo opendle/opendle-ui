@@ -35,7 +35,10 @@ a double click or the Enter key edits a passkey name in place.
 the channels. It scrolls in the sidebar and opens from one button of the
 bottom bar on a phone. With `onCollapsedChange`, a button next to the account
 collapses the sidebar to icons; the host stores the state. `AccountMenu` is a
-menu button with sections of actions and choices.
+menu button with sections of actions and choices. Use `appearance="workspace"`
+for a workspace card with an optional `detail` and an explicit accessible
+`label`. Its menu opens below the card. Put it in `ApplicationShell.workspace`
+to show it above navigation, in the icon rail, and in a top bar on phones.
 
 `ChannelList` shows connected accounts: name edited in place, tags
 (`TagInput`), switches, the warning for an ended authorization, connect and

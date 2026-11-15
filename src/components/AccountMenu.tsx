@@ -33,6 +33,10 @@ export interface AccountMenuProps {
   readonly name: string;
   readonly sections: readonly AccountMenuSection[];
   readonly className?: string;
+  /** Use a card trigger and open the menu below it. */
+  readonly appearance?: "account" | "workspace";
+  readonly detail?: string;
+  readonly label?: string;
 }
 
 const itemSelector = '[role="menuitem"], [role="menuitemradio"]';
@@ -43,7 +47,10 @@ const itemSelector = '[role="menuitem"], [role="menuitemradio"]';
  */
 export function AccountMenu({
   avatar,
+  appearance = "account",
   className,
+  detail,
+  label,
   name,
   sections,
 }: AccountMenuProps) {
@@ -113,8 +120,13 @@ export function AccountMenu({
   }
 
   return (
-    <div className={classes("od-account", className)} ref={rootRef}>
+    <div
+      className={classes("od-account", className)}
+      data-appearance={appearance}
+      ref={rootRef}
+    >
       <button
+        aria-label={label}
         aria-controls={open ? menuId : undefined}
         aria-expanded={open}
         aria-haspopup="menu"
@@ -127,7 +139,10 @@ export function AccountMenu({
         type="button"
       >
         {avatar}
-        <span className="od-navigation-label">{name}</span>
+        <span className="od-navigation-label">
+          <strong>{name}</strong>
+          {detail === undefined ? null : <small>{detail}</small>}
+        </span>
         <Icon className="od-account-chevron" name="chevron-down" size={15} />
       </button>
       {open ? (

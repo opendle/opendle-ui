@@ -12,7 +12,7 @@ const panelIcon = _jsx(Icon, { name: "panel-left" });
  * The application frame: a left sidebar that becomes an icon rail on a medium
  * window, or when the user collapses it, and a bottom bar on a phone.
  */
-export function ApplicationShell({ account, brandHref = "/", brandMark, brandName, children, className, closeLabel = "Close", collapsed = false, collapseLabel = "Collapse the sidebar", expandLabel = "Expand the sidebar", mainProps, navigation, navigationLabel, onCollapsedChange, secondaryNavigation, secondaryNavigationLabel = "", skipLabel, ...props }) {
+export function ApplicationShell({ account, brandHref = "/", brandMark, brandName, children, className, closeLabel = "Close", collapsed = false, collapseLabel = "Collapse the sidebar", expandLabel = "Expand the sidebar", mainProps, navigation, navigationLabel, onCollapsedChange, secondaryNavigation, secondaryNavigationLabel = "", skipLabel, workspace, ...props }) {
     const [listOpen, setListOpen] = useState(false);
     // A used link of the sheet closes the sheet.
     const closeAfterLink = useCallback((list) => {
@@ -29,7 +29,7 @@ export function ApplicationShell({ account, brandHref = "/", brandMark, brandNam
         };
     }, []);
     const hasSecondary = secondaryNavigation !== undefined && secondaryNavigation !== null;
-    return (_jsxs("div", { ...props, className: classes("od-application-shell", className), "data-collapsed": collapsed, children: [_jsx("a", { className: "od-skip-link", href: `#${mainId}`, children: skipLabel }), _jsxs("aside", { className: "od-application-sidebar", children: [_jsxs("a", { className: "od-application-brand", href: brandHref, children: [brandMark, _jsx("span", { className: "od-application-brand-name", children: brandName })] }), _jsxs("nav", { "aria-label": navigationLabel, className: "od-application-navigation", children: [navigation, hasSecondary ? (_jsx(NavigationItem, { className: "od-application-list-button", icon: listIcon, label: secondaryNavigationLabel, onClick: () => {
+    return (_jsxs("div", { ...props, className: classes("od-application-shell", className), "data-collapsed": collapsed, children: [_jsx("a", { className: "od-skip-link", href: `#${mainId}`, children: skipLabel }), _jsxs("aside", { className: "od-application-sidebar", children: [_jsxs("a", { className: "od-application-brand", href: brandHref, children: [brandMark, _jsx("span", { className: "od-application-brand-name", children: brandName })] }), workspace === undefined || workspace === null ? null : (_jsx("div", { className: "od-application-workspace", children: workspace })), _jsxs("nav", { "aria-label": navigationLabel, className: "od-application-navigation", children: [navigation, hasSecondary ? (_jsx(NavigationItem, { className: "od-application-list-button", icon: listIcon, label: secondaryNavigationLabel, onClick: () => {
                                     setListOpen(true);
                                 } })) : null] }), hasSecondary ? (_jsx("nav", { "aria-label": secondaryNavigationLabel, className: "od-application-navigation od-application-secondary", children: secondaryNavigation })) : null, _jsxs("div", { className: "od-application-footer", children: [account, onCollapsedChange === undefined ? null : (_jsx(IconButton, { "aria-pressed": collapsed, className: "od-application-collapse", icon: panelIcon, label: collapsed ? expandLabel : collapseLabel, onClick: () => {
                                     onCollapsedChange(!collapsed);

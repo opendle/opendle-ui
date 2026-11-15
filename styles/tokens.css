@@ -11309,3 +11309,140 @@ button.od-tag:disabled {
     border: 0;
   }
 }
+
+/* Workspace card and menu, above the main navigation. */
+.od-account-menu .od-navigation-label > strong {
+  font-weight: inherit;
+}
+
+.od-application-workspace {
+  min-width: 0;
+  margin-bottom: 12px;
+}
+
+.od-account[data-appearance="workspace"] .od-account-menu {
+  min-height: 52px;
+  gap: 10px;
+  padding: 10px;
+  border: 1px solid var(--od-color-border);
+  border-radius: var(--od-radius-lg);
+  background: var(--od-color-surface);
+  box-shadow: 0 2px 6px rgb(0 0 0 / 3%);
+}
+
+.od-account[data-appearance="workspace"]
+  .od-account-menu:is(:hover, [aria-expanded="true"]) {
+  border-color: var(--od-color-brand);
+  background: color-mix(
+    in srgb,
+    var(--od-color-brand) 5%,
+    var(--od-color-surface)
+  );
+}
+
+.od-account[data-appearance="workspace"] .od-account-menu > .od-avatar {
+  border-radius: var(--od-radius-md);
+  background: var(--od-color-brand);
+  color: var(--od-color-on-brand);
+}
+
+.od-account[data-appearance="workspace"] .od-navigation-label {
+  display: grid;
+  gap: 3px;
+}
+
+.od-account[data-appearance="workspace"] .od-navigation-label > strong {
+  overflow: hidden;
+  font-weight: 600;
+  text-overflow: ellipsis;
+}
+
+.od-account[data-appearance="workspace"] .od-navigation-label > small {
+  color: var(--od-color-muted);
+  font-size: 0.6875rem;
+}
+
+.od-account[data-appearance="workspace"] .od-account-chevron {
+  rotate: 0deg;
+}
+
+.od-account[data-appearance="workspace"] .od-account-popup {
+  top: calc(100% + 8px);
+  bottom: auto;
+  width: 280px;
+  max-height: min(480px, 65dvh);
+  overflow-y: auto;
+  padding: 6px;
+}
+
+.od-account[data-appearance="workspace"] .od-account-item {
+  min-height: 44px;
+}
+
+.od-account[data-appearance="workspace"] .od-account-item > .od-avatar {
+  flex: none;
+}
+
+.od-account[data-appearance="workspace"] .od-account-item[aria-checked="true"] {
+  background: var(--od-color-sunken);
+}
+
+@media (min-width: 721px) and (max-width: 1100px) {
+  .od-application-workspace {
+    width: 44px;
+  }
+
+  .od-account[data-appearance="workspace"] .od-account-menu {
+    min-height: 44px;
+    padding: 5px;
+  }
+}
+
+@media (min-width: 1101px) {
+  .od-application-shell[data-collapsed="true"] .od-application-workspace {
+    width: 44px;
+  }
+
+  .od-application-shell[data-collapsed="true"]
+    .od-account[data-appearance="workspace"]
+    .od-account-menu {
+    min-height: 44px;
+    padding: 5px;
+  }
+}
+
+@media (max-width: 720px) {
+  .od-application-workspace {
+    position: fixed;
+    z-index: 20;
+    inset: 0 0 auto;
+    margin: 0;
+    padding: 8px 16px;
+    border-bottom: 1px solid var(--od-color-border);
+    background: var(--od-color-background);
+  }
+
+  .od-application-shell:has(.od-application-workspace) .od-application-main {
+    padding-top: 88px;
+  }
+
+  .od-account[data-appearance="workspace"] .od-account-menu {
+    min-height: 52px;
+    justify-content: flex-start;
+  }
+
+  .od-account[data-appearance="workspace"]
+    :is(.od-navigation-label, .od-account-chevron) {
+    position: static;
+    width: auto;
+    height: auto;
+    clip-path: none;
+  }
+}
+
+@media (max-width: 720px) {
+  .od-application-shell:has(.od-application-workspace small)
+    .od-application-main {
+    padding-top: 100px;
+  }
+}

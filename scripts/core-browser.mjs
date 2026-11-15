@@ -48,6 +48,13 @@ function App() {
   }
   return (
     <ApplicationShell brandMark={<Mark/>} brandName="Poster" navigationLabel="Main" skipLabel="Skip to content"
+      workspace={<AccountMenu appearance="workspace" avatar={<Avatar name="Music"/>} name="Music" detail="Workspace" label="Switch workspace: Music" sections={[
+        {id: "workspaces", label: "Workspaces", items: [
+          {id: "music", label: "Music", current: true, onSelect: () => {}},
+          {id: "studio", label: "Studio", current: false, onSelect: () => {window.workspaceChoice = "studio";}},
+        ]},
+        {id: "create", items: [{id: "create", label: "Create workspace", onSelect: () => {window.workspaceChoice = "create";}}]},
+      ]}/>}
       navigation={<>
         <NavigationLink href="#calendar" icon={<Icon name="calendar"/>} label="Calendar"/>
         <NavigationLink href="#community" icon={<Icon name="message"/>} label="Community" count={12}/>
@@ -215,6 +222,43 @@ try {
         }
       }
       await audit(page, `${name}-page`);
+
+      const workspace = page.getByRole("button", {
+        name: "Switch workspace: Music",
+      });
+      await workspace.click();
+      const workspaceMenu = page.getByRole("menu", {
+        name: "Music",
+        exact: true,
+      });
+      assert.equal(
+        await workspaceMenu
+          .getByRole("menuitemradio", { name: "Music", exact: true })
+          .getAttribute("aria-checked"),
+        "true",
+      );
+      await page.keyboard.press("End");
+      assert.equal(
+        await workspaceMenu
+          .getByRole("menuitem", { name: "Create workspace" })
+          .evaluate((item) => item === document.activeElement),
+        true,
+      );
+      await audit(page, `${name}-workspace-menu`);
+      const workspaceBounds = await workspace.boundingBox();
+      const menuBounds = await workspaceMenu.boundingBox();
+      assert.ok(menuBounds.y >= workspaceBounds.y + workspaceBounds.height);
+      await page.keyboard.press("Escape");
+      assert.equal(
+        await workspace.evaluate((item) => item === document.activeElement),
+        true,
+      );
+      await workspace.click();
+      await workspaceMenu
+        .getByRole("menuitemradio", { name: "Studio", exact: true })
+        .click();
+      assert.equal(await page.evaluate(() => window.workspaceChoice), "studio");
+      assert.equal(await workspace.getAttribute("aria-expanded"), "false");
 
       // The account menu: arrow keys move, Escape closes, a choice runs.
       const account = page.getByRole("button", {

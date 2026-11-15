@@ -28,6 +28,8 @@ export interface ApplicationShellProps extends Omit<
    */
   readonly secondaryNavigation?: ReactNode;
   readonly secondaryNavigationLabel?: string;
+  /** A workspace menu above the main navigation. */
+  readonly workspace?: ReactNode;
   /** An `AccountMenu` element at the end of the sidebar. */
   readonly account?: ReactNode;
   /** Show the sidebar as an icon rail. */
@@ -68,6 +70,7 @@ export function ApplicationShell({
   secondaryNavigation,
   secondaryNavigationLabel = "",
   skipLabel,
+  workspace,
   ...props
 }: ApplicationShellProps) {
   const [listOpen, setListOpen] = useState(false);
@@ -100,6 +103,9 @@ export function ApplicationShell({
           {brandMark}
           <span className="od-application-brand-name">{brandName}</span>
         </a>
+        {workspace === undefined || workspace === null ? null : (
+          <div className="od-application-workspace">{workspace}</div>
+        )}
         <nav aria-label={navigationLabel} className="od-application-navigation">
           {navigation}
           {hasSecondary ? (

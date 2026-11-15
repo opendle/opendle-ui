@@ -5,6 +5,8 @@ import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import {
   Avatar,
+  AccountMenu,
+  ApplicationShell,
   Button,
   Dialog,
   IconButton,
@@ -300,4 +302,35 @@ test("navigation groups contain their parent and nested destinations", () => {
   assert.match(markup, /od-navigation-group" data-active="true"/);
   assert.match(markup, /od-navigation-group-children/);
   assert.equal(markup.match(/<a /g).length, 2);
+});
+
+test("workspace menus keep a labelled card trigger and detail", () => {
+  const markup = render(AccountMenu, {
+    appearance: "workspace",
+    name: "Music",
+    detail: "Workspace",
+    label: "Switch workspace: Music",
+    avatar: React.createElement(Avatar, { name: "Music" }),
+    sections: [],
+  });
+  assert.match(markup, /data-appearance="workspace"/);
+  assert.match(markup, /aria-label="Switch workspace: Music"/);
+  assert.match(markup, /aria-haspopup="menu"/);
+  assert.match(markup, /<strong>Music<\/strong><small>Workspace<\/small>/);
+});
+
+test("the application shell places the workspace before navigation", () => {
+  const markup = render(ApplicationShell, {
+    brandMark: null,
+    brandName: "Product",
+    navigationLabel: "Main",
+    skipLabel: "Skip",
+    workspace: "Workspace control",
+    navigation: "Navigation control",
+    children: "Content",
+  });
+  assert.ok(
+    markup.indexOf("Workspace control") < markup.indexOf("Navigation control"),
+  );
+  assert.match(markup, /od-application-workspace/);
 });

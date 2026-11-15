@@ -19,10 +19,14 @@ export interface AccountMenuProps {
     readonly name: string;
     readonly sections: readonly AccountMenuSection[];
     readonly className?: string;
+    /** Use a card trigger and open the menu below it. */
+    readonly appearance?: "account" | "workspace";
+    readonly detail?: string;
+    readonly label?: string;
 }
 /**
  * The signed-in person at the end of the application sidebar. A press opens
  * a menu with the actions of the account.
  */
-export declare function AccountMenu({ avatar, className, name, sections, }: AccountMenuProps): import("react").JSX.Element;
+export declare function AccountMenu({ avatar, appearance, className, detail, label, name, sections, }: AccountMenuProps): import("react").JSX.Element;
 //# sourceMappingURL=AccountMenu.d.ts.map
