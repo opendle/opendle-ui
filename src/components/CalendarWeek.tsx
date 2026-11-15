@@ -1,6 +1,13 @@
+import type { CSSProperties } from "react";
+
 import { CalendarEntry } from "./CalendarEntry.js";
-import { calendarDayDate, calendarGridDays } from "./calendarDates.js";
+import {
+  calendarDayDate,
+  calendarDayKey,
+  calendarGridDays,
+} from "./calendarDates.js";
 import type { CalendarBoardLabels, CalendarItem } from "./calendarItems.js";
+import { useMinute } from "./useMinute.js";
 
 export interface CalendarWeekFormats {
   readonly time: Intl.DateTimeFormat;
@@ -16,6 +23,8 @@ export interface CalendarWeekProps {
   readonly formats: CalendarWeekFormats;
   readonly labels: CalendarBoardLabels;
   readonly onSelect: (item: CalendarItem) => void;
+  /** The present time. Without it, the clock of the browser gives it. */
+  readonly now?: Date | undefined;
 }
 
 const halfHours = Array.from({ length: 48 }, (_, index) => index);
@@ -34,10 +43,17 @@ export function CalendarWeek({
   formats,
   groups,
   labels,
+  now,
   onSelect,
   today,
 }: CalendarWeekProps) {
+  const clock = useMinute();
+  const present = now ?? clock;
   const days = calendarGridDays("week", anchor);
+  // The half hour of the present, and the part of it that is over.
+  const onToday = calendarDayKey(present) === today;
+  const nowSlot = present.getHours() * 2 + (present.getMinutes() >= 30 ? 1 : 0);
+  const nowPart = (present.getMinutes() % 30) / 30;
   return (
     <table className="od-calendar-week">
       <thead>
@@ -79,21 +95,39 @@ export function CalendarWeek({
                   <time>{label}</time>
                 </th>
               ) : null}
-              {days.map((day) => (
-                <td data-today={day === today} key={day}>
-                  {(groups.get(day) ?? []).map((item) =>
-                    slotOf(item) === slot ? (
-                      <CalendarEntry
-                        item={item}
-                        key={item.id}
-                        onSelect={onSelect}
-                        stateLabels={labels.states}
-                        time={formats.time.format(new Date(item.start))}
-                      />
-                    ) : null,
-                  )}
-                </td>
-              ))}
+              {days.map((day) => {
+                const current = day === today && onToday && slot === nowSlot;
+                return (
+                  <td
+                    data-now={current || undefined}
+                    data-past={
+                      day < today ||
+                      (day === today && onToday && slot < nowSlot)
+                    }
+                    data-today={day === today}
+                    key={day}
+                    style={
+                      current
+                        ? ({
+                            "--od-calendar-now": `${String(Math.round(nowPart * 1000) / 10)}%`,
+                          } as CSSProperties)
+                        : undefined
+                    }
+                  >
+                    {(groups.get(day) ?? []).map((item) =>
+                      slotOf(item) === slot ? (
+                        <CalendarEntry
+                          item={item}
+                          key={item.id}
+                          onSelect={onSelect}
+                          stateLabels={labels.states}
+                          time={formats.time.format(new Date(item.start))}
+                        />
+                      ) : null,
+                    )}
+                  </td>
+                );
+              })}
             </tr>
           );
         })}

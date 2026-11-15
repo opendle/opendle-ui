@@ -10780,3 +10780,51 @@ button.od-tag[data-color][aria-pressed="true"] {
   border-left: 1px solid var(--od-color-border-strong);
   border-radius: 0;
 }
+
+/*
+ * The past of a calendar has thin diagonal lines behind its entries.
+ */
+
+.od-calendar {
+  --od-calendar-hatch: repeating-linear-gradient(
+    135deg,
+    transparent 0 7px,
+    color-mix(in srgb, var(--od-color-border-strong) 42%, transparent) 7px 8px
+  );
+}
+
+@media (min-width: 721px) {
+  .od-calendar-grid .od-calendar-day[data-past="true"],
+  .od-calendar-week tbody td[data-past="true"] {
+    background-image: var(--od-calendar-hatch);
+  }
+
+  .od-calendar-week tbody td[data-now="true"] {
+    position: relative;
+  }
+
+  .od-calendar-week tbody td[data-now="true"]::before {
+    position: absolute;
+    inset: 0 0 auto;
+    height: var(--od-calendar-now);
+    background-image: var(--od-calendar-hatch);
+    content: "";
+  }
+
+  /* The present. */
+  .od-calendar-week tbody td[data-now="true"]::after {
+    position: absolute;
+    top: var(--od-calendar-now);
+    right: 0;
+    left: -4px;
+    height: 0;
+    border-top: 1.5px solid var(--od-color-brand);
+    content: "";
+    pointer-events: none;
+  }
+
+  .od-calendar-week tbody td[data-now="true"] > .od-calendar-item {
+    position: relative;
+    z-index: 1;
+  }
+}

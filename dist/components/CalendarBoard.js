@@ -25,7 +25,7 @@ function Grid({ anchor, formats, groups, labels, mode, onSelect, today, }) {
     return (_jsxs(_Fragment, { children: [_jsx("div", { "aria-hidden": "true", className: "od-calendar-weekdays", children: days.slice(0, 7).map((day) => (_jsx("span", { children: formats.weekday.format(calendarDayDate(day)) }, day))) }), _jsx("ol", { className: "od-calendar-grid", children: days.map((day) => {
                     const date = calendarDayDate(day);
                     const items = groups.get(day) ?? [];
-                    return (_jsxs("li", { className: "od-calendar-day", "data-empty": items.length === 0, "data-outside": mode === "month" && day.slice(0, 7) !== anchorMonth, "data-today": day === today, children: [_jsxs("time", { "aria-current": day === today ? "date" : undefined, "aria-label": formats.fullDay.format(date), className: "od-calendar-day-head", dateTime: day, children: [_jsx("span", { className: "od-calendar-day-weekday", children: formats.weekday.format(date) }), _jsx("span", { className: "od-calendar-day-number", children: date.getDate() })] }), items.map((item) => (_jsx(CalendarEntry, { item: item, onSelect: onSelect, stateLabels: labels.states, time: formats.time.format(new Date(item.start)) }, item.id)))] }, day));
+                    return (_jsxs("li", { className: "od-calendar-day", "data-empty": items.length === 0, "data-outside": mode === "month" && day.slice(0, 7) !== anchorMonth, "data-past": day < today, "data-today": day === today, children: [_jsxs("time", { "aria-current": day === today ? "date" : undefined, "aria-label": formats.fullDay.format(date), className: "od-calendar-day-head", dateTime: day, children: [_jsx("span", { className: "od-calendar-day-weekday", children: formats.weekday.format(date) }), _jsx("span", { className: "od-calendar-day-number", children: date.getDate() })] }), items.map((item) => (_jsx(CalendarEntry, { item: item, onSelect: onSelect, stateLabels: labels.states, time: formats.time.format(new Date(item.start)) }, item.id)))] }, day));
                 }) }), hasItems ? null : _jsx("p", { className: "od-calendar-empty", children: labels.empty })] }));
 }
 function Timeline({ formats, groups, hasEarlier, hasLater, labels, onLoadEarlier, onLoadLater, onSelect, today, }) {
@@ -85,7 +85,7 @@ function Timeline({ formats, groups, hasEarlier, hasLater, labels, onLoadEarlier
  * A calendar of entries that go to one or more networks. It has a month
  * view, a week view and a continuous timeline. The host owns the data.
  */
-export function CalendarBoard({ anchor, className, hasEarlier = false, hasLater = false, items, labels = calendarBoardLabels, locale, mode, onLoadEarlier, onLoadLater, onSelect, today, }) {
+export function CalendarBoard({ anchor, className, hasEarlier = false, hasLater = false, items, labels = calendarBoardLabels, locale, mode, now, onLoadEarlier, onLoadLater, onSelect, today, }) {
     const formats = useMemo(() => ({
         time: new Intl.DateTimeFormat(locale, {
             hour: "2-digit",
@@ -105,6 +105,6 @@ export function CalendarBoard({ anchor, className, hasEarlier = false, hasLater 
         }),
     }), [locale]);
     const groups = useMemo(() => groupByDay(items), [items]);
-    return (_jsx("section", { "aria-label": labels.board, className: classes("od-calendar", className), "data-mode": mode, children: mode === "timeline" ? (_jsx(Timeline, { formats: formats, groups: groups, hasEarlier: hasEarlier, hasLater: hasLater, labels: labels, onLoadEarlier: onLoadEarlier, onLoadLater: onLoadLater, onSelect: onSelect, today: today })) : (_jsxs(_Fragment, { children: [mode === "week" ? (_jsx(CalendarWeek, { anchor: anchor, formats: formats, groups: groups, labels: labels, onSelect: onSelect, today: today })) : null, _jsx(Grid, { anchor: anchor, formats: formats, groups: groups, labels: labels, mode: mode, onSelect: onSelect, today: today })] })) }));
+    return (_jsx("section", { "aria-label": labels.board, className: classes("od-calendar", className), "data-mode": mode, children: mode === "timeline" ? (_jsx(Timeline, { formats: formats, groups: groups, hasEarlier: hasEarlier, hasLater: hasLater, labels: labels, onLoadEarlier: onLoadEarlier, onLoadLater: onLoadLater, onSelect: onSelect, today: today })) : (_jsxs(_Fragment, { children: [mode === "week" ? (_jsx(CalendarWeek, { anchor: anchor, formats: formats, groups: groups, labels: labels, now: now, onSelect: onSelect, today: today })) : null, _jsx(Grid, { anchor: anchor, formats: formats, groups: groups, labels: labels, mode: mode, onSelect: onSelect, today: today })] })) }));
 }
 //# sourceMappingURL=CalendarBoard.js.map

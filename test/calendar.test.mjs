@@ -122,6 +122,18 @@ test("the week view shows seven days", () => {
   assert.equal(markup.match(/class="od-calendar-week-hour"/g).length, 24);
   assert.equal(markup.match(/<tr data-half=/g).length, 48);
   assert.match(markup, /<time>09:00<\/time>/);
+  // With the present at 13:20, the past ends in the row of 13:00 of today.
+  const timed = render(CalendarBoard, {
+    mode: "week",
+    anchor: "2026-11-14",
+    today: "2026-11-14",
+    now: new Date(2026, 10, 14, 13, 20),
+    items,
+    onSelect: () => undefined,
+  });
+  assert.equal(timed.match(/data-now="true"/g).length, 1);
+  assert.match(timed, /--od-calendar-now:66\.7%/);
+  assert.equal(timed.match(/<td data-past="true"/g).length, 5 * 48 + 26);
 });
 
 test("the timeline shows the days with entries and marks the present", () => {

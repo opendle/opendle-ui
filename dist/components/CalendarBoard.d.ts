@@ -17,6 +17,8 @@ export interface CalendarBoardProps {
     /** Timeline: called when the reader comes near the end. */
     readonly onLoadLater?: () => void;
     readonly locale?: string;
+    /** The present time of the week view. The default is the browser clock. */
+    readonly now?: Date;
     readonly labels?: CalendarBoardLabels;
     readonly className?: string;
 }
@@ -24,5 +26,5 @@ export interface CalendarBoardProps {
  * A calendar of entries that go to one or more networks. It has a month
  * view, a week view and a continuous timeline. The host owns the data.
  */
-export declare function CalendarBoard({ anchor, className, hasEarlier, hasLater, items, labels, locale, mode, onLoadEarlier, onLoadLater, onSelect, today, }: CalendarBoardProps): import("react").JSX.Element;
+export declare function CalendarBoard({ anchor, className, hasEarlier, hasLater, items, labels, locale, mode, now, onLoadEarlier, onLoadLater, onSelect, today, }: CalendarBoardProps): import("react").JSX.Element;
 //# sourceMappingURL=CalendarBoard.d.ts.map

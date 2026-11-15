@@ -32,6 +32,8 @@ export interface CalendarBoardProps {
   /** Timeline: called when the reader comes near the end. */
   readonly onLoadLater?: () => void;
   readonly locale?: string;
+  /** The present time of the week view. The default is the browser clock. */
+  readonly now?: Date;
   readonly labels?: CalendarBoardLabels;
   readonly className?: string;
 }
@@ -104,6 +106,7 @@ function Grid({
               className="od-calendar-day"
               data-empty={items.length === 0}
               data-outside={mode === "month" && day.slice(0, 7) !== anchorMonth}
+              data-past={day < today}
               data-today={day === today}
               key={day}
             >
@@ -304,6 +307,7 @@ export function CalendarBoard({
   labels = calendarBoardLabels,
   locale,
   mode,
+  now,
   onLoadEarlier,
   onLoadLater,
   onSelect,
@@ -357,6 +361,7 @@ export function CalendarBoard({
               formats={formats}
               groups={groups}
               labels={labels}
+              now={now}
               onSelect={onSelect}
               today={today}
             />

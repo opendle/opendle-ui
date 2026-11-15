@@ -88,7 +88,7 @@ function App() {
         })}/>
       <TagFilterBar channels={channels} tags={["short","long","take-me-with-you","paper-lanterns","low-tide"]}
         tagColors={{short: 8, long: 3, "take-me-with-you": 1, "paper-lanterns": 5, "low-tide": 7}} value={filter} onChange={setFilter}/>
-      <CalendarBoard mode={mode} anchor={anchor} today={today} items={items} locale="en-GB"
+      <CalendarBoard mode={mode} anchor={anchor} today={today} items={items} locale="en-GB" now={new Date(2026, 10, 14, 13, 20)}
         onSelect={(item) => { setRetried(false); setSelected(item); }}
         hasEarlier={!empty && earlier < 3} onLoadEarlier={() => setEarlier((value) => Math.min(3, value + 1))}/>
       <PostDetailDialog open={selected !== null} onClose={() => setSelected(null)}
@@ -170,6 +170,23 @@ try {
           await page.locator(".od-calendar-day:visible").count(),
           18,
           "a phone lists only the days that have entries",
+        );
+      }
+      // The days before today have the hatch of the past. Today has not.
+      const pastDays = page.locator('.od-calendar-day[data-past="true"]');
+      assert.equal(await pastDays.count(), 19);
+      assert.equal(
+        await page
+          .locator('.od-calendar-day[data-today="true"]')
+          .getAttribute("data-past"),
+        "false",
+      );
+      if (width !== 390) {
+        assert.match(
+          await pastDays
+            .first()
+            .evaluate((day) => getComputedStyle(day).backgroundImage),
+          /repeating-linear-gradient/,
         );
       }
       await audit(page, `${name}-month`);
@@ -268,6 +285,40 @@ try {
           "the entries of 12:30 are in the second half of the hour",
         );
         assert.ok(heights.every((height) => height >= 32));
+        // The past of the week is hatched to the present: 13:20 is two thirds
+        // of the half hour that starts at 13:00, in the column of today.
+        const rows = page.locator(".od-calendar-week tbody tr");
+        const todayCell = (slot) => rows.nth(slot).locator("td").nth(5);
+        assert.equal(await todayCell(25).getAttribute("data-past"), "true");
+        assert.equal(await todayCell(26).getAttribute("data-now"), "true");
+        assert.equal(await todayCell(26).getAttribute("data-past"), "false");
+        assert.equal(await todayCell(27).getAttribute("data-past"), "false");
+        assert.equal(
+          await rows.nth(40).locator("td").nth(4).getAttribute("data-past"),
+          "true",
+          "a day before today is in the past for all hours",
+        );
+        assert.equal(
+          await rows.nth(2).locator("td").nth(6).getAttribute("data-past"),
+          "false",
+        );
+        const nowLine = await todayCell(26).evaluate((cell) => {
+          // The percentage is of the cell without its border.
+          const box = { height: cell.clientHeight };
+          const hatch = getComputedStyle(cell, "::before");
+          const line = getComputedStyle(cell, "::after");
+          return {
+            height: box.height,
+            hatch: Number.parseFloat(hatch.height),
+            line: Number.parseFloat(line.top),
+          };
+        });
+        assert.ok(
+          Math.abs(nowLine.hatch / nowLine.height - 2 / 3) < 0.03 &&
+            Math.abs(nowLine.line / nowLine.height - 2 / 3) < 0.03,
+          JSON.stringify(nowLine),
+        );
+        assert.equal(await page.locator('[data-now="true"]').count(), 1);
         // The bottom of the period controls is on the baseline of the title.
         const edges = await page.evaluate(() => {
           const title = document.querySelector(".od-calendar-header h1");

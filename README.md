@@ -62,7 +62,9 @@ holds one message: a new message replaces the old one.
 
 `CalendarBoard` shows entries in a month view, a week view or a continuous
 timeline. One entry can go to several networks and shows one badge for each.
-The week view has a time axis of 24 hours; a row is one half hour and grows
+The past has thin diagonal lines: the days before today in the month view,
+and the time to the present minute in the week view, with a line at the
+present. The week view has a time axis of 24 hours; a row is one half hour and grows
 with its entries. The timeline opens at the present and asks for earlier or later entries
 through `onLoadEarlier` and `onLoadLater`. `TagFilterBar` holds the channel
 and tag selection with the AND or OR logic. The host owns
