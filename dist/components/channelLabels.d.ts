@@ -20,6 +20,8 @@ export interface ChannelItem {
     readonly switches: readonly ChannelSwitch[];
     /** The host connection provider to use instead of native authorization. */
     readonly connectionProvider?: string;
+    /** A visible host label for the connection route, for example `via Gateway`. */
+    readonly connectionLabel?: string;
 }
 /** A network that the user can connect. */
 export interface ChannelNetwork {

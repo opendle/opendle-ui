@@ -50,15 +50,20 @@ export function ChannelRow({
             />
           )}
         </span>
-        <span className="od-channel-handle">
-          {item.needsReconnect ? (
-            <span className="od-channel-warning">
-              <Icon name="alert" size={13} />
-              {labels.reconnectNeeded}
-            </span>
-          ) : (
-            item.handle
-          )}
+        <span className="od-channel-details">
+          <span className="od-channel-handle">
+            {item.needsReconnect ? (
+              <span className="od-channel-warning">
+                <Icon name="alert" size={13} />
+                {labels.reconnectNeeded}
+              </span>
+            ) : (
+              item.handle
+            )}
+          </span>
+          {item.connectionLabel ? (
+            <span className="od-channel-provider">{item.connectionLabel}</span>
+          ) : null}
         </span>
       </span>
       <TagInput

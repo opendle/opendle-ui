@@ -24,7 +24,7 @@ function App() {
  window.setConnectOpen = setConnectOpen;
  window.configureChannels = (readOnly, native) => {setReadonly(readOnly);setNative(native)};
  return <main><h1>Channel connections</h1>
- <ChannelList items={[{id:"buffer",network:"pinterest",name:"Music",handle:"music",tags:[],switches:[],needsReconnect:true,connectionProvider:"gateway"}, {id:"native",network:"pinterest",name:"Native",handle:"native",tags:[],switches:[],needsReconnect:true}]}
+ <ChannelList items={[{id:"buffer",network:"pinterest",name:"Music",handle:"music",tags:[],switches:[],needsReconnect:true,connectionProvider:"gateway",connectionLabel:"via External gateway"}, {id:"native",network:"pinterest",name:"Native",handle:"native",tags:[],switches:[],needsReconnect:true}]}
  connectOpen={connectOpen} onConnectOpenChange={setConnectOpen}
  readOnly={readonly} networks={native ? [{network:"pinterest",label:"Pinterest",href:"#native"},{network:"bluesky",label:"Bluesky"}] : []}
  connectionProviders={[{id:"gateway",label:"External gateway",onSelect:()=>setOpen(true)}]}
@@ -56,6 +56,13 @@ try {
     const errors = [];
     page.on("pageerror", (error) => errors.push(error.message));
     await page.goto(pathToFileURL(pagePath).href);
+    const route = page.getByText("via External gateway", { exact: true });
+    await route.waitFor();
+    assert.equal(await page.locator(".od-channel-provider").count(), 1);
+    assert.equal(
+      await route.evaluate((node) => node.scrollWidth <= node.clientWidth),
+      true,
+    );
     const add = page.getByRole("button", { name: "Connect", exact: true });
     await add.click();
     const picker = page.getByRole("dialog", { name: "Connect a channel" });
@@ -144,6 +151,7 @@ try {
     await gateway.waitFor();
     await page.keyboard.press("Escape");
     await page.evaluate(() => window.configureChannels(true, false));
+    assert.equal(await route.isVisible(), true);
     await add.waitFor({ state: "detached" });
     await page.evaluate(() => window.setConnectOpen(true));
     assert.equal(await picker.isVisible(), false);

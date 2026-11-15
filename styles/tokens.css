@@ -9255,7 +9255,26 @@ html:has(.od-dialog:modal) {
   font-weight: 500;
 }
 
+.od-channel-details {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px 8px;
+  min-width: 0;
+}
+
+.od-channel-provider {
+  flex-shrink: 0;
+  color: var(--od-color-muted-strong);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  padding: 1px 5px;
+  border: 1px solid var(--od-color-border);
+  border-radius: 4px;
+}
+
 .od-channel-handle {
+  min-width: 0;
   overflow: hidden;
   color: var(--od-color-muted);
   font-size: 0.78125rem;

@@ -6,6 +6,52 @@ import { ChannelList, NavigationGroup, NavigationLink } from "../dist/index.js";
 
 const element = React.createElement;
 
+test("ChannelList keeps the connection label for every authorization and access state", () => {
+  for (const needsReconnect of [false, true]) {
+    for (const readOnly of [false, true]) {
+      const item = {
+        id: "external",
+        network: "pinterest",
+        name: "Music",
+        handle: "@music",
+        tags: [],
+        switches: [],
+        needsReconnect,
+        connectionProvider: "gateway",
+        connectionLabel: "via Gateway",
+      };
+      const markup = renderToStaticMarkup(
+        element(ChannelList, {
+          items: [
+            item,
+            {
+              ...item,
+              id: "native",
+              name: "Native",
+              connectionLabel: undefined,
+              connectionProvider: undefined,
+            },
+          ],
+          networks: [],
+          readOnly,
+          onRename: async () => {},
+          onTagsChange: async () => {},
+          onSwitchChange: async () => {},
+          onDisconnect: async () => {},
+          onPasswordConnect: async () => {},
+          errorMessage: () => "Failed",
+        }),
+      );
+      assert.equal(
+        (markup.match(/class="od-channel-provider"/g) ?? []).length,
+        1,
+      );
+      assert.match(markup, /class="od-channel-provider">via Gateway<\/span>/);
+      assert.match(markup, needsReconnect ? /Authorization ended/ : /@music/);
+    }
+  }
+});
+
 test("NavigationGroup keeps a parent link with its active subpage", () => {
   const markup = renderToStaticMarkup(
     element(NavigationGroup, {

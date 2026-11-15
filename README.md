@@ -49,7 +49,10 @@ to show it above navigation, in the icon rail, and in a top bar on phones.
 disconnect. Set `connectOpen` and `onConnectOpenChange` to control the connect
 dialog from the host, for example from a navigation link. The list keeps its
 own dialog state when these props are omitted. `readOnly` prevents the dialog
-from opening. `MetricTile` in a `dl.od-metrics` shows a key number with its
+from opening. Set `ChannelItem.connectionLabel` to show a host-owned connection
+route beside the handle. It stays visible with an ended authorization and in
+read-only lists. Omit it for a connection that needs no route label.
+`MetricTile` in a `dl.od-metrics` shows a key number with its
 change, and with `points` a small smooth line of the days of the period in
 the colour of the change. `CalendarEntry` is one calendar entry for a list outside the board.
 
