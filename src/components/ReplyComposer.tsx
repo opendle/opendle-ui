@@ -106,6 +106,7 @@ export function ReplyComposer({
           onChange={(event) => {
             setText(event.currentTarget.value);
           }}
+          maxHeight={null}
           onKeyDown={keyDown}
           ref={focusEnd}
           rows={2}

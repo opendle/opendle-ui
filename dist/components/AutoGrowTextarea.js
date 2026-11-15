@@ -3,11 +3,11 @@ import { useCallback, useLayoutEffect, useRef } from "react";
 function resizeTextarea(textarea, maxHeight) {
     if (!textarea)
         return;
+    const limit = maxHeight ?? Number.POSITIVE_INFINITY;
     textarea.style.height = "auto";
-    const nextHeight = Math.min(textarea.scrollHeight, maxHeight);
+    const nextHeight = Math.min(textarea.scrollHeight, limit);
     textarea.style.height = `${String(nextHeight)}px`;
-    textarea.style.overflowY =
-        textarea.scrollHeight > maxHeight ? "auto" : "hidden";
+    textarea.style.overflowY = textarea.scrollHeight > limit ? "auto" : "hidden";
 }
 export function AutoGrowTextarea({ maxHeight = 240, onInput, rows = 2, className, style, value, defaultValue, ref, ...props }) {
     const textareaRef = useRef(null);
@@ -45,7 +45,7 @@ export function AutoGrowTextarea({ maxHeight = 240, onInput, rows = 2, className
             ...style,
             height: "auto",
             minHeight: 0,
-            maxHeight,
+            maxHeight: maxHeight ?? undefined,
             overflowY: "hidden",
             resize: "none",
         } }));

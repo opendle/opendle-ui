@@ -190,9 +190,42 @@ try {
       await second.fill("@lea.fontaine Soon ");
       await page.getByRole("button", { name: "Emoji" }).click();
       const grid = page.getByRole("group", { name: "Emoji" });
+      // The grid is fixed to the window: no container cuts it.
+      const gridBox = await grid.boundingBox();
+      const viewport = page.viewportSize();
+      assert.ok(
+        gridBox.y >= 0 &&
+          gridBox.y + gridBox.height <= viewport.height &&
+          gridBox.x >= 0 &&
+          gridBox.x + gridBox.width <= viewport.width,
+        `the emoji grid is in the window: ${JSON.stringify(gridBox)}`,
+      );
+      assert.equal(
+        await grid.evaluate((element) => {
+          const box = element.getBoundingClientRect();
+          return element.contains(
+            document.elementFromPoint(box.left + 10, box.bottom - 10),
+          );
+        }),
+        true,
+        "the last row of the grid is on top",
+      );
       await audit(page, `${name}-emoji`);
       await grid.getByRole("button").first().click();
       assert.equal(await second.inputValue(), "@lea.fontaine Soon 🧡");
+      // The reply box grows with all its lines and never scrolls.
+      await second.fill(
+        Array.from({ length: 30 }, (_, line) => `Line ${String(line)}`).join(
+          "\n",
+        ),
+      );
+      assert.equal(
+        await second.evaluate(
+          (element) => element.scrollHeight <= element.clientHeight + 1,
+        ),
+        true,
+        "the reply box shows all lines",
+      );
       // A failed send keeps the text.
       await second.fill("fail");
       await second.press("Enter");

@@ -6,20 +6,21 @@ import type {
 } from "react";
 
 export interface AutoGrowTextareaProps extends TextareaHTMLAttributes<HTMLTextAreaElement> {
-  readonly maxHeight?: number;
+  /** The height at which the text scrolls. `null` grows with all the text. */
+  readonly maxHeight?: number | null;
   readonly ref?: Ref<HTMLTextAreaElement>;
 }
 
 function resizeTextarea(
   textarea: HTMLTextAreaElement | null,
-  maxHeight: number,
+  maxHeight: number | null,
 ) {
   if (!textarea) return;
+  const limit = maxHeight ?? Number.POSITIVE_INFINITY;
   textarea.style.height = "auto";
-  const nextHeight = Math.min(textarea.scrollHeight, maxHeight);
+  const nextHeight = Math.min(textarea.scrollHeight, limit);
   textarea.style.height = `${String(nextHeight)}px`;
-  textarea.style.overflowY =
-    textarea.scrollHeight > maxHeight ? "auto" : "hidden";
+  textarea.style.overflowY = textarea.scrollHeight > limit ? "auto" : "hidden";
 }
 
 export function AutoGrowTextarea({
@@ -80,7 +81,7 @@ export function AutoGrowTextarea({
         ...style,
         height: "auto",
         minHeight: 0,
-        maxHeight,
+        maxHeight: maxHeight ?? undefined,
         overflowY: "hidden",
         resize: "none",
       }}

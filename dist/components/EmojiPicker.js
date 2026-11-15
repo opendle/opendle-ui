@@ -1,13 +1,46 @@
 import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
-import { useCallback, useEffect, useId, useRef, useState, } from "react";
+import { useCallback, useEffect, useId, useLayoutEffect, useRef, useState, } from "react";
 import { conversationEmoji } from "./conversationLabels.js";
 import { Icon } from "./Icon.js";
 import { IconButton } from "./IconButton.js";
+const gap = 4;
+const margin = 8;
+/**
+ * Put the grid below the button, or above it when the window has no room
+ * below. The grid is fixed to the window, so a container that hides its
+ * overflow does not cut it.
+ */
+function place(button, grid) {
+    const bounds = button.getBoundingClientRect();
+    const height = grid.offsetHeight;
+    const width = grid.offsetWidth;
+    const below = bounds.bottom + gap + height <= window.innerHeight - margin;
+    grid.style.top = `${String(below ? bounds.bottom + gap : Math.max(margin, bounds.top - gap - height))}px`;
+    grid.style.left = `${String(Math.max(margin, Math.min(bounds.left, window.innerWidth - width - margin)))}px`;
+    grid.dataset.side = below ? "below" : "above";
+}
 /** A button that opens a small grid of emoji. */
 export function EmojiPicker({ disabled = false, emoji = conversationEmoji, label, onSelect, }) {
     const [open, setOpen] = useState(false);
     const rootRef = useRef(null);
+    const gridRef = useRef(null);
     const gridId = useId();
+    useLayoutEffect(() => {
+        const button = rootRef.current?.querySelector("button");
+        const grid = gridRef.current;
+        if (!open || !button || !grid)
+            return undefined;
+        const update = () => {
+            place(button, grid);
+        };
+        update();
+        window.addEventListener("resize", update);
+        window.addEventListener("scroll", update, true);
+        return () => {
+            window.removeEventListener("resize", update);
+            window.removeEventListener("scroll", update, true);
+        };
+    }, [open]);
     useEffect(() => {
         if (!open)
             return undefined;
@@ -23,7 +56,8 @@ export function EmojiPicker({ disabled = false, emoji = conversationEmoji, label
         };
     }, [open]);
     const focusFirst = useCallback((grid) => {
-        grid?.querySelector("button")?.focus();
+        gridRef.current = grid;
+        grid?.querySelector("button")?.focus({ preventScroll: true });
     }, []);
     const closeOnEscape = (event) => {
         if (event.key !== "Escape")
