@@ -10039,6 +10039,34 @@ button.od-message-action:hover {
   stroke: var(--od-color-surface);
 }
 
+/* A level that continues: one stacked area for each series. */
+.od-chart-area {
+  fill: var(--od-chart-color);
+  fill-opacity: 0.3;
+}
+
+.od-chart-line {
+  fill: none;
+  stroke: var(--od-chart-color);
+  stroke-linejoin: round;
+  stroke-width: 1.75;
+}
+
+[data-active="true"] > .od-chart-area {
+  fill-opacity: 0.5;
+}
+
+.od-chart-cursor {
+  stroke: var(--od-color-border-strong);
+  stroke-dasharray: 3 3;
+}
+
+.od-chart-point {
+  fill: var(--od-chart-color);
+  stroke: var(--od-color-surface);
+  stroke-width: 2;
+}
+
 .od-chart-key-list {
   margin: 0;
   padding: 0;
@@ -10122,6 +10150,19 @@ button.od-message-action:hover {
   white-space: nowrap;
 }
 
+/* The series under the pointer. */
+.od-chart-tooltip-row[data-active="true"] {
+  margin-inline: -6px;
+  padding-inline: 6px;
+  border-radius: 4px;
+  background: var(--od-color-hover);
+  color: var(--od-color-foreground);
+}
+
+.od-chart-tooltip-row[data-active="true"] .od-chart-key {
+  height: 10px;
+}
+
 .od-chart-tooltip-row b {
   min-width: 2.5em;
   color: var(--od-color-foreground);
@@ -10130,7 +10171,8 @@ button.od-message-action:hover {
 }
 
 @media (forced-colors: active) {
-  .od-chart-bar {
+  .od-chart-bar,
+  .od-chart-line {
     stroke: CanvasText;
   }
 }

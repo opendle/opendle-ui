@@ -162,6 +162,27 @@ test("StackedBarChart has a legend and a table with all values", () => {
   );
 });
 
+test("an area chart stacks a level that continues", () => {
+  const markup = render(StackedBarChart, {
+    label: "Followers",
+    variant: "area",
+    days: ["2026-11-12", "2026-11-13", "2026-11-14"],
+    series: [
+      { id: "a", label: "YouTube", slot: 0, values: [100, null, 120] },
+      { id: "b", label: "X", slot: 1, values: [null, 50, 60] },
+    ],
+  });
+  assert.doesNotMatch(markup, /od-chart-bar/);
+  assert.equal(markup.match(/class="od-chart-area"/g).length, 2);
+  assert.equal(markup.match(/class="od-chart-line"/g).length, 2);
+  assert.match(markup, /data-variant="area"/);
+  // The table keeps the values that the host gave.
+  assert.match(
+    markup,
+    /<th scope="row">2026-11-13<\/th><td><\/td><td>50<\/td><td>150<\/td>/,
+  );
+});
+
 test("a preset range ends at the current day", () => {
   assert.deepEqual(lastDays("2026-11-14", 30), {
     from: "2026-10-16",

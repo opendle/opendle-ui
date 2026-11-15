@@ -47,7 +47,10 @@ reply box (`ReplyComposer`: suggestions, a textarea that grows, emoji, a
 character counter; Enter sends and Shift+Enter adds a line). `InboxList` lists
 messages as links. `StackedBarChart` shows one value for each day, stacked by
 series; a series keeps its colour slot when a filter changes the list, and
-the tenth and later series become one neutral series. `ChartLegend` is one
+the tenth and later series become one neutral series. `variant="area"` draws
+a level that continues, for example followers, as a stacked area; a day
+without a value keeps the last value. The values of the hovered day list the
+top of the stack first and mark the series under the pointer. `ChartLegend` is one
 legend for several charts. `DateRangeControl` and `RecordTable`
 complete an analytics view.
 

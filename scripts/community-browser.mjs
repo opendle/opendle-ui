@@ -67,6 +67,8 @@ function App() {
         <Card padded><StackedBarChart label="Comments by channel" days={days} locale="en-GB"
           series={series.slice(0, 2).map((entry) => ({...entry, total: "0", values: days.map(() => 0)}))}/></Card>
         <Card padded><StackedBarChart label="Likes by channel" days={days} locale="en-GB" series={[]}/></Card>
+        <Card padded><StackedBarChart label="Followers by channel" variant="area" days={days} locale="en-GB"
+          series={series.slice(0, 4).map((entry) => ({...entry, values: entry.values.map((value, day) => value === null ? null : 1000 + entry.slot * 400 + day * 10)}))}/></Card>
       </Section>
       <RecordTable label="Best posts" onOpen={setOpened}
         columns={[{id: "post", label: "Post"}, {id: "views", label: "Views", numeric: true}, {id: "likes", label: "Reactions", numeric: true}]}
@@ -254,6 +256,26 @@ try {
       assert.equal(await tip.locator(".od-chart-tooltip-row").count(), 10);
       const tipBox = await tip.boundingBox();
       assert.ok(tipBox.x >= 0 && tipBox.x + tipBox.width <= width);
+      // The series under the pointer is marked in the values of the day.
+      const under = (x, y) =>
+        page.evaluate(
+          ([pointX, pointY]) =>
+            document
+              .elementFromPoint(pointX, pointY)
+              ?.closest("[data-slot]")
+              ?.getAttribute("data-slot") ?? null,
+          [x, y],
+        );
+      const marked = async (scope) =>
+        scope
+          .locator('.od-chart-tooltip-row[data-active="true"] .od-chart-key')
+          .evaluateAll((keys) => keys.map((key) => key.dataset.slot));
+      const barSlot = await under(
+        plot.x + plot.width / 3,
+        plot.y + plot.height / 2,
+      );
+      assert.notEqual(barSlot, null);
+      assert.deepEqual(await marked(figure), [barSlot]);
       await audit(page, `${name}-chart`);
       await page.mouse.move(0, 0);
       await chart.focus();
@@ -267,6 +289,35 @@ try {
       await page.keyboard.press("Escape");
       await tip.waitFor({ state: "detached" });
       assert.equal(await figure.locator("table tbody tr").count(), 30);
+
+      // A level that continues is a stacked area, with the same marks.
+      const followers = page.getByRole("img", { name: "Followers by channel" });
+      const followersFigure = page.locator("figure.od-chart", {
+        has: followers,
+      });
+      await followers.scrollIntoViewIfNeeded();
+      assert.equal(await followers.locator(".od-chart-bar").count(), 0);
+      assert.equal(await followers.locator(".od-chart-area").count(), 4);
+      const areaBox = await followers.boundingBox();
+      // The lowest area at the right half of the chart, near the axis.
+      const areaX = areaBox.x + areaBox.width * 0.75;
+      const areaY = areaBox.y + areaBox.height - 40;
+      await page.mouse.move(areaX, areaY);
+      await followersFigure.locator(".od-chart-tooltip").waitFor();
+      assert.equal(await followers.locator(".od-chart-point").count(), 4);
+      const areaSlot = await under(areaX, areaY);
+      assert.equal(areaSlot, "0");
+      assert.deepEqual(await marked(followersFigure), ["0"]);
+      // The top of the stack is the first value of the day.
+      assert.equal(
+        await followersFigure
+          .locator(".od-chart-tooltip-row .od-chart-key")
+          .first()
+          .getAttribute("data-slot"),
+        "3",
+      );
+      await audit(page, `${name}-area-chart`);
+      await page.mouse.move(0, 0);
 
       // A chart without values keeps its axis and its day labels.
       for (const emptyName of ["Comments by channel", "Likes by channel"]) {
