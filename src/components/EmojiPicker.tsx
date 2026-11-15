@@ -9,6 +9,7 @@ import {
 } from "react";
 
 import { conversationEmoji } from "./conversationLabels.js";
+import { emojiData, searchEmoji } from "./emojiData.js";
 import { Icon } from "./Icon.js";
 import { IconButton } from "./IconButton.js";
 
@@ -16,8 +17,13 @@ export interface EmojiPickerProps {
   /** The accessible name of the button. */
   readonly label: string;
   readonly onSelect: (emoji: string) => void;
+  /** The emoji that come first when the search field is empty. */
   readonly emoji?: readonly string[];
   readonly disabled?: boolean;
+  /** The accessible name of the search field. */
+  readonly searchLabel?: string;
+  /** The text when no emoji has the words of the search. */
+  readonly emptyLabel?: string;
 }
 
 const gap = 4;
@@ -38,16 +44,23 @@ function place(button: HTMLElement, grid: HTMLElement) {
   grid.dataset.side = below ? "below" : "above";
 }
 
-/** A button that opens a small grid of emoji. */
+/** A button that opens a grid of emoji with a search field. */
 export function EmojiPicker({
   disabled = false,
   emoji = conversationEmoji,
+  emptyLabel = "No emoji",
   label,
   onSelect,
+  searchLabel = "Search emoji",
 }: EmojiPickerProps) {
   const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const shown =
+    query.trim() === ""
+      ? [...new Set([...emoji, ...emojiData.map(([entry]) => entry)])]
+      : searchEmoji(query);
   const rootRef = useRef<HTMLSpanElement>(null);
-  const gridRef = useRef<HTMLFieldSetElement>(null);
+  const gridRef = useRef<HTMLDivElement>(null);
   const gridId = useId();
 
   useLayoutEffect(() => {
@@ -82,17 +95,26 @@ export function EmojiPicker({
     };
   }, [open]);
 
-  const focusFirst = useCallback((grid: HTMLFieldSetElement | null) => {
-    gridRef.current = grid;
-    grid?.querySelector<HTMLElement>("button")?.focus({ preventScroll: true });
+  const focusSearch = useCallback((panel: HTMLDivElement | null) => {
+    gridRef.current = panel;
+    panel?.querySelector<HTMLElement>("input")?.focus({ preventScroll: true });
   }, []);
 
-  const closeOnEscape = (event: KeyboardEvent<HTMLButtonElement>) => {
+  const close = () => {
+    setOpen(false);
+    setQuery("");
+    rootRef.current?.querySelector<HTMLElement>("button")?.focus();
+  };
+  const choose = (entry: string) => {
+    setOpen(false);
+    setQuery("");
+    onSelect(entry);
+  };
+  const closeOnEscape = (event: KeyboardEvent<HTMLElement>) => {
     if (event.key !== "Escape") return;
     event.preventDefault();
     event.stopPropagation();
-    setOpen(false);
-    rootRef.current?.querySelector<HTMLElement>("button")?.focus();
+    close();
   };
 
   return (
@@ -108,26 +130,44 @@ export function EmojiPicker({
         }}
       />
       {open ? (
-        <fieldset
-          aria-label={label}
-          className="od-emoji-grid"
-          id={gridId}
-          ref={focusFirst}
-        >
-          {emoji.map((entry) => (
-            <button
-              key={entry}
-              onKeyDown={closeOnEscape}
-              onClick={() => {
-                setOpen(false);
-                onSelect(entry);
-              }}
-              type="button"
-            >
-              {entry}
-            </button>
-          ))}
-        </fieldset>
+        <div className="od-emoji-panel" id={gridId} ref={focusSearch}>
+          <input
+            aria-label={searchLabel}
+            className="od-emoji-search"
+            onChange={(event) => {
+              setQuery(event.currentTarget.value);
+            }}
+            onKeyDown={(event) => {
+              closeOnEscape(event);
+              const first = shown[0];
+              if (event.key === "Enter" && first !== undefined) {
+                event.preventDefault();
+                choose(first);
+              }
+            }}
+            placeholder={searchLabel}
+            type="search"
+            value={query}
+          />
+          {shown.length === 0 ? (
+            <p className="od-emoji-empty">{emptyLabel}</p>
+          ) : (
+            <fieldset aria-label={label} className="od-emoji-grid">
+              {shown.map((entry) => (
+                <button
+                  key={entry}
+                  onKeyDown={closeOnEscape}
+                  onClick={() => {
+                    choose(entry);
+                  }}
+                  type="button"
+                >
+                  {entry}
+                </button>
+              ))}
+            </fieldset>
+          )}
+        </div>
       ) : null}
     </span>
   );

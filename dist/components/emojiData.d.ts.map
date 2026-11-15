@@ -1,0 +1,1 @@
+{"version":3,"file":"emojiData.d.ts","sourceRoot":"","sources":["../../src/components/emojiData.ts"],"names":[],"mappings":"AAAA;;;;GAIG;AACH,eAAO,MAAM,SAAS,EAAE,SAAS,CAAC,SAAS,CAAC,MAAM,EAAE,MAAM,CAAC,CAAC,EAwI3D,CAAC;AAEF,sEAAsE;AACtE,wBAAgB,WAAW,CACzB,KAAK,EAAE,MAAM,EACb,IAAI,GAAE,SAAS,CAAC,SAAS,CAAC,MAAM,EAAE,MAAM,CAAC,CAAC,EAAc,GACvD,SAAS,MAAM,EAAE,CASnB"}

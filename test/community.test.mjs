@@ -11,6 +11,7 @@ import {
   foldSeries,
   lastDays,
 } from "../dist/index.js";
+import { searchEmoji } from "../dist/components/emojiData.js";
 
 const render = (type, props) =>
   renderToStaticMarkup(React.createElement(type, props));
@@ -204,4 +205,12 @@ test("ChartLegend names each series with its colour slot", () => {
     markup,
     /data-slot="2"><\/i><span class="od-chart-name">YouTube<\/span><\/li>/,
   );
+});
+
+test("the emoji search matches the start of each word", () => {
+  assert.ok(searchEmoji("music").includes("🎵"));
+  assert.ok(searchEmoji("hea lov").includes("🧡"));
+  assert.ok(!searchEmoji("heart").includes("🎵"));
+  assert.deepEqual(searchEmoji("zzz"), []);
+  assert.ok(searchEmoji(" ").length > 100);
 });

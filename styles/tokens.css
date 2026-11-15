@@ -9671,6 +9671,31 @@ html:has(.od-dialog:modal) {
   white-space: pre-line;
 }
 
+/* A long text shows its first lines; a button shows all of it. */
+.od-conversation-post-text:not([data-expanded="true"]) {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 6;
+  line-clamp: 6;
+}
+
+.od-conversation-post-more {
+  margin-top: 2px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--od-color-muted);
+  font: inherit;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.od-conversation-post-more:hover {
+  color: var(--od-color-foreground);
+}
+
 .od-conversation-post-stats {
   display: flex;
   flex-wrap: wrap;
@@ -9886,20 +9911,55 @@ button.od-message-action:hover {
 }
 
 /* Fixed to the window: a container that hides its overflow does not cut it. */
-.od-emoji-grid {
+.od-emoji-panel {
   position: fixed;
   z-index: 60;
   top: 0;
   left: 0;
   display: grid;
   width: max-content;
-  margin: 0;
+  gap: 6px;
   padding: 6px;
-  grid-template-columns: repeat(8, 34px);
   border: 1px solid var(--od-color-border);
   border-radius: var(--od-radius-lg);
   background: var(--od-color-surface);
   box-shadow: var(--od-shadow);
+}
+
+.od-emoji-search {
+  width: 100%;
+  min-height: 34px;
+  padding: 0 10px;
+  border: 1px solid var(--od-color-border);
+  border-radius: var(--od-radius-md);
+  background: var(--od-color-background);
+  color: var(--od-color-foreground);
+  font: inherit;
+  font-size: 0.875rem;
+}
+
+.od-emoji-search:focus-visible {
+  outline: 2px solid var(--od-color-focus);
+  outline-offset: 1px;
+}
+
+.od-emoji-grid {
+  display: grid;
+  max-height: 222px;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  grid-template-columns: repeat(8, 34px);
+  border: 0;
+  overscroll-behavior: contain;
+}
+
+.od-emoji-empty {
+  width: calc(8 * 34px);
+  margin: 0;
+  padding: 10px 4px;
+  color: var(--od-color-muted);
+  font-size: 0.8125rem;
 }
 
 .od-emoji-grid button {

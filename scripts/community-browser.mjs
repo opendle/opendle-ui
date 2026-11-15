@@ -57,7 +57,7 @@ function App() {
           onIgnore={(id) => patch(id, {state: "ignored"})}
           onRestore={(id) => patch(id, {state: "new"})}
           post={<ConversationPost network="instagram" title="Take Me With You" when="10 Nov, 12:30"
-            text="The night we wrote the chorus, nobody wanted to go home." stats={["18.4K views", "1,204 likes", "37 comments"]} url="https://example.com/p"/>}/>
+            text={["The night we wrote the chorus, nobody wanted to go home.", "", "Full video on YouTube.", "Lyrics:", "Take me with you", "Into the night", "Where the city sleeps", "And the radio plays"].join("\\n")} stats={["18.4K views", "1,204 likes", "37 comments"]} url="https://example.com/p"/>}/>
       </Card>
       <Section title="Views" actions={<DateRangeControl label="Period" fromLabel="From" toLabel="To" today="2026-11-14" value={range} onChange={setRange}
         presets={[{days: 7, label: "7 days"}, {days: 30, label: "30 days"}, {days: 90, label: "90 days"}]}/>}>
@@ -186,10 +186,36 @@ try {
       await page.getByText("61 / 60").waitFor();
       await second.press("Enter");
       assert.equal(await page.evaluate(() => window.sent.length), 1);
+      // A long post shows its first lines; More shows all of them.
+      const postText = page.locator(".od-conversation-post-text");
+      const short = (await postText.boundingBox()).height;
+      await page.getByRole("button", { name: "More" }).click();
+      assert.equal(
+        await page
+          .locator(".od-conversation-post-more")
+          .getAttribute("aria-expanded"),
+        "true",
+      );
+      assert.ok((await postText.boundingBox()).height > short + 20);
+      await page.getByRole("button", { name: "Less" }).click();
+      assert.ok(Math.abs((await postText.boundingBox()).height - short) <= 1);
       // The emoji button adds an emoji at the caret.
       await second.fill("@lea.fontaine Soon ");
       await page.getByRole("button", { name: "Emoji" }).click();
       const grid = page.getByRole("group", { name: "Emoji" });
+      // The search field finds an emoji by its words; Enter takes the first.
+      const search = page.getByRole("searchbox", { name: "Search emoji" });
+      assert.equal(
+        await search.evaluate((element) => element === document.activeElement),
+        true,
+      );
+      await search.fill("guitar");
+      assert.deepEqual(await grid.getByRole("button").allTextContents(), [
+        "🎸",
+      ]);
+      await search.fill("zzz");
+      await page.getByText("No emoji").waitFor();
+      await search.fill("");
       // The grid is fixed to the window: no container cuts it.
       const gridBox = await grid.boundingBox();
       const viewport = page.viewportSize();

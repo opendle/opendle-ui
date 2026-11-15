@@ -45,7 +45,10 @@ the colour of the change. `CalendarEntry` is one calendar entry for a list outsi
 
 `Conversation` shows the comments of a post in thread order with one open
 reply box (`ReplyComposer`: suggestions, a textarea that grows, emoji, a
-character counter; Enter sends and Shift+Enter adds a line). `InboxList` lists
+character counter; Enter sends and Shift+Enter adds a line). The emoji
+picker has a search field: each word matches the start of a word of an
+emoji, and Enter takes the first. `ConversationPost` shows the first six
+lines of a long text, with a More button for all of it. `InboxList` lists
 messages as links. `StackedBarChart` shows one value for each day, stacked by
 series; a series keeps its colour slot when a filter changes the list, and
 the tenth and later series become one neutral series. `variant="area"` draws
