@@ -12,13 +12,11 @@ import { TagChip } from "./TagChip.js";
 
 export interface TagFilterBarProps {
   readonly channels: readonly TagFilterChannel[];
-  readonly channelTags: readonly string[];
-  readonly postTags: readonly string[];
+  readonly tags: readonly string[];
+  /** The colour key, from 1 to 12, of each tag. */
+  readonly tagColors?: TagColors;
   readonly value: TagFilterValue;
   readonly onChange: (value: TagFilterValue) => void;
-  /** The colour key of each channel tag and of each post tag. */
-  readonly channelTagColors?: TagColors;
-  readonly postTagColors?: TagColors;
   readonly labels?: TagFilterLabels;
   readonly className?: string;
 }
@@ -32,27 +30,19 @@ function toggled(list: readonly string[], item: string): readonly string[] {
 }
 
 /**
- * Filters for channels, channel tags and post tags, with the AND or OR logic
- * of the tags. A group with no entry does not show.
+ * Filters for channels and tags, with the AND or OR logic of the tags. A
+ * group with no entry does not show.
  */
 export function TagFilterBar({
-  channelTagColors = noColors,
-  channelTags,
   channels,
   className,
   labels = tagFilterLabels,
   onChange,
-  postTagColors = noColors,
-  postTags,
+  tagColors = noColors,
+  tags,
   value,
 }: TagFilterBarProps) {
-  if (
-    channels.length === 0 &&
-    channelTags.length === 0 &&
-    postTags.length === 0
-  ) {
-    return null;
-  }
+  if (channels.length === 0 && tags.length === 0) return null;
   return (
     <fieldset
       aria-label={labels.filters}
@@ -88,51 +78,26 @@ export function TagFilterBar({
           </span>
         </fieldset>
       )}
-      {channelTags.length === 0 ? null : (
-        <fieldset
-          aria-label={labels.channelTags}
-          className="od-tag-filter-group"
-        >
+      {tags.length === 0 ? null : (
+        <fieldset aria-label={labels.tags} className="od-tag-filter-group">
           <span aria-hidden="true" className="od-tag-filter-label">
-            {labels.channelTags}
+            {labels.tags}
           </span>
-          {channelTags.map((tag) => (
+          {tags.map((tag) => (
             <TagChip
-              color={channelTagColors[tag]}
+              color={tagColors[tag]}
               key={tag}
               onPressedChange={() => {
-                onChange({
-                  ...value,
-                  channelTags: toggled(value.channelTags, tag),
-                });
+                onChange({ ...value, tags: toggled(value.tags, tag) });
               }}
-              pressed={value.channelTags.includes(tag)}
+              pressed={value.tags.includes(tag)}
             >
               #{tag}
             </TagChip>
           ))}
         </fieldset>
       )}
-      {postTags.length === 0 ? null : (
-        <fieldset aria-label={labels.postTags} className="od-tag-filter-group">
-          <span aria-hidden="true" className="od-tag-filter-label">
-            {labels.postTags}
-          </span>
-          {postTags.map((tag) => (
-            <TagChip
-              color={postTagColors[tag]}
-              key={tag}
-              onPressedChange={() => {
-                onChange({ ...value, postTags: toggled(value.postTags, tag) });
-              }}
-              pressed={value.postTags.includes(tag)}
-            >
-              #{tag}
-            </TagChip>
-          ))}
-        </fieldset>
-      )}
-      {channelTags.length + postTags.length === 0 ? null : (
+      {tags.length === 0 ? null : (
         <SegmentedControl
           className="od-tag-filter-match"
           label={labels.match}

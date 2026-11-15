@@ -86,8 +86,8 @@ function App() {
           onPrevious: () => setAnchor(shiftCalendarAnchor(mode, anchor, -1)),
           onNext: () => setAnchor(shiftCalendarAnchor(mode, anchor, 1)),
         })}/>
-      <TagFilterBar channels={channels} channelTags={["short","long"]}
-        postTags={["take-me-with-you","paper-lanterns","low-tide"]} value={filter} onChange={setFilter}/>
+      <TagFilterBar channels={channels} tags={["short","long","take-me-with-you","paper-lanterns","low-tide"]}
+        tagColors={{short: 8, long: 3, "take-me-with-you": 1, "paper-lanterns": 5, "low-tide": 7}} value={filter} onChange={setFilter}/>
       <CalendarBoard mode={mode} anchor={anchor} today={today} items={items} locale="en-GB"
         onSelect={(item) => { setRetried(false); setSelected(item); }}
         hasEarlier={!empty && earlier < 3} onLoadEarlier={() => setEarlier((value) => Math.min(3, value + 1))}/>
@@ -183,6 +183,21 @@ try {
       assert.equal(await pinterest.getAttribute("aria-pressed"), "true");
       assert.equal(await page.locator(".od-calendar-item").count(), 16);
       await pinterest.click();
+      // One group of tags, each in its colour.
+      const tagGroup = page.getByRole("group", { name: "Tags", exact: true });
+      assert.equal(await tagGroup.getByRole("button").count(), 5);
+      assert.equal(
+        await page
+          .getByRole("group", { name: /Channel tags|Post tags/ })
+          .count(),
+        0,
+      );
+      assert.equal(
+        await tagGroup
+          .getByRole("button", { name: "#short" })
+          .getAttribute("data-color"),
+        "8",
+      );
       const logic = page.getByRole("group", { name: "Tag logic" });
       await logic.getByRole("button", { name: "OR" }).click();
       assert.equal(

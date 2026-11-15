@@ -22,15 +22,13 @@ export const postDetailLabels = {
 };
 export const emptyTagFilter = {
     channels: [],
-    channelTags: [],
-    postTags: [],
+    tags: [],
     match: "all",
 };
 export const tagFilterLabels = {
     filters: "Filters",
     channels: "Channels",
-    channelTags: "Channel tags",
-    postTags: "Post tags",
+    tags: "Tags",
     match: "Tag logic",
     matchAll: "AND",
     matchAny: "OR",

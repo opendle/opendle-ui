@@ -11,28 +11,20 @@ function toggled(list, item) {
         : [...list, item];
 }
 /**
- * Filters for channels, channel tags and post tags, with the AND or OR logic
- * of the tags. A group with no entry does not show.
+ * Filters for channels and tags, with the AND or OR logic of the tags. A
+ * group with no entry does not show.
  */
-export function TagFilterBar({ channelTagColors = noColors, channelTags, channels, className, labels = tagFilterLabels, onChange, postTagColors = noColors, postTags, value, }) {
-    if (channels.length === 0 &&
-        channelTags.length === 0 &&
-        postTags.length === 0) {
+export function TagFilterBar({ channels, className, labels = tagFilterLabels, onChange, tagColors = noColors, tags, value, }) {
+    if (channels.length === 0 && tags.length === 0)
         return null;
-    }
     return (_jsxs("fieldset", { "aria-label": labels.filters, className: classes("od-tag-filter", className), children: [channels.length === 0 ? null : (_jsxs("fieldset", { "aria-label": labels.channels, className: "od-tag-filter-group", children: [_jsx("span", { "aria-hidden": "true", className: "od-tag-filter-label", children: labels.channels }), _jsx("span", { className: "od-tag-filter-channels", "data-filtered": value.channels.length > 0, children: channels.map((channel) => (_jsx("button", { "aria-label": channel.label, "aria-pressed": value.channels.includes(channel.id), className: "od-tag-filter-channel", onClick: () => {
                                 onChange({
                                     ...value,
                                     channels: toggled(value.channels, channel.id),
                                 });
-                            }, title: channel.label, type: "button", children: _jsx(NetworkIcon, { badge: true, network: channel.network }) }, channel.id))) })] })), channelTags.length === 0 ? null : (_jsxs("fieldset", { "aria-label": labels.channelTags, className: "od-tag-filter-group", children: [_jsx("span", { "aria-hidden": "true", className: "od-tag-filter-label", children: labels.channelTags }), channelTags.map((tag) => (_jsxs(TagChip, { color: channelTagColors[tag], onPressedChange: () => {
-                            onChange({
-                                ...value,
-                                channelTags: toggled(value.channelTags, tag),
-                            });
-                        }, pressed: value.channelTags.includes(tag), children: ["#", tag] }, tag)))] })), postTags.length === 0 ? null : (_jsxs("fieldset", { "aria-label": labels.postTags, className: "od-tag-filter-group", children: [_jsx("span", { "aria-hidden": "true", className: "od-tag-filter-label", children: labels.postTags }), postTags.map((tag) => (_jsxs(TagChip, { color: postTagColors[tag], onPressedChange: () => {
-                            onChange({ ...value, postTags: toggled(value.postTags, tag) });
-                        }, pressed: value.postTags.includes(tag), children: ["#", tag] }, tag)))] })), channelTags.length + postTags.length === 0 ? null : (_jsx(SegmentedControl, { className: "od-tag-filter-match", label: labels.match, onChange: (match) => {
+                            }, title: channel.label, type: "button", children: _jsx(NetworkIcon, { badge: true, network: channel.network }) }, channel.id))) })] })), tags.length === 0 ? null : (_jsxs("fieldset", { "aria-label": labels.tags, className: "od-tag-filter-group", children: [_jsx("span", { "aria-hidden": "true", className: "od-tag-filter-label", children: labels.tags }), tags.map((tag) => (_jsxs(TagChip, { color: tagColors[tag], onPressedChange: () => {
+                            onChange({ ...value, tags: toggled(value.tags, tag) });
+                        }, pressed: value.tags.includes(tag), children: ["#", tag] }, tag)))] })), tags.length === 0 ? null : (_jsx(SegmentedControl, { className: "od-tag-filter-match", label: labels.match, onChange: (match) => {
                     onChange({ ...value, match });
                 }, options: [
                     { value: "all", label: labels.matchAll },

@@ -59,23 +59,20 @@ export type TagFilterMatch = "all" | "any";
 export interface TagFilterValue {
   /** Selected channel IDs. An empty list selects all channels. */
   readonly channels: readonly string[];
-  readonly channelTags: readonly string[];
-  readonly postTags: readonly string[];
+  readonly tags: readonly string[];
   readonly match: TagFilterMatch;
 }
 
 export const emptyTagFilter: TagFilterValue = {
   channels: [],
-  channelTags: [],
-  postTags: [],
+  tags: [],
   match: "all",
 };
 
 export interface TagFilterLabels {
   readonly filters: string;
   readonly channels: string;
-  readonly channelTags: string;
-  readonly postTags: string;
+  readonly tags: string;
   readonly match: string;
   readonly matchAll: string;
   readonly matchAny: string;
@@ -84,8 +81,7 @@ export interface TagFilterLabels {
 export const tagFilterLabels: TagFilterLabels = {
   filters: "Filters",
   channels: "Channels",
-  channelTags: "Channel tags",
-  postTags: "Post tags",
+  tags: "Tags",
   match: "Tag logic",
   matchAll: "AND",
   matchAny: "OR",

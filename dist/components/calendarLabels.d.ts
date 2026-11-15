@@ -31,16 +31,14 @@ export type TagFilterMatch = "all" | "any";
 export interface TagFilterValue {
     /** Selected channel IDs. An empty list selects all channels. */
     readonly channels: readonly string[];
-    readonly channelTags: readonly string[];
-    readonly postTags: readonly string[];
+    readonly tags: readonly string[];
     readonly match: TagFilterMatch;
 }
 export declare const emptyTagFilter: TagFilterValue;
 export interface TagFilterLabels {
     readonly filters: string;
     readonly channels: string;
-    readonly channelTags: string;
-    readonly postTags: string;
+    readonly tags: string;
     readonly match: string;
     readonly matchAll: string;
     readonly matchAny: string;

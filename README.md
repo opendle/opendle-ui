@@ -64,8 +64,8 @@ holds one message: a new message replaces the old one.
 timeline. One entry can go to several networks and shows one badge for each.
 The week view has a time axis of 24 hours; a row is one half hour and grows
 with its entries. The timeline opens at the present and asks for earlier or later entries
-through `onLoadEarlier` and `onLoadLater`. `TagFilterBar` holds the channel,
-channel tag and post tag selection with the AND or OR logic. The host owns
+through `onLoadEarlier` and `onLoadLater`. `TagFilterBar` holds the channel
+and tag selection with the AND or OR logic. The host owns
 the data and the requests.
 
 Version 0.4.0 is a breaking version:

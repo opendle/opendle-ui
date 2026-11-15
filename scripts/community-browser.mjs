@@ -64,6 +64,9 @@ function App() {
         <ChartLegend label="Channels" items={series.slice(0, 9).map(({id, label, slot}) => ({id, label, slot}))}/>
         <Card padded><StackedBarChart label="Views by channel" days={days} series={series} locale="en-GB"/></Card>
         <p id="range">{range.from} {range.to}</p>
+        <Card padded><StackedBarChart label="Comments by channel" days={days} locale="en-GB"
+          series={series.slice(0, 2).map((entry) => ({...entry, total: "0", values: days.map(() => 0)}))}/></Card>
+        <Card padded><StackedBarChart label="Likes by channel" days={days} locale="en-GB" series={[]}/></Card>
       </Section>
       <RecordTable label="Best posts" onOpen={setOpened}
         columns={[{id: "post", label: "Post"}, {id: "views", label: "Views", numeric: true}, {id: "likes", label: "Reactions", numeric: true}]}
@@ -211,16 +214,14 @@ try {
 
       // The chart: a pointer or the arrow keys give the values of one day.
       const chart = page.getByRole("img", { name: "Views by channel" });
+      const figure = page.locator("figure.od-chart").first();
       await chart.scrollIntoViewIfNeeded();
       assert.equal(
-        await page.locator("figure .od-chart-legend > span").count(),
+        await figure.locator(".od-chart-legend > span").count(),
         10,
         "the tenth and later series are one Other series",
       );
-      await page
-        .locator("figure .od-chart-legend")
-        .getByText("Other")
-        .waitFor();
+      await figure.locator(".od-chart-legend").getByText("Other").waitFor();
       assert.equal(
         await page
           .getByRole("list", { name: "Channels" })
@@ -229,26 +230,26 @@ try {
         9,
       );
       // Nine different colours and one neutral colour.
-      const fills = await page
-        .locator("figure .od-chart-swatch")
+      const fills = await figure
+        .locator(".od-chart-swatch")
         .evaluateAll((marks) =>
           marks.map((mark) => getComputedStyle(mark).backgroundColor),
         );
       assert.equal(new Set(fills).size, 10);
       // Each day has one top segment. Only it is round.
       assert.equal(
-        await page.locator('.od-chart-bar[data-top="true"]').count(),
+        await figure.locator('.od-chart-bar[data-top="true"]').count(),
         30,
       );
       const plot = await chart.boundingBox();
       assert.ok(
         Math.abs(
           plot.width -
-            (await page.locator(".od-chart-plot").boundingBox()).width,
+            (await figure.locator(".od-chart-plot").boundingBox()).width,
         ) <= 1,
       );
       await page.mouse.move(plot.x + plot.width / 3, plot.y + plot.height / 2);
-      const tip = page.locator(".od-chart-tooltip");
+      const tip = figure.locator(".od-chart-tooltip");
       await tip.waitFor();
       assert.equal(await tip.locator(".od-chart-tooltip-row").count(), 10);
       const tipBox = await tip.boundingBox();
@@ -265,7 +266,16 @@ try {
       );
       await page.keyboard.press("Escape");
       await tip.waitFor({ state: "detached" });
-      assert.equal(await page.locator(".od-chart table tbody tr").count(), 30);
+      assert.equal(await figure.locator("table tbody tr").count(), 30);
+
+      // A chart without values keeps its axis and its day labels.
+      for (const emptyName of ["Comments by channel", "Likes by channel"]) {
+        const empty = page.getByRole("img", { name: emptyName });
+        assert.equal(await empty.locator(".od-chart-bar").count(), 0);
+        assert.equal(await empty.locator(".od-chart-axis").count(), 1);
+        assert.ok((await empty.locator(".od-chart-tick").count()) >= 4);
+        assert.ok((await empty.boundingBox()).height >= 190);
+      }
 
       // The period: a preset and the date inputs.
       await page.getByRole("button", { name: "7 days" }).click();

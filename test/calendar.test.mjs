@@ -188,34 +188,30 @@ test("SegmentedControl marks the selected choice", () => {
   assert.match(markup, /<button aria-pressed="true" type="button">OR</);
 });
 
-test("TagFilterBar shows only the groups that have entries", () => {
+test("TagFilterBar has one group of tags and shows only groups with entries", () => {
   const props = { value: emptyTagFilter, onChange: () => undefined };
-  assert.equal(
-    render(TagFilterBar, {
-      ...props,
-      channels: [],
-      channelTags: [],
-      postTags: [],
-    }),
-    "",
-  );
+  assert.equal(render(TagFilterBar, { ...props, channels: [], tags: [] }), "");
   const channelsOnly = render(TagFilterBar, {
     ...props,
     channels: [{ id: "c1", network: "youtube", label: "YouTube" }],
-    channelTags: [],
-    postTags: [],
+    tags: [],
   });
   assert.match(channelsOnly, /aria-label="YouTube" aria-pressed="false"/);
   assert.doesNotMatch(channelsOnly, /Tag logic/);
   const full = render(TagFilterBar, {
     ...props,
-    value: { ...emptyTagFilter, channels: ["c1"], postTags: ["reel"] },
+    value: { ...emptyTagFilter, channels: ["c1"], tags: ["reel"] },
     channels: [{ id: "c1", network: "youtube", label: "YouTube" }],
-    channelTags: ["short"],
-    postTags: ["reel"],
+    tags: ["short", "reel"],
+    tagColors: { reel: 4 },
   });
   assert.match(full, /data-filtered="true"/);
-  assert.match(full, /aria-pressed="true" class="od-tag"[^>]*>#reel</);
+  assert.match(full, /aria-label="Tags"/);
+  assert.doesNotMatch(full, /Channel tags|Post tags/);
+  assert.match(
+    full,
+    /aria-pressed="true" class="od-tag" data-color="4"[^>]*>#reel</,
+  );
   assert.match(full, /aria-pressed="false" class="od-tag"[^>]*>#short</);
   assert.match(full, /aria-label="Tag logic"/);
 });
