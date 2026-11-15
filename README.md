@@ -101,9 +101,9 @@ for the whole post. Targets declare `canReschedule` and an optional
 `scheduleDisabledReason`. The host supplies its form through `scheduleEditor`.
 
 `TagChip` supports `disabled` and a native `title` for unavailable actions.
-Unselected colour tags keep readable text, a transparent fill, and a dashed
-border. `--od-tag-unselected-opacity` controls the fill and border opacity;
-the default is `0.6`.
+Unselected tags use a dashed border and 60% opacity for the complete chip,
+including its text. `--od-tag-unselected-opacity` controls this value. The
+source text colours keep sufficient contrast after the opacity is applied.
 
 Version 0.4.0 is a breaking version:
 

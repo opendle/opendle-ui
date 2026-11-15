@@ -509,10 +509,45 @@ try {
         true,
       );
 
+      // Unselected chips fade as a whole, and the host can change that value.
+      const opacityOf = (chip) =>
+        chip.evaluate((element) => getComputedStyle(element).opacity);
+      const unselectedTag = page.getByRole("button", {
+        name: "#filter-2",
+        exact: true,
+      });
+      const selectedTag = page.getByRole("button", {
+        name: "#filter-1",
+        exact: true,
+      });
+      assert.equal(await opacityOf(unselectedTag), "0.6");
+      assert.equal(await opacityOf(selectedTag), "1");
+      assert.equal(
+        await unselectedTag.evaluate(
+          (element) => getComputedStyle(element).borderStyle,
+        ),
+        "dashed",
+      );
+      await page.evaluate(() =>
+        document.documentElement.style.setProperty(
+          "--od-tag-unselected-opacity",
+          "0.75",
+        ),
+      );
+      assert.equal(await opacityOf(unselectedTag), "0.75");
+      assert.equal(await opacityOf(selectedTag), "1");
+      await page.evaluate(() =>
+        document.documentElement.style.removeProperty(
+          "--od-tag-unselected-opacity",
+        ),
+      );
+
       // A tag chip with a handler is a toggle.
       const chip = page.getByRole("button", { name: "#short" });
+      assert.equal(await opacityOf(chip), "0.6");
       await chip.click();
       assert.equal(await chip.getAttribute("aria-pressed"), "true");
+      assert.equal(await opacityOf(chip), "1");
 
       // The textarea grows with its content.
       const reply = page.getByLabel("Reply");

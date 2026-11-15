@@ -3,6 +3,9 @@
 :root {
   color-scheme: light;
 
+  --od-tag-unselected-opacity: 0.6;
+  --od-tag-unselected-text-base: #000000;
+
   --od-font-body: "DM Sans", system-ui, sans-serif;
   --od-font-display: "Playfair Display", Georgia, serif;
   --od-font-mono: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, monospace;
@@ -98,6 +101,8 @@
 @media (prefers-color-scheme: dark) {
   :root {
     color-scheme: dark;
+
+    --od-tag-unselected-text-base: #ffffff;
 
     --od-color-background: #171b1c;
     --od-color-surface: #202627;
@@ -10653,27 +10658,25 @@ button.od-message-action:hover {
   color: var(--od-tag-text);
 }
 
-/* Unselected tags keep both colours and use a dashed outline. */
+/* Fade the complete unselected chip. Stronger source text keeps it readable. */
 button.od-tag[aria-pressed="false"] {
   border-style: dashed;
+  color: var(--od-tag-unselected-text-base);
+  opacity: var(--od-tag-unselected-opacity);
 }
 
 button.od-tag[data-color][aria-pressed="false"] {
-  border-color: color-mix(
+  border-color: var(--od-tag-text);
+  background: var(--od-tag-background);
+  color: color-mix(
     in srgb,
-    var(--od-tag-text) calc(var(--od-tag-unselected-opacity, 0.6) * 100%),
-    transparent
-  );
-  background: color-mix(
-    in srgb,
-    var(--od-tag-background) calc(var(--od-tag-unselected-opacity, 0.6) * 100%),
-    transparent
+    var(--od-tag-text) 10%,
+    var(--od-tag-unselected-text-base)
   );
 }
 
 button.od-tag[data-color]:hover {
   border-color: var(--od-tag-text);
-  color: var(--od-tag-text);
 }
 
 button.od-tag[data-color][aria-pressed="true"] {
@@ -11172,7 +11175,7 @@ button.od-tag[data-color][aria-pressed="true"] {
 
 button.od-tag:disabled {
   cursor: not-allowed;
-  opacity: var(--od-tag-unselected-opacity, 0.8);
+  opacity: var(--od-tag-unselected-opacity);
 }
 
 .od-post-detail-metrics > div {
