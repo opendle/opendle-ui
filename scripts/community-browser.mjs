@@ -213,7 +213,11 @@ try {
       assert.deepEqual(await grid.getByRole("button").allTextContents(), [
         "🎸",
       ]);
-      await search.fill("zzz");
+      await search.fill("flag france");
+      assert.deepEqual(await grid.getByRole("button").allTextContents(), [
+        "🇫🇷",
+      ]);
+      await search.fill("no-such-emoji");
       await page.getByText("No emoji").waitFor();
       await search.fill("");
       // The grid is fixed to the window: no container cuts it.

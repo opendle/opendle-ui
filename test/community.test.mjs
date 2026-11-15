@@ -211,6 +211,30 @@ test("the emoji search matches the start of each word", () => {
   assert.ok(searchEmoji("music").includes("🎵"));
   assert.ok(searchEmoji("hea lov").includes("🧡"));
   assert.ok(!searchEmoji("heart").includes("🎵"));
-  assert.deepEqual(searchEmoji("zzz"), []);
+  assert.deepEqual(searchEmoji("no-such-emoji"), []);
   assert.ok(searchEmoji(" ").length > 100);
+});
+
+test("the emoji search covers all categories", () => {
+  for (const [query, emoji] of [
+    ["yawn", "🥱"],
+    ["woman techn", "👩‍💻"],
+    ["otter", "🦦"],
+    ["broccoli", "🥦"],
+    ["airplane", "✈️"],
+    ["badminton", "🏸"],
+    ["stethoscope", "🩺"],
+    ["recycling", "♻️"],
+    ["flag france", "🇫🇷"],
+    ["  POLAR   BEAR  ", "🐻‍❄️"],
+  ]) {
+    assert.ok(searchEmoji(query).includes(emoji), query);
+  }
+});
+
+test("the emoji grid has a broad list without duplicates", () => {
+  const emoji = searchEmoji("");
+  assert.ok(emoji.length > 1900);
+  assert.equal(new Set(emoji).size, emoji.length);
+  assert.equal(emoji[0], "🧡");
 });
