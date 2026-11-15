@@ -46,7 +46,10 @@ to show it above navigation, in the icon rail, and in a top bar on phones.
 
 `ChannelList` shows connected accounts: name edited in place, tags
 (`TagInput`), switches, the warning for an ended authorization, connect and
-disconnect. `MetricTile` in a `dl.od-metrics` shows a key number with its
+disconnect. Set `connectOpen` and `onConnectOpenChange` to control the connect
+dialog from the host, for example from a navigation link. The list keeps its
+own dialog state when these props are omitted. `readOnly` prevents the dialog
+from opening. `MetricTile` in a `dl.od-metrics` shows a key number with its
 change, and with `points` a small smooth line of the days of the period in
 the colour of the change. `CalendarEntry` is one calendar entry for a list outside the board.
 

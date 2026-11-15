@@ -8,6 +8,9 @@ export interface ChannelListProps {
     readonly connectionProviders?: readonly ChannelConnectionProvider[];
     /** Show the channels without the controls that change them. */
     readonly readOnly?: boolean;
+    /** Control the connect dialog from the host. */
+    readonly connectOpen?: boolean;
+    readonly onConnectOpenChange?: (open: boolean) => void;
     /** The colour key, from 1 to 12, of each tag name. */
     readonly tagColors?: Readonly<Record<string, number>>;
     readonly onRename: (id: string, name: string) => Promise<void>;
@@ -22,5 +25,5 @@ export interface ChannelListProps {
  * The connected accounts of the networks: name, tags, switches, the warning
  * for an ended authorization, and the connect and disconnect actions.
  */
-export declare function ChannelList({ connectionProviders, errorMessage, items, labels, networks, onDisconnect, onPasswordConnect, onRename, onSwitchChange, onTagsChange, readOnly, tagColors, }: ChannelListProps): import("react").JSX.Element;
+export declare function ChannelList({ connectOpen, onConnectOpenChange, connectionProviders, errorMessage, items, labels, networks, onDisconnect, onPasswordConnect, onRename, onSwitchChange, onTagsChange, readOnly, tagColors, }: ChannelListProps): import("react").JSX.Element;
 //# sourceMappingURL=ChannelList.d.ts.map

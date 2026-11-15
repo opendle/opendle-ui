@@ -26,6 +26,9 @@ export interface ChannelListProps {
   readonly connectionProviders?: readonly ChannelConnectionProvider[];
   /** Show the channels without the controls that change them. */
   readonly readOnly?: boolean;
+  /** Control the connect dialog from the host. */
+  readonly connectOpen?: boolean;
+  readonly onConnectOpenChange?: (open: boolean) => void;
   /** The colour key, from 1 to 12, of each tag name. */
   readonly tagColors?: Readonly<Record<string, number>>;
   readonly onRename: (id: string, name: string) => Promise<void>;
@@ -54,6 +57,8 @@ const noConnectionProviders: readonly ChannelConnectionProvider[] = [];
  * for an ended authorization, and the connect and disconnect actions.
  */
 export function ChannelList({
+  connectOpen,
+  onConnectOpenChange,
   connectionProviders = noConnectionProviders,
   errorMessage,
   items,
@@ -87,6 +92,7 @@ export function ChannelList({
             icon={<Icon name="plus" size={15} />}
             onClick={() => {
               setConnection({ network: null });
+              onConnectOpenChange?.(true);
             }}
             variant="secondary"
           >
@@ -117,11 +123,13 @@ export function ChannelList({
                     (entry) => entry.id === item.connectionProvider,
                   );
                   if (provider !== undefined) provider.onSelect();
-                  else
+                  else {
                     setConnection({
                       network:
                         item.connectionProvider === undefined ? network : null,
                     });
+                    onConnectOpenChange?.(true);
+                  }
                 }}
                 onRename={(name) => guarded(() => onRename(item.id, name))}
                 onSwitchChange={(switchId, on) => {
@@ -151,9 +159,10 @@ export function ChannelList({
         networks={networks}
         onClose={() => {
           setConnection(null);
+          onConnectOpenChange?.(false);
         }}
         onPasswordConnect={onPasswordConnect}
-        open={connection !== null}
+        open={!readOnly && (connectOpen ?? connection !== null)}
       />
       <ConfirmationDialog
         cancelLabel={labels.cancel}

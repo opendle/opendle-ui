@@ -20,9 +20,12 @@ function App() {
  const [readonly,setReadonly] = useState(false);
  const [native,setNative] = useState(true);
  const [secret,setSecret] = useState("");
+ const [connectOpen,setConnectOpen] = useState();
+ window.setConnectOpen = setConnectOpen;
  window.configureChannels = (readOnly, native) => {setReadonly(readOnly);setNative(native)};
  return <main><h1>Channel connections</h1>
  <ChannelList items={[{id:"buffer",network:"pinterest",name:"Music",handle:"music",tags:[],switches:[],needsReconnect:true,connectionProvider:"gateway"}, {id:"native",network:"pinterest",name:"Native",handle:"native",tags:[],switches:[],needsReconnect:true}]}
+ connectOpen={connectOpen} onConnectOpenChange={setConnectOpen}
  readOnly={readonly} networks={native ? [{network:"pinterest",label:"Pinterest",href:"#native"},{network:"bluesky",label:"Bluesky"}] : []}
  connectionProviders={[{id:"gateway",label:"External gateway",onSelect:()=>setOpen(true)}]}
  errorMessage={()=>"Failed"} onRename={nothing} onTagsChange={nothing} onSwitchChange={nothing} onDisconnect={nothing} onPasswordConnect={nothing}/>
@@ -122,6 +125,16 @@ try {
     );
     await page.keyboard.press("Escape");
 
+    // A host can open and close the same picker without its Connect button.
+    await page.evaluate(() => window.setConnectOpen(true));
+    await picker.waitFor();
+    await page.keyboard.press("Escape");
+    await picker.waitFor({ state: "hidden" });
+    await page.evaluate(() => window.setConnectOpen(true));
+    await picker.waitFor();
+    await page.evaluate(() => window.setConnectOpen(false));
+    await picker.waitFor({ state: "hidden" });
+
     // The provider alone is sufficient to make the connect action available.
     await page.evaluate(() => window.configureChannels(false, false));
     await add.click();
@@ -132,6 +145,8 @@ try {
     await page.keyboard.press("Escape");
     await page.evaluate(() => window.configureChannels(true, false));
     await add.waitFor({ state: "detached" });
+    await page.evaluate(() => window.setConnectOpen(true));
+    assert.equal(await picker.isVisible(), false);
     assert.equal(
       await page
         .getByRole("button", { name: "Reconnect", exact: true })
