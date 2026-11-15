@@ -260,6 +260,23 @@ try {
       assert.equal(await page.evaluate(() => window.workspaceChoice), "studio");
       assert.equal(await workspace.getAttribute("aria-expanded"), "false");
 
+      // All avatar placeholders use the same frame and colours.
+      const avatars = await page.locator(".od-avatar").evaluateAll((items) =>
+        items.map((item) => {
+          const style = getComputedStyle(item);
+          return [
+            style.borderRadius,
+            style.backgroundColor,
+            style.backgroundImage,
+            style.color,
+          ];
+        }),
+      );
+      assert.ok(avatars.length > 2);
+      for (const style of avatars) assert.deepEqual(style, avatars[0]);
+      assert.equal(avatars[0][2], "none");
+      assert.notEqual(avatars[0][0], "50%");
+
       // The account menu: arrow keys move, Escape closes, a choice runs.
       const account = page.getByRole("button", {
         name: "Vincent",

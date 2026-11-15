@@ -5,6 +5,7 @@ import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import {
   Avatar,
+  AvatarUpload,
   AccountMenu,
   ApplicationShell,
   Button,
@@ -333,4 +334,18 @@ test("the application shell places the workspace before navigation", () => {
     markup.indexOf("Workspace control") < markup.indexOf("Navigation control"),
   );
   assert.match(markup, /od-application-workspace/);
+});
+
+test("AvatarUpload keeps the picture and disables changes without permission", () => {
+  const markup = render(AvatarUpload, {
+    name: "Studio",
+    src: "/workspace.png",
+    disabled: true,
+    errorMessage: String,
+    onUpload: async () => {},
+    onRemove: async () => {},
+  });
+  assert.match(markup, /src="\/workspace.png"/);
+  assert.equal((markup.match(/<button[^>]*disabled=""/g) ?? []).length, 2);
+  assert.match(markup, /<input[^>]*disabled=""/);
 });

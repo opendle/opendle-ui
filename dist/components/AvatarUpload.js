@@ -9,7 +9,7 @@ import { avatarUploadLabels, } from "./identityLabels.js";
 import { Section } from "./Section.js";
 import { squarePicture } from "./squarePicture.js";
 /** Show, replace and remove the picture of one account. */
-export function AvatarUpload({ errorMessage, labels = avatarUploadLabels, name, onRemove, onUpload, pixels = 256, src, }) {
+export function AvatarUpload({ disabled = false, errorMessage, labels = avatarUploadLabels, name, onRemove, onUpload, pixels = 256, src, }) {
     const inputRef = useRef(null);
     const [pending, setPending] = useState(false);
     const [failure, setFailure] = useState(null);
@@ -35,6 +35,6 @@ export function AvatarUpload({ errorMessage, labels = avatarUploadLabels, name, 
             await onUpload(await squarePicture(file, pixels));
         });
     }, [onUpload, pixels, run]);
-    return (_jsxs(Section, { title: labels.title, children: [_jsx(Card, { padded: true, children: _jsxs("div", { className: "od-avatar-upload", children: [_jsx(Avatar, { name: name, size: "large", src: src }), _jsxs("div", { className: "od-avatar-upload-actions", children: [_jsx(Button, { icon: _jsx(Icon, { name: "upload", size: 15 }), loading: pending, onClick: () => inputRef.current?.click(), variant: "secondary", children: src === null ? labels.upload : labels.replace }), src === null ? null : (_jsx(Button, { disabled: pending, onClick: () => void run(onRemove), variant: "quiet", children: labels.remove })), _jsx("input", { accept: "image/png,image/jpeg,image/webp", "aria-label": src === null ? labels.upload : labels.replace, hidden: true, onChange: select, ref: inputRef, tabIndex: -1, type: "file" })] })] }) }), failure === null ? null : (_jsx(InlineAlert, { className: "od-section-alert", tone: "error", children: failure }))] }));
+    return (_jsxs(Section, { title: labels.title, children: [_jsx(Card, { padded: true, children: _jsxs("div", { className: "od-avatar-upload", children: [_jsx(Avatar, { name: name, size: "large", src: src }), _jsxs("div", { className: "od-avatar-upload-actions", children: [_jsx(Button, { icon: _jsx(Icon, { name: "upload", size: 15 }), disabled: disabled || pending, loading: pending, onClick: () => inputRef.current?.click(), variant: "secondary", children: src === null ? labels.upload : labels.replace }), src === null ? null : (_jsx(Button, { disabled: disabled || pending, onClick: () => void run(onRemove), variant: "quiet", children: labels.remove })), _jsx("input", { accept: "image/png,image/jpeg,image/webp", "aria-label": src === null ? labels.upload : labels.replace, disabled: disabled || pending, hidden: true, onChange: select, ref: inputRef, tabIndex: -1, type: "file" })] })] }) }), failure === null ? null : (_jsx(InlineAlert, { className: "od-section-alert", tone: "error", children: failure }))] }));
 }
 //# sourceMappingURL=AvatarUpload.js.map

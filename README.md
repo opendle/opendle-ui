@@ -31,6 +31,10 @@ states and error display. The host supplies the data and the asynchronous
 actions. Each has a `labels` property with English defaults. With `onRename`,
 a double click or the Enter key edits a passkey name in place.
 
+`Avatar` uses a rounded square frame and a solid brand colour for its initial.
+`AvatarUpload.disabled` shows the picture with its upload and remove controls
+disabled. Use it when the user cannot change the picture.
+
 `ApplicationShell` takes a second list (`secondaryNavigation`), for example
 the channels. It scrolls in the sidebar and opens from one button of the
 bottom bar on a phone. With `onCollapsedChange`, a button next to the account

@@ -302,9 +302,9 @@ a {
   height: var(--od-avatar-size, 28px);
   overflow: hidden;
   place-items: center;
-  border-radius: 50%;
-  background: linear-gradient(140deg, #c97b4f, #7d4a63);
-  color: #ffffff;
+  border-radius: var(--od-radius-md);
+  background: var(--od-color-brand);
+  color: var(--od-color-on-brand);
   font-size: calc(var(--od-avatar-size, 28px) * 0.43);
   font-weight: 600;
   line-height: 1;
@@ -11338,12 +11338,6 @@ button.od-tag:disabled {
     var(--od-color-brand) 5%,
     var(--od-color-surface)
   );
-}
-
-.od-account[data-appearance="workspace"] .od-account-menu > .od-avatar {
-  border-radius: var(--od-radius-md);
-  background: var(--od-color-brand);
-  color: var(--od-color-on-brand);
 }
 
 .od-account[data-appearance="workspace"] .od-navigation-label {

@@ -8,7 +8,7 @@ export interface AvatarProps {
   readonly className?: string;
 }
 
-/** A round picture of a person, with an initial as the fallback. */
+/** A rounded square picture, with an initial as the fallback. */
 export function Avatar({
   className,
   name,

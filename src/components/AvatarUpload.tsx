@@ -20,11 +20,13 @@ export interface AvatarUploadProps {
   readonly onRemove: () => Promise<void>;
   readonly errorMessage: (error: unknown) => string;
   readonly pixels?: number;
+  readonly disabled?: boolean;
   readonly labels?: AvatarUploadLabels;
 }
 
 /** Show, replace and remove the picture of one account. */
 export function AvatarUpload({
+  disabled = false,
   errorMessage,
   labels = avatarUploadLabels,
   name,
@@ -72,6 +74,7 @@ export function AvatarUpload({
           <div className="od-avatar-upload-actions">
             <Button
               icon={<Icon name="upload" size={15} />}
+              disabled={disabled || pending}
               loading={pending}
               onClick={() => inputRef.current?.click()}
               variant="secondary"
@@ -80,7 +83,7 @@ export function AvatarUpload({
             </Button>
             {src === null ? null : (
               <Button
-                disabled={pending}
+                disabled={disabled || pending}
                 onClick={() => void run(onRemove)}
                 variant="quiet"
               >
@@ -90,6 +93,7 @@ export function AvatarUpload({
             <input
               accept="image/png,image/jpeg,image/webp"
               aria-label={src === null ? labels.upload : labels.replace}
+              disabled={disabled || pending}
               hidden
               onChange={select}
               ref={inputRef}
