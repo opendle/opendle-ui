@@ -1,7 +1,11 @@
 import { useId, useState, type SyntheticEvent } from "react";
 
 import { Button } from "./Button.js";
-import type { ChannelListLabels, ChannelNetwork } from "./channelLabels.js";
+import type {
+  ChannelConnectionProvider,
+  ChannelListLabels,
+  ChannelNetwork,
+} from "./channelLabels.js";
 import { Dialog } from "./Dialog.js";
 import { TextControl } from "./FormControls.js";
 import { Icon, NetworkIcon } from "./Icon.js";
@@ -13,6 +17,7 @@ export interface ConnectChannelDialogProps {
   readonly open: boolean;
   readonly onClose: () => void;
   readonly networks: readonly ChannelNetwork[];
+  readonly connectionProviders?: readonly ChannelConnectionProvider[];
   /** Open the form of this network at once, for a new connection of it. */
   readonly network?: NetworkName | null;
   /** Connect a network that has no authorization address. */
@@ -25,8 +30,11 @@ export interface ConnectChannelDialogProps {
   readonly labels: ChannelListLabels;
 }
 
+const noConnectionProviders: readonly ChannelConnectionProvider[] = [];
+
 /** Select a network, then go to its authorization or give an app password. */
 export function ConnectChannelDialog({
+  connectionProviders = noConnectionProviders,
   errorMessage,
   labels,
   network = null,
@@ -99,6 +107,22 @@ export function ConnectChannelDialog({
     >
       {form === null ? (
         <ul className="od-connect-options">
+          {connectionProviders.map((entry) => (
+            <li key={entry.id}>
+              <button
+                className="od-connect-option"
+                onClick={() => {
+                  close();
+                  entry.onSelect();
+                }}
+                type="button"
+              >
+                {entry.icon ?? <Icon name="link" />}
+                <span>{entry.label}</span>
+                <Icon name="chevron-right" size={15} />
+              </button>
+            </li>
+          ))}
           {networks.map((entry) => (
             <li key={entry.network}>
               {entry.href === undefined ? (
@@ -139,6 +163,7 @@ export function ConnectChannelDialog({
           <TextControl
             autoComplete="off"
             label={labels.password}
+            type="password"
             onChange={(event) => {
               setPassword(event.currentTarget.value);
             }}

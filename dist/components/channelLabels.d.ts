@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import type { NetworkName } from "./networks.js";
 export interface ChannelSwitch {
     readonly id: string;
@@ -17,6 +18,8 @@ export interface ChannelItem {
     /** The authorization ended. The user must connect the account again. */
     readonly needsReconnect: boolean;
     readonly switches: readonly ChannelSwitch[];
+    /** The host connection provider to use instead of native authorization. */
+    readonly connectionProvider?: string;
 }
 /** A network that the user can connect. */
 export interface ChannelNetwork {
@@ -24,6 +27,15 @@ export interface ChannelNetwork {
     readonly label: string;
     /** The address that starts the authorization. Without it, a form shows. */
     readonly href?: string;
+}
+/** A host-owned connection flow, alongside the native networks. */
+export interface ChannelConnectionProvider {
+    readonly id: string;
+    readonly label: string;
+    /** A decorative mark. Without it, a generic connection mark shows. */
+    readonly icon?: ReactNode;
+    /** Called after the network picker closes. The host owns the next dialog. */
+    readonly onSelect: () => void;
 }
 export interface ChannelListLabels {
     readonly title: string;

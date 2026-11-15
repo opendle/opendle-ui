@@ -282,6 +282,7 @@ export {
 } from "./components/ChannelList.js";
 export {
   channelListLabels,
+  type ChannelConnectionProvider,
   type ChannelItem,
   type ChannelListLabels,
   type ChannelNetwork,

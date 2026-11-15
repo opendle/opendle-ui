@@ -4,6 +4,7 @@ import { Button } from "./Button.js";
 import { Card } from "./Card.js";
 import {
   channelListLabels,
+  type ChannelConnectionProvider,
   type ChannelItem,
   type ChannelListLabels,
   type ChannelNetwork,
@@ -21,6 +22,8 @@ export interface ChannelListProps {
   readonly items: readonly ChannelItem[];
   /** The networks that the user can connect. */
   readonly networks: readonly ChannelNetwork[];
+  /** Extra host-owned connection flows in the network picker. */
+  readonly connectionProviders?: readonly ChannelConnectionProvider[];
   /** Show the channels without the controls that change them. */
   readonly readOnly?: boolean;
   /** The colour key, from 1 to 12, of each tag name. */
@@ -44,11 +47,14 @@ export interface ChannelListProps {
 
 type Connection = { readonly network: NetworkName | null } | null;
 
+const noConnectionProviders: readonly ChannelConnectionProvider[] = [];
+
 /**
  * The connected accounts of the networks: name, tags, switches, the warning
  * for an ended authorization, and the connect and disconnect actions.
  */
 export function ChannelList({
+  connectionProviders = noConnectionProviders,
   errorMessage,
   items,
   labels = channelListLabels,
@@ -75,7 +81,8 @@ export function ChannelList({
   return (
     <Section
       actions={
-        readOnly || networks.length === 0 ? null : (
+        readOnly ||
+        (networks.length === 0 && connectionProviders.length === 0) ? null : (
           <Button
             icon={<Icon name="plus" size={15} />}
             onClick={() => {
@@ -106,7 +113,15 @@ export function ChannelList({
                 labels={labels}
                 onDisconnect={setRemoving}
                 onReconnect={(network) => {
-                  setConnection({ network });
+                  const provider = connectionProviders.find(
+                    (entry) => entry.id === item.connectionProvider,
+                  );
+                  if (provider !== undefined) provider.onSelect();
+                  else
+                    setConnection({
+                      network:
+                        item.connectionProvider === undefined ? network : null,
+                    });
                 }}
                 onRename={(name) => guarded(() => onRename(item.id, name))}
                 onSwitchChange={(switchId, on) => {
@@ -118,8 +133,10 @@ export function ChannelList({
                 readOnly={readOnly}
                 tagColors={tagColors}
                 reconnectHref={
-                  networks.find((entry) => entry.network === item.network)
-                    ?.href ?? null
+                  item.connectionProvider === undefined
+                    ? (networks.find((entry) => entry.network === item.network)
+                        ?.href ?? null)
+                    : null
                 }
               />
             ))}
@@ -127,6 +144,7 @@ export function ChannelList({
         )}
       </Card>
       <ConnectChannelDialog
+        connectionProviders={connectionProviders}
         errorMessage={errorMessage}
         labels={labels}
         network={connection?.network ?? null}

@@ -138,6 +138,7 @@ node scripts/graph-native-overlay-browser.mjs
 node scripts/graph-viewport-content-browser.mjs
 node scripts/relationship-column-header-browser.mjs
 node scripts/core-browser.mjs
+node scripts/channel-connections-browser.mjs
 node scripts/calendar-browser.mjs
 node scripts/community-browser.mjs
 npm run security

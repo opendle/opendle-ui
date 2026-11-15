@@ -1,9 +1,10 @@
-import type { ChannelListLabels, ChannelNetwork } from "./channelLabels.js";
+import type { ChannelConnectionProvider, ChannelListLabels, ChannelNetwork } from "./channelLabels.js";
 import type { NetworkName } from "./networks.js";
 export interface ConnectChannelDialogProps {
     readonly open: boolean;
     readonly onClose: () => void;
     readonly networks: readonly ChannelNetwork[];
+    readonly connectionProviders?: readonly ChannelConnectionProvider[];
     /** Open the form of this network at once, for a new connection of it. */
     readonly network?: NetworkName | null;
     /** Connect a network that has no authorization address. */
@@ -12,5 +13,5 @@ export interface ConnectChannelDialogProps {
     readonly labels: ChannelListLabels;
 }
 /** Select a network, then go to its authorization or give an app password. */
-export declare function ConnectChannelDialog({ errorMessage, labels, network, networks, onClose, onPasswordConnect, open, }: ConnectChannelDialogProps): import("react").JSX.Element;
+export declare function ConnectChannelDialog({ connectionProviders, errorMessage, labels, network, networks, onClose, onPasswordConnect, open, }: ConnectChannelDialogProps): import("react").JSX.Element;
 //# sourceMappingURL=ConnectChannelDialog.d.ts.map

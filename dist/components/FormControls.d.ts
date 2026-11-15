@@ -12,6 +12,8 @@ interface ControlledInputProps extends Omit<InputHTMLAttributes<HTMLInputElement
     readonly "aria-invalid"?: AriaAttributes["aria-invalid"];
 }
 export interface TextControlProps extends ControlledInputProps, ControlFieldProps {
+    /** Mask a secret without changing label, validation or input behavior. */
+    readonly type?: "text" | "password";
     readonly onChange: ChangeEventHandler<HTMLInputElement>;
     readonly value: string;
 }

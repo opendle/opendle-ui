@@ -1,9 +1,11 @@
-import { type ChannelItem, type ChannelListLabels, type ChannelNetwork } from "./channelLabels.js";
+import { type ChannelConnectionProvider, type ChannelItem, type ChannelListLabels, type ChannelNetwork } from "./channelLabels.js";
 import type { NetworkName } from "./networks.js";
 export interface ChannelListProps {
     readonly items: readonly ChannelItem[];
     /** The networks that the user can connect. */
     readonly networks: readonly ChannelNetwork[];
+    /** Extra host-owned connection flows in the network picker. */
+    readonly connectionProviders?: readonly ChannelConnectionProvider[];
     /** Show the channels without the controls that change them. */
     readonly readOnly?: boolean;
     /** The colour key, from 1 to 12, of each tag name. */
@@ -20,5 +22,5 @@ export interface ChannelListProps {
  * The connected accounts of the networks: name, tags, switches, the warning
  * for an ended authorization, and the connect and disconnect actions.
  */
-export declare function ChannelList({ errorMessage, items, labels, networks, onDisconnect, onPasswordConnect, onRename, onSwitchChange, onTagsChange, readOnly, tagColors, }: ChannelListProps): import("react").JSX.Element;
+export declare function ChannelList({ connectionProviders, errorMessage, items, labels, networks, onDisconnect, onPasswordConnect, onRename, onSwitchChange, onTagsChange, readOnly, tagColors, }: ChannelListProps): import("react").JSX.Element;
 //# sourceMappingURL=ChannelList.d.ts.map

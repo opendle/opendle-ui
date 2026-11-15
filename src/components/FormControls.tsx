@@ -49,6 +49,8 @@ function requirementProps(
 
 export interface TextControlProps
   extends ControlledInputProps, ControlFieldProps {
+  /** Mask a secret without changing label, validation or input behavior. */
+  readonly type?: "text" | "password";
   readonly onChange: ChangeEventHandler<HTMLInputElement>;
   readonly value: string;
 }
@@ -77,7 +79,7 @@ export function TextControl({
         className={controlClassName("od-text-control-input", controlClass)}
         onChange={onChange}
         required={isControlRequired(required, requirement)}
-        type="text"
+        type={props.type ?? "text"}
       />
     </FormField>
   );
