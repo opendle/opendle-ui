@@ -48,6 +48,8 @@ export interface PostDetailDialogProps {
   readonly media?: PostDetailMedia | null;
   /** Internal tags of the post. */
   readonly tags?: readonly string[];
+  /** The colour key, from 1 to 12, of each tag name. */
+  readonly tagColors?: Readonly<Record<string, number>>;
   readonly targets: readonly PostDetailTarget[];
   /** Send a failed network again. Without it, there is no retry button. */
   readonly onRetry?: (targetId: string) => Promise<void>;
@@ -146,8 +148,8 @@ function TargetRow({ labels, onRetry, pending, target }: TargetRowProps) {
           </span>
           {onRetry === null ? null : (
             <Button
-              disabled={pending}
               icon={<Icon name="retry" size={15} />}
+              loading={pending}
               onClick={() => {
                 onRetry(target.id);
               }}
@@ -191,6 +193,7 @@ export function PostDetailDialog({
   onClose,
   onRetry,
   open,
+  tagColors,
   tags = noTags,
   targets,
   title,
@@ -231,7 +234,9 @@ export function PostDetailDialog({
         {tags.length === 0 ? null : (
           <div className="od-post-detail-tags">
             {tags.map((tag) => (
-              <TagChip key={tag}>#{tag}</TagChip>
+              <TagChip color={tagColors?.[tag]} key={tag}>
+                #{tag}
+              </TagChip>
             ))}
           </div>
         )}

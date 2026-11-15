@@ -103,6 +103,7 @@ export { CalendarEntry, type CalendarEntryProps, } from "./components/CalendarEn
 export { ChannelList, type ChannelListProps, } from "./components/ChannelList.js";
 export { channelListLabels, type ChannelItem, type ChannelListLabels, type ChannelNetwork, type ChannelSwitch, } from "./components/channelLabels.js";
 export { TagInput, type TagInputProps } from "./components/TagInput.js";
+export { LoadingIndicator, type LoadingIndicatorProps, } from "./components/LoadingIndicator.js";
 export { Conversation, type ConversationProps, } from "./components/Conversation.js";
 export { conversationEmoji, conversationLabels, type ConversationLabels, type ConversationMessage, } from "./components/conversationLabels.js";
 export { ConversationPost, type ConversationPostProps, } from "./components/ConversationPost.js";
@@ -119,7 +120,7 @@ export { StackedBarChart, type StackedBarChartProps, } from "./components/Stacke
 export { calendarBoardLabels, calendarItemState, type CalendarBoardLabels, type CalendarItem, type CalendarItemState, type CalendarItemTarget, } from "./components/calendarItems.js";
 export { calendarDayDate, calendarDayKey, calendarGridDays, calendarPeriod, calendarTitle, shiftCalendarAnchor, type CalendarMode, type CalendarPeriod, } from "./components/calendarDates.js";
 export { CalendarHeader, type CalendarHeaderProps, } from "./components/CalendarHeader.js";
-export { calendarHeaderLabels, emptyTagFilter, postDetailLabels, tagFilterLabels, type CalendarHeaderLabels, type PostDetailLabels, type TagFilterChannel, type TagFilterLabels, type TagFilterMatch, type TagFilterValue, } from "./components/calendarLabels.js";
+export { calendarHeaderLabels, emptyTagFilter, postDetailLabels, tagFilterLabels, type CalendarHeaderLabels, type PostDetailLabels, type TagColors, type TagFilterChannel, type TagFilterLabels, type TagFilterMatch, type TagFilterValue, } from "./components/calendarLabels.js";
 export { PostDetailDialog, type PostDetailDialogProps, type PostDetailMedia, type PostDetailMetric, type PostDetailTarget, } from "./components/PostDetailDialog.js";
 export { SegmentedControl, type SegmentedControlProps, type SegmentedOption, } from "./components/SegmentedControl.js";
 export { TagFilterBar, type TagFilterBarProps, } from "./components/TagFilterBar.js";

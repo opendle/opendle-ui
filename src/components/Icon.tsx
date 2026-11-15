@@ -96,20 +96,20 @@ export function Icon({ className, name, size = 18, ...props }: IconProps) {
 
 export interface NetworkIconProps extends Omit<
   HTMLAttributes<HTMLSpanElement>,
-  "children"
+  "children" | "title" | "role"
 > {
   readonly network: NetworkName;
   /** Show the mark in a round tinted badge. */
   readonly badge?: boolean;
-  /** Add the network name for assistive technology. */
-  readonly labelled?: boolean;
 }
 
-/** The mark of a social network in its brand colour. */
+/**
+ * The mark of a social network in its brand colour. The network name is its
+ * accessible name and shows on hover.
+ */
 export function NetworkIcon({
   badge = false,
   className,
-  labelled = false,
   network,
   ...props
 }: NetworkIconProps) {
@@ -117,13 +117,12 @@ export function NetworkIcon({
   return (
     <span
       {...props}
-      aria-label={labelled ? mark.label : undefined}
       className={classes("od-network", className)}
       data-badge={badge}
       data-network={network}
-      role={labelled ? "img" : undefined}
+      title={mark.label}
     >
-      <svg aria-hidden="true" viewBox="0 0 24 24">
+      <svg aria-label={mark.label} role="img" viewBox="0 0 24 24">
         <path d={mark.path} />
       </svg>
     </span>

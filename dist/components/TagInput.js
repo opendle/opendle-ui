@@ -9,7 +9,7 @@ function clean(text) {
  * A list of tags that the user edits in place. Enter or a comma adds the
  * typed tag. Backspace in the empty input removes the last tag.
  */
-export function TagInput({ className, disabled = false, label, onChange, placeholder, removeLabel, value, }) {
+export function TagInput({ className, colors, disabled = false, label, onChange, placeholder, removeLabel, value, }) {
     const [draft, setDraft] = useState("");
     function add() {
         const tag = clean(draft);
@@ -26,7 +26,7 @@ export function TagInput({ className, disabled = false, label, onChange, placeho
             onChange(value.slice(0, -1));
         }
     }
-    return (_jsxs("span", { className: classes("od-tag-input", className), children: [value.map((tag) => (_jsxs("span", { className: "od-tag od-tag-input-tag", children: ["#", tag, disabled ? null : (_jsx("button", { "aria-label": `${removeLabel}: ${tag}`, className: "od-tag-input-remove", onClick: () => {
+    return (_jsxs("span", { className: classes("od-tag-input", className), children: [value.map((tag) => (_jsxs("span", { className: "od-tag od-tag-input-tag", "data-color": colors?.[tag], children: ["#", tag, disabled ? null : (_jsx("button", { "aria-label": `${removeLabel}: ${tag}`, className: "od-tag-input-remove", onClick: () => {
                             onChange(value.filter((entry) => entry !== tag));
                         }, title: `${removeLabel}: ${tag}`, type: "button", children: _jsx(Icon, { name: "close", size: 12 }) }))] }, tag))), disabled ? null : (_jsx("input", { "aria-label": label, className: "od-tag-input-field", onBlur: add, onChange: (event) => {
                     setDraft(event.currentTarget.value);

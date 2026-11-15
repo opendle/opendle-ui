@@ -79,9 +79,8 @@ export function ConnectChannelDialog({
               </Button>
             ) : null}
             <Button
-              disabled={
-                connect.pending || handle.trim() === "" || password === ""
-              }
+              disabled={handle.trim() === "" || password === ""}
+              loading={connect.pending}
               form={formId}
               type="submit"
             >

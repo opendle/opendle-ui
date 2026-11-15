@@ -32,7 +32,7 @@ export function ChartLegend({ className, items, label }: ChartLegendProps) {
         <li key={item.id}>
           <i className="od-chart-swatch" data-slot={item.slot} />
           {item.icon}
-          {item.label}
+          <span className="od-chart-name">{item.label}</span>
         </li>
       ))}
     </ul>

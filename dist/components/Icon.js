@@ -52,9 +52,12 @@ export function Icon({ className, name, size = 18, ...props }) {
             key: `${tag}:${Object.values(attributes).join(",")}`,
         }))) : (_jsx("path", { d: extraIconPaths[name] })) }));
 }
-/** The mark of a social network in its brand colour. */
-export function NetworkIcon({ badge = false, className, labelled = false, network, ...props }) {
+/**
+ * The mark of a social network in its brand colour. The network name is its
+ * accessible name and shows on hover.
+ */
+export function NetworkIcon({ badge = false, className, network, ...props }) {
     const mark = networkMarks[network];
-    return (_jsx("span", { ...props, "aria-label": labelled ? mark.label : undefined, className: classes("od-network", className), "data-badge": badge, "data-network": network, role: labelled ? "img" : undefined, children: _jsx("svg", { "aria-hidden": "true", viewBox: "0 0 24 24", children: _jsx("path", { d: mark.path }) }) }));
+    return (_jsx("span", { ...props, className: classes("od-network", className), "data-badge": badge, "data-network": network, title: mark.label, children: _jsx("svg", { "aria-label": mark.label, role: "img", viewBox: "0 0 24 24", children: _jsx("path", { d: mark.path }) }) }));
 }
 //# sourceMappingURL=Icon.js.map

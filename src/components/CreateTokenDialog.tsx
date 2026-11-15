@@ -81,7 +81,8 @@ export function CreateTokenDialog({
           {labels.cancel}
         </Button>
         <Button
-          disabled={pending || name.trim() === ""}
+          disabled={name.trim() === ""}
+          loading={pending}
           form={formId}
           type="submit"
         >

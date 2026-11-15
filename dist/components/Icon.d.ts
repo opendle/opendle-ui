@@ -48,14 +48,15 @@ export interface IconProps extends Omit<SVGAttributes<SVGSVGElement>, "name"> {
 }
 /** A stroke icon. It is decorative unless the host gives `aria-label`. */
 export declare function Icon({ className, name, size, ...props }: IconProps): import("react").JSX.Element;
-export interface NetworkIconProps extends Omit<HTMLAttributes<HTMLSpanElement>, "children"> {
+export interface NetworkIconProps extends Omit<HTMLAttributes<HTMLSpanElement>, "children" | "title" | "role"> {
     readonly network: NetworkName;
     /** Show the mark in a round tinted badge. */
     readonly badge?: boolean;
-    /** Add the network name for assistive technology. */
-    readonly labelled?: boolean;
 }
-/** The mark of a social network in its brand colour. */
-export declare function NetworkIcon({ badge, className, labelled, network, ...props }: NetworkIconProps): import("react").JSX.Element;
+/**
+ * The mark of a social network in its brand colour. The network name is its
+ * accessible name and shows on hover.
+ */
+export declare function NetworkIcon({ badge, className, network, ...props }: NetworkIconProps): import("react").JSX.Element;
 export {};
 //# sourceMappingURL=Icon.d.ts.map

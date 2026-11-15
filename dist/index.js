@@ -103,6 +103,7 @@ export { CalendarEntry, } from "./components/CalendarEntry.js";
 export { ChannelList, } from "./components/ChannelList.js";
 export { channelListLabels, } from "./components/channelLabels.js";
 export { TagInput } from "./components/TagInput.js";
+export { LoadingIndicator, } from "./components/LoadingIndicator.js";
 export { Conversation, } from "./components/Conversation.js";
 export { conversationEmoji, conversationLabels, } from "./components/conversationLabels.js";
 export { ConversationPost, } from "./components/ConversationPost.js";

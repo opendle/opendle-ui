@@ -13,6 +13,7 @@ import {
   NetworkIcon,
   PasskeyList,
   InlineEditableText,
+  LoadingIndicator,
   NavigationLink,
   SecretValue,
   TagChip,
@@ -80,7 +81,7 @@ test("Avatar shows the picture, or the first letter of the name", () => {
   assert.match(render(Avatar, { name: "" }), /><\/span>$/);
 });
 
-test("NetworkIcon covers each network and names it on request", () => {
+test("NetworkIcon covers each network and always names it", () => {
   assert.deepEqual([...networkNames].sort(), [
     "bluesky",
     "facebook",
@@ -92,12 +93,14 @@ test("NetworkIcon covers each network and names it on request", () => {
     "x",
     "youtube",
   ]);
-  const plain = render(NetworkIcon, { network: "youtube" });
-  assert.match(plain, /data-network="youtube"/);
-  assert.doesNotMatch(plain, /role=|aria-label=/);
+  // Each mark has the network name as its accessible name and its tooltip.
   assert.match(
-    render(NetworkIcon, { network: "x", labelled: true, badge: true }),
-    /aria-label="X".*data-badge="true".*role="img"/,
+    render(NetworkIcon, { network: "youtube" }),
+    /data-network="youtube" title="YouTube"><svg aria-label="YouTube" role="img"/,
+  );
+  assert.match(
+    render(NetworkIcon, { network: "x", badge: true }),
+    /data-badge="true"/,
   );
 });
 
@@ -236,4 +239,24 @@ test("PasskeyList names are editable only with a rename handler", () => {
     render(PasskeyList, { ...props, onRename: async () => undefined }),
     /aria-label="Rename: MacBook"/,
   );
+});
+
+test("LoadingIndicator is a named status", () => {
+  assert.equal(
+    render(LoadingIndicator, { label: "Loading" }),
+    '<output aria-label="Loading" class="od-loading" data-block="false" data-size="default"><span class="od-loading-ring"></span></output>',
+  );
+});
+
+test("a loading Button is busy, does not act and shows the loading sign", () => {
+  const markup = render(Button, { loading: true, icon: "i" }, "Save");
+  assert.match(markup, /aria-busy="true"/);
+  assert.match(markup, /disabled=""/);
+  assert.match(markup, /class="od-loading-ring"><\/span>Save/);
+  assert.doesNotMatch(render(Button, null, "Save"), /aria-busy|od-loading/);
+});
+
+test("TagChip carries the colour key of its tag", () => {
+  assert.match(render(TagChip, { color: 7 }, "#reel"), /data-color="7"/);
+  assert.doesNotMatch(render(TagChip, null, "#reel"), /data-color/);
 });

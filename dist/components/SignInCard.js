@@ -23,7 +23,7 @@ export function SignInCard({ actionIcon, actionLabel, pendingLabel, onSignIn, er
             setPending(false);
         }
     }, [onSignIn, errorMessage]);
-    const actions = useMemo(() => (_jsx(Button, { disabled: pending, icon: actionIcon, onClick: () => void signIn(), children: pending ? pendingLabel : actionLabel })), [pending, pendingLabel, actionIcon, actionLabel, signIn]);
+    const actions = useMemo(() => (_jsx(Button, { icon: actionIcon, loading: pending, onClick: () => void signIn(), children: pending ? pendingLabel : actionLabel })), [pending, pendingLabel, actionIcon, actionLabel, signIn]);
     const feedback = useMemo(() => failure === null ? null : (_jsx(InlineAlert, { tone: "error", children: failure })), [failure]);
     return _jsx(SessionCard, { ...props, actions: actions, feedback: feedback });
 }

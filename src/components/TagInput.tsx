@@ -10,6 +10,8 @@ export interface TagInputProps {
   readonly label: string;
   /** The accessible name of a remove button. It gets the tag after it. */
   readonly removeLabel: string;
+  /** The colour key, from 1 to 12, of each tag name. */
+  readonly colors?: Readonly<Record<string, number>>;
   readonly placeholder?: string;
   readonly disabled?: boolean;
   readonly className?: string;
@@ -25,6 +27,7 @@ function clean(text: string): string {
  */
 export function TagInput({
   className,
+  colors,
   disabled = false,
   label,
   onChange,
@@ -52,7 +55,11 @@ export function TagInput({
   return (
     <span className={classes("od-tag-input", className)}>
       {value.map((tag) => (
-        <span className="od-tag od-tag-input-tag" key={tag}>
+        <span
+          className="od-tag od-tag-input-tag"
+          data-color={colors?.[tag]}
+          key={tag}
+        >
           #{tag}
           {disabled ? null : (
             <button

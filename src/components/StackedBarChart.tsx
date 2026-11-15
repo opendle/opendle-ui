@@ -252,7 +252,7 @@ export function StackedBarChart({
                 <span className="od-chart-tooltip-row" key={entry.id}>
                   <i className="od-chart-key" data-slot={entry.slot} />
                   <b>{formatValue(value)}</b>
-                  {entry.label}
+                  <span className="od-chart-name">{entry.label}</span>
                 </span>
               );
             })}
@@ -264,7 +264,7 @@ export function StackedBarChart({
           {shown.map((entry) => (
             <span key={entry.id}>
               <i className="od-chart-swatch" data-slot={entry.slot} />
-              {entry.label}
+              <span className="od-chart-name">{entry.label}</span>
               {entry.total === undefined ? null : <b>{entry.total}</b>}
             </span>
           ))}

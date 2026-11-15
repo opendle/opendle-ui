@@ -25,6 +25,8 @@ export interface TagFilterChannel {
     /** The accessible name, for example the network and the account. */
     readonly label: string;
 }
+/** The colour key, from 1 to 12, of each tag name. */
+export type TagColors = Readonly<Record<string, number>>;
 export type TagFilterMatch = "all" | "any";
 export interface TagFilterValue {
     /** Selected channel IDs. An empty list selects all channels. */

@@ -289,6 +289,10 @@ export {
 } from "./components/channelLabels.js";
 export { TagInput, type TagInputProps } from "./components/TagInput.js";
 export {
+  LoadingIndicator,
+  type LoadingIndicatorProps,
+} from "./components/LoadingIndicator.js";
+export {
   Conversation,
   type ConversationProps,
 } from "./components/Conversation.js";
@@ -375,6 +379,7 @@ export {
   tagFilterLabels,
   type CalendarHeaderLabels,
   type PostDetailLabels,
+  type TagColors,
   type TagFilterChannel,
   type TagFilterLabels,
   type TagFilterMatch,

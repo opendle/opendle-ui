@@ -11,6 +11,7 @@ export interface ChannelRowProps {
   readonly item: ChannelItem;
   readonly labels: ChannelListLabels;
   readonly readOnly: boolean;
+  readonly tagColors: Readonly<Record<string, number>> | undefined;
   /** The authorization address of the network, or `null` for a form. */
   readonly reconnectHref: string | null;
   readonly onRename: (name: string) => Promise<void>;
@@ -31,6 +32,7 @@ export function ChannelRow({
   onTagsChange,
   readOnly,
   reconnectHref,
+  tagColors,
 }: ChannelRowProps) {
   return (
     <li className="od-channel-row" data-warning={item.needsReconnect}>
@@ -61,6 +63,7 @@ export function ChannelRow({
       </span>
       <TagInput
         className="od-channel-tags"
+        {...(tagColors === undefined ? {} : { colors: tagColors })}
         disabled={readOnly}
         label={`${labels.tags}: ${item.name}`}
         onChange={onTagsChange}

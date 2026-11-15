@@ -36,6 +36,8 @@ export interface PostDetailDialogProps {
     readonly media?: PostDetailMedia | null;
     /** Internal tags of the post. */
     readonly tags?: readonly string[];
+    /** The colour key, from 1 to 12, of each tag name. */
+    readonly tagColors?: Readonly<Record<string, number>>;
     readonly targets: readonly PostDetailTarget[];
     /** Send a failed network again. Without it, there is no retry button. */
     readonly onRetry?: (targetId: string) => Promise<void>;
@@ -51,5 +53,5 @@ export interface PostDetailDialogProps {
  * network and a link to each published post. When the text or the time
  * differs between networks, each network has a tab.
  */
-export declare function PostDetailDialog({ children, errorMessage, labels, media, metrics, onClose, onRetry, open, tags, targets, title, }: PostDetailDialogProps): import("react").JSX.Element;
+export declare function PostDetailDialog({ children, errorMessage, labels, media, metrics, onClose, onRetry, open, tagColors, tags, targets, title, }: PostDetailDialogProps): import("react").JSX.Element;
 //# sourceMappingURL=PostDetailDialog.d.ts.map

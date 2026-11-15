@@ -45,7 +45,7 @@ export function CreateTokenDialog({ errorMessage, labels, onClose, onCreate, ope
             }));
         }
     }, [errorMessage, name, onCreate, pending]);
-    const actions = secret === null ? (_jsxs(_Fragment, { children: [_jsx(Button, { disabled: pending, onClick: close, variant: "secondary", children: labels.cancel }), _jsx(Button, { disabled: pending || name.trim() === "", form: formId, type: "submit", children: labels.submit })] })) : (_jsx(Button, { onClick: close, ref: focusWhenShown, children: labels.done }));
+    const actions = secret === null ? (_jsxs(_Fragment, { children: [_jsx(Button, { disabled: pending, onClick: close, variant: "secondary", children: labels.cancel }), _jsx(Button, { disabled: name.trim() === "", loading: pending, form: formId, type: "submit", children: labels.submit })] })) : (_jsx(Button, { onClick: close, ref: focusWhenShown, children: labels.done }));
     return (_jsxs(Dialog, { actions: actions, className: "od-token-dialog", closeDisabled: pending, closeLabel: labels.close, onClose: close, open: open, size: "narrow", title: secret === null ? labels.createTitle : labels.createdTitle, children: [secret === null ? (_jsx("form", { id: formId, onSubmit: (event) => void submit(event), children: _jsx(TextControl, { autoComplete: "off", "data-dialog-initial-focus": "true", label: labels.name, maxLength: 80, onChange: (event) => {
                         const next = event.currentTarget.value;
                         setState((current) => ({ ...current, name: next }));

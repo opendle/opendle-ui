@@ -71,8 +71,8 @@ export function AvatarUpload({
           <Avatar name={name} size="large" src={src} />
           <div className="od-avatar-upload-actions">
             <Button
-              disabled={pending}
               icon={<Icon name="upload" size={15} />}
+              loading={pending}
               onClick={() => inputRef.current?.click()}
               variant="secondary"
             >

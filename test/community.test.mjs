@@ -141,7 +141,7 @@ test("StackedBarChart has a legend and a table with all values", () => {
   });
   assert.match(markup, /<svg aria-label="Views"/);
   assert.equal(markup.match(/class="od-chart-bar"/g).length, 3);
-  assert.match(markup, /YouTube<b>30<\/b>/);
+  assert.match(markup, /YouTube<\/span><b>30<\/b>/);
   // One line between two segments of a bar, and none on a short segment.
   assert.equal(markup.match(/class="od-chart-separator"/g).length, 1);
   assert.doesNotMatch(
@@ -179,5 +179,8 @@ test("ChartLegend names each series with its colour slot", () => {
     items: [{ id: "a", label: "YouTube", slot: 2 }],
   });
   assert.match(markup, /<ul aria-label="Channels"/);
-  assert.match(markup, /data-slot="2"><\/i>YouTube<\/li>/);
+  assert.match(
+    markup,
+    /data-slot="2"><\/i><span class="od-chart-name">YouTube<\/span><\/li>/,
+  );
 });

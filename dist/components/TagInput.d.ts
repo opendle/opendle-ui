@@ -5,6 +5,8 @@ export interface TagInputProps {
     readonly label: string;
     /** The accessible name of a remove button. It gets the tag after it. */
     readonly removeLabel: string;
+    /** The colour key, from 1 to 12, of each tag name. */
+    readonly colors?: Readonly<Record<string, number>>;
     readonly placeholder?: string;
     readonly disabled?: boolean;
     readonly className?: string;
@@ -13,5 +15,5 @@ export interface TagInputProps {
  * A list of tags that the user edits in place. Enter or a comma adds the
  * typed tag. Backspace in the empty input removes the last tag.
  */
-export declare function TagInput({ className, disabled, label, onChange, placeholder, removeLabel, value, }: TagInputProps): import("react").JSX.Element;
+export declare function TagInput({ className, colors, disabled, label, onChange, placeholder, removeLabel, value, }: TagInputProps): import("react").JSX.Element;
 //# sourceMappingURL=TagInput.d.ts.map

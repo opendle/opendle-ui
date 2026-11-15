@@ -23,6 +23,8 @@ export interface ChannelListProps {
   readonly networks: readonly ChannelNetwork[];
   /** Show the channels without the controls that change them. */
   readonly readOnly?: boolean;
+  /** The colour key, from 1 to 12, of each tag name. */
+  readonly tagColors?: Readonly<Record<string, number>>;
   readonly onRename: (id: string, name: string) => Promise<void>;
   readonly onTagsChange: (id: string, tags: readonly string[]) => Promise<void>;
   readonly onSwitchChange: (
@@ -57,6 +59,7 @@ export function ChannelList({
   onSwitchChange,
   onTagsChange,
   readOnly = false,
+  tagColors,
 }: ChannelListProps) {
   const change = useAsyncAction(errorMessage);
   const removal = useAsyncAction(errorMessage);
@@ -113,6 +116,7 @@ export function ChannelList({
                   void run(() => onTagsChange(item.id, tags));
                 }}
                 readOnly={readOnly}
+                tagColors={tagColors}
                 reconnectHref={
                   networks.find((entry) => entry.network === item.network)
                     ?.href ?? null

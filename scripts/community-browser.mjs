@@ -213,7 +213,7 @@ try {
       const chart = page.getByRole("img", { name: "Views by channel" });
       await chart.scrollIntoViewIfNeeded();
       assert.equal(
-        await page.locator("figure .od-chart-legend span").count(),
+        await page.locator("figure .od-chart-legend > span").count(),
         10,
         "the tenth and later series are one Other series",
       );

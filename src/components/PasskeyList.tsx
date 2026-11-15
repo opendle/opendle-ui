@@ -80,8 +80,8 @@ export function PasskeyList({
     <Section
       actions={
         <Button
-          disabled={adding}
           icon={<Icon name="plus" size={15} />}
+          loading={adding}
           onClick={() => void add()}
           variant="secondary"
         >

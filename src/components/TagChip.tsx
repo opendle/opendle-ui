@@ -7,6 +7,8 @@ export interface TagChipProps {
   /** With `onPressedChange`, the chip is a toggle button. */
   readonly pressed?: boolean;
   readonly onPressedChange?: (pressed: boolean) => void;
+  /** The colour key of the tag, from 1 to 12. */
+  readonly color?: number | undefined;
   readonly className?: string;
 }
 
@@ -14,16 +16,22 @@ export interface TagChipProps {
 export function TagChip({
   children,
   className,
+  color,
   onPressedChange,
   pressed = false,
 }: TagChipProps) {
   if (onPressedChange === undefined) {
-    return <span className={classes("od-tag", className)}>{children}</span>;
+    return (
+      <span className={classes("od-tag", className)} data-color={color}>
+        {children}
+      </span>
+    );
   }
   return (
     <button
       aria-pressed={pressed}
       className={classes("od-tag", className)}
+      data-color={color}
       onClick={() => {
         onPressedChange(!pressed);
       }}

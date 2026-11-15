@@ -10517,3 +10517,254 @@ button.od-message-action:hover {
 .od-section-heading > .od-date-range {
   min-width: 0;
 }
+
+/* A long name stays in its row and ends with an ellipsis. */
+
+.od-application-navigation {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.od-navigation-item,
+.od-account-menu {
+  min-width: 0;
+}
+
+.od-navigation-label {
+  flex: 1;
+}
+
+.od-navigation-item > .od-count {
+  flex: none;
+}
+
+.od-inline-editable {
+  min-width: 0;
+}
+
+.od-channel-name,
+.od-chart-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.od-chart-legend :is(span, li) {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.od-chart-tooltip {
+  max-width: min(18rem, calc(100% - 16px));
+}
+
+.od-chart-tooltip-row {
+  min-width: 0;
+}
+
+.od-list-copy,
+.od-list-title {
+  min-width: 0;
+}
+
+/*
+ * Tag colours. Twelve pairs of background and text. Each pair has a contrast
+ * of 7:1 or more, and the text has it on the page surfaces too.
+ */
+
+:root {
+  --od-tag-1-background: #fedfd1;
+  --od-tag-1-text: #6c371d;
+  --od-tag-2-background: #f6e3c9;
+  --od-tag-2-text: #624000;
+  --od-tag-3-background: #ece7c9;
+  --od-tag-3-text: #534800;
+  --od-tag-4-background: #dbedd2;
+  --od-tag-4-text: #33521f;
+  --od-tag-5-background: #cfefe0;
+  --od-tag-5-text: #00563c;
+  --od-tag-6-background: #c9efee;
+  --od-tag-6-text: #005556;
+  --od-tag-7-background: #cbedfb;
+  --od-tag-7-text: #00506a;
+  --od-tag-8-background: #d5e8ff;
+  --od-tag-8-text: #254974;
+  --od-tag-9-background: #e3e3ff;
+  --od-tag-9-text: #434073;
+  --od-tag-10-background: #f1dff9;
+  --od-tag-10-text: #593867;
+  --od-tag-11-background: #fbdcec;
+  --od-tag-11-text: #673352;
+  --od-tag-12-background: #ffdcde;
+  --od-tag-12-text: #6e3239;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --od-tag-1-background: #412a1f;
+    --od-tag-1-text: #f5bca2;
+    --od-tag-2-background: #3c2d18;
+    --od-tag-2-text: #e8c494;
+    --od-tag-3-background: #353118;
+    --od-tag-3-text: #d6cc93;
+    --od-tag-4-background: #273520;
+    --od-tag-4-text: #b6d6a5;
+    --od-tag-5-background: #1b372b;
+    --od-tag-5-text: #9cdbbe;
+    --od-tag-6-background: #143737;
+    --od-tag-6-text: #8fdada;
+    --od-tag-7-background: #183540;
+    --od-tag-7-text: #95d6f0;
+    --od-tag-8-background: #223144;
+    --od-tag-8-text: #aacdfb;
+    --od-tag-9-background: #2e2d44;
+    --od-tag-9-text: #c5c4fa;
+    --od-tag-10-background: #382a3e;
+    --od-tag-10-text: #ddbced;
+    --od-tag-11-background: #3f2835;
+    --od-tag-11-text: #efb7d6;
+    --od-tag-12-background: #42282a;
+    --od-tag-12-text: #f8b7bb;
+  }
+}
+
+.od-tag[data-color="1"] {
+  --od-tag-background: var(--od-tag-1-background);
+  --od-tag-text: var(--od-tag-1-text);
+}
+
+.od-tag[data-color="2"] {
+  --od-tag-background: var(--od-tag-2-background);
+  --od-tag-text: var(--od-tag-2-text);
+}
+
+.od-tag[data-color="3"] {
+  --od-tag-background: var(--od-tag-3-background);
+  --od-tag-text: var(--od-tag-3-text);
+}
+
+.od-tag[data-color="4"] {
+  --od-tag-background: var(--od-tag-4-background);
+  --od-tag-text: var(--od-tag-4-text);
+}
+
+.od-tag[data-color="5"] {
+  --od-tag-background: var(--od-tag-5-background);
+  --od-tag-text: var(--od-tag-5-text);
+}
+
+.od-tag[data-color="6"] {
+  --od-tag-background: var(--od-tag-6-background);
+  --od-tag-text: var(--od-tag-6-text);
+}
+
+.od-tag[data-color="7"] {
+  --od-tag-background: var(--od-tag-7-background);
+  --od-tag-text: var(--od-tag-7-text);
+}
+
+.od-tag[data-color="8"] {
+  --od-tag-background: var(--od-tag-8-background);
+  --od-tag-text: var(--od-tag-8-text);
+}
+
+.od-tag[data-color="9"] {
+  --od-tag-background: var(--od-tag-9-background);
+  --od-tag-text: var(--od-tag-9-text);
+}
+
+.od-tag[data-color="10"] {
+  --od-tag-background: var(--od-tag-10-background);
+  --od-tag-text: var(--od-tag-10-text);
+}
+
+.od-tag[data-color="11"] {
+  --od-tag-background: var(--od-tag-11-background);
+  --od-tag-text: var(--od-tag-11-text);
+}
+
+.od-tag[data-color="12"] {
+  --od-tag-background: var(--od-tag-12-background);
+  --od-tag-text: var(--od-tag-12-text);
+}
+
+.od-tag[data-color] {
+  border-color: transparent;
+  background: var(--od-tag-background);
+  color: var(--od-tag-text);
+}
+
+/* A filter chip has the colour of its tag as text, and as fill when it is on. */
+button.od-tag[data-color][aria-pressed="false"] {
+  border-color: color-mix(in srgb, var(--od-tag-text) 28%, transparent);
+  background: transparent;
+}
+
+button.od-tag[data-color]:hover {
+  border-color: var(--od-tag-text);
+  color: var(--od-tag-text);
+}
+
+button.od-tag[data-color][aria-pressed="true"] {
+  background: var(--od-tag-background);
+  box-shadow: inset 0 0 0 1.5px var(--od-tag-text);
+  color: var(--od-tag-text);
+}
+
+.od-tag[data-color] .od-tag-input-remove {
+  color: inherit;
+}
+
+/* Loading */
+
+.od-loading {
+  display: inline-grid;
+  place-items: center;
+  color: var(--od-color-muted);
+}
+
+.od-loading[data-block="true"] {
+  display: grid;
+  min-height: 160px;
+}
+
+.od-loading-ring {
+  display: block;
+  width: 20px;
+  height: 20px;
+  flex: none;
+  border: 2px solid color-mix(in srgb, currentColor 22%, transparent);
+  border-top-color: currentColor;
+  border-radius: 50%;
+  animation: od-loading-turn 0.8s linear infinite;
+}
+
+.od-loading[data-size="small"] .od-loading-ring,
+.od-button > .od-loading-ring {
+  width: 14px;
+  height: 14px;
+}
+
+.od-button[data-loading="true"] {
+  opacity: 1;
+  cursor: progress;
+}
+
+@keyframes od-loading-turn {
+  to {
+    rotate: 1turn;
+  }
+}
+
+@keyframes od-loading-fade {
+  50% {
+    opacity: 0.35;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .od-loading-ring {
+    border-color: currentColor;
+    animation: od-loading-fade 1.6s ease-in-out infinite;
+  }
+}

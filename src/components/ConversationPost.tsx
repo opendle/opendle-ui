@@ -41,7 +41,7 @@ export function ConversationPost({
       )}
       <div className="od-conversation-post-body">
         <div className="od-conversation-post-head">
-          <NetworkIcon labelled network={network} />
+          <NetworkIcon network={network} />
           <strong>{title}</strong>
           {when === undefined ? null : <time>{when}</time>}
           {url === null ? null : (

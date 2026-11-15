@@ -124,8 +124,9 @@ export function ReplyComposer({
           )}
           <Button
             className="od-reply-send"
-            disabled={!ready || send.pending}
+            disabled={!ready}
             icon={<Icon name="send" size={15} />}
+            loading={send.pending}
             onClick={submit}
           >
             {labels.send}

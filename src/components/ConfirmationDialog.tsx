@@ -150,7 +150,8 @@ function ConfirmationButton({
   const submittedRef = useRef(false);
   return (
     <Button
-      disabled={pending || !impactMatches}
+      disabled={!impactMatches}
+      loading={pending}
       onClick={() => {
         if (pending || submittedRef.current || !impactMatches) return;
         submittedRef.current = true;

@@ -46,11 +46,7 @@ export function SignInCard({
 
   const actions = useMemo(
     () => (
-      <Button
-        disabled={pending}
-        icon={actionIcon}
-        onClick={() => void signIn()}
-      >
+      <Button icon={actionIcon} loading={pending} onClick={() => void signIn()}>
         {pending ? pendingLabel : actionLabel}
       </Button>
     ),

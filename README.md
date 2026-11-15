@@ -51,6 +51,12 @@ the tenth and later series become one neutral series. `ChartLegend` is one
 legend for several charts. `DateRangeControl` and `RecordTable`
 complete an analytics view.
 
+`NetworkIcon` always has the network name as its accessible name and its
+tooltip. `LoadingIndicator` is the one loading sign; `Button` shows it with
+`loading`. With reduced motion it fades and does not turn. `TagChip` takes a
+colour key from 1 to 12 (`color`); the twelve pairs of background and text
+are tokens (`--od-tag-N-background`, `--od-tag-N-text`) for light and dark.
+
 `Toast` shows above all content, also above an open dialog. `useToastQueue`
 holds one message: a new message replaces the old one.
 

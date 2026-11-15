@@ -15,7 +15,7 @@ const fixture = `
 import React, {useState} from "react";
 import {createRoot} from "react-dom/client";
 import {
-  AccountMenu, ApiTokenList, ChannelList, MetricTile, ApplicationShell, AutoGrowTextarea, Avatar,
+  AccountMenu, ApiTokenList, ChannelList, LoadingIndicator, MetricTile, ApplicationShell, AutoGrowTextarea, Avatar,
   AvatarUpload, Button, Card, Icon, InlineAlert, NavigationLink, NetworkIcon,
   PageHeading, PasskeyList, Section, SessionPage, SignInCard, TabPanel, Tabs,
   TagChip, Toast, networkNames, useToastQueue,
@@ -67,6 +67,7 @@ function App() {
       secondaryNavigationLabel="Channels"
       secondaryNavigation={<>
         <NavigationLink href="#c1" icon={<NetworkIcon badge network="youtube"/>} label="tubededentifrice"/>
+        <NavigationLink href="#c0" icon={<NetworkIcon badge network="tumblr"/>} label="Studio Tubededentifrice Official Long Channel Name"/>
         <NavigationLink href="#c2" icon={<NetworkIcon badge network="instagram"/>} label="vincent.music" active/>
         <NavigationLink nested href="#c2-calendar" icon={<Icon name="calendar"/>} label="Calendar"/>
       </>}>
@@ -97,8 +98,12 @@ function App() {
             items={[{id: "inbox", label: "Inbox", count: 12}, {id: "replied", label: "Replied to"}, {id: "ignored", label: "Ignored"}]}/>
           <TabPanel idBase="demo" id={tab}>
             <p id="panel-text">{tab}</p>
-            <p>{networkNames.map((n) => <NetworkIcon key={n} network={n} badge labelled/>)}</p>
+            <p>{networkNames.map((n) => <NetworkIcon key={n} network={n} badge/>)}</p>
             <p><TagChip pressed={pressed} onPressedChange={setPressed}>#short</TagChip> <TagChip>#reel</TagChip></p>
+            <p id="tag-colors">{Array.from({length: 12}, (_, i) => <TagChip key={i} color={i + 1}>#tag-{i + 1}</TagChip>)}</p>
+            <p>{Array.from({length: 12}, (_, i) => <TagChip key={i} color={i + 1} pressed={i % 2 === 0} onPressedChange={() => {}}>#filter-{i + 1}</TagChip>)}</p>
+            <LoadingIndicator label="Loading" block/>
+            <p><Button loading>Saving</Button> <Button loading variant="secondary">Saving</Button></p>
             <p><Button>Primary</Button> <Button variant="secondary">Secondary</Button> <Button variant="danger">Danger</Button> <Button variant="quiet">Quiet</Button></p>
             <InlineAlert tone="success">Saved</InlineAlert>
             <InlineAlert tone="warning">Authorization expires soon</InlineAlert>
@@ -184,6 +189,30 @@ try {
         1,
         "the rail keeps the accessible name",
       );
+      // A long channel name stays in its row, with the full name as a title.
+      if (width !== 390) {
+        const long = page.getByRole("link", {
+          name: "Studio Tubededentifrice Official Long Channel Name",
+        });
+        assert.equal(
+          await long.getAttribute("title"),
+          "Studio Tubededentifrice Official Long Channel Name",
+        );
+        const longBox = await long.boundingBox();
+        assert.ok(
+          longBox.x + longBox.width <= sidebar.x + sidebar.width,
+          "a long name does not go out of the sidebar",
+        );
+        if (width === 1440) {
+          assert.equal(
+            await long
+              .locator(".od-navigation-label")
+              .evaluate((label) => label.scrollWidth > label.clientWidth),
+            true,
+            "a long name ends with an ellipsis",
+          );
+        }
+      }
       await audit(page, `${name}-page`);
 
       // The account menu: arrow keys move, Escape closes, a choice runs.
@@ -252,9 +281,13 @@ try {
       if (width === 390) {
         await page.getByRole("button", { name: "Channels" }).click();
         const sheet = page.getByRole("dialog", { name: "Channels" });
-        await sheet.getByRole("link", { name: "tubededentifrice" }).waitFor();
+        await sheet
+          .getByRole("link", { name: "YouTube tubededentifrice", exact: true })
+          .waitFor();
         await audit(page, `${name}-channels`);
-        await sheet.getByRole("link", { name: "tubededentifrice" }).click();
+        await sheet
+          .getByRole("link", { name: "YouTube tubededentifrice", exact: true })
+          .click();
         await sheet.waitFor({ state: "hidden" });
       }
 
@@ -423,6 +456,33 @@ try {
       assert.equal(await page.locator("#panel-text").textContent(), "ignored");
       await page.keyboard.press("ArrowRight");
       assert.equal(await page.locator("#panel-text").textContent(), "inbox");
+
+      // Twelve tag colours, each different. The loading sign fades and does
+      // not turn with reduced motion.
+      const tagFills = await page
+        .locator("#tag-colors .od-tag")
+        .evaluateAll((tags) =>
+          tags.map((tag) => getComputedStyle(tag).backgroundColor),
+        );
+      assert.equal(new Set(tagFills).size, 12);
+      assert.equal(
+        await page
+          .getByRole("status", { name: "Loading" })
+          .locator(".od-loading-ring")
+          .evaluate((ring) => getComputedStyle(ring).animationName),
+        "od-loading-fade",
+      );
+      assert.equal(
+        await page.getByRole("button", { name: "Saving" }).first().isDisabled(),
+        true,
+      );
+      // Each network mark has the network name as a tooltip.
+      assert.equal(
+        await page
+          .locator(".od-network")
+          .evaluateAll((marks) => marks.every((mark) => mark.title !== "")),
+        true,
+      );
 
       // A tag chip with a handler is a toggle.
       const chip = page.getByRole("button", { name: "#short" });

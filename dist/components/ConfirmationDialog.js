@@ -24,7 +24,7 @@ function ConfirmationState({ cancelLabel = "Cancel", className, confirmLabel, de
 }
 function ConfirmationButton({ confirmLabel, impactMatches, onConfirm, pending, pendingLabel, tone, }) {
     const submittedRef = useRef(false);
-    return (_jsx(Button, { disabled: pending || !impactMatches, onClick: () => {
+    return (_jsx(Button, { disabled: !impactMatches, loading: pending, onClick: () => {
             if (pending || submittedRef.current || !impactMatches)
                 return;
             submittedRef.current = true;

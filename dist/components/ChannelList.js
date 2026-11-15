@@ -14,7 +14,7 @@ import { useAsyncAction } from "./useAsyncAction.js";
  * The connected accounts of the networks: name, tags, switches, the warning
  * for an ended authorization, and the connect and disconnect actions.
  */
-export function ChannelList({ errorMessage, items, labels = channelListLabels, networks, onDisconnect, onPasswordConnect, onRename, onSwitchChange, onTagsChange, readOnly = false, }) {
+export function ChannelList({ errorMessage, items, labels = channelListLabels, networks, onDisconnect, onPasswordConnect, onRename, onSwitchChange, onTagsChange, readOnly = false, tagColors, }) {
     const change = useAsyncAction(errorMessage);
     const removal = useAsyncAction(errorMessage);
     const [connection, setConnection] = useState(null);
@@ -33,7 +33,7 @@ export function ChannelList({ errorMessage, items, labels = channelListLabels, n
                             void run(() => onSwitchChange(item.id, switchId, on));
                         }, onTagsChange: (tags) => {
                             void run(() => onTagsChange(item.id, tags));
-                        }, readOnly: readOnly, reconnectHref: networks.find((entry) => entry.network === item.network)
+                        }, readOnly: readOnly, tagColors: tagColors, reconnectHref: networks.find((entry) => entry.network === item.network)
                             ?.href ?? null }, item.id))) })) }), _jsx(ConnectChannelDialog, { errorMessage: errorMessage, labels: labels, network: connection?.network ?? null, networks: networks, onClose: () => {
                     setConnection(null);
                 }, onPasswordConnect: onPasswordConnect, open: connection !== null }), _jsx(ConfirmationDialog, { cancelLabel: labels.cancel, confirmLabel: labels.disconnect, description: removing?.name ?? "", error: removal.failure, onCancel: () => {

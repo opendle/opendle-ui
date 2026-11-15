@@ -2,6 +2,7 @@ import { classes } from "./classes.js";
 import { NetworkIcon } from "./Icon.js";
 import {
   tagFilterLabels,
+  type TagColors,
   type TagFilterChannel,
   type TagFilterLabels,
   type TagFilterValue,
@@ -15,9 +16,14 @@ export interface TagFilterBarProps {
   readonly postTags: readonly string[];
   readonly value: TagFilterValue;
   readonly onChange: (value: TagFilterValue) => void;
+  /** The colour key of each channel tag and of each post tag. */
+  readonly channelTagColors?: TagColors;
+  readonly postTagColors?: TagColors;
   readonly labels?: TagFilterLabels;
   readonly className?: string;
 }
+
+const noColors: TagColors = {};
 
 function toggled(list: readonly string[], item: string): readonly string[] {
   return list.includes(item)
@@ -30,11 +36,13 @@ function toggled(list: readonly string[], item: string): readonly string[] {
  * of the tags. A group with no entry does not show.
  */
 export function TagFilterBar({
+  channelTagColors = noColors,
   channelTags,
   channels,
   className,
   labels = tagFilterLabels,
   onChange,
+  postTagColors = noColors,
   postTags,
   value,
 }: TagFilterBarProps) {
@@ -90,6 +98,7 @@ export function TagFilterBar({
           </span>
           {channelTags.map((tag) => (
             <TagChip
+              color={channelTagColors[tag]}
               key={tag}
               onPressedChange={() => {
                 onChange({
@@ -111,6 +120,7 @@ export function TagFilterBar({
           </span>
           {postTags.map((tag) => (
             <TagChip
+              color={postTagColors[tag]}
               key={tag}
               onPressedChange={() => {
                 onChange({ ...value, postTags: toggled(value.postTags, tag) });

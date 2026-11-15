@@ -1,10 +1,13 @@
-import { type TagFilterChannel, type TagFilterLabels, type TagFilterValue } from "./calendarLabels.js";
+import { type TagColors, type TagFilterChannel, type TagFilterLabels, type TagFilterValue } from "./calendarLabels.js";
 export interface TagFilterBarProps {
     readonly channels: readonly TagFilterChannel[];
     readonly channelTags: readonly string[];
     readonly postTags: readonly string[];
     readonly value: TagFilterValue;
     readonly onChange: (value: TagFilterValue) => void;
+    /** The colour key of each channel tag and of each post tag. */
+    readonly channelTagColors?: TagColors;
+    readonly postTagColors?: TagColors;
     readonly labels?: TagFilterLabels;
     readonly className?: string;
 }
@@ -12,5 +15,5 @@ export interface TagFilterBarProps {
  * Filters for channels, channel tags and post tags, with the AND or OR logic
  * of the tags. A group with no entry does not show.
  */
-export declare function TagFilterBar({ channelTags, channels, className, labels, onChange, postTags, value, }: TagFilterBarProps): import("react").JSX.Element | null;
+export declare function TagFilterBar({ channelTagColors, channelTags, channels, className, labels, onChange, postTagColors, postTags, value, }: TagFilterBarProps): import("react").JSX.Element | null;
 //# sourceMappingURL=TagFilterBar.d.ts.map
