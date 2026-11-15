@@ -16,8 +16,11 @@ export interface CalendarItem {
   /** The ISO 8601 instant of the entry. */
   readonly start: string;
   readonly title: string;
-  /** A short type, for example "Reel". */
-  readonly kind?: string;
+  /** A small square picture of the media. A video gets a play mark. */
+  readonly preview?: {
+    readonly src: string;
+    readonly video?: boolean;
+  };
   /** A CSS colour for the bar at the start of the entry. */
   readonly color?: string;
   /** A short line of facts, for example "18.4K views · 37 comments". */

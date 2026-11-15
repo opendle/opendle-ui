@@ -97,6 +97,9 @@ export function CalendarWeek({
               ) : null}
               {days.map((day) => {
                 const current = day === today && onToday && slot === nowSlot;
+                const entries = (groups.get(day) ?? []).filter(
+                  (item) => slotOf(item) === slot,
+                );
                 return (
                   <td
                     data-now={current || undefined}
@@ -114,16 +117,18 @@ export function CalendarWeek({
                         : undefined
                     }
                   >
-                    {(groups.get(day) ?? []).map((item) =>
-                      slotOf(item) === slot ? (
-                        <CalendarEntry
-                          item={item}
-                          key={item.id}
-                          onSelect={onSelect}
-                          stateLabels={labels.states}
-                          time={formats.time.format(new Date(item.start))}
-                        />
-                      ) : null,
+                    {entries.length === 0 ? null : (
+                      <div className="od-calendar-week-cell">
+                        {entries.map((item) => (
+                          <CalendarEntry
+                            item={item}
+                            key={item.id}
+                            onSelect={onSelect}
+                            stateLabels={labels.states}
+                            time={formats.time.format(new Date(item.start))}
+                          />
+                        ))}
+                      </div>
                     )}
                   </td>
                 );

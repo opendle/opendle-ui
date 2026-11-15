@@ -30,7 +30,7 @@ const items = [
     id: "g1",
     start: local("2026-11-12", "18:30"),
     title: "Take Me With You",
-    kind: "Reel",
+    preview: { src: "/p.jpg", video: true },
     color: "#b8683c",
     targets: [
       target("p1", "instagram", "published"),
@@ -101,9 +101,21 @@ test("the month view groups one entry with a badge for each network", () => {
   assert.equal(markup.match(/class="od-calendar-item"/g).length, 2);
   assert.match(
     markup,
-    /aria-label="18:30, Reel, Take Me With You, Failed" class="od-calendar-item" data-layout="card" data-state="failed"/,
+    /aria-label="18:30, Take Me With You, Failed" class="od-calendar-item" data-layout="card" data-state="failed"/,
   );
   assert.match(markup, /data-state="failed"[^>]*data-network="pinterest"/);
+  // The marks are in the first line with the time. A post with media has a
+  // preview, and a post without media has none.
+  assert.match(
+    markup,
+    /<time[^>]*>18:30<\/time><span class="od-calendar-item-networks">/,
+  );
+  assert.equal(markup.match(/class="od-calendar-item-preview"/g).length, 1);
+  assert.match(
+    markup,
+    /data-video="true"><img alt="" loading="lazy" src="\/p.jpg"/,
+  );
+  assert.doesNotMatch(markup, /Reel/);
   assert.match(markup, /aria-current="date"[^>]*dateTime="2026-11-14"/i);
   assert.match(markup, /data-outside="true"[^>]*data-today="false"/);
 });

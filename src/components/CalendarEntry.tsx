@@ -47,7 +47,7 @@ export function CalendarEntry({
       : ({ "--od-calendar-item-color": item.color } as CSSProperties);
   return (
     <button
-      aria-label={[date, time, item.kind, item.title, stateLabels[state]]
+      aria-label={[date, time, item.title, stateLabels[state]]
         .filter(Boolean)
         .join(", ")}
       className={classes("od-calendar-item", className)}
@@ -60,34 +60,41 @@ export function CalendarEntry({
       type="button"
     >
       <span className="od-calendar-item-bar" />
-      <span className="od-calendar-item-top">
-        <time dateTime={item.start}>
-          {date === undefined ? time : `${date}, ${time}`}
-        </time>
-        {item.kind ? (
-          <span className="od-calendar-item-kind">{item.kind}</span>
-        ) : null}
-        <span className="od-calendar-item-state" title={stateLabels[state]}>
-          <Icon name={stateIcons[state]} size={13} />
+      <span className="od-calendar-item-main">
+        <span className="od-calendar-item-top">
+          <span className="od-calendar-item-state" title={stateLabels[state]}>
+            <Icon name={stateIcons[state]} size={13} />
+          </span>
+          <time dateTime={item.start}>
+            {date === undefined ? time : `${date}, ${time}`}
+          </time>
+          <span className="od-calendar-item-networks">
+            {item.targets.map((target) => (
+              <NetworkIcon
+                badge
+                className="od-calendar-item-network"
+                data-state={target.state}
+                key={target.id}
+                network={target.network}
+              />
+            ))}
+          </span>
+        </span>
+        <span className="od-calendar-item-title">
+          {item.title}
+          {item.summary ? (
+            <span className="od-calendar-item-summary">{item.summary}</span>
+          ) : null}
         </span>
       </span>
-      <span className="od-calendar-item-title">
-        {item.title}
-        {item.summary ? (
-          <span className="od-calendar-item-summary">{item.summary}</span>
-        ) : null}
-      </span>
-      <span className="od-calendar-item-networks">
-        {item.targets.map((target) => (
-          <NetworkIcon
-            badge
-            className="od-calendar-item-network"
-            data-state={target.state}
-            key={target.id}
-            network={target.network}
-          />
-        ))}
-      </span>
+      {item.preview ? (
+        <span
+          className="od-calendar-item-preview"
+          data-video={item.preview.video === true}
+        >
+          <img alt="" loading="lazy" src={item.preview.src} />
+        </span>
+      ) : null}
     </button>
   );
 }

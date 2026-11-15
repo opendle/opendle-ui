@@ -27,12 +27,13 @@ export function CalendarWeek({ anchor, formats, groups, labels, now, onSelect, t
                     const label = formats.time.format(new Date(2000, 0, 1, hour, 0));
                     return (_jsxs("tr", { "data-half": slot % 2 === 1, children: [slot % 2 === 0 ? (_jsx("th", { className: "od-calendar-week-hour", rowSpan: 2, scope: "row", children: _jsx("time", { children: label }) })) : null, days.map((day) => {
                                 const current = day === today && onToday && slot === nowSlot;
+                                const entries = (groups.get(day) ?? []).filter((item) => slotOf(item) === slot);
                                 return (_jsx("td", { "data-now": current || undefined, "data-past": day < today ||
                                         (day === today && onToday && slot < nowSlot), "data-today": day === today, style: current
                                         ? {
                                             "--od-calendar-now": `${String(Math.round(nowPart * 1000) / 10)}%`,
                                         }
-                                        : undefined, children: (groups.get(day) ?? []).map((item) => slotOf(item) === slot ? (_jsx(CalendarEntry, { item: item, onSelect: onSelect, stateLabels: labels.states, time: formats.time.format(new Date(item.start)) }, item.id)) : null) }, day));
+                                        : undefined, children: entries.length === 0 ? null : (_jsx("div", { className: "od-calendar-week-cell", children: entries.map((item) => (_jsx(CalendarEntry, { item: item, onSelect: onSelect, stateLabels: labels.states, time: formats.time.format(new Date(item.start)) }, item.id))) })) }, day));
                             })] }, slot));
                 }) })] }));
 }

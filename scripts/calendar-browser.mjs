@@ -36,12 +36,14 @@ function entries(month, count) {
     const start = new Date(2026, month, day, Number(time.slice(0, 2)), Number(time.slice(3)));
     const past = start < new Date(2026, 10, 14, 13);
     return {
-      id: month + "-" + day + "-" + time, start: start.toISOString(), title: songs[song][0], kind, color: songs[song][1],
+      id: month + "-" + day + "-" + time, start: start.toISOString(), title: songs[song][0], color: songs[song][1],
+      ...(day % 4 === 0 ? {} : {preview: {src: preview(songs[song][1]), video: kind !== "Image"}}),
       targets: networks.map((network) => ({id: month + "-" + day + time + network, network,
         state: network === failed ? "failed" : past ? "published" : "scheduled"})),
     };
   });
 }
+const preview = (color) => "data:image/svg+xml," + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 9 16"><rect width="9" height="16" fill="' + color + '"/><circle cx="3" cy="5" r="2" fill="#fff8"/></svg>');
 const channels = all.map((network) => ({id: network, network, label: network}));
 function Mark() {
   return <svg width="22" height="22" viewBox="0 0 22 22" aria-hidden="true"><circle cx="11" cy="11" r="11" fill="currentColor"/></svg>;
@@ -137,6 +139,63 @@ async function audit(page, name) {
   }
 }
 
+/**
+ * In a header, the text of each control is on the baseline of the title, and
+ * an icon button has the same middle as the text button next to it.
+ */
+async function baselines(page, name) {
+  const result = await page.evaluate(() => {
+    // A zero-size inline box sits on the baseline of its line. The wrapper
+    // keeps the line when the element is a flex container.
+    const baseline = (element) => {
+      const line = document.createElement("span");
+      const probe = document.createElement("span");
+      probe.style.cssText = "display:inline-block;width:0;height:0";
+      line.append(probe);
+      element.append(line);
+      const value = probe.getBoundingClientRect().bottom;
+      line.remove();
+      return value;
+    };
+    const header = document.querySelector(".od-calendar-header");
+    const title = header.querySelector("h1");
+    const today = header.querySelector(
+      ".od-calendar-header-navigation .od-button",
+    );
+    const view = header.querySelector(".od-calendar-header-views button");
+    const arrow = header.querySelector(".od-icon-button");
+    const middle = (element) => {
+      const box = element.getBoundingClientRect();
+      return box.top + box.height / 2;
+    };
+    const sameLine = (element) =>
+      element.getBoundingClientRect().top <
+      title.getBoundingClientRect().bottom;
+    return {
+      title: baseline(title),
+      today: baseline(today),
+      view: sameLine(view) ? baseline(view) : null,
+      arrow: arrow === null ? null : middle(arrow) - middle(today),
+    };
+  });
+  assert.ok(
+    Math.abs(result.title - result.today) <= 1.5,
+    `${name}: ${JSON.stringify(result)}`,
+  );
+  if (result.view !== null) {
+    assert.ok(
+      Math.abs(result.title - result.view) <= 1.5,
+      `${name}: ${JSON.stringify(result)}`,
+    );
+  }
+  if (result.arrow !== null) {
+    assert.ok(
+      Math.abs(result.arrow) <= 1,
+      `${name}: ${JSON.stringify(result)}`,
+    );
+  }
+}
+
 try {
   for (const colorScheme of ["light", "dark"]) {
     for (const width of [1440, 1000, 390]) {
@@ -156,7 +215,7 @@ try {
       // Month: one entry for each group, with a badge for each network.
       await page.getByRole("heading", { name: "November 2026" }).waitFor();
       const failed = page.getByRole("button", {
-        name: "18:30, Reel, Take Me With You, Failed",
+        name: "18:30, Take Me With You, Failed",
       });
       assert.equal(await failed.count(), 1);
       assert.equal(await failed.locator(".od-network").count(), 9);
@@ -189,6 +248,18 @@ try {
           /repeating-linear-gradient/,
         );
       }
+      await baselines(page, `${name} month`);
+      // The network marks follow the time in the first block of the card,
+      // on its line when the card has the room.
+      assert.equal(
+        await failed.evaluate(
+          (card) =>
+            card.querySelector("time").nextElementSibling.className ===
+            "od-calendar-item-networks",
+        ),
+        true,
+      );
+      assert.equal(await page.locator(".od-calendar-item-kind").count(), 0);
       await audit(page, `${name}-month`);
 
       // A channel filter keeps the entries of that channel.
@@ -319,31 +390,35 @@ try {
           JSON.stringify(nowLine),
         );
         assert.equal(await page.locator('[data-now="true"]').count(), 1);
-        // The bottom of the period controls is on the baseline of the title.
-        const edges = await page.evaluate(() => {
-          const title = document.querySelector(".od-calendar-header h1");
-          const probe = document.createElement("span");
-          probe.style.cssText = "display:inline-block;width:0;height:0";
-          title.append(probe);
-          const baseline = probe.getBoundingClientRect().bottom;
-          probe.remove();
-          return [
-            baseline,
-            ...[
-              ".od-calendar-header-navigation .od-button",
-              ".od-calendar-header-navigation .od-icon-button",
-            ].map(
-              (selector) =>
-                document.querySelector(selector).getBoundingClientRect().bottom,
+        // The preview is square and hides before the title has no room.
+        const previews = page.locator(
+          ".od-calendar-week .od-calendar-item-preview:visible",
+        );
+        if (width === 1440) {
+          const box = await previews.first().boundingBox();
+          assert.equal(box.width, box.height);
+          assert.ok(box.width >= 32);
+        } else {
+          assert.equal(
+            await previews.count(),
+            0,
+            "no preview in a narrow column",
+          );
+        }
+        assert.equal(
+          await page
+            .locator(".od-calendar-week .od-calendar-item")
+            .evaluateAll((cards) =>
+              cards.every((card) => {
+                const title = card.querySelector(".od-calendar-item-title");
+                return title.getBoundingClientRect().width >= 60;
+              }),
             ),
-          ];
-        });
-        assert.ok(
-          Math.abs(edges[0] - edges[1]) <= 1.5 &&
-            Math.abs(edges[0] - edges[2]) <= 1.5,
-          JSON.stringify(edges),
+          true,
+          "each title keeps room",
         );
       }
+      await baselines(page, `${name} week`);
       await audit(page, `${name}-week`);
 
       // The timeline opens at the present and loads earlier days on demand.
@@ -374,6 +449,29 @@ try {
         4,
         "each month has one heading",
       );
+      if (width !== 390) {
+        assert.equal(
+          await page
+            .locator(".od-calendar-timeline .od-calendar-item")
+            .first()
+            .evaluate((card) => {
+              const time = card.querySelector("time").getBoundingClientRect();
+              const mark = card
+                .querySelector(".od-calendar-item-network")
+                .getBoundingClientRect();
+              return (
+                Math.abs(
+                  time.top + time.height / 2 - (mark.top + mark.height / 2),
+                ) <= 3
+              );
+            }),
+          true,
+          "in a row, the marks are on the line of the time",
+        );
+      }
+      await todayRow.scrollIntoViewIfNeeded();
+      await page.evaluate(() => window.scrollTo(0, 0));
+      await baselines(page, `${name} timeline`);
       await todayRow.scrollIntoViewIfNeeded();
       await audit(page, `${name}-timeline`);
 
@@ -381,7 +479,7 @@ try {
       await page.goto(`${pageUrl}#variants`);
       await page.reload();
       await page
-        .getByRole("button", { name: "18:30, Reel, Take Me With You, Failed" })
+        .getByRole("button", { name: "18:30, Take Me With You, Failed" })
         .click();
       const variants = page.getByRole("dialog", { name: "Take Me With You" });
       assert.equal(await variants.getByRole("tab").count(), 9);

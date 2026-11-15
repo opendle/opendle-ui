@@ -62,7 +62,10 @@ holds one message: a new message replaces the old one.
 
 `CalendarBoard` shows entries in a month view, a week view or a continuous
 timeline. One entry can go to several networks and shows one badge for each.
-The past has thin diagonal lines: the days before today in the month view,
+An entry shows its state, its time and the network marks on the first line,
+then its title, and a square preview of its media when the host gives one.
+In a page header (`PageHeading`, `CalendarHeader`) the text of each control
+is on the baseline of the title. The past has thin diagonal lines: the days before today in the month view,
 and the time to the present minute in the week view, with a line at the
 present. The week view has a time axis of 24 hours; a row is one half hour and grows
 with its entries. The timeline opens at the present and asks for earlier or later entries

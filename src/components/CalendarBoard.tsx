@@ -268,6 +268,7 @@ function Timeline({
                   items.map((item) => (
                     <CalendarEntry
                       item={item}
+                      layout="row"
                       key={item.id}
                       onSelect={onSelect}
                       stateLabels={labels.states}
