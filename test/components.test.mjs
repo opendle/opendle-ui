@@ -1280,6 +1280,29 @@ test("session components keep one named page and caller-supplied states", () => 
   assert.match(markup, /<footer class="od-session-footer">/);
 });
 
+test("session artwork stays decorative and keeps the page content named", () => {
+  const markup = renderToStaticMarkup(
+    React.createElement(
+      SessionPage,
+      {
+        artwork: React.createElement("span", null, "Product artwork"),
+        className: "product-session",
+        "aria-label": "Session access",
+      },
+      React.createElement(SessionCard, { title: "Sign in" }),
+    ),
+  );
+  assert.match(
+    markup,
+    /class="od-session-page od-session-page-with-artwork product-session"/,
+  );
+  assert.match(markup, /aria-hidden="true" class="od-session-artwork"/);
+  assert.match(markup, /class="od-session-content"/);
+  assert.match(markup, /aria-label="Session access"/);
+  assert.match(markup, /<h1 id="[^"]+">Sign in<\/h1>/);
+  assert.doesNotMatch(markup, /artwork="/);
+});
+
 test("state panels expose status, error, action, and heading states", () => {
   const loading = renderToStaticMarkup(
     React.createElement(

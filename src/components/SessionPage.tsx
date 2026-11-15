@@ -9,10 +9,13 @@ import { Card } from "./Card.js";
 
 export interface SessionPageProps extends HTMLAttributes<HTMLElement> {
   readonly children?: ReactNode;
+  /** Decorative artwork, hidden from assistive technology and on phones. */
+  readonly artwork?: ReactNode;
 }
 
 /** A centered page boundary for sign-in, session, and bootstrap states. */
 export function SessionPage({
+  artwork,
   children,
   className,
   ...props
@@ -20,9 +23,24 @@ export function SessionPage({
   return (
     <main
       {...props}
-      className={["od-session-page", className].filter(Boolean).join(" ")}
+      className={[
+        "od-session-page",
+        artwork ? "od-session-page-with-artwork" : undefined,
+        className,
+      ]
+        .filter(Boolean)
+        .join(" ")}
     >
-      {children}
+      {artwork ? (
+        <>
+          <div aria-hidden="true" className="od-session-artwork">
+            {artwork}
+          </div>
+          <div className="od-session-content">{children}</div>
+        </>
+      ) : (
+        children
+      )}
     </main>
   );
 }

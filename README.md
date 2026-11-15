@@ -147,6 +147,11 @@ disabled after success while the browser leaves the page. Hosts supply copy,
 `onSignIn`, error mapping, URL validation, and navigation. Authentication,
 authorization, and provider policy stay in the host.
 
+Pass decorative brand artwork to `SessionPage.artwork` for a split sign-in
+page with larger type and a full-width action. The artwork stays outside the
+accessible content and hides at widths of 760 px or less. Pages without
+artwork keep the centered layout. Hosts own the artwork and product copy.
+
 DataTable cards stack each label above its value when the table container is
 `22rem` wide or less. The title then uses its own row above selection and detail
 controls. This layout gives narrow cards the full content width at enlarged

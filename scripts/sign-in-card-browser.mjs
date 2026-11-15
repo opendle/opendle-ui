@@ -17,7 +17,7 @@ function signIn() {
  return new Promise((resolve,reject) => { window.finish = resolve; window.fail = reject; });
 }
 createRoot(document.getElementById("root")).render(
- <SessionPage><SignInCard title="Administrator sign-in" description="Use your shared account."
+ <SessionPage artwork={window.withArtwork ? <span role="img" aria-label="Product artwork">Product artwork</span> : undefined}><SignInCard title="Administrator sign-in" description="Use your shared account."
   actionLabel="Continue with Pocket ID" pendingLabel="Opening Pocket ID…"
   onSignIn={signIn} errorMessage={() => "The identity service is unavailable."}/></SessionPage>
 );`;
@@ -29,11 +29,18 @@ const bundled = await build({
 });
 const browser = await chromium.launch({ headless: true });
 try {
-  for (const viewport of [
-    { width: 1280, height: 800 },
-    { width: 375, height: 812 },
+  for (const { width, colorScheme, withArtwork } of [
+    { width: 1280, colorScheme: "light", withArtwork: false },
+    { width: 375, colorScheme: "light", withArtwork: false },
+    { width: 1280, colorScheme: "light", withArtwork: true },
+    { width: 1280, colorScheme: "dark", withArtwork: true },
+    { width: 375, colorScheme: "light", withArtwork: true },
+    { width: 320, colorScheme: "dark", withArtwork: true },
   ]) {
-    const context = await browser.newContext({ viewport });
+    const context = await browser.newContext({
+      colorScheme,
+      viewport: { width, height: 812 },
+    });
     const page = await context.newPage();
     const errors = [];
     page.on("pageerror", (error) => errors.push(error.message));
@@ -43,11 +50,28 @@ try {
     await page.addStyleTag({
       content: readFileSync(`${root}/styles/tokens.css`, "utf8"),
     });
+    await page.evaluate((value) => {
+      window.withArtwork = value;
+    }, withArtwork);
     await page.addScriptTag({ content: bundled.outputFiles[0].text });
     const action = page.getByRole("button", {
       name: "Continue with Pocket ID",
     });
     await action.waitFor();
+    const artwork = page.locator(".od-session-artwork");
+    if (withArtwork) {
+      assert.equal(await artwork.isVisible(), width > 760);
+      assert.equal(
+        await page.getByRole("img", { name: "Product artwork" }).count(),
+        0,
+      );
+      if (width > 760) {
+        const bounds = await action.boundingBox();
+        assert.ok(bounds.x > width / 2, "the action stays beside the artwork");
+      }
+    } else {
+      assert.equal(await artwork.count(), 0);
+    }
     await page.keyboard.press("Tab");
     assert.equal(
       await action.evaluate((node) => node === document.activeElement),
