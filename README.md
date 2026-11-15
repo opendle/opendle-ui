@@ -564,6 +564,9 @@ package version updates. The Git dependency is an intentional exception to
 host dependency age and exact-version checks. Keep the built `dist/` files in
 Git because host installs can use `npm ci --ignore-scripts`.
 
+This package uses Node.js 26.13.0 and npm 12. npm 12 refuses Git
+dependencies by default, so a host adds `allow-git=root` to its `.npmrc`.
+
 Host projects run `scripts/build-consumer.mjs` before development, build,
 typecheck, and test commands. The helper builds local shared source, updates a
 local installed copy when needed, and checks the required public exports. It
