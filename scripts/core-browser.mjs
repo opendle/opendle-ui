@@ -17,7 +17,7 @@ import {createRoot} from "react-dom/client";
 import {
   AccountMenu, ApiTokenList, ChannelList, LoadingIndicator, MetricTile, ApplicationShell, AutoGrowTextarea, Avatar,
   AvatarUpload, Button, Card, Icon, InlineAlert, NavigationLink, NetworkIcon,
-  PageHeading, PasskeyList, Section, SessionPage, SignInCard, TabPanel, Tabs,
+  PageHeading, PasskeyList, Section, SessionPage, SignInCard, TabPanel, Tabs, NavigationGroup,
   TagChip, Toast, networkNames, useToastQueue,
 } from "./dist/index.js";
 
@@ -37,7 +37,7 @@ function App() {
     {id: "c1", network: "youtube", name: "tubededentifrice", handle: "@tubededentifrice", tags: ["long"], needsReconnect: false,
       switches: [{id: "publish", label: "Publish", on: true}, {id: "community", label: "Community", on: true}, {id: "analytics", label: "Analytics", on: false}]},
     {id: "c2", network: "pinterest", name: "Vincent Music", handle: "@vincent", tags: [], needsReconnect: true,
-      switches: [{id: "publish", label: "Publish", on: true}, {id: "community", label: "Community", on: false}, {id: "analytics", label: "Analytics", on: false}]},
+      switches: [{id: "publish", label: "Publish", on: true}, {id: "community", label: "Community", on: false, disabled: true, disabledReason: "Community is not supported"}, {id: "analytics", label: "Analytics", on: false}]},
   ]);
   const patch = (id, change) => setChannels((list) => list.map((c) => c.id === id ? {...c, ...change(c)} : c));
   const {toast, showToast} = useToastQueue(60000);
@@ -68,8 +68,9 @@ function App() {
       secondaryNavigation={<>
         <NavigationLink href="#c1" icon={<NetworkIcon badge network="youtube"/>} label="tubededentifrice"/>
         <NavigationLink href="#c0" icon={<NetworkIcon badge network="tumblr"/>} label="Studio Tubededentifrice Official Long Channel Name"/>
-        <NavigationLink href="#c2" icon={<NetworkIcon badge network="instagram"/>} label="vincent.music" active/>
-        <NavigationLink nested href="#c2-calendar" icon={<Icon name="calendar"/>} label="Calendar"/>
+        <NavigationGroup active nested={<NavigationLink nested href="#c2-calendar" icon={<Icon name="calendar"/>} label="Calendar"/>}>
+          <NavigationLink href="#c2" icon={<NetworkIcon badge network="instagram"/>} label="vincent.music" active/>
+        </NavigationGroup>
       </>}>
       <PageHeading title="Settings" actions={<Button variant="quiet" icon={<Icon name="sign-out" size={15}/>}>Sign out</Button>}/>
       <PasskeyList items={passkeys} errorMessage={message}
@@ -268,6 +269,20 @@ try {
           64,
         );
         await audit(page, `${name}-collapsed`);
+        // A saved desktop collapse must not remove the line in a phone sheet.
+        await page.setViewportSize({ width: 390, height: 900 });
+        await page.getByRole("button", { name: "Channels" }).click();
+        const phoneSheet = page.getByRole("dialog", { name: "Channels" });
+        await phoneSheet.waitFor();
+        assert.equal(
+          await phoneSheet
+            .locator(".od-navigation-group-children")
+            .evaluate((group) => getComputedStyle(group).borderLeftStyle),
+          "solid",
+        );
+        await page.keyboard.press("Escape");
+        await phoneSheet.waitFor({ state: "hidden" });
+        await page.setViewportSize({ width, height: 900 });
         await page.getByRole("button", { name: "Expand the sidebar" }).click();
         assert.equal(
           (await page.locator(".od-application-sidebar").boundingBox()).width,
@@ -384,6 +399,16 @@ try {
         .first();
       await analytics.click();
       assert.equal(await analytics.getAttribute("aria-pressed"), "true");
+      const unsupported = channelsRegion
+        .getByRole("button", { name: "Community", exact: true })
+        .last();
+      assert.equal(await unsupported.isDisabled(), true);
+      assert.equal(
+        await unsupported.getAttribute("title"),
+        "Community is not supported",
+      );
+      await unsupported.dispatchEvent("click");
+      assert.equal(await unsupported.getAttribute("aria-pressed"), "false");
       await channelsRegion.getByText("Authorization ended").waitFor();
       assert.equal(
         await channelsRegion

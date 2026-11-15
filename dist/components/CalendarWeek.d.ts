@@ -1,4 +1,5 @@
 import type { CalendarBoardLabels, CalendarItem } from "./calendarItems.js";
+import type { CalendarDrag } from "./useCalendarDrag.js";
 export interface CalendarWeekFormats {
     readonly time: Intl.DateTimeFormat;
     readonly weekday: Intl.DateTimeFormat;
@@ -6,6 +7,7 @@ export interface CalendarWeekFormats {
 }
 export interface CalendarWeekProps {
     readonly anchor: string;
+    readonly drag: CalendarDrag;
     readonly today: string;
     /** The entries of each `YYYY-MM-DD` day, in time order. */
     readonly groups: ReadonlyMap<string, readonly CalendarItem[]>;
@@ -19,5 +21,5 @@ export interface CalendarWeekProps {
  * One week against a time axis of 24 hours. A row is one half hour. A row
  * grows with its entries, and a row without entries stays thin.
  */
-export declare function CalendarWeek({ anchor, formats, groups, labels, now, onSelect, today, }: CalendarWeekProps): import("react").JSX.Element;
+export declare function CalendarWeek({ anchor, drag, formats, groups, labels, now, onSelect, today, }: CalendarWeekProps): import("react").JSX.Element;
 //# sourceMappingURL=CalendarWeek.d.ts.map

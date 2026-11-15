@@ -7,7 +7,9 @@ export interface TagChipProps {
     /** The colour key of the tag, from 1 to 12. */
     readonly color?: number | undefined;
     readonly className?: string;
+    readonly disabled?: boolean;
+    readonly title?: string | undefined;
 }
 /** A tag label. It is a toggle when the host gives `onPressedChange`. */
-export declare function TagChip({ children, className, color, onPressedChange, pressed, }: TagChipProps): import("react").JSX.Element;
+export declare function TagChip({ children, className, color, disabled, title, onPressedChange, pressed, }: TagChipProps): import("react").JSX.Element;
 //# sourceMappingURL=TagChip.d.ts.map

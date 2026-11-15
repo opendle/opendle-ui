@@ -28,6 +28,8 @@ export interface PostDetailTarget {
     readonly text: string;
     /** The time of this network, already formatted. */
     readonly when: string;
+    readonly canReschedule?: boolean;
+    readonly scheduleDisabledReason?: string;
 }
 export interface PostDetailDialogProps {
     readonly open: boolean;
@@ -41,6 +43,9 @@ export interface PostDetailDialogProps {
     readonly targets: readonly PostDetailTarget[];
     /** Send a failed network again. Without it, there is no retry button. */
     readonly onRetry?: (targetId: string) => Promise<void>;
+    readonly onReschedule?: (targetId: string | null) => void;
+    readonly rescheduleLabel?: string;
+    readonly scheduleEditor?: ReactNode;
     readonly errorMessage: (error: unknown) => string | null;
     /** Key numbers of the post, already formatted. */
     readonly metrics?: readonly PostDetailMetric[];
@@ -53,5 +58,5 @@ export interface PostDetailDialogProps {
  * network and a link to each published post. When the text or the time
  * differs between networks, each network has a tab.
  */
-export declare function PostDetailDialog({ children, errorMessage, labels, media, metrics, onClose, onRetry, open, tagColors, tags, targets, title, }: PostDetailDialogProps): import("react").JSX.Element;
+export declare function PostDetailDialog({ children, errorMessage, labels, media, metrics, onClose, onRetry, onReschedule, rescheduleLabel, scheduleEditor, open, tagColors, tags, targets, title, }: PostDetailDialogProps): import("react").JSX.Element;
 //# sourceMappingURL=PostDetailDialog.d.ts.map

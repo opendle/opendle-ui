@@ -79,6 +79,8 @@ export function ChannelRow({
             ) : null
           ) : (
             <TagChip
+              disabled={entry.disabled ?? false}
+              title={entry.disabledReason}
               key={entry.id}
               onPressedChange={(on) => {
                 onSwitchChange(entry.id, on);

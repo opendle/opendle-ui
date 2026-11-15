@@ -14,6 +14,7 @@ import {
   type CalendarItem,
 } from "./calendarItems.js";
 import { classes } from "./classes.js";
+import { useCalendarDrag, type CalendarDrag } from "./useCalendarDrag.js";
 
 export interface CalendarBoardProps {
   readonly mode: CalendarMode;
@@ -23,6 +24,10 @@ export interface CalendarBoardProps {
   readonly today: string;
   readonly items: readonly CalendarItem[];
   readonly onSelect: (item: CalendarItem) => void;
+  /** The host permits this entry to move. Only future entries can move. */
+  readonly canMove?: (item: CalendarItem) => boolean;
+  /** A month keeps the local time. A week uses the destination half hour. */
+  readonly onMove?: (item: CalendarItem, start: string) => void;
   /** Timeline: more entries exist before the first one. */
   readonly hasEarlier?: boolean;
   /** Timeline: more entries exist after the last one. */
@@ -69,6 +74,7 @@ interface Formats {
 }
 
 interface GridProps {
+  readonly drag: CalendarDrag;
   readonly mode: "month" | "week";
   readonly anchor: string;
   readonly today: string;
@@ -80,6 +86,7 @@ interface GridProps {
 
 function Grid({
   anchor,
+  drag,
   formats,
   groups,
   labels,
@@ -109,6 +116,7 @@ function Grid({
               data-past={day < today}
               data-today={day === today}
               key={day}
+              {...drag.target(day, formats.time)}
             >
               <time
                 aria-current={day === today ? "date" : undefined}
@@ -124,6 +132,7 @@ function Grid({
               {items.map((item) => (
                 <CalendarEntry
                   item={item}
+                  drag={drag.entry(item)}
                   key={item.id}
                   onSelect={onSelect}
                   followUpLabels={labels.followUps}
@@ -303,6 +312,7 @@ function Timeline({
  */
 export function CalendarBoard({
   anchor,
+  canMove,
   className,
   hasEarlier = false,
   hasLater = false,
@@ -313,6 +323,7 @@ export function CalendarBoard({
   now,
   onLoadEarlier,
   onLoadLater,
+  onMove,
   onSelect,
   today,
 }: CalendarBoardProps) {
@@ -338,11 +349,13 @@ export function CalendarBoard({
     [locale],
   );
   const groups = useMemo(() => groupByDay(items), [items]);
+  const drag = useCalendarDrag({ items, canMove, onMove, now });
   return (
     <section
       aria-label={labels.board}
       className={classes("od-calendar", className)}
       data-mode={mode}
+      data-dragging={drag.dragging || undefined}
     >
       {mode === "timeline" ? (
         <Timeline
@@ -361,6 +374,7 @@ export function CalendarBoard({
           {mode === "week" ? (
             <CalendarWeek
               anchor={anchor}
+              drag={drag}
               formats={formats}
               groups={groups}
               labels={labels}
@@ -371,6 +385,7 @@ export function CalendarBoard({
           ) : null}
           <Grid
             anchor={anchor}
+            drag={drag}
             formats={formats}
             groups={groups}
             labels={labels}

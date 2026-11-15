@@ -8,6 +8,7 @@ import {
 } from "./calendarDates.js";
 import type { CalendarBoardLabels, CalendarItem } from "./calendarItems.js";
 import { useMinute } from "./useMinute.js";
+import type { CalendarDrag } from "./useCalendarDrag.js";
 
 export interface CalendarWeekFormats {
   readonly time: Intl.DateTimeFormat;
@@ -17,6 +18,7 @@ export interface CalendarWeekFormats {
 
 export interface CalendarWeekProps {
   readonly anchor: string;
+  readonly drag: CalendarDrag;
   readonly today: string;
   /** The entries of each `YYYY-MM-DD` day, in time order. */
   readonly groups: ReadonlyMap<string, readonly CalendarItem[]>;
@@ -40,6 +42,7 @@ function slotOf(item: CalendarItem): number {
  */
 export function CalendarWeek({
   anchor,
+  drag,
   formats,
   groups,
   labels,
@@ -109,6 +112,7 @@ export function CalendarWeek({
                     }
                     data-today={day === today}
                     key={day}
+                    {...drag.target(day, formats.time, slot)}
                     style={
                       current
                         ? ({
@@ -122,6 +126,7 @@ export function CalendarWeek({
                         {entries.map((item) => (
                           <CalendarEntry
                             item={item}
+                            drag={drag.entry(item)}
                             key={item.id}
                             onSelect={onSelect}
                             followUpLabels={labels.followUps}

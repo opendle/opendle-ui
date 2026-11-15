@@ -433,3 +433,27 @@ test("MetricTile shows the change only when it has one", () => {
     /<span class="od-metric-change" data-trend="up">\+12%<\/span>/,
   );
 });
+
+test("post dates can change for eligible channels in a mixed group", () => {
+  const markup = render(PostDetailDialog, {
+    open: true,
+    onClose: () => undefined,
+    errorMessage: () => "Failed",
+    title: "Post",
+    onReschedule: () => undefined,
+    targets: [
+      detailTarget("held", "youtube", "scheduled", {
+        canReschedule: false,
+        scheduleDisabledReason: "Held by network",
+      }),
+      detailTarget("pending", "facebook", "scheduled", { canReschedule: true }),
+    ],
+    media: { type: "video", src: "/video.mp4" },
+    metrics: [{ label: "Views", value: "12" }],
+  });
+  assert.match(markup, /class="od-post-detail-date"(?! disabled)/);
+  assert.match(markup, /disabled="" title="Held by network"/);
+  assert.equal(markup.match(/od-post-detail-target-schedule/g).length, 2);
+  assert.match(markup, /preload="metadata" src="\/video.mp4"/);
+  assert.match(markup, /od-post-detail-metrics/);
+});

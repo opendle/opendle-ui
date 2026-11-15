@@ -1,4 +1,5 @@
 import { type CalendarFollowUpLabels, type CalendarItem, type CalendarItemState } from "./calendarItems.js";
+import type { CalendarEntryDrag } from "./useCalendarDrag.js";
 export interface CalendarEntryProps {
     readonly item: CalendarItem;
     /** The time of the entry, already formatted. */
@@ -6,6 +7,8 @@ export interface CalendarEntryProps {
     /** A day before the time, for a list that is not grouped by day. */
     readonly date?: string;
     readonly onSelect: (item: CalendarItem) => void;
+    /** Drag behavior supplied by the calendar board. */
+    readonly drag?: CalendarEntryDrag | undefined;
     /** `row` puts all parts on one line when the width permits. */
     readonly layout?: "card" | "row";
     readonly stateLabels?: Readonly<Record<CalendarItemState, string>>;
@@ -13,5 +16,5 @@ export interface CalendarEntryProps {
     readonly className?: string;
 }
 /** One entry of a calendar or of a list of posts, with its network badges. */
-export declare function CalendarEntry({ className, date, item, followUpLabels, layout, onSelect, stateLabels, time, }: CalendarEntryProps): import("react").JSX.Element;
+export declare function CalendarEntry({ className, date, drag, item, followUpLabels, layout, onSelect, stateLabels, time, }: CalendarEntryProps): import("react").JSX.Element;
 //# sourceMappingURL=CalendarEntry.d.ts.map

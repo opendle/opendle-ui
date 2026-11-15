@@ -8,6 +8,10 @@ export interface CalendarBoardProps {
     readonly today: string;
     readonly items: readonly CalendarItem[];
     readonly onSelect: (item: CalendarItem) => void;
+    /** The host permits this entry to move. Only future entries can move. */
+    readonly canMove?: (item: CalendarItem) => boolean;
+    /** A month keeps the local time. A week uses the destination half hour. */
+    readonly onMove?: (item: CalendarItem, start: string) => void;
     /** Timeline: more entries exist before the first one. */
     readonly hasEarlier?: boolean;
     /** Timeline: more entries exist after the last one. */
@@ -26,5 +30,5 @@ export interface CalendarBoardProps {
  * A calendar of entries that go to one or more networks. It has a month
  * view, a week view and a continuous timeline. The host owns the data.
  */
-export declare function CalendarBoard({ anchor, className, hasEarlier, hasLater, items, labels, locale, mode, now, onLoadEarlier, onLoadLater, onSelect, today, }: CalendarBoardProps): import("react").JSX.Element;
+export declare function CalendarBoard({ anchor, canMove, className, hasEarlier, hasLater, items, labels, locale, mode, now, onLoadEarlier, onLoadLater, onMove, onSelect, today, }: CalendarBoardProps): import("react").JSX.Element;
 //# sourceMappingURL=CalendarBoard.d.ts.map

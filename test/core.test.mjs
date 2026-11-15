@@ -15,6 +15,7 @@ import {
   InlineEditableText,
   LoadingIndicator,
   NavigationLink,
+  NavigationGroup,
   SecretValue,
   TagChip,
   TextControl,
@@ -259,4 +260,44 @@ test("a loading Button is busy, does not act and shows the loading sign", () => 
 test("TagChip carries the colour key of its tag", () => {
   assert.match(render(TagChip, { color: 7 }, "#reel"), /data-color="7"/);
   assert.doesNotMatch(render(TagChip, null, "#reel"), /data-color/);
+});
+
+test("disabled tag switches retain their reason and cannot be selected", () => {
+  const markup = render(
+    TagChip,
+    {
+      onPressedChange: () => undefined,
+      disabled: true,
+      title: "Not supported",
+      pressed: false,
+    },
+    "Community",
+  );
+  assert.match(markup, /disabled=""/);
+  assert.match(markup, /title="Not supported"/);
+  assert.match(markup, /aria-pressed="false"/);
+});
+
+test("navigation groups contain their parent and nested destinations", () => {
+  const markup = render(
+    NavigationGroup,
+    {
+      active: true,
+      nested: React.createElement(NavigationLink, {
+        href: "/calendar",
+        label: "Calendar",
+        icon: null,
+        nested: true,
+        active: true,
+      }),
+    },
+    React.createElement(NavigationLink, {
+      href: "/channel",
+      label: "Channel",
+      icon: null,
+    }),
+  );
+  assert.match(markup, /od-navigation-group" data-active="true"/);
+  assert.match(markup, /od-navigation-group-children/);
+  assert.equal(markup.match(/<a /g).length, 2);
 });

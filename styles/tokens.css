@@ -8812,7 +8812,6 @@ html:has(.od-dialog:modal) {
 
 .od-post-detail-target[data-state="failed"] {
   padding-block: 5px;
-  grid-column: 1 / -1;
   background: var(--od-color-danger-soft);
 }
 
@@ -9604,10 +9603,11 @@ html:has(.od-dialog:modal) {
 /* Calendar entry facts and post metrics */
 
 .od-post-detail-metrics {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px 22px;
-  margin: 8px 0 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(88px, 1fr));
+  gap: 8px;
+  margin: 0;
+  padding: 0 22px 18px;
 }
 
 .od-post-detail-metrics dt {
@@ -10653,10 +10653,22 @@ button.od-message-action:hover {
   color: var(--od-tag-text);
 }
 
-/* A filter chip has the colour of its tag as text, and as fill when it is on. */
+/* Unselected tags keep both colours and use a dashed outline. */
+button.od-tag[aria-pressed="false"] {
+  border-style: dashed;
+}
+
 button.od-tag[data-color][aria-pressed="false"] {
-  border-color: color-mix(in srgb, var(--od-tag-text) 28%, transparent);
-  background: transparent;
+  border-color: color-mix(
+    in srgb,
+    var(--od-tag-text) calc(var(--od-tag-unselected-opacity, 0.6) * 100%),
+    transparent
+  );
+  background: color-mix(
+    in srgb,
+    var(--od-tag-background) calc(var(--od-tag-unselected-opacity, 0.6) * 100%),
+    transparent
+  );
 }
 
 button.od-tag[data-color]:hover {
@@ -11155,5 +11167,142 @@ button.od-tag[data-color][aria-pressed="true"] {
 
   .od-tag-filter {
     padding: 4px var(--od-page-x) 12px;
+  }
+}
+
+button.od-tag:disabled {
+  cursor: not-allowed;
+  opacity: var(--od-tag-unselected-opacity, 0.8);
+}
+
+.od-post-detail-metrics > div {
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid var(--od-color-border);
+  border-radius: var(--od-radius-md);
+  background: var(--od-color-sunken);
+}
+
+.od-post-detail-metrics dd {
+  margin-top: 4px;
+  font-size: 1.25rem;
+}
+
+.od-post-detail-metadata {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 12px;
+}
+
+.od-post-detail-metadata .od-post-detail-states {
+  order: -1;
+}
+
+.od-post-detail-target {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-content: start;
+  padding-block: 7px;
+}
+
+.od-post-detail-target-note {
+  grid-column: 2 / -1;
+  grid-row: 2;
+}
+
+.od-post-detail-target > .od-button {
+  grid-column: 3;
+  grid-row: 1;
+}
+
+.od-post-detail-target-schedule {
+  display: inline-flex;
+  align-items: center;
+  justify-self: start;
+  gap: 6px;
+  grid-column: 2 / -1;
+  padding: 4px 0;
+  border: 0;
+  background: none;
+  color: var(--od-color-muted);
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+
+.od-post-detail-date {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 3px 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+:is(.od-post-detail-date, .od-post-detail-target-schedule):enabled:hover {
+  color: var(--od-color-brand-text);
+}
+
+:is(.od-post-detail-date, .od-post-detail-target-schedule):disabled {
+  cursor: default;
+  opacity: 0.6;
+}
+
+.od-navigation-group {
+  min-width: 0;
+  border: 1px solid transparent;
+  border-radius: var(--od-radius-lg);
+}
+
+.od-navigation-group[data-active="true"] {
+  padding: 3px;
+  border-color: var(--od-color-border-strong);
+  background: var(--od-color-sunken);
+}
+
+.od-navigation-group-children {
+  display: grid;
+  gap: 2px;
+  margin: 2px 4px 5px 17px;
+  padding-left: 9px;
+  border-left: 1px solid var(--od-color-border-strong);
+}
+
+.od-navigation-group-children .od-navigation-item[data-nested="true"] {
+  margin-left: 0;
+}
+
+.od-navigation-group-children .od-navigation-item[aria-current="page"] {
+  background: var(--od-color-hover);
+}
+
+.od-application-shell[data-collapsed="true"]
+  .od-application-sidebar
+  .od-navigation-group {
+  padding: 0;
+}
+
+.od-application-shell[data-collapsed="true"]
+  .od-application-sidebar
+  .od-navigation-group-children {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+@media (721px <= width <= 1100px) {
+  .od-navigation-group,
+  .od-navigation-group[data-active="true"] {
+    padding: 0;
+  }
+
+  .od-navigation-group-children {
+    margin: 0;
+    padding: 0;
+    border: 0;
   }
 }

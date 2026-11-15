@@ -138,7 +138,7 @@ export { OperationPlayground, } from "./components/OperationPlayground.js";
 export { clampGraphPosition, clampGraphViewport, fitGraphViewport, graphPositionAtViewportCenter, graphViewportCenter, layoutLayeredDirectedGraph, layoutTree, moveGraphPosition, treeEdgePath, zoomGraphViewportAtPoint, } from "./GraphLayout.js";
 export { IconButton } from "./components/IconButton.js";
 export { NavigationItem, } from "./components/NavigationItem.js";
-export { NavigationLink, } from "./components/NavigationLink.js";
+export { NavigationGroup, NavigationLink, } from "./components/NavigationLink.js";
 export { MediaLightbox, } from "./components/MediaLightbox.js";
 export { PageHeading, } from "./components/PageHeading.js";
 export { Panel, PanelHeader, PanelBody, SummaryFacts, } from "./components/Panel.js";

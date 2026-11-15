@@ -1,0 +1,66 @@
+.od-inbox-group {
+  padding: 12px;
+}
+
+.od-inbox-group + .od-inbox-group {
+  border-top: 1px solid var(--od-color-border);
+}
+
+.od-inbox-group-post {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  border: 1px solid var(--od-color-border);
+  border-radius: var(--od-radius-md);
+  background: var(--od-color-sunken);
+  color: var(--od-color-foreground);
+}
+
+.od-inbox-group-post:hover {
+  background: var(--od-color-hover);
+}
+
+.od-inbox-group-post > img {
+  width: 40px;
+  height: 40px;
+  flex: none;
+  border-radius: var(--od-radius-sm);
+  object-fit: cover;
+}
+
+.od-inbox-group-title {
+  display: -webkit-box;
+  min-width: 0;
+  flex: 1;
+  overflow: hidden;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.od-inbox-group-networks {
+  display: flex;
+  flex: none;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 4px;
+  max-width: 72px;
+}
+
+.od-inbox-group-networks > .od-network {
+  --od-network-size: 14px;
+}
+
+.od-inbox-group-comments {
+  margin: 8px 0 0 10px;
+  padding-left: 6px;
+  border-left: 1px solid var(--od-color-border-strong);
+}
+
+.od-inbox-group-comments .od-inbox-row {
+  padding-inline: 8px;
+  border-radius: var(--od-radius-md);
+}

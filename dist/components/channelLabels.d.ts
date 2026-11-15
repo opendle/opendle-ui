@@ -3,6 +3,8 @@ export interface ChannelSwitch {
     readonly id: string;
     readonly label: string;
     readonly on: boolean;
+    readonly disabled?: boolean;
+    readonly disabledReason?: string;
 }
 /** One connected account of a network. */
 export interface ChannelItem {

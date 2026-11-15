@@ -56,13 +56,15 @@ function App() {
   const [earlier, setEarlier] = useState(0);
   const [selected, setSelected] = useState(null);
   const [retried, setRetried] = useState(false);
+  const [moved, setMoved] = useState({});
+  window.moved = moved;
   const items = useMemo(() => {
     if (empty) return [];
     const base = entries(10, plan.length);
     const older = Array.from({length: earlier}, (_, index) => entries(9 - index, 12)).flat();
-    return [...older, ...base].filter((item) =>
+    return [...older, ...base].map((item) => moved[item.id] ? {...item, start: moved[item.id]} : item).filter((item) =>
       filter.channels.length === 0 || item.targets.some((target) => filter.channels.includes(target.network)));
-  }, [earlier, empty, filter]);
+  }, [earlier, empty, filter, moved]);
   window.loads = earlier;
   const targets = (selected?.targets ?? []).map((target) => ({
     id: target.id, network: target.network, name: target.network[0].toUpperCase() + target.network.slice(1),
@@ -92,6 +94,8 @@ function App() {
         tagColors={{short: 8, long: 3, "take-me-with-you": 1, "paper-lanterns": 5, "low-tide": 7}} value={filter} onChange={setFilter}/>
       <CalendarBoard mode={mode} anchor={anchor} today={today} items={items} locale="en-GB" now={new Date(2026, 10, 14, 13, 20)}
         onSelect={(item) => { setRetried(false); setSelected(item); }}
+        canMove={(item) => item.targets.every((target) => target.state === "scheduled")}
+        onMove={(item, start) => setMoved((current) => ({...current, [item.id]: start}))}
         hasEarlier={!empty && earlier < 3} onLoadEarlier={() => setEarlier((value) => Math.min(3, value + 1))}/>
       <PostDetailDialog open={selected !== null} onClose={() => setSelected(null)}
         title={selected?.title ?? ""} tags={["take-me-with-you","reel"]}
@@ -502,6 +506,112 @@ try {
       await variants.getByRole("tab", { name: "X" }).click();
       await variants.getByText("Take Me With You. Out now.").waitFor();
       await audit(page, `${name}-variants`);
+
+      if (width === 1440 && colorScheme === "light") {
+        await page.goto(`${pageUrl}#drag`);
+        await page.reload();
+        await page.getByRole("heading", { name: "November 2026" }).waitFor();
+        const begin = async (source) => {
+          const transfer = await page.evaluateHandle(() => new DataTransfer());
+          await source.dispatchEvent("dragstart", { dataTransfer: transfer });
+          await page.locator('.od-calendar[data-dragging="true"]').waitFor();
+          return transfer;
+        };
+        const destination = (day) =>
+          page.locator(".od-calendar-day").filter({
+            has: page.locator(`time[datetime="${day}"]`),
+          });
+        const future = page.getByRole("button", {
+          name: "15:00, Low Tide, Scheduled",
+          exact: true,
+        });
+        assert.equal(await future.getAttribute("draggable"), "true");
+        assert.equal(
+          await page
+            .getByRole("button", {
+              name: "18:30, Take Me With You, Failed",
+              exact: true,
+            })
+            .getAttribute("draggable"),
+          null,
+        );
+        const transfer = await begin(future);
+        const past = destination("2026-11-13");
+        const nextDay = destination("2026-11-21");
+        assert.equal(await past.getAttribute("data-drop-target"), "false");
+        assert.equal(await nextDay.getAttribute("data-drop-target"), "true");
+        await nextDay.dispatchEvent("dragover", { dataTransfer: transfer });
+        assert.equal(await nextDay.getAttribute("data-drop-active"), "true");
+        assert.equal(await nextDay.getAttribute("data-drop-label"), "15:00");
+        await nextDay.dispatchEvent("drop", { dataTransfer: transfer });
+        await page.waitForFunction(
+          () => window.moved["10-16-15:00"] !== undefined,
+        );
+        assert.equal(
+          await page.evaluate(() =>
+            new Date(window.moved["10-16-15:00"]).getDate(),
+          ),
+          21,
+        );
+        assert.equal(
+          await nextDay.locator(".od-calendar-item time").textContent(),
+          "15:00",
+        );
+        assert.equal(
+          await page.locator('[data-drop-active="true"]').count(),
+          0,
+        );
+        assert.equal(await page.getByRole("dialog").count(), 0);
+
+        const earlyToday = page
+          .getByRole("button", {
+            name: "12:30, Low Tide, Scheduled",
+            exact: true,
+          })
+          .first();
+        const immediate = await begin(earlyToday);
+        await destination("2026-11-14").dispatchEvent("drop", {
+          dataTransfer: immediate,
+        });
+        await page.waitForFunction(
+          () => window.moved["10-18-12:30"] !== undefined,
+        );
+        assert.equal(
+          await page.evaluate(() => window.moved["10-18-12:30"]),
+          new Date("2026-11-14T13:20:00+01:00").toISOString(),
+        );
+
+        await page
+          .getByRole("group", { name: "View" })
+          .getByRole("button", { name: "Week", exact: true })
+          .click();
+        const weekSource = page
+          .locator('.od-calendar-week .od-calendar-item[draggable="true"]')
+          .filter({
+            has: page.locator('time[datetime="2026-11-14T17:30:00.000Z"]'),
+          });
+        const weekTransfer = await begin(weekSource);
+        const rows = page.locator(".od-calendar-week tbody tr");
+        const oldSlot = rows.nth(25).locator("td").nth(5);
+        const slot = rows.nth(31).locator("td").nth(6);
+        assert.equal(await oldSlot.getAttribute("data-drop-target"), "false");
+        await slot.dispatchEvent("dragover", { dataTransfer: weekTransfer });
+        assert.equal(await slot.getAttribute("data-drop-active"), "true");
+        assert.equal(await slot.getAttribute("data-drop-label"), "15:30");
+        await slot.dispatchEvent("drop", { dataTransfer: weekTransfer });
+        await page.waitForFunction(
+          () => window.moved["10-14-18:30"] !== undefined,
+        );
+        assert.equal(
+          await page.evaluate(() => window.moved["10-14-18:30"]),
+          new Date("2026-11-15T15:30:00+01:00").toISOString(),
+        );
+        assert.equal(
+          await slot.locator(".od-calendar-item time").textContent(),
+          "15:30",
+        );
+        await audit(page, "calendar-drag-targets");
+      }
 
       // An empty calendar keeps its frame.
       await page.goto(`${pageUrl}#empty`);

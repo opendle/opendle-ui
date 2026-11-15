@@ -138,7 +138,7 @@ export { OperationPlayground, type FixedOperationPlaygroundProps, type Operation
 export { clampGraphPosition, clampGraphViewport, fitGraphViewport, graphPositionAtViewportCenter, graphViewportCenter, layoutLayeredDirectedGraph, layoutTree, moveGraphPosition, treeEdgePath, zoomGraphViewportAtPoint, type FitGraphViewportOptions, type GraphPoint, type GraphPositionBounds, type GraphRect, type GraphSize, type GraphViewportLimits, type GraphViewportValue, type LayeredGraphLayoutEdge, type LayeredGraphLayoutItem, type LayeredGraphLayoutNode, type LayeredGraphLayoutOptions, type LayeredGraphLayoutResult, type TreeEdgePathOptions, type TreeLayoutEdge, type TreeLayoutItem, type TreeLayoutNode, type TreeLayoutOptions, type TreeLayoutResult, } from "./GraphLayout.js";
 export { IconButton, type IconButtonProps } from "./components/IconButton.js";
 export { NavigationItem, type NavigationItemProps, } from "./components/NavigationItem.js";
-export { NavigationLink, type NavigationLinkProps, } from "./components/NavigationLink.js";
+export { NavigationGroup, type NavigationGroupProps, NavigationLink, type NavigationLinkProps, } from "./components/NavigationLink.js";
 export { MediaLightbox, type MediaLightboxProps, } from "./components/MediaLightbox.js";
 export { PageHeading, type PageHeadingProps, } from "./components/PageHeading.js";
 export { Panel, PanelHeader, PanelBody, SummaryFacts, type SummaryFactsProps, type PanelHeaderProps, type PanelProps, } from "./components/Panel.js";

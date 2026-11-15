@@ -1,4 +1,4 @@
-import type { CSSProperties } from "react";
+import { useRef, type CSSProperties } from "react";
 
 import {
   calendarBoardLabels,
@@ -9,6 +9,7 @@ import {
   type CalendarItemState,
 } from "./calendarItems.js";
 import { classes } from "./classes.js";
+import type { CalendarEntryDrag } from "./useCalendarDrag.js";
 import { Icon, NetworkIcon, type IconName } from "./Icon.js";
 
 export interface CalendarEntryProps {
@@ -18,6 +19,8 @@ export interface CalendarEntryProps {
   /** A day before the time, for a list that is not grouped by day. */
   readonly date?: string;
   readonly onSelect: (item: CalendarItem) => void;
+  /** Drag behavior supplied by the calendar board. */
+  readonly drag?: CalendarEntryDrag | undefined;
   /** `row` puts all parts on one line when the width permits. */
   readonly layout?: "card" | "row";
   readonly stateLabels?: Readonly<Record<CalendarItemState, string>>;
@@ -67,6 +70,7 @@ const stateIcons: Record<CalendarItemState, IconName> = {
 export function CalendarEntry({
   className,
   date,
+  drag,
   item,
   followUpLabels = calendarBoardLabels.followUps,
   layout = "card",
@@ -74,6 +78,7 @@ export function CalendarEntry({
   stateLabels = calendarBoardLabels.states,
   time,
 }: CalendarEntryProps) {
+  const dragged = useRef(false);
   const state = calendarItemState(item);
   const marks = followUpMarks(item);
   const style =
@@ -96,8 +101,20 @@ export function CalendarEntry({
       className={classes("od-calendar-item", className)}
       data-layout={layout}
       data-state={state}
+      draggable={drag === undefined ? undefined : true}
+      onDragStart={(event) => {
+        if (drag === undefined) return;
+        dragged.current = true;
+        drag.onStart(event);
+      }}
+      onDragEnd={() => {
+        drag?.onEnd();
+        window.setTimeout(() => {
+          dragged.current = false;
+        }, 0);
+      }}
       onClick={() => {
-        onSelect(item);
+        if (!dragged.current) onSelect(item);
       }}
       style={style}
       type="button"

@@ -1,0 +1,44 @@
+.od-calendar-item[draggable="true"] {
+  cursor: grab;
+}
+
+.od-calendar[data-dragging="true"] .od-calendar-item[draggable="true"] {
+  cursor: grabbing;
+}
+
+.od-calendar [data-drop-target="true"] {
+  position: relative;
+  background-color: color-mix(in srgb, var(--od-color-brand) 5%, transparent);
+  outline: 1px dashed color-mix(in srgb, var(--od-color-brand) 35%, transparent);
+  outline-offset: -3px;
+}
+
+.od-calendar [data-drop-target="false"] {
+  cursor: not-allowed;
+}
+
+.od-calendar [data-drop-active="true"] {
+  background-color: color-mix(
+    in srgb,
+    var(--od-color-brand) 16%,
+    var(--od-color-surface)
+  );
+  outline: 2px solid var(--od-color-brand);
+  outline-offset: -3px;
+}
+
+.od-calendar [data-drop-active="true"]::after {
+  position: absolute;
+  z-index: 2;
+  right: 5px;
+  bottom: 5px;
+  padding: 2px 7px;
+  border: 1px solid var(--od-color-brand);
+  border-radius: var(--od-radius-sm);
+  background: var(--od-color-surface);
+  color: var(--od-color-foreground);
+  content: attr(data-drop-label);
+  font-size: 0.75rem;
+  font-weight: 600;
+  pointer-events: none;
+}

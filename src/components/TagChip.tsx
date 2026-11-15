@@ -10,6 +10,8 @@ export interface TagChipProps {
   /** The colour key of the tag, from 1 to 12. */
   readonly color?: number | undefined;
   readonly className?: string;
+  readonly disabled?: boolean;
+  readonly title?: string | undefined;
 }
 
 /** A tag label. It is a toggle when the host gives `onPressedChange`. */
@@ -17,6 +19,8 @@ export function TagChip({
   children,
   className,
   color,
+  disabled = false,
+  title,
   onPressedChange,
   pressed = false,
 }: TagChipProps) {
@@ -32,6 +36,8 @@ export function TagChip({
       aria-pressed={pressed}
       className={classes("od-tag", className)}
       data-color={color}
+      disabled={disabled}
+      title={title}
       onClick={() => {
         onPressedChange(!pressed);
       }}

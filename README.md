@@ -82,6 +82,29 @@ through `onLoadEarlier` and `onLoadLater`. `TagFilterBar` holds the channel
 and tag selection with the AND or OR logic. The host owns
 the data and the requests.
 
+`InboxList.groups` accepts post cards and their comments in host order. Each
+group has `id`, `title`, optional `thumbnailUrl`, and `items`. The host groups
+and sorts the data. A `ChannelSwitch` can have `disabled` and
+`disabledReason` for an unavailable function.
+
+`NavigationGroup` keeps a parent link and its `nested` links in one frame.
+Set `active` for the open group. Each nested `NavigationLink` keeps its own
+current-page state.
+
+Set `CalendarBoard.canMove` and `onMove` to enable drag and drop for future
+entries. A month drop keeps the local time. A week drop uses a half-hour
+slot. The host decides which entries can move and stores the new ISO time.
+The date controls of the host remain available for keyboard and touch use.
+
+`PostDetailDialog.onReschedule` receives a target ID for a channel, or `null`
+for the whole post. Targets declare `canReschedule` and an optional
+`scheduleDisabledReason`. The host supplies its form through `scheduleEditor`.
+
+`TagChip` supports `disabled` and a native `title` for unavailable actions.
+Unselected colour tags keep readable text, a transparent fill, and a dashed
+border. `--od-tag-unselected-opacity` controls the fill and border opacity;
+the default is `0.6`.
+
 Version 0.4.0 is a breaking version:
 
 - The `@opendle/ui/paper` and `@opendle/ui/paper.css` entries do not exist.

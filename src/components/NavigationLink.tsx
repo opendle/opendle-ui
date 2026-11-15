@@ -39,3 +39,25 @@ export function NavigationLink({
     </a>
   );
 }
+
+export interface NavigationGroupProps {
+  readonly children: ReactNode;
+  readonly nested?: ReactNode;
+  readonly active?: boolean;
+}
+
+/** Keep a parent destination and its open child destinations in one frame. */
+export function NavigationGroup({
+  children,
+  nested,
+  active = false,
+}: NavigationGroupProps) {
+  return (
+    <div className="od-navigation-group" data-active={active}>
+      {children}
+      {nested == null ? null : (
+        <div className="od-navigation-group-children">{nested}</div>
+      )}
+    </div>
+  );
+}

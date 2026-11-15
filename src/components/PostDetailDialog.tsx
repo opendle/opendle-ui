@@ -39,6 +39,8 @@ export interface PostDetailTarget {
   readonly text: string;
   /** The time of this network, already formatted. */
   readonly when: string;
+  readonly canReschedule?: boolean;
+  readonly scheduleDisabledReason?: string;
 }
 
 export interface PostDetailDialogProps {
@@ -53,6 +55,9 @@ export interface PostDetailDialogProps {
   readonly targets: readonly PostDetailTarget[];
   /** Send a failed network again. Without it, there is no retry button. */
   readonly onRetry?: (targetId: string) => Promise<void>;
+  readonly onReschedule?: (targetId: string | null) => void;
+  readonly rescheduleLabel?: string;
+  readonly scheduleEditor?: ReactNode;
   readonly errorMessage: (error: unknown) => string | null;
   /** Key numbers of the post, already formatted. */
   readonly metrics?: readonly PostDetailMetric[];
@@ -110,7 +115,18 @@ function MediaTile({ media, playLabel }: MediaTileProps) {
   }
   return (
     <div className="od-post-detail-media">
-      {media.poster ? <img alt="" src={media.poster} /> : null}
+      {media.poster ? (
+        <img alt="" src={media.poster} />
+      ) : (
+        // react-doctor-disable-next-line react-doctor/media-has-caption -- This muted video supplies a still preview only.
+        <video
+          aria-label={playLabel}
+          muted
+          playsInline
+          preload="metadata"
+          src={media.src}
+        />
+      )}
       <button
         aria-label={playLabel}
         className="od-post-detail-play"
@@ -134,9 +150,18 @@ interface TargetRowProps {
   readonly labels: PostDetailLabels;
   readonly pending: boolean;
   readonly onRetry: ((targetId: string) => void) | null;
+  readonly onReschedule: ((targetId: string | null) => void) | undefined;
+  readonly rescheduleLabel: string;
 }
 
-function TargetRow({ labels, onRetry, pending, target }: TargetRowProps) {
+function TargetRow({
+  labels,
+  onRetry,
+  onReschedule,
+  rescheduleLabel,
+  pending,
+  target,
+}: TargetRowProps) {
   return (
     <li className="od-post-detail-target" data-state={target.state}>
       <NetworkIcon badge network={target.network} />
@@ -175,6 +200,21 @@ function TargetRow({ labels, onRetry, pending, target }: TargetRowProps) {
           {labels.states[target.state]}
         </span>
       )}
+      {onReschedule === undefined ||
+      (target.state !== "scheduled" && target.state !== "failed") ? null : (
+        <button
+          className="od-post-detail-target-schedule"
+          disabled={!target.canReschedule}
+          title={target.scheduleDisabledReason}
+          onClick={() => {
+            onReschedule(target.id);
+          }}
+          type="button"
+        >
+          <Icon name="calendar" size={13} />
+          {rescheduleLabel}
+        </button>
+      )}
     </li>
   );
 }
@@ -192,6 +232,9 @@ export function PostDetailDialog({
   metrics = noMetrics,
   onClose,
   onRetry,
+  onReschedule,
+  rescheduleLabel = "Change date and time",
+  scheduleEditor,
   open,
   tagColors,
   tags = noTags,
@@ -231,53 +274,75 @@ export function PostDetailDialog({
             // react-doctor-disable-next-line react-doctor/no-array-index-key -- The lines of one text have no identity and no state.
             <p key={`${String(index)}:${line}`}>{line}</p>
           ))}
-        {tags.length === 0 ? null : (
-          <div className="od-post-detail-tags">
-            {tags.map((tag) => (
-              <TagChip color={tagColors?.[tag]} key={tag}>
-                #{tag}
-              </TagChip>
+        <div className="od-post-detail-metadata">
+          {tags.length === 0 ? null : (
+            <div className="od-post-detail-tags">
+              {tags.map((tag) => (
+                <TagChip color={tagColors?.[tag]} key={tag}>
+                  #{tag}
+                </TagChip>
+              ))}
+            </div>
+          )}
+          <p className="od-post-detail-states">
+            {counts.map(({ count, state }) => (
+              <span
+                className="od-post-detail-pill"
+                data-tone={stateTones[state]}
+                key={state}
+              >
+                {state === "published" ? <Icon name="check" size={13} /> : null}
+                {state === "failed" ? <Icon name="alert" size={13} /> : null}
+                {state === "scheduled" ? <Icon name="clock" size={13} /> : null}
+                {count} {labels.states[state]}
+              </span>
             ))}
-          </div>
-        )}
-        <p className="od-post-detail-states">
-          {counts.map(({ count, state }) => (
-            <span
-              className="od-post-detail-pill"
-              data-tone={stateTones[state]}
-              key={state}
-            >
-              {state === "published" ? <Icon name="check" size={13} /> : null}
-              {state === "failed" ? <Icon name="alert" size={13} /> : null}
-              {state === "scheduled" ? <Icon name="clock" size={13} /> : null}
-              {count} {labels.states[state]}
-            </span>
-          ))}
-        </p>
-        {metrics.length === 0 ? null : (
-          <dl className="od-post-detail-metrics">
-            {metrics.map((metric) => (
-              <div key={metric.label}>
-                <dt>{metric.label}</dt>
-                <dd>{metric.value}</dd>
-              </div>
-            ))}
-          </dl>
-        )}
+          </p>
+        </div>
       </div>
     </div>
   );
+
+  const metricCards =
+    metrics.length === 0 ? null : (
+      <dl className="od-post-detail-metrics">
+        {metrics.map((metric) => (
+          <div key={metric.label}>
+            <dt>{metric.label}</dt>
+            <dd>{metric.value}</dd>
+          </div>
+        ))}
+      </dl>
+    );
 
   return (
     <Dialog
       bodyClassName="od-post-detail-body"
       className="od-post-detail"
       closeLabel={labels.close}
-      description={shown?.when}
+      description={
+        onReschedule === undefined ? (
+          shown?.when
+        ) : (
+          <button
+            className="od-post-detail-date"
+            disabled={!targets.some((target) => target.canReschedule)}
+            onClick={() => {
+              onReschedule(null);
+            }}
+            title={rescheduleLabel}
+            type="button"
+          >
+            {shown?.when}
+            <Icon name="calendar" size={14} />
+          </button>
+        )
+      }
       onClose={close}
       open={open}
       title={title}
     >
+      {scheduleEditor}
       {differs && shown !== undefined ? (
         <>
           <Tabs
@@ -303,6 +368,7 @@ export function PostDetailDialog({
       ) : (
         body
       )}
+      {metricCards}
       {retry.failure === null ? null : (
         <InlineAlert className="od-post-detail-alert" tone="error">
           {retry.failure}
@@ -320,6 +386,8 @@ export function PostDetailDialog({
                     void retry.run(() => onRetry(targetId));
                   }
             }
+            onReschedule={onReschedule}
+            rescheduleLabel={rescheduleLabel}
             pending={retry.pending}
             target={target}
           />

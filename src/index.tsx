@@ -543,6 +543,8 @@ export {
   type NavigationItemProps,
 } from "./components/NavigationItem.js";
 export {
+  NavigationGroup,
+  type NavigationGroupProps,
   NavigationLink,
   type NavigationLinkProps,
 } from "./components/NavigationLink.js";

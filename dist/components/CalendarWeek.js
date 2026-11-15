@@ -11,7 +11,7 @@ function slotOf(item) {
  * One week against a time axis of 24 hours. A row is one half hour. A row
  * grows with its entries, and a row without entries stays thin.
  */
-export function CalendarWeek({ anchor, formats, groups, labels, now, onSelect, today, }) {
+export function CalendarWeek({ anchor, drag, formats, groups, labels, now, onSelect, today, }) {
     const clock = useMinute();
     const present = now ?? clock;
     const days = calendarGridDays("week", anchor);
@@ -29,11 +29,11 @@ export function CalendarWeek({ anchor, formats, groups, labels, now, onSelect, t
                                 const current = day === today && onToday && slot === nowSlot;
                                 const entries = (groups.get(day) ?? []).filter((item) => slotOf(item) === slot);
                                 return (_jsx("td", { "data-now": current || undefined, "data-past": day < today ||
-                                        (day === today && onToday && slot < nowSlot), "data-today": day === today, style: current
+                                        (day === today && onToday && slot < nowSlot), "data-today": day === today, ...drag.target(day, formats.time, slot), style: current
                                         ? {
                                             "--od-calendar-now": `${String(Math.round(nowPart * 1000) / 10)}%`,
                                         }
-                                        : undefined, children: entries.length === 0 ? null : (_jsx("div", { className: "od-calendar-week-cell", children: entries.map((item) => (_jsx(CalendarEntry, { item: item, onSelect: onSelect, followUpLabels: labels.followUps, stateLabels: labels.states, time: formats.time.format(new Date(item.start)) }, item.id))) })) }, day));
+                                        : undefined, children: entries.length === 0 ? null : (_jsx("div", { className: "od-calendar-week-cell", children: entries.map((item) => (_jsx(CalendarEntry, { item: item, drag: drag.entry(item), onSelect: onSelect, followUpLabels: labels.followUps, stateLabels: labels.states, time: formats.time.format(new Date(item.start)) }, item.id))) })) }, day));
                             })] }, slot));
                 }) })] }));
 }

@@ -19,8 +19,17 @@ export interface InboxEntry {
   readonly href: string;
 }
 
+interface InboxGroup {
+  readonly id: string;
+  readonly title: string;
+  readonly thumbnailUrl?: string | null;
+  readonly items: readonly InboxEntry[];
+}
+
 export interface InboxListProps {
   readonly items: readonly InboxEntry[];
+  /** Complete groups in host order. Their items replace the flat list. */
+  readonly groups?: readonly InboxGroup[];
   readonly selectedId?: string | null;
   /** Called for an unmodified click, with the event to prevent. */
   readonly onOpen?: (
@@ -36,10 +45,51 @@ export interface InboxListProps {
   readonly className?: string;
 }
 
-/** The messages of an inbox, newest first. Each row is a link. */
+interface InboxRowProps {
+  readonly item: InboxEntry;
+  readonly selectedId: string | null;
+  readonly onOpen: InboxListProps["onOpen"];
+  readonly grouped?: boolean;
+}
+
+function InboxRow({
+  grouped = false,
+  item,
+  onOpen,
+  selectedId,
+}: InboxRowProps) {
+  return (
+    <a
+      aria-current={item.id === selectedId ? "true" : undefined}
+      className="od-inbox-row"
+      href={item.href}
+      onClick={(event) => {
+        onOpen?.(item, event);
+      }}
+    >
+      <span className="od-inbox-avatar">
+        <Avatar name={item.authorName} src={item.avatarUrl} />
+        <NetworkIcon badge network={item.network} />
+      </span>
+      <span className="od-inbox-copy">
+        <span className="od-inbox-head">
+          <strong>{item.authorName}</strong>
+          <time dateTime={item.createdAt}>{item.when}</time>
+        </span>
+        <span className="od-inbox-text">{item.text}</span>
+        {!grouped && item.context ? (
+          <span className="od-inbox-context">{item.context}</span>
+        ) : null}
+      </span>
+    </a>
+  );
+}
+
+/** The messages of an inbox. Optional post cards keep related rows together. */
 export function InboxList({
   className,
   empty,
+  groups,
   items,
   label,
   moreLabel = "Older",
@@ -47,37 +97,63 @@ export function InboxList({
   onOpen,
   selectedId = null,
 }: InboxListProps) {
-  if (items.length === 0) {
+  if (groups === undefined ? items.length === 0 : groups.length === 0) {
     return <p className="od-inbox-empty">{empty}</p>;
   }
   return (
     <nav aria-label={label} className={classes("od-inbox", className)}>
-      {items.map((item) => (
-        <a
-          aria-current={item.id === selectedId ? "true" : undefined}
-          className="od-inbox-row"
-          href={item.href}
-          key={item.id}
-          onClick={(event) => {
-            onOpen?.(item, event);
-          }}
-        >
-          <span className="od-inbox-avatar">
-            <Avatar name={item.authorName} src={item.avatarUrl} />
-            <NetworkIcon badge network={item.network} />
-          </span>
-          <span className="od-inbox-copy">
-            <span className="od-inbox-head">
-              <strong>{item.authorName}</strong>
-              <time dateTime={item.createdAt}>{item.when}</time>
-            </span>
-            <span className="od-inbox-text">{item.text}</span>
-            {item.context ? (
-              <span className="od-inbox-context">{item.context}</span>
-            ) : null}
-          </span>
-        </a>
-      ))}
+      {groups === undefined
+        ? items.map((item) => (
+            <InboxRow
+              item={item}
+              key={item.id}
+              onOpen={onOpen}
+              selectedId={selectedId}
+            />
+          ))
+        : groups.map((group) => {
+            const first = group.items[0];
+            if (first === undefined) return null;
+            const networks = [
+              ...new Set(group.items.map((item) => item.network)),
+            ];
+            return (
+              <section
+                aria-label={group.title}
+                className="od-inbox-group"
+                key={group.id}
+              >
+                <a
+                  className="od-inbox-group-post"
+                  href={first.href}
+                  onClick={(event) => {
+                    onOpen?.(first, event);
+                  }}
+                >
+                  {group.thumbnailUrl ? (
+                    <img alt="" loading="lazy" src={group.thumbnailUrl} />
+                  ) : null}
+                  <span className="od-inbox-group-title">{group.title}</span>
+                  <span className="od-inbox-group-networks">
+                    {networks.map((network) => (
+                      <NetworkIcon key={network} network={network} />
+                    ))}
+                  </span>
+                </a>
+                <div className="od-inbox-group-comments">
+                  {group.items.map((item) => (
+                    <InboxRow
+                      grouped
+                      item={item}
+                      key={item.id}
+                      onOpen={onOpen}
+                      selectedId={selectedId}
+                    />
+                  ))}
+                </div>
+              </section>
+            );
+          })}
       {onLoadMore === undefined ? null : (
         <button className="od-calendar-more" onClick={onLoadMore} type="button">
           {moreLabel}

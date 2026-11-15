@@ -238,3 +238,52 @@ test("the emoji grid has a broad list without duplicates", () => {
   assert.equal(new Set(emoji).size, emoji.length);
   assert.equal(emoji[0], "🧡");
 });
+
+test("InboxList keeps host groups with post cards and indented comments", () => {
+  const item = (id, network) => ({
+    id,
+    network,
+    authorName: "Mara",
+    avatarUrl: null,
+    text: `Comment ${id}`,
+    context: "Duplicate context",
+    when: "3 h",
+    createdAt: "2026-11-14T09:00:00Z",
+    href: `/community/${id}`,
+  });
+  const markup = render(InboxList, {
+    items: [],
+    groups: [
+      {
+        id: "post-b",
+        title: "Most recent post",
+        thumbnailUrl: "/picture.jpg",
+        items: [item("b", "youtube"), item("c", "facebook")],
+      },
+      { id: "post-a", title: "Older post", items: [item("a", "youtube")] },
+    ],
+    selectedId: "c",
+    label: "Inbox",
+    empty: "No messages",
+  });
+  assert.equal(markup.match(/class="od-inbox-group"/g).length, 2);
+  assert.equal(markup.match(/class="od-inbox-group-comments"/g).length, 2);
+  assert.equal(markup.match(/class="od-inbox-row"/g).length, 3);
+  assert.ok(markup.indexOf("Most recent post") < markup.indexOf("Older post"));
+  assert.match(markup, /class="od-inbox-group-post" href="\/community\/b"/);
+  assert.match(markup, /src="\/picture.jpg"/);
+  assert.match(
+    markup,
+    /aria-current="true" class="od-inbox-row" href="\/community\/c"/,
+  );
+  assert.doesNotMatch(markup, /Duplicate context/);
+  assert.match(
+    render(InboxList, {
+      items: [item("a", "youtube")],
+      groups: [],
+      label: "Inbox",
+      empty: "No messages",
+    }),
+    /No messages/,
+  );
+});
