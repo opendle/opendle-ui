@@ -1,15 +1,9 @@
-import { jsx as _jsx, Fragment as _Fragment, jsxs as _jsxs } from "react/jsx-runtime";
+import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
 import { useId, } from "react";
 import { Card } from "./Card.js";
 /** A centered page boundary for sign-in, session, and bootstrap states. */
-export function SessionPage({ artwork, children, className, ...props }) {
-    return (_jsx("main", { ...props, className: [
-            "od-session-page",
-            artwork ? "od-session-page-with-artwork" : undefined,
-            className,
-        ]
-            .filter(Boolean)
-            .join(" "), children: artwork ? (_jsxs(_Fragment, { children: [_jsx("div", { "aria-hidden": "true", className: "od-session-artwork", children: artwork }), _jsx("div", { className: "od-session-content", children: children })] })) : (children) }));
+export function SessionPage({ children, className, ...props }) {
+    return (_jsx("main", { ...props, className: ["od-session-page", className].filter(Boolean).join(" "), children: children }));
 }
 /** A product-neutral card for one bounded session action. */
 export function SessionCard({ actions, className, description, eyebrow, feedback, footer, headingLevel = "h1", icon, title, "aria-labelledby": labelledBy, ...props }) {
