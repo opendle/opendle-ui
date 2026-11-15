@@ -40,7 +40,8 @@ menu button with sections of actions and choices.
 `ChannelList` shows connected accounts: name edited in place, tags
 (`TagInput`), switches, the warning for an ended authorization, connect and
 disconnect. `MetricTile` in a `dl.od-metrics` shows a key number with its
-change. `CalendarEntry` is one calendar entry for a list outside the board.
+change, and with `points` a small smooth line of the days of the period in
+the colour of the change. `CalendarEntry` is one calendar entry for a list outside the board.
 
 `Conversation` shows the comments of a post in thread order with one open
 reply box (`ReplyComposer`: suggestions, a textarea that grows, emoji, a

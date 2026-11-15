@@ -9400,6 +9400,43 @@ html:has(.od-dialog:modal) {
   color: var(--od-color-danger);
 }
 
+/* A small line of the days of the period, in the colour of the change. */
+.od-metric-spark {
+  --od-metric-spark-color: var(--od-color-brand);
+
+  height: 32px;
+  margin: 6px 0 0;
+}
+
+.od-metric[data-trend="up"] .od-metric-spark {
+  --od-metric-spark-color: var(--od-color-success);
+}
+
+.od-metric[data-trend="down"] .od-metric-spark {
+  --od-metric-spark-color: var(--od-color-danger);
+}
+
+.od-metric-spark svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.od-metric-spark-area {
+  fill: var(--od-metric-spark-color);
+  fill-opacity: 0.1;
+}
+
+.od-metric-spark-line {
+  fill: none;
+  stroke: var(--od-metric-spark-color);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.75;
+  vector-effect: non-scaling-stroke;
+}
+
 /* Sidebar rows have room: the list is short. */
 
 .od-application-navigation {

@@ -88,8 +88,8 @@ function App() {
         onDisconnect={async (id) => setChannels((list) => list.filter((c) => c.id !== id))}
         onPasswordConnect={async (network, handle) => { if (handle === "bad") throw new Error("no"); setChannels((list) => [...list, {id: "c3", network, name: handle, handle, tags: [], needsReconnect: false, switches: []}]); }}/>
       <dl className="od-metrics" style={{marginTop: 36}}>
-        <MetricTile label="Views" value="18.4K" change="+12%" trend="up"/>
-        <MetricTile label="Likes" value="1,204" change="-3%" trend="down"/>
+        <MetricTile label="Views" value="18.4K" change="+12%" trend="up" points={[310, 420, 380, 520, 610, 590, 720]}/>
+        <MetricTile label="Likes" value="1,204" change="-3%" trend="down" points={[220, 190, null, 205, 160, 150, 140]}/>
         <MetricTile label="Comments" value="37"/>
       </dl>
       <Section title="Primitives">

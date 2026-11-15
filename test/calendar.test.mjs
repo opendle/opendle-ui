@@ -397,6 +397,28 @@ test("ChannelList warns about an ended authorization and hides writes", () => {
   assert.match(readOnly, /Authorization ended/);
 });
 
+test("MetricTile draws a line of the days, without gaps or overshoot", () => {
+  const markup = render(MetricTile, {
+    label: "Views",
+    value: "1,204",
+    change: "+12%",
+    trend: "up",
+    points: [10, null, 30, 30, 20],
+  });
+  assert.match(markup, /<dd aria-hidden="true" class="od-metric-spark">/);
+  const line = markup.match(/class="od-metric-spark-line" d="([^"]+)"/)[1];
+  // The day without a value is left out: three curves join four points.
+  assert.equal(line.match(/C/g).length, 3);
+  // No point of the path is above the highest value or below the lowest.
+  const numbers = line.match(/-?\d+(\.\d+)?/g).map(Number);
+  const ys = numbers.filter((_, index) => index % 2 === 1);
+  assert.ok(Math.min(...ys) >= 3 - 1e-9 && Math.max(...ys) <= 29 + 1e-9);
+  assert.doesNotMatch(
+    render(MetricTile, { label: "Views", value: "1", points: [null, 4] }),
+    /od-metric-spark/,
+  );
+});
+
 test("MetricTile shows the change only when it has one", () => {
   const plain = render(MetricTile, { label: "Views", value: "1,204" });
   assert.match(plain, /<dt class="od-metric-label">Views<\/dt>/);
