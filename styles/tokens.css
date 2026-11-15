@@ -10768,3 +10768,15 @@ button.od-tag[data-color][aria-pressed="true"] {
     animation: od-loading-fade 1.6s ease-in-out infinite;
   }
 }
+
+/* The filter groups have no visible name. A line separates them. */
+
+.od-tag-filter {
+  gap: 10px 16px;
+}
+
+.od-tag-filter-group + .od-tag-filter-group {
+  padding-left: 16px;
+  border-left: 1px solid var(--od-color-border-strong);
+  border-radius: 0;
+}

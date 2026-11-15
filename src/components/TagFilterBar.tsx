@@ -50,9 +50,6 @@ export function TagFilterBar({
     >
       {channels.length === 0 ? null : (
         <fieldset aria-label={labels.channels} className="od-tag-filter-group">
-          <span aria-hidden="true" className="od-tag-filter-label">
-            {labels.channels}
-          </span>
           <span
             className="od-tag-filter-channels"
             data-filtered={value.channels.length > 0}
@@ -80,9 +77,6 @@ export function TagFilterBar({
       )}
       {tags.length === 0 ? null : (
         <fieldset aria-label={labels.tags} className="od-tag-filter-group">
-          <span aria-hidden="true" className="od-tag-filter-label">
-            {labels.tags}
-          </span>
           {tags.map((tag) => (
             <TagChip
               color={tagColors[tag]}

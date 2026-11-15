@@ -198,6 +198,18 @@ try {
           .getAttribute("data-color"),
         "8",
       );
+      assert.equal(
+        await page.getByText("Channels", { exact: true }).count(),
+        0,
+      );
+      assert.equal(await page.getByText("Tags", { exact: true }).count(), 0);
+      assert.equal(
+        await tagGroup.evaluate(
+          (group) => getComputedStyle(group).borderLeftStyle,
+        ),
+        "solid",
+        "a line separates the tags from the channels",
+      );
       const logic = page.getByRole("group", { name: "Tag logic" });
       await logic.getByRole("button", { name: "OR" }).click();
       assert.equal(

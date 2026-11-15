@@ -207,6 +207,9 @@ test("TagFilterBar has one group of tags and shows only groups with entries", ()
   });
   assert.match(full, /data-filtered="true"/);
   assert.match(full, /aria-label="Tags"/);
+  // The groups have an accessible name and no visible label.
+  assert.match(full, /aria-label="Channels"/);
+  assert.doesNotMatch(full, />Channels<|>Tags</);
   assert.doesNotMatch(full, /Channel tags|Post tags/);
   assert.match(
     full,
