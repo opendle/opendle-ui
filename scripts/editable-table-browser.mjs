@@ -469,6 +469,23 @@ const browser = await chromium.launch({
   headless: true,
 });
 
+/**
+ * Wait until a control has the focus. The table moves focus in an animation
+ * frame, so a check at once can run before that frame on a busy machine.
+ */
+async function assertFocused(locator, message, timeout = 2000) {
+  const element = await locator.elementHandle();
+  try {
+    await locator
+      .page()
+      .waitForFunction((target) => target === document.activeElement, element, {
+        timeout,
+      });
+  } catch {
+    assert.fail(message);
+  }
+}
+
 async function loadFixture(page) {
   const errors = [];
   page.on("console", (message) => {
@@ -585,9 +602,8 @@ try {
     name: "Edit Created route",
   });
   await createdEdit.waitFor();
-  assert.equal(
-    await createdEdit.evaluate((element) => element === document.activeElement),
-    true,
+  await assertFocused(
+    createdEdit,
     "Async create replacement must focus the created row.",
   );
   await desktop
@@ -628,11 +644,8 @@ try {
     name: "Edit Backup route",
   });
   await desktop.waitForTimeout(20);
-  assert.equal(
-    await backupEditAfterExternalRemoval.evaluate(
-      (element) => element === document.activeElement,
-    ),
-    true,
+  await assertFocused(
+    backupEditAfterExternalRemoval,
     "An externally removed dialog target must focus the nearest row.",
   );
   await desktop
@@ -687,11 +700,8 @@ try {
   await explicitTable
     .getByText("Backup route", { exact: true })
     .waitFor({ state: "detached" });
-  assert.equal(
-    await explicitTable
-      .getByRole("button", { name: "Edit Created route" })
-      .evaluate((element) => element === document.activeElement),
-    true,
+  await assertFocused(
+    explicitTable.getByRole("button", { name: "Edit Created route" }),
     "Delete must focus the nearest available row control.",
   );
 
@@ -785,12 +795,8 @@ try {
     "1",
     "Escape-caused blur must not autosave the canceled draft.",
   );
-  assert.equal(
-    await automatic
-      .getByRole("button", { name: "Edit Automatic route" })
-      .first()
-      .evaluate((element) => element === document.activeElement),
-    true,
+  await assertFocused(
+    automatic.getByRole("button", { name: "Edit Automatic route" }).first(),
     "Escape must restore focus to the row edit control.",
   );
   assert.equal(
@@ -977,21 +983,17 @@ try {
   const delayedNeighbor = delayed.getByRole("button", {
     name: "Edit Delayed neighbor",
   });
-  assert.equal(
-    await delayedNeighbor.evaluate(
-      (element) => element === document.activeElement,
-    ),
-    true,
+  await assertFocused(
+    delayedNeighbor,
     "Delete success must focus the nearest remaining control before a delayed host removal.",
+    // The host removes the row 500 ms after the delete.
+    300,
   );
   await delayed
     .getByRole("button", { name: "Edit Delayed target" })
     .waitFor({ state: "detached" });
-  assert.equal(
-    await delayedNeighbor.evaluate(
-      (element) => element === document.activeElement,
-    ),
-    true,
+  await assertFocused(
+    delayedNeighbor,
     "A delayed controlled removal must keep focus on the nearest row.",
   );
 
