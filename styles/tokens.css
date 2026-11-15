@@ -9358,6 +9358,8 @@ html:has(.od-dialog:modal) {
 
 .od-metric {
   display: grid;
+  /* The label and the value stay at the top; a line goes to the bottom. */
+  grid-template-rows: auto auto 1fr;
   gap: 4px;
   padding: 14px 18px 16px;
   border: 1px solid var(--od-color-border);
@@ -9404,6 +9406,7 @@ html:has(.od-dialog:modal) {
 .od-metric-spark {
   --od-metric-spark-color: var(--od-color-brand);
 
+  align-self: end;
   height: 32px;
   margin: 6px 0 0;
 }
