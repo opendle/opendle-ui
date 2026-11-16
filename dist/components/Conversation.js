@@ -12,7 +12,7 @@ const noSuggestions = [];
  * The comments of one post, or the messages of one thread, in order. One
  * message at a time has an open reply box.
  */
-export function Conversation({ className, errorMessage = noError, labels = conversationLabels, limit = null, mention, messages, onIgnore, onLike, onReply, onReplyRequest, onRestore, post, selectedId = null, suggestions = noSuggestions, }) {
+export function Conversation({ className, errorMessage = noError, labels = conversationLabels, limit = null, mention, messages, onIgnore, onLike, onReply, onReplyRequest, onRestore, post, selectedId = null, suggestions = noSuggestions, savedReplies, savedRepliesLabel, messageActions, }) {
     // Until the user opens or closes a reply box, the selected message has it.
     const [chosenId, setOpenId] = useState(undefined);
     const openId = chosenId === undefined ? selectedId : chosenId;
@@ -25,7 +25,7 @@ export function Conversation({ className, errorMessage = noError, labels = conve
                     const open = openId === message.id && onReply !== undefined && canReply;
                     return (_jsxs("li", { className: "od-message", "data-own": message.own, "data-selected": message.id === selectedId, "data-state": message.state, ref: message.id === selectedId ? reveal : undefined, style: {
                             "--od-message-depth": Math.min(message.depth, 3),
-                        }, children: [_jsx(Avatar, { name: message.authorName, src: message.avatarUrl }), _jsxs("div", { className: "od-message-body", children: [_jsxs("div", { className: "od-message-head", children: [_jsx("strong", { children: message.authorName }), message.authorHandle === "" ? null : (_jsx("span", { className: "od-message-handle", children: message.authorHandle })), _jsx("time", { dateTime: message.createdAt, children: message.when })] }), _jsx("p", { className: "od-message-text", children: message.text }), message.own ? null : (_jsxs("div", { className: "od-message-actions", children: [message.canLike && onLike !== undefined ? (_jsxs("button", { "aria-label": labels.like, "aria-pressed": message.liked, className: "od-message-action", onClick: () => {
+                        }, children: [_jsx(Avatar, { name: message.authorName, src: message.avatarUrl }), _jsxs("div", { className: "od-message-body", children: [_jsxs("div", { className: "od-message-head", children: [_jsx("strong", { children: message.authorName }), message.authorHandle === "" ? null : (_jsx("span", { className: "od-message-handle", children: message.authorHandle })), _jsx("time", { dateTime: message.createdAt, children: message.when })] }), _jsx("p", { className: "od-message-text", children: message.text }), message.own ? null : (_jsxs("div", { className: "od-message-actions", children: [messageActions?.(message), message.canLike && onLike !== undefined ? (_jsxs("button", { "aria-label": labels.like, "aria-pressed": message.liked, className: "od-message-action", onClick: () => {
                                                     onLike(message.id, !message.liked);
                                                 }, title: labels.like, type: "button", children: [_jsx(Icon, { name: "heart", size: 15 }), message.likeCount === null ||
                                                         message.likeCount === 0 ? null : (_jsx("span", { children: countFormat.format(message.likeCount) }))] })) : message.likeCount === null ||
@@ -44,7 +44,9 @@ export function Conversation({ className, errorMessage = noError, labels = conve
                                                 }, title: labels.ignore, type: "button", children: _jsx(Icon, { name: "eye-off", size: 15 }) }))] })), open ? (_jsx(ReplyComposer, { errorMessage: errorMessage, label: `${labels.replyTo} ${message.authorName}`, labels: labels, limit: limit, mention: mention?.(message) ?? "", onSend: async (text) => {
                                             await onReply(message.id, text);
                                             setOpenId(null);
-                                        }, suggestions: message.id === selectedId ? suggestions : [] }, message.id)) : null] })] }, message.id));
+                                        }, suggestions: message.id === selectedId ? suggestions : [], ...(savedReplies === undefined ? {} : { savedReplies }), ...(savedRepliesLabel === undefined
+                                            ? {}
+                                            : { savedRepliesLabel }) }, message.id)) : null] })] }, message.id));
                 }) })] }));
 }
 //# sourceMappingURL=Conversation.js.map

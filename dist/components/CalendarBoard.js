@@ -6,11 +6,11 @@ import { CalendarWeek } from "./CalendarWeek.js";
 import { calendarBoardLabels, } from "./calendarItems.js";
 import { classes } from "./classes.js";
 import { useCalendarDrag } from "./useCalendarDrag.js";
-function groupByDay(items) {
+function groupByDay(items, timeZone) {
     const groups = new Map();
     const sorted = items.toSorted((first, second) => Date.parse(first.start) - Date.parse(second.start));
     for (const item of sorted) {
-        const day = calendarDayKey(new Date(item.start));
+        const day = calendarDayKey(new Date(item.start), timeZone);
         const group = groups.get(day);
         if (group === undefined)
             groups.set(day, [item]);
@@ -86,9 +86,15 @@ function Timeline({ formats, groups, hasEarlier, hasLater, labels, onLoadEarlier
  * A calendar of entries that go to one or more networks. It has a month
  * view, a week view and a continuous timeline. The host owns the data.
  */
-export function CalendarBoard({ anchor, canMove, className, hasEarlier = false, hasLater = false, items, labels = calendarBoardLabels, locale, mode, now, onLoadEarlier, onLoadLater, onMove, onSelect, today, }) {
+export function CalendarBoard({ anchor, canMove, className, hasEarlier = false, hasLater = false, items, labels = calendarBoardLabels, locale, mode, now, onLoadEarlier, onLoadLater, onMove, onSelect, today, timeZone, }) {
     const formats = useMemo(() => ({
         time: new Intl.DateTimeFormat(locale, {
+            timeZone,
+            hour: "2-digit",
+            minute: "2-digit",
+            hourCycle: "h23",
+        }),
+        hour: new Intl.DateTimeFormat(locale, {
             hour: "2-digit",
             minute: "2-digit",
             hourCycle: "h23",
@@ -104,9 +110,9 @@ export function CalendarBoard({ anchor, canMove, className, hasEarlier = false, 
             month: "long",
             year: "numeric",
         }),
-    }), [locale]);
-    const groups = useMemo(() => groupByDay(items), [items]);
-    const drag = useCalendarDrag({ items, canMove, onMove, now });
-    return (_jsx("section", { "aria-label": labels.board, className: classes("od-calendar", className), "data-mode": mode, "data-dragging": drag.dragging || undefined, children: mode === "timeline" ? (_jsx(Timeline, { formats: formats, groups: groups, hasEarlier: hasEarlier, hasLater: hasLater, labels: labels, onLoadEarlier: onLoadEarlier, onLoadLater: onLoadLater, onSelect: onSelect, today: today })) : (_jsxs(_Fragment, { children: [mode === "week" ? (_jsx(CalendarWeek, { anchor: anchor, drag: drag, formats: formats, groups: groups, labels: labels, now: now, onSelect: onSelect, today: today })) : null, _jsx(Grid, { anchor: anchor, drag: drag, formats: formats, groups: groups, labels: labels, mode: mode, onSelect: onSelect, today: today })] })) }));
+    }), [locale, timeZone]);
+    const groups = useMemo(() => groupByDay(items, timeZone), [items, timeZone]);
+    const drag = useCalendarDrag({ items, canMove, onMove, now, timeZone });
+    return (_jsx("section", { "aria-label": labels.board, className: classes("od-calendar", className), "data-mode": mode, "data-dragging": drag.dragging || undefined, children: mode === "timeline" ? (_jsx(Timeline, { formats: formats, groups: groups, hasEarlier: hasEarlier, hasLater: hasLater, labels: labels, onLoadEarlier: onLoadEarlier, onLoadLater: onLoadLater, onSelect: onSelect, today: today })) : (_jsxs(_Fragment, { children: [mode === "week" ? (_jsx(CalendarWeek, { anchor: anchor, drag: drag, formats: formats, groups: groups, labels: labels, now: now, onSelect: onSelect, today: today, timeZone: timeZone })) : null, _jsx(Grid, { anchor: anchor, drag: drag, formats: formats, groups: groups, labels: labels, mode: mode, onSelect: onSelect, today: today })] })) }));
 }
 //# sourceMappingURL=CalendarBoard.js.map

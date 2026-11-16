@@ -9,9 +9,10 @@ interface CalendarDragOptions {
     readonly canMove: ((item: CalendarItem) => boolean) | undefined;
     readonly onMove: ((item: CalendarItem, start: string) => void) | undefined;
     readonly now: Date | undefined;
+    readonly timeZone?: string | undefined;
 }
 /** Native drag state is local to one board. The host owns persistence. */
-export declare function useCalendarDrag({ canMove, items, now, onMove, }: CalendarDragOptions): {
+export declare function useCalendarDrag({ canMove, items, now, onMove, timeZone, }: CalendarDragOptions): {
     dragging: boolean;
     entry(item: CalendarItem): CalendarEntryDrag | undefined;
     target(day: string, time: Intl.DateTimeFormat, slot?: number): {

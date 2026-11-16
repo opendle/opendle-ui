@@ -1,6 +1,9 @@
-/** Calendar date helpers. All of them use the local time zone. */
+/** Calendar date helpers. Named zones are optional. */
+import { dateTimeInputInstant, timeZoneDayKey } from "./timeZones.js";
 /** A local calendar day as `YYYY-MM-DD`. */
-export function calendarDayKey(date) {
+export function calendarDayKey(date, timeZone) {
+    if (timeZone !== undefined)
+        return timeZoneDayKey(date, timeZone);
     const year = String(date.getFullYear()).padStart(4, "0");
     const month = String(date.getMonth() + 1).padStart(2, "0");
     const day = String(date.getDate()).padStart(2, "0");
@@ -33,13 +36,20 @@ export function calendarGridDays(mode, anchor) {
     return Array.from({ length: weeks * 7 }, (_, index) => calendarDayKey(addDays(start, index)));
 }
 /** The time range of a month or week view, for a data request. */
-export function calendarPeriod(mode, anchor) {
+export function calendarPeriod(mode, anchor, timeZone) {
     const days = calendarGridDays(mode, anchor);
     const first = calendarDayDate(days[0] ?? anchor);
     const last = calendarDayDate(days.at(-1) ?? anchor);
     first.setHours(0, 0, 0, 0);
     const to = addDays(last, 1);
     to.setHours(0, 0, 0, 0);
+    if (timeZone !== undefined) {
+        const start = dateTimeInputInstant(`${calendarDayKey(first)}T00:00`, timeZone, "later");
+        const end = dateTimeInputInstant(`${calendarDayKey(to)}T00:00`, timeZone, "later");
+        if (start === null || end === null)
+            throw new RangeError("The calendar period is not valid.");
+        return { from: new Date(start), to: new Date(end) };
+    }
     return { from: first, to };
 }
 /** Move the anchor day by one month or one week. */

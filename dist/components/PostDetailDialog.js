@@ -16,18 +16,31 @@ const stateOrder = [
     "scheduled",
     "failed",
     "cancelled",
+    "draft",
 ];
 const stateTones = {
+    draft: "neutral",
     published: "ok",
     publishing: "neutral",
     scheduled: "neutral",
     failed: "bad",
     cancelled: "neutral",
 };
+function MediaGallery({ media, playLabel, }) {
+    const [index, setIndex] = useState(0);
+    const shown = media[index] ?? media[0];
+    if (shown === undefined)
+        return null;
+    return (_jsxs("div", { className: "od-post-detail-gallery", children: [_jsx(MediaTile, { media: shown, playLabel: playLabel }, shown.src), media.length < 2 ? null : (_jsxs("div", { className: "od-post-detail-gallery-controls", "aria-label": "Media", children: [_jsx(Button, { variant: "quiet", "aria-label": "Previous image", disabled: index === 0, onClick: () => {
+                            setIndex((current) => Math.max(0, current - 1));
+                        }, children: _jsx(Icon, { name: "chevron-left", size: 16 }) }), _jsxs("output", { children: [index + 1, " / ", media.length] }), _jsx(Button, { variant: "quiet", "aria-label": "Next image", disabled: index >= media.length - 1, onClick: () => {
+                            setIndex((current) => Math.min(media.length - 1, current + 1));
+                        }, children: _jsx(Icon, { name: "chevron-right", size: 16 }) })] }))] }));
+}
 function MediaTile({ media, playLabel }) {
     const [playing, setPlaying] = useState(false);
     if (media.type === "image") {
-        return (_jsx("div", { className: "od-post-detail-media", children: _jsx("img", { alt: "", src: media.src }) }));
+        return (_jsx("div", { className: "od-post-detail-media", children: _jsx("img", { alt: media.alt ?? "", src: media.src }) }));
     }
     if (playing) {
         return (_jsx("div", { className: "od-post-detail-media", "data-playing": "true", children: _jsx("video", { "aria-label": playLabel, autoPlay: true, controls: true, playsInline: true, src: media.src }) }));
@@ -53,7 +66,9 @@ export function PostDetailDialog({ children, errorMessage, labels = postDetailLa
     const retry = useAsyncAction(errorMessage);
     const [selected, setSelected] = useState(null);
     const first = targets[0];
-    const differs = targets.some((target) => target.text !== first?.text || target.when !== first.when);
+    const differs = targets.some((target) => target.text !== first?.text ||
+        target.when !== first.when ||
+        JSON.stringify(target.media) !== JSON.stringify(first.media));
     const shown = (differs ? targets.find((target) => target.id === selected) : undefined) ??
         first;
     const counts = stateOrder.flatMap((state) => {
@@ -65,7 +80,8 @@ export function PostDetailDialog({ children, errorMessage, labels = postDetailLa
         setSelected(null);
         onClose();
     };
-    const body = (_jsxs("div", { className: "od-post-detail-main", "data-media": media !== null, children: [media === null ? null : (_jsx(MediaTile, { media: media, playLabel: labels.play }, media.src)), _jsxs("div", { className: "od-post-detail-text", children: [(shown?.text ?? "")
+    const shownMedia = shown?.media ?? (media === null ? [] : [media]);
+    const body = (_jsxs("div", { className: "od-post-detail-main", "data-media": shownMedia.length > 0, children: [_jsx(MediaGallery, { media: shownMedia, playLabel: labels.play }, shown?.id ?? "media"), _jsxs("div", { className: "od-post-detail-text", children: [(shown?.text ?? "")
                         .split(/\n+/)
                         .filter((line) => line.trim() !== "")
                         .map((line, index) => (_jsx("p", { children: line }, `${String(index)}:${line}`))), _jsxs("div", { className: "od-post-detail-metadata", children: [tags.length === 0 ? null : (_jsx("div", { className: "od-post-detail-tags", children: tags.map((tag) => (_jsxs(TagChip, { color: tagColors?.[tag], children: ["#", tag] }, tag))) })), _jsx("p", { className: "od-post-detail-states", children: counts.map(({ count, state }) => (_jsxs("span", { className: "od-post-detail-pill", "data-tone": stateTones[state], children: [state === "published" ? _jsx(Icon, { name: "check", size: 13 }) : null, state === "failed" ? _jsx(Icon, { name: "alert", size: 13 }) : null, state === "scheduled" ? _jsx(Icon, { name: "clock", size: 13 }) : null, count, " ", labels.states[state]] }, state))) })] })] })] }));

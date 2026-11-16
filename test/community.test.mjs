@@ -287,3 +287,19 @@ test("InboxList keeps host groups with post cards and indented comments", () => 
     /No messages/,
   );
 });
+
+test("saved replies and host message actions are available in the conversation", () => {
+  const markup = render(Conversation, {
+    messages: [message("a")],
+    selectedId: "a",
+    onReply: async () => undefined,
+    savedReplies: [
+      { id: "thanks", name: "Thank you", text: "Thanks for listening" },
+    ],
+    messageActions: () =>
+      React.createElement("button", { type: "button" }, "Hide"),
+  });
+  assert.match(markup, /<select[^>]*>/);
+  assert.match(markup, /<option value="thanks">Thank you<\/option>/);
+  assert.match(markup, />Hide<\/button>/);
+});

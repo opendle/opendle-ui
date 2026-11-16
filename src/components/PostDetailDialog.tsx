@@ -14,6 +14,7 @@ import { useAsyncAction } from "./useAsyncAction.js";
 export interface PostDetailMedia {
   readonly type: "image" | "video";
   readonly src: string;
+  readonly alt?: string;
   /** A still picture for a video. */
   readonly poster?: string | null;
   /** The length of a video, for example "0:38". */
@@ -39,6 +40,7 @@ export interface PostDetailTarget {
   readonly text: string;
   /** The time of this network, already formatted. */
   readonly when: string;
+  readonly media?: readonly PostDetailMedia[];
   readonly canReschedule?: boolean;
   readonly scheduleDisabledReason?: string;
 }
@@ -75,9 +77,11 @@ const stateOrder: readonly CalendarItemState[] = [
   "scheduled",
   "failed",
   "cancelled",
+  "draft",
 ];
 
 const stateTones: Record<CalendarItemState, "ok" | "bad" | "neutral"> = {
+  draft: "neutral",
   published: "ok",
   publishing: "neutral",
   scheduled: "neutral",
@@ -90,12 +94,56 @@ interface MediaTileProps {
   readonly playLabel: string;
 }
 
+function MediaGallery({
+  media,
+  playLabel,
+}: {
+  readonly media: readonly PostDetailMedia[];
+  readonly playLabel: string;
+}) {
+  const [index, setIndex] = useState(0);
+  const shown = media[index] ?? media[0];
+  if (shown === undefined) return null;
+  return (
+    <div className="od-post-detail-gallery">
+      <MediaTile key={shown.src} media={shown} playLabel={playLabel} />
+      {media.length < 2 ? null : (
+        <div className="od-post-detail-gallery-controls" aria-label="Media">
+          <Button
+            variant="quiet"
+            aria-label="Previous image"
+            disabled={index === 0}
+            onClick={() => {
+              setIndex((current) => Math.max(0, current - 1));
+            }}
+          >
+            <Icon name="chevron-left" size={16} />
+          </Button>
+          <output>
+            {index + 1} / {media.length}
+          </output>
+          <Button
+            variant="quiet"
+            aria-label="Next image"
+            disabled={index >= media.length - 1}
+            onClick={() => {
+              setIndex((current) => Math.min(media.length - 1, current + 1));
+            }}
+          >
+            <Icon name="chevron-right" size={16} />
+          </Button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function MediaTile({ media, playLabel }: MediaTileProps) {
   const [playing, setPlaying] = useState(false);
   if (media.type === "image") {
     return (
       <div className="od-post-detail-media">
-        <img alt="" src={media.src} />
+        <img alt={media.alt ?? ""} src={media.src} />
       </div>
     );
   }
@@ -245,7 +293,10 @@ export function PostDetailDialog({
   const [selected, setSelected] = useState<string | null>(null);
   const first = targets[0];
   const differs = targets.some(
-    (target) => target.text !== first?.text || target.when !== first.when,
+    (target) =>
+      target.text !== first?.text ||
+      target.when !== first.when ||
+      JSON.stringify(target.media) !== JSON.stringify(first.media),
   );
   const shown =
     (differs ? targets.find((target) => target.id === selected) : undefined) ??
@@ -261,11 +312,14 @@ export function PostDetailDialog({
     onClose();
   };
 
+  const shownMedia = shown?.media ?? (media === null ? [] : [media]);
   const body = (
-    <div className="od-post-detail-main" data-media={media !== null}>
-      {media === null ? null : (
-        <MediaTile key={media.src} media={media} playLabel={labels.play} />
-      )}
+    <div className="od-post-detail-main" data-media={shownMedia.length > 0}>
+      <MediaGallery
+        key={shown?.id ?? "media"}
+        media={shownMedia}
+        playLabel={labels.play}
+      />
       <div className="od-post-detail-text">
         {(shown?.text ?? "")
           .split(/\n+/)

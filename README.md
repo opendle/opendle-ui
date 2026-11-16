@@ -109,6 +109,16 @@ entries. A month drop keeps the local time. A week drop uses a half-hour
 slot. The host decides which entries can move and stores the new ISO time.
 The date controls of the host remain available for keyboard and touch use.
 
+Set `CalendarBoard.timeZone` to a named IANA zone for day grouping, displayed
+times, week slots and drag actions. Omit it to follow the browser. Pass the
+same optional zone to `calendarDayKey` and `calendarPeriod` for data requests.
+`dateTimeInputValue(instant, timeZone)` gives a local control value.
+`dateTimeInputInstant(value, timeZone)` gives an ISO instant, or `null` when
+the value is invalid, missing during a clock change, or repeated during a
+clock change. An explicit third argument, `earlier` or `later`, selects that
+clock-change rule. The default rejects both cases. Keep this conversion
+separate from the browser zone when the user selects a named zone.
+
 `PostDetailDialog.onReschedule` receives a target ID for a channel, or `null`
 for the whole post. Targets declare `canReschedule` and an optional
 `scheduleDisabledReason`. The host supplies its form through `scheduleEditor`.

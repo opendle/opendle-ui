@@ -51,6 +51,7 @@ function App() {
         <Conversation messages={messages} selectedId="m3" limit={60}
           mention={(message) => message.authorHandle}
           suggestions={["Thank you! The full version is out on Friday.", "So happy you like it"]}
+          savedReplies={[{id: "thanks", name: "Thank you", text: "Thanks for listening"}]}
           errorMessage={() => "The request failed."}
           onReply={async (id, text) => { if (text.includes("fail")) throw new Error("no"); setSent((list) => [...list, [id, text]]); patch(id, {state: "replied"}); }}
           onLike={(id, liked) => patch(id, {liked})}
@@ -153,6 +154,18 @@ try {
         "the mention alone is no reply",
       );
       await audit(page, `${name}-conversation`);
+
+      // A saved reply keeps the mention and returns focus without sending.
+      await page
+        .getByRole("combobox", { name: "Saved replies" })
+        .selectOption("thanks");
+      assert.equal(await box.inputValue(), "@mara.keys Thanks for listening");
+      assert.equal(
+        await box.evaluate((area) => area === document.activeElement),
+        true,
+      );
+      assert.equal(await page.evaluate(() => window.sent.length), 0);
+      await box.fill("@mara.keys ");
 
       // A suggestion goes after the mention. The user can edit it.
       await page.getByRole("button", { name: "So happy you like it" }).click();

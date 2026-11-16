@@ -13,6 +13,7 @@ export const postDetailLabels = {
     channels: "Channels",
     variants: "Channel versions",
     states: {
+        draft: "draft",
         scheduled: "scheduled",
         publishing: "publishing",
         published: "published",

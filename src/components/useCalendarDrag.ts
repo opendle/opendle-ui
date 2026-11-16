@@ -13,6 +13,7 @@ interface CalendarDragOptions {
   readonly canMove: ((item: CalendarItem) => boolean) | undefined;
   readonly onMove: ((item: CalendarItem, start: string) => void) | undefined;
   readonly now: Date | undefined;
+  readonly timeZone?: string | undefined;
 }
 
 /** Native drag state is local to one board. The host owns persistence. */
@@ -21,6 +22,7 @@ export function useCalendarDrag({
   items,
   now,
   onMove,
+  timeZone,
 }: CalendarDragOptions) {
   const [draggedId, setDraggedId] = useState<string | null>(null);
   const [active, setActive] = useState<string | null>(null);
@@ -57,7 +59,7 @@ export function useCalendarDrag({
       const start =
         dragged === undefined
           ? null
-          : calendarDropTime(dragged.start, day, slot, present());
+          : calendarDropTime(dragged.start, day, slot, present(), timeZone);
       const valid = start !== null && dragged !== undefined && movable(dragged);
       return {
         "data-drop-target": dragged === undefined ? undefined : valid,
@@ -83,7 +85,7 @@ export function useCalendarDrag({
           const value =
             dropped === undefined
               ? null
-              : calendarDropTime(dropped.start, day, slot, present());
+              : calendarDropTime(dropped.start, day, slot, present(), timeZone);
           end();
           if (dropped === undefined || value === null || !movable(dropped))
             return;

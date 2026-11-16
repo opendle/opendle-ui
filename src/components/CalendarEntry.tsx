@@ -59,6 +59,7 @@ function followUpMarks(item: CalendarItem): readonly FollowUpMark[] {
 }
 
 const stateIcons: Record<CalendarItemState, IconName> = {
+  draft: "edit",
   scheduled: "clock",
   publishing: "retry",
   published: "check",

@@ -517,3 +517,17 @@ test("designTokens exposes the matching strong colors and page gutter", () => {
   assert.equal(designTokens.color.amberStrong, "--od-color-amber-strong");
   assert.equal(designTokens.space.pageGutter, "--od-page-gutter");
 });
+
+test("TextControl preserves native search, number and date fields", () => {
+  for (const type of ["search", "number", "date"]) {
+    const markup = renderToStaticMarkup(
+      React.createElement(TextControl, {
+        label: type,
+        type,
+        value: "",
+        onChange: () => undefined,
+      }),
+    );
+    assert.ok(markup.includes(`type="${type}"`));
+  }
+});

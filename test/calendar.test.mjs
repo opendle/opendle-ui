@@ -457,3 +457,38 @@ test("post dates can change for eligible channels in a mixed group", () => {
   assert.match(markup, /preload="metadata" src="\/video.mp4"/);
   assert.match(markup, /od-post-detail-metrics/);
 });
+
+test("draft media review uses the selected target carousel and alternative text", () => {
+  const markup = render(PostDetailDialog, {
+    open: true,
+    title: "Draft",
+    onClose: () => undefined,
+    errorMessage: () => null,
+    media: { type: "image", src: "/fallback.jpg" },
+    targets: [
+      {
+        id: "draft",
+        network: "instagram",
+        name: "Band",
+        state: "draft",
+        text: "Caption",
+        when: "Draft",
+        media: [
+          { type: "image", src: "/one.jpg", alt: "First cover" },
+          { type: "image", src: "/two.jpg", alt: "Second cover" },
+        ],
+      },
+    ],
+  });
+  assert.match(markup, /alt="First cover"/);
+  assert.match(markup, /src="\/one.jpg"/);
+  assert.doesNotMatch(markup, /fallback.jpg/);
+  assert.match(markup, /aria-label="Previous image"[^>]*disabled/);
+  assert.match(markup, /aria-label="Next image"/);
+  assert.match(markup, /1 \/ 2/);
+  assert.match(markup, /1 draft/);
+  assert.equal(
+    calendarItemState({ ...items[0], targets: [target("a", "x", "draft")] }),
+    "draft",
+  );
+});

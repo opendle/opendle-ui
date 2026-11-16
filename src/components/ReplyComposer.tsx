@@ -5,6 +5,7 @@ import { Button } from "./Button.js";
 import type { ConversationLabels } from "./conversationLabels.js";
 import { EmojiPicker } from "./EmojiPicker.js";
 import { Icon } from "./Icon.js";
+import { SelectControl } from "./FormControls.js";
 import { InlineAlert } from "./InlineAlert.js";
 import { useAsyncAction } from "./useAsyncAction.js";
 
@@ -16,6 +17,12 @@ export interface ReplyComposerProps {
   /** The character limit of the network, or `null` for none. */
   readonly limit?: number | null;
   readonly suggestions?: readonly string[];
+  readonly savedReplies?: readonly {
+    readonly id: string;
+    readonly name: string;
+    readonly text: string;
+  }[];
+  readonly savedRepliesLabel?: string;
   /** Send the text. A rejection keeps the text and shows the message. */
   readonly onSend: (text: string) => Promise<void>;
   readonly errorMessage: (error: unknown) => string | null;
@@ -24,6 +31,7 @@ export interface ReplyComposerProps {
 
 const countFormat = new Intl.NumberFormat();
 const noSuggestions: readonly string[] = [];
+const noSavedReplies: NonNullable<ReplyComposerProps["savedReplies"]> = [];
 
 /**
  * A reply box: suggestions, a textarea that grows, an emoji button, a
@@ -37,6 +45,8 @@ export function ReplyComposer({
   mention = "",
   onSend,
   suggestions = noSuggestions,
+  savedReplies = noSavedReplies,
+  savedRepliesLabel = "Saved replies",
 }: ReplyComposerProps) {
   const prefix = mention === "" ? "" : `${mention} `;
   const [text, setText] = useState(prefix);
@@ -79,6 +89,29 @@ export function ReplyComposer({
 
   return (
     <div className="od-reply">
+      {savedReplies.length === 0 ? null : (
+        <SelectControl
+          label={savedRepliesLabel}
+          value=""
+          disabled={send.pending}
+          onChange={(event) => {
+            const reply = savedReplies.find(
+              (entry) => entry.id === event.currentTarget.value,
+            );
+            if (reply !== undefined) {
+              setText(prefix + reply.text);
+              areaRef.current?.focus();
+            }
+          }}
+        >
+          <option value="">{savedRepliesLabel}</option>
+          {savedReplies.map((entry) => (
+            <option key={entry.id} value={entry.id}>
+              {entry.name}
+            </option>
+          ))}
+        </SelectControl>
+      )}
       {suggestions.length === 0 ? null : (
         <fieldset
           aria-label={labels.suggestions}

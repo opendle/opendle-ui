@@ -2,6 +2,7 @@ import type { CalendarBoardLabels, CalendarItem } from "./calendarItems.js";
 import type { CalendarDrag } from "./useCalendarDrag.js";
 export interface CalendarWeekFormats {
     readonly time: Intl.DateTimeFormat;
+    readonly hour?: Intl.DateTimeFormat;
     readonly weekday: Intl.DateTimeFormat;
     readonly fullDay: Intl.DateTimeFormat;
 }
@@ -16,10 +17,11 @@ export interface CalendarWeekProps {
     readonly onSelect: (item: CalendarItem) => void;
     /** The present time. Without it, the clock of the browser gives it. */
     readonly now?: Date | undefined;
+    readonly timeZone?: string | undefined;
 }
 /**
  * One week against a time axis of 24 hours. A row is one half hour. A row
  * grows with its entries, and a row without entries stays thin.
  */
-export declare function CalendarWeek({ anchor, drag, formats, groups, labels, now, onSelect, today, }: CalendarWeekProps): import("react").JSX.Element;
+export declare function CalendarWeek({ anchor, drag, formats, groups, labels, now, onSelect, today, timeZone, }: CalendarWeekProps): import("react").JSX.Element;
 //# sourceMappingURL=CalendarWeek.d.ts.map

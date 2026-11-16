@@ -1,9 +1,12 @@
-/** Calendar date helpers. All of them use the local time zone. */
+/** Calendar date helpers. Named zones are optional. */
+
+import { dateTimeInputInstant, timeZoneDayKey } from "./timeZones.js";
 
 export type CalendarMode = "month" | "week" | "timeline";
 
 /** A local calendar day as `YYYY-MM-DD`. */
-export function calendarDayKey(date: Date): string {
+export function calendarDayKey(date: Date, timeZone?: string): string {
+  if (timeZone !== undefined) return timeZoneDayKey(date, timeZone);
   const year = String(date.getFullYear()).padStart(4, "0");
   const month = String(date.getMonth() + 1).padStart(2, "0");
   const day = String(date.getDate()).padStart(2, "0");
@@ -70,6 +73,7 @@ export interface CalendarPeriod {
 export function calendarPeriod(
   mode: "month" | "week",
   anchor: string,
+  timeZone?: string,
 ): CalendarPeriod {
   const days = calendarGridDays(mode, anchor);
   const first = calendarDayDate(days[0] ?? anchor);
@@ -77,6 +81,21 @@ export function calendarPeriod(
   first.setHours(0, 0, 0, 0);
   const to = addDays(last, 1);
   to.setHours(0, 0, 0, 0);
+  if (timeZone !== undefined) {
+    const start = dateTimeInputInstant(
+      `${calendarDayKey(first)}T00:00`,
+      timeZone,
+      "later",
+    );
+    const end = dateTimeInputInstant(
+      `${calendarDayKey(to)}T00:00`,
+      timeZone,
+      "later",
+    );
+    if (start === null || end === null)
+      throw new RangeError("The calendar period is not valid.");
+    return { from: new Date(start), to: new Date(end) };
+  }
   return { from: first, to };
 }
 

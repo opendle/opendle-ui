@@ -37,6 +37,8 @@ export interface CalendarBoardProps {
   /** Timeline: called when the reader comes near the end. */
   readonly onLoadLater?: () => void;
   readonly locale?: string;
+  /** The display and drag zone. Omit it for the browser zone. */
+  readonly timeZone?: string;
   /** The present time of the week view. The default is the browser clock. */
   readonly now?: Date;
   readonly labels?: CalendarBoardLabels;
@@ -52,13 +54,14 @@ interface DayGroup {
 
 function groupByDay(
   items: readonly CalendarItem[],
+  timeZone?: string,
 ): Map<string, CalendarItem[]> {
   const groups = new Map<string, CalendarItem[]>();
   const sorted = items.toSorted(
     (first, second) => Date.parse(first.start) - Date.parse(second.start),
   );
   for (const item of sorted) {
-    const day = calendarDayKey(new Date(item.start));
+    const day = calendarDayKey(new Date(item.start), timeZone);
     const group = groups.get(day);
     if (group === undefined) groups.set(day, [item]);
     else group.push(item);
@@ -68,6 +71,7 @@ function groupByDay(
 
 interface Formats {
   readonly time: Intl.DateTimeFormat;
+  readonly hour: Intl.DateTimeFormat;
   readonly weekday: Intl.DateTimeFormat;
   readonly fullDay: Intl.DateTimeFormat;
   readonly month: Intl.DateTimeFormat;
@@ -326,10 +330,17 @@ export function CalendarBoard({
   onMove,
   onSelect,
   today,
+  timeZone,
 }: CalendarBoardProps) {
   const formats = useMemo<Formats>(
     () => ({
       time: new Intl.DateTimeFormat(locale, {
+        timeZone,
+        hour: "2-digit",
+        minute: "2-digit",
+        hourCycle: "h23",
+      }),
+      hour: new Intl.DateTimeFormat(locale, {
         hour: "2-digit",
         minute: "2-digit",
         hourCycle: "h23",
@@ -346,10 +357,10 @@ export function CalendarBoard({
         year: "numeric",
       }),
     }),
-    [locale],
+    [locale, timeZone],
   );
-  const groups = useMemo(() => groupByDay(items), [items]);
-  const drag = useCalendarDrag({ items, canMove, onMove, now });
+  const groups = useMemo(() => groupByDay(items, timeZone), [items, timeZone]);
+  const drag = useCalendarDrag({ items, canMove, onMove, now, timeZone });
   return (
     <section
       aria-label={labels.board}
@@ -381,6 +392,7 @@ export function CalendarBoard({
               now={now}
               onSelect={onSelect}
               today={today}
+              timeZone={timeZone}
             />
           ) : null}
           <Grid

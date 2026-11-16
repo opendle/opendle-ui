@@ -5,6 +5,7 @@ import type { NetworkName } from "./networks.js";
 export interface PostDetailMedia {
     readonly type: "image" | "video";
     readonly src: string;
+    readonly alt?: string;
     /** A still picture for a video. */
     readonly poster?: string | null;
     /** The length of a video, for example "0:38". */
@@ -28,6 +29,7 @@ export interface PostDetailTarget {
     readonly text: string;
     /** The time of this network, already formatted. */
     readonly when: string;
+    readonly media?: readonly PostDetailMedia[];
     readonly canReschedule?: boolean;
     readonly scheduleDisabledReason?: string;
 }

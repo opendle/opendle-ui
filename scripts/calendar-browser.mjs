@@ -75,6 +75,10 @@ function App() {
       ? "Take Me With You. Out now."
       : "The night we wrote the chorus, nobody wanted to go home.\\n\\nTake Me With You. Full video on YouTube.\\n\\n#music #lyrics",
     when: "Thursday 12 November, 18:30",
+    ...(location.hash === "#variants" ? {media: target.network === "x"
+      ? [{type: "image", src: "data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=", alt: "Front cover"},
+         {type: "image", src: "data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=#back", alt: "Back cover"}]
+      : []} : {}),
   }));
   return (
     <ApplicationShell brandMark={<Mark/>} brandName="Poster" navigationLabel="Main" skipLabel="Skip to content"
@@ -505,6 +509,30 @@ try {
       assert.equal(await variants.getByRole("tab").count(), 9);
       await variants.getByRole("tab", { name: "X" }).click();
       await variants.getByText("Take Me With You. Out now.").waitFor();
+      await variants.getByRole("img", { name: "Front cover" }).waitFor();
+      assert.equal(
+        await variants
+          .getByRole("button", { name: "Previous image" })
+          .isDisabled(),
+        true,
+      );
+      const nextImage = variants.getByRole("button", { name: "Next image" });
+      await nextImage.focus();
+      await page.keyboard.press("Enter");
+      await variants.getByRole("img", { name: "Back cover" }).waitFor();
+      assert.equal(await nextImage.isDisabled(), true);
+      assert.equal(await variants.getByRole("status").textContent(), "2 / 2");
+      await variants.getByRole("tab", { name: "Instagram" }).click();
+      assert.equal(await variants.locator(".od-post-detail-media").count(), 0);
+      await variants.getByRole("tab", { name: "X" }).click();
+      await variants.getByRole("img", { name: "Front cover" }).waitFor();
+      assert.equal(await variants.getByRole("status").textContent(), "1 / 2");
+      assert.equal(
+        await variants
+          .getByRole("img", { name: "Front cover" })
+          .evaluate((image) => getComputedStyle(image).objectFit),
+        "contain",
+      );
       await audit(page, `${name}-variants`);
 
       if (width === 1440 && colorScheme === "light") {

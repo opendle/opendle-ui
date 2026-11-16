@@ -8684,7 +8684,7 @@ html:has(.od-dialog:modal) {
   inset: 0;
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
 }
 
 .od-post-detail-media video {
@@ -11458,4 +11458,23 @@ button.od-tag:disabled {
     .od-application-main {
     padding-top: 100px;
   }
+}
+
+.od-post-detail-gallery {
+  min-width: 0;
+}
+
+.od-post-detail-gallery-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+  margin-top: 8px;
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.od-post-detail-gallery-controls .od-button {
+  min-width: 36px;
+  padding-inline: 6px;
 }

@@ -25,6 +25,7 @@ function followUpMarks(item) {
         ]);
 }
 const stateIcons = {
+    draft: "edit",
     scheduled: "clock",
     publishing: "retry",
     published: "check",

@@ -1,5 +1,5 @@
 import type { NetworkName } from "./networks.js";
-export type CalendarItemState = "scheduled" | "publishing" | "published" | "failed" | "cancelled";
+export type CalendarItemState = "draft" | "scheduled" | "publishing" | "published" | "failed" | "cancelled";
 export interface CalendarItemTarget {
     readonly id: string;
     readonly network: NetworkName;

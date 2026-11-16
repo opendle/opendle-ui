@@ -6,6 +6,7 @@ export const calendarBoardLabels = {
     later: "Later",
     time: "Time",
     states: {
+        draft: "Draft",
         scheduled: "Scheduled",
         publishing: "Publishing",
         published: "Published",
@@ -20,6 +21,7 @@ const statePriority = [
     "scheduled",
     "published",
     "cancelled",
+    "draft",
 ];
 /** The most urgent state of a list of states. */
 export function urgentState(states) {

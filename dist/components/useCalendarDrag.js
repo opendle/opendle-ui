@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { calendarDropTime } from "./calendarDropTime.js";
 /** Native drag state is local to one board. The host owns persistence. */
-export function useCalendarDrag({ canMove, items, now, onMove, }) {
+export function useCalendarDrag({ canMove, items, now, onMove, timeZone, }) {
     const [draggedId, setDraggedId] = useState(null);
     const [active, setActive] = useState(null);
     const present = () => now ?? new Date();
@@ -36,7 +36,7 @@ export function useCalendarDrag({ canMove, items, now, onMove, }) {
             const key = `${day}:${String(slot ?? "day")}`;
             const start = dragged === undefined
                 ? null
-                : calendarDropTime(dragged.start, day, slot, present());
+                : calendarDropTime(dragged.start, day, slot, present(), timeZone);
             const valid = start !== null && dragged !== undefined && movable(dragged);
             return {
                 "data-drop-target": dragged === undefined ? undefined : valid,
@@ -60,7 +60,7 @@ export function useCalendarDrag({ canMove, items, now, onMove, }) {
                     const dropped = dragged;
                     const value = dropped === undefined
                         ? null
-                        : calendarDropTime(dropped.start, day, slot, present());
+                        : calendarDropTime(dropped.start, day, slot, present(), timeZone);
                     end();
                     if (dropped === undefined || value === null || !movable(dropped))
                         return;

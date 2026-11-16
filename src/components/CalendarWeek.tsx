@@ -7,11 +7,13 @@ import {
   calendarGridDays,
 } from "./calendarDates.js";
 import type { CalendarBoardLabels, CalendarItem } from "./calendarItems.js";
+import { timeZoneParts } from "./timeZones.js";
 import { useMinute } from "./useMinute.js";
 import type { CalendarDrag } from "./useCalendarDrag.js";
 
 export interface CalendarWeekFormats {
   readonly time: Intl.DateTimeFormat;
+  readonly hour?: Intl.DateTimeFormat;
   readonly weekday: Intl.DateTimeFormat;
   readonly fullDay: Intl.DateTimeFormat;
 }
@@ -27,13 +29,14 @@ export interface CalendarWeekProps {
   readonly onSelect: (item: CalendarItem) => void;
   /** The present time. Without it, the clock of the browser gives it. */
   readonly now?: Date | undefined;
+  readonly timeZone?: string | undefined;
 }
 
 const halfHours = Array.from({ length: 48 }, (_, index) => index);
 
-function slotOf(item: CalendarItem): number {
-  const start = new Date(item.start);
-  return start.getHours() * 2 + (start.getMinutes() >= 30 ? 1 : 0);
+function slotOf(item: CalendarItem, timeZone?: string): number {
+  const start = timeZoneParts(new Date(item.start), timeZone);
+  return start.hour * 2 + (start.minute >= 30 ? 1 : 0);
 }
 
 /**
@@ -49,14 +52,16 @@ export function CalendarWeek({
   now,
   onSelect,
   today,
+  timeZone,
 }: CalendarWeekProps) {
   const clock = useMinute();
   const present = now ?? clock;
   const days = calendarGridDays("week", anchor);
   // The half hour of the present, and the part of it that is over.
-  const onToday = calendarDayKey(present) === today;
-  const nowSlot = present.getHours() * 2 + (present.getMinutes() >= 30 ? 1 : 0);
-  const nowPart = (present.getMinutes() % 30) / 30;
+  const onToday = calendarDayKey(present, timeZone) === today;
+  const nowParts = timeZoneParts(present, timeZone);
+  const nowSlot = nowParts.hour * 2 + (nowParts.minute >= 30 ? 1 : 0);
+  const nowPart = (nowParts.minute % 30) / 30;
   return (
     <table className="od-calendar-week">
       <thead>
@@ -90,7 +95,9 @@ export function CalendarWeek({
       <tbody>
         {halfHours.map((slot) => {
           const hour = Math.floor(slot / 2);
-          const label = formats.time.format(new Date(2000, 0, 1, hour, 0));
+          const label = (formats.hour ?? formats.time).format(
+            new Date(2000, 0, 1, hour, 0),
+          );
           return (
             <tr data-half={slot % 2 === 1} key={slot}>
               {slot % 2 === 0 ? (
@@ -101,7 +108,7 @@ export function CalendarWeek({
               {days.map((day) => {
                 const current = day === today && onToday && slot === nowSlot;
                 const entries = (groups.get(day) ?? []).filter(
-                  (item) => slotOf(item) === slot,
+                  (item) => slotOf(item, timeZone) === slot,
                 );
                 return (
                   <td

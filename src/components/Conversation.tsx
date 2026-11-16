@@ -13,7 +13,7 @@ import {
   type ConversationMessage,
 } from "./conversationLabels.js";
 import { Icon } from "./Icon.js";
-import { ReplyComposer } from "./ReplyComposer.js";
+import { ReplyComposer, type ReplyComposerProps } from "./ReplyComposer.js";
 
 export interface ConversationProps {
   readonly messages: readonly ConversationMessage[];
@@ -26,6 +26,9 @@ export interface ConversationProps {
   readonly limit?: number | null;
   /** The suggestions for a reply to the selected message. */
   readonly suggestions?: readonly string[];
+  readonly savedReplies?: ReplyComposerProps["savedReplies"];
+  readonly savedRepliesLabel?: string;
+  readonly messageActions?: (message: ConversationMessage) => ReactNode;
   /** Without it, the messages have no reply box. */
   readonly onReply?: (id: string, text: string) => Promise<void>;
   /** With it, the reply link calls the host and no reply box opens. */
@@ -61,6 +64,9 @@ export function Conversation({
   post,
   selectedId = null,
   suggestions = noSuggestions,
+  savedReplies,
+  savedRepliesLabel,
+  messageActions,
 }: ConversationProps) {
   // Until the user opens or closes a reply box, the selected message has it.
   const [chosenId, setOpenId] = useState<string | null | undefined>(undefined);
@@ -106,6 +112,7 @@ export function Conversation({
                 <p className="od-message-text">{message.text}</p>
                 {message.own ? null : (
                   <div className="od-message-actions">
+                    {messageActions?.(message)}
                     {message.canLike && onLike !== undefined ? (
                       <button
                         aria-label={labels.like}
@@ -192,6 +199,10 @@ export function Conversation({
                       setOpenId(null);
                     }}
                     suggestions={message.id === selectedId ? suggestions : []}
+                    {...(savedReplies === undefined ? {} : { savedReplies })}
+                    {...(savedRepliesLabel === undefined
+                      ? {}
+                      : { savedRepliesLabel })}
                   />
                 ) : null}
               </div>

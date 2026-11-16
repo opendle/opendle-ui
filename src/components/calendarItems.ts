@@ -1,7 +1,7 @@
 import type { NetworkName } from "./networks.js";
 
 export type CalendarItemState =
-  "scheduled" | "publishing" | "published" | "failed" | "cancelled";
+  "draft" | "scheduled" | "publishing" | "published" | "failed" | "cancelled";
 
 export interface CalendarItemTarget {
   readonly id: string;
@@ -60,6 +60,7 @@ export const calendarBoardLabels: CalendarBoardLabels = {
   later: "Later",
   time: "Time",
   states: {
+    draft: "Draft",
     scheduled: "Scheduled",
     publishing: "Publishing",
     published: "Published",
@@ -75,6 +76,7 @@ const statePriority: readonly CalendarItemState[] = [
   "scheduled",
   "published",
   "cancelled",
+  "draft",
 ];
 
 /** The most urgent state of a list of states. */

@@ -4,15 +4,17 @@ import { AutoGrowTextarea } from "./AutoGrowTextarea.js";
 import { Button } from "./Button.js";
 import { EmojiPicker } from "./EmojiPicker.js";
 import { Icon } from "./Icon.js";
+import { SelectControl } from "./FormControls.js";
 import { InlineAlert } from "./InlineAlert.js";
 import { useAsyncAction } from "./useAsyncAction.js";
 const countFormat = new Intl.NumberFormat();
 const noSuggestions = [];
+const noSavedReplies = [];
 /**
  * A reply box: suggestions, a textarea that grows, an emoji button, a
  * character counter and the send button. Enter sends. Shift+Enter adds a line.
  */
-export function ReplyComposer({ errorMessage, label, labels, limit = null, mention = "", onSend, suggestions = noSuggestions, }) {
+export function ReplyComposer({ errorMessage, label, labels, limit = null, mention = "", onSend, suggestions = noSuggestions, savedReplies = noSavedReplies, savedRepliesLabel = "Saved replies", }) {
     const prefix = mention === "" ? "" : `${mention} `;
     const [text, setText] = useState(prefix);
     const send = useAsyncAction(errorMessage);
@@ -47,7 +49,13 @@ export function ReplyComposer({ errorMessage, label, labels, limit = null, menti
         setText(text.slice(0, start) + emoji + text.slice(end));
         area?.focus();
     };
-    return (_jsxs("div", { className: "od-reply", children: [suggestions.length === 0 ? null : (_jsx("fieldset", { "aria-label": labels.suggestions, className: "od-reply-suggestions", children: suggestions.map((suggestion) => (_jsx("button", { onClick: () => {
+    return (_jsxs("div", { className: "od-reply", children: [savedReplies.length === 0 ? null : (_jsxs(SelectControl, { label: savedRepliesLabel, value: "", disabled: send.pending, onChange: (event) => {
+                    const reply = savedReplies.find((entry) => entry.id === event.currentTarget.value);
+                    if (reply !== undefined) {
+                        setText(prefix + reply.text);
+                        areaRef.current?.focus();
+                    }
+                }, children: [_jsx("option", { value: "", children: savedRepliesLabel }), savedReplies.map((entry) => (_jsx("option", { value: entry.id, children: entry.name }, entry.id)))] })), suggestions.length === 0 ? null : (_jsx("fieldset", { "aria-label": labels.suggestions, className: "od-reply-suggestions", children: suggestions.map((suggestion) => (_jsx("button", { onClick: () => {
                         setText(prefix + suggestion);
                         areaRef.current?.focus();
                     }, type: "button", children: suggestion }, suggestion))) })), _jsxs("div", { className: "od-reply-field", "data-invalid": tooLong, children: [_jsx(AutoGrowTextarea, { "aria-label": label, className: "od-reply-text", disabled: send.pending, onChange: (event) => {

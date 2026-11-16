@@ -50,7 +50,7 @@ function requirementProps(
 export interface TextControlProps
   extends ControlledInputProps, ControlFieldProps {
   /** Mask a secret without changing label, validation or input behavior. */
-  readonly type?: "text" | "password";
+  readonly type?: "text" | "password" | "search" | "number" | "date";
   readonly onChange: ChangeEventHandler<HTMLInputElement>;
   readonly value: string;
 }
