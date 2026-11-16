@@ -69,7 +69,8 @@ a level that continues, for example followers, as a stacked area; a day
 without a value keeps the last value. The values of the hovered day list the
 top of the stack first and mark the series under the pointer. `ChartLegend` is one
 legend for several charts. `DateRangeControl` and `RecordTable`
-complete an analytics view.
+complete an analytics view. `RecordTable` has a named, keyboard-focusable
+scroll region for wide tables.
 
 `NetworkIcon` always has the network name as its accessible name and its
 tooltip. `LoadingIndicator` is the one loading sign; `Button` shows it with

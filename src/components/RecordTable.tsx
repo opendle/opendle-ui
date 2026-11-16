@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 
 import { classes } from "./classes.js";
+import { PanelContent } from "./PanelContent.js";
 
 export interface RecordTableColumn {
   readonly id: string;
@@ -38,7 +39,10 @@ export function RecordTable({
   rows,
 }: RecordTableProps) {
   return (
-    <div className={classes("od-record-table", className)}>
+    <PanelContent
+      aria-label={`${label} scrollable table`}
+      className={classes("od-record-table", className)}
+    >
       <table>
         <caption className="od-visually-hidden">{label}</caption>
         <thead>
@@ -84,6 +88,6 @@ export function RecordTable({
           ))}
         </tbody>
       </table>
-    </div>
+    </PanelContent>
   );
 }

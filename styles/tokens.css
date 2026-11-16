@@ -10434,7 +10434,9 @@ button.od-message-action:hover {
 /* Record table */
 
 .od-record-table {
+  max-block-size: none;
   overflow-x: auto;
+  overscroll-behavior-y: auto;
   border: 1px solid var(--od-color-border);
   border-radius: var(--od-radius-lg);
   background: var(--od-color-surface);
@@ -10462,9 +10464,12 @@ button.od-message-action:hover {
 }
 
 .od-record-table tbody th {
+  font-weight: 500;
+}
+
+.od-record-table tbody th:has(> button) {
   width: 100%;
   max-width: 0;
-  font-weight: 500;
 }
 
 .od-record-table tbody th > button {
