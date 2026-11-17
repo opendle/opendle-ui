@@ -144,7 +144,7 @@ export { clampGraphPosition, clampGraphViewport, fitGraphViewport, graphPosition
 export { IconButton, type IconButtonProps } from "./components/IconButton.js";
 export { NavigationItem, type NavigationItemProps, } from "./components/NavigationItem.js";
 export { NavigationGroup, type NavigationGroupProps, NavigationLink, type NavigationLinkProps, } from "./components/NavigationLink.js";
-export { MediaLightbox, type MediaLightboxProps, } from "./components/MediaLightbox.js";
+export { MediaLightbox, type MediaLightboxKind, type MediaLightboxProps, } from "./components/MediaLightbox.js";
 export { PageHeading, type PageHeadingProps, } from "./components/PageHeading.js";
 export { Panel, PanelHeader, PanelBody, SummaryFacts, type SummaryFactsProps, type PanelHeaderProps, type PanelProps, } from "./components/Panel.js";
 export { PanelContent, type PanelContentProps, } from "./components/PanelContent.js";

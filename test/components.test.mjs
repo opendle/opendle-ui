@@ -215,11 +215,74 @@ test("MediaLightbox accepts only a labelled host-owned image or PDF blob", () =>
           open: true,
           title: "Unsupported",
           source: "blob:unsupported",
+          kind: "audio",
+          onClose: () => undefined,
+        }),
+      ),
+    /only image, PDF or video media/,
+  );
+});
+
+test("MediaLightbox plays a same-origin video and offers item navigation", () => {
+  const video = renderToStaticMarkup(
+    React.createElement(MediaLightbox, {
+      open: true,
+      title: "Release clip",
+      source: "/api/v1/media/clip/content",
+      poster: "/api/v1/media/clip/thumbnail",
+      kind: "video",
+      details: "Video · 0:42",
+      onClose: () => undefined,
+      onPrevious: () => undefined,
+      onNext: () => undefined,
+    }),
+  );
+  assert.match(video, /<video[^>]*aria-label="Release clip"/);
+  assert.match(video, /<video[^>]*controls=""/);
+  assert.match(video, /poster="\/api\/v1\/media\/clip\/thumbnail"/);
+  assert.match(video, /Video · 0:42/);
+  assert.match(video, /aria-label="Previous"/);
+  assert.match(video, /aria-label="Next"/);
+  assert.match(video, /aria-label="Close preview"/);
+  const single = renderToStaticMarkup(
+    React.createElement(MediaLightbox, {
+      open: true,
+      title: "Cover",
+      source: "/media/cover.jpg",
+      kind: "image",
+      imageAlt: "Cover",
+      onClose: () => undefined,
+    }),
+  );
+  assert.doesNotMatch(single, /aria-label="(?:Previous|Next)"/);
+  for (const source of ["//example.com/clip.mp4", "/\\example.com/clip.mp4"]) {
+    assert.throws(
+      () =>
+        renderToStaticMarkup(
+          React.createElement(MediaLightbox, {
+            open: true,
+            title: "Remote",
+            source,
+            kind: "video",
+            onClose: () => undefined,
+          }),
+        ),
+      /same-origin path/,
+    );
+  }
+  assert.throws(
+    () =>
+      renderToStaticMarkup(
+        React.createElement(MediaLightbox, {
+          open: true,
+          title: "Remote poster",
+          source: "/clip.mp4",
+          poster: "https://example.com/poster.jpg",
           kind: "video",
           onClose: () => undefined,
         }),
       ),
-    /only image or PDF media/,
+    /video poster/,
   );
 });
 

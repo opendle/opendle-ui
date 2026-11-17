@@ -11,6 +11,8 @@ export interface InboxEntry {
     readonly createdAt: string;
     /** The post that the message is about. */
     readonly context?: string;
+    /** A short state label, for example `Replied`, next to the time. */
+    readonly status?: string;
     readonly href: string;
 }
 interface InboxGroup {

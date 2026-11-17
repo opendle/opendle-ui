@@ -190,8 +190,13 @@ the package. `Dialog` supplies a controlled native modal with focus return,
 fixed framing, local body scrolling, three desktop sizes, and a full phone
 sheet. `ConfirmationDialog` composes it for an optional exact impact-statement
 check. Host apps keep the target, effect, impact text, and mutation behavior.
-`MediaLightbox` previews one host-owned image or PDF blob URL. The host owns
-media-type policy, loading, URL revocation, and error handling. Host apps keep
+`MediaLightbox` previews one host-owned image, video or PDF. The source is a
+blob URL or a same-origin path that starts with `/`; remote URLs are refused.
+A video plays with its controls and an optional `poster`. `details` shows
+short facts below the title. With `onPrevious` and `onNext`, buttons on the
+media and the left and right arrow keys move between items. Escape closes the
+preview. On a phone, the preview fills the screen. The host owns media-type
+policy, loading, URL revocation, and error handling. Host apps keep
 their navigation, routes, product copy, mock data, and service behavior here.
 
 Use `PanelHeader` for a card title, description, and related actions. Use

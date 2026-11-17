@@ -96,6 +96,15 @@ test("InboxList marks the selected row and shows the empty text", () => {
     markup,
     /aria-current="true" class="od-inbox-row" href="\/community\/a"/,
   );
+  assert.doesNotMatch(markup, /od-inbox-status/);
+  assert.match(
+    render(InboxList, {
+      items: [{ ...item, status: "Replied" }],
+      label: "Search",
+      empty: "No messages",
+    }),
+    /<strong>Mara<\/strong><span class="od-inbox-status">Replied<\/span><time/,
+  );
   assert.equal(
     render(InboxList, { items: [], label: "Inbox", empty: "No messages" }),
     '<p class="od-inbox-empty">No messages</p>',

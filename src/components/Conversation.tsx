@@ -71,9 +71,25 @@ export function Conversation({
   // Until the user opens or closes a reply box, the selected message has it.
   const [chosenId, setOpenId] = useState<string | null | undefined>(undefined);
   const openId = chosenId === undefined ? selectedId : chosenId;
-  // Show the selected message when the view opens.
+  // Show the selected message when the view opens. A scrolling container
+  // centres it; the page scrolls only as far as necessary.
   const reveal = useCallback((row: HTMLLIElement | null) => {
-    row?.scrollIntoView({ block: "center" });
+    if (row === null) return;
+    let box = row.parentElement;
+    while (box !== null && box !== document.body) {
+      const { overflowY } = getComputedStyle(box);
+      if (
+        (overflowY === "auto" || overflowY === "scroll") &&
+        box.scrollHeight > box.clientHeight
+      ) {
+        const offset =
+          row.getBoundingClientRect().top - box.getBoundingClientRect().top;
+        box.scrollTop += offset - (box.clientHeight - row.offsetHeight) / 2;
+        return;
+      }
+      box = box.parentElement;
+    }
+    row.scrollIntoView({ block: "nearest" });
   }, []);
 
   return (

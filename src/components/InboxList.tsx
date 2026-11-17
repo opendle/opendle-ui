@@ -16,6 +16,8 @@ export interface InboxEntry {
   readonly createdAt: string;
   /** The post that the message is about. */
   readonly context?: string;
+  /** A short state label, for example `Replied`, next to the time. */
+  readonly status?: string;
   readonly href: string;
 }
 
@@ -74,6 +76,9 @@ function InboxRow({
       <span className="od-inbox-copy">
         <span className="od-inbox-head">
           <strong>{item.authorName}</strong>
+          {item.status ? (
+            <span className="od-inbox-status">{item.status}</span>
+          ) : null}
           <time dateTime={item.createdAt}>{item.when}</time>
         </span>
         <span className="od-inbox-text">{item.text}</span>

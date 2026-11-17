@@ -572,6 +572,7 @@ export {
 } from "./components/NavigationLink.js";
 export {
   MediaLightbox,
+  type MediaLightboxKind,
   type MediaLightboxProps,
 } from "./components/MediaLightbox.js";
 export {
