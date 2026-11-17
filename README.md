@@ -70,7 +70,11 @@ complete rows for each width; a shorter last row fills its width. `CalendarEntry
 
 `Conversation` shows the comments of a post in thread order with one open
 reply box (`ReplyComposer`: suggestions, a textarea that grows, emoji, a
-character counter; Enter sends and Shift+Enter adds a line). The emoji
+character counter; Enter sends and Shift+Enter adds a line). With `onIgnore`,
+a new message has its `Ignore` button next to the send button, and a narrow
+box shows only its icon. A message that cannot have a reply box keeps an
+ignore icon in its action row. A `translation` of a message shows below its
+text, with its `lang`. The emoji
 picker has a search field: each word matches the start of a word of an
 emoji, and Enter takes the first. `ConversationPost` shows the first six
 lines of a long text, with a More button for all of it. `InboxList` lists
@@ -136,7 +140,12 @@ clock change. An explicit third argument, `earlier` or `later`, selects that
 clock-change rule. The default rejects both cases. Keep this conversion
 separate from the browser zone when the user selects a named zone.
 `timeZoneOptions()` gives the IANA zones for a `SearchableSelect`, UTC first,
-with the current UTC offset of each zone.
+with the current UTC offset of each zone. `languageOptions()` gives common
+languages as BCP 47 tags, by English name, with the native name as the
+description. `languageName()` gives the name of one tag.
+
+`SearchableMultiSelect` adds each choice of a `SearchableSelect` to a list of
+removable chips. The search shows only the options that are not selected.
 
 `PostDetailDialog.onReschedule` receives a target ID for a channel, or `null`
 for the whole post. A target with `canReschedule` has a time button in its

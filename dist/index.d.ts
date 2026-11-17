@@ -77,6 +77,7 @@ export { DateTime, type DateTimeProps } from "./components/DateTime.js";
 export { FileDropZone, type FileDropZoneProps, } from "./components/FileDropZone.js";
 export { InlineAlert, type InlineAlertProps, type InlineAlertTone, } from "./components/InlineAlert.js";
 export { SearchableSelect, type SearchableSelectOption, type SearchableSelectProps, } from "./components/SearchableSelect.js";
+export { SearchableMultiSelect, type SearchableMultiSelectProps, } from "./components/SearchableMultiSelect.js";
 export { AsyncSearchableSelect, type AsyncSearchableSelectPage, type AsyncSearchableSelectProps, type AsyncSearchableSelectRequest, } from "./components/AsyncSearchableSelect.js";
 export { YamlEditor, type YamlEditorCompletionSource, type YamlEditorDiagnostic, type YamlEditorHandle, type YamlEditorProps, } from "./components/YamlEditor.js";
 export { SecretRevealPanel, type SecretRevealPanelProps, } from "./components/SecretRevealPanel.js";
@@ -108,7 +109,7 @@ export { channelListLabels, type ChannelConnectionProvider, type ChannelItem, ty
 export { TagInput, type TagInputProps } from "./components/TagInput.js";
 export { LoadingIndicator, type LoadingIndicatorProps, } from "./components/LoadingIndicator.js";
 export { Conversation, type ConversationProps, } from "./components/Conversation.js";
-export { conversationEmoji, conversationLabels, type ConversationLabels, type ConversationMessage, } from "./components/conversationLabels.js";
+export { conversationEmoji, conversationLabels, type ConversationLabels, type ConversationMessage, type ConversationTranslation, } from "./components/conversationLabels.js";
 export { ConversationPost, type ConversationPostProps, } from "./components/ConversationPost.js";
 export { EmojiPicker, type EmojiPickerProps, } from "./components/EmojiPicker.js";
 export { InboxList, type InboxEntry, type InboxListProps, } from "./components/InboxList.js";
@@ -170,4 +171,5 @@ export { SavedViewCanvas, type SavedViewCanvasProps, } from "./components/SavedV
 export { ONTOLOGY_GRAPH_LIMIT, ONTOLOGY_LABEL_LIMIT, ONTOLOGY_OCCURRENCE_LIMIT, ONTOLOGY_PAGE_LIMIT, ONTOLOGY_PROPERTY_LIMIT, ONTOLOGY_TYPE_LIMIT, assertBoundedItems, assertFiniteNumber, assertIdentifier, assertUniqueIdentifiers, countOccurrences, formatOntologyFileSize, moveCanvasPosition, type OntologyCanvasPosition, type OntologyFileMetadata, type OntologyGraphLink, type OntologyGraphObject, type OntologyMetadataBag, type OntologyPropertyMap, type OntologyPropertyOccurrence, type OntologyRecordSummary, type OntologyTypeDefinition, } from "./OntologyExplorerContract.js";
 export { RadioGroup, type RadioGroupOption, type RadioGroupProps, } from "./components/RadioGroup.js";
 export { timeZoneParts, timeZoneDayKey, dateTimeInputValue, dateTimeInputInstant, timeZoneOptions, type TimeZoneOption, type TimeZoneParts, } from "./components/timeZones.js";
+export { languageName, languageOptions, type LanguageOption, } from "./components/languages.js";
 //# sourceMappingURL=index.d.ts.map

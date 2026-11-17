@@ -25,6 +25,8 @@ export interface ReplyComposerProps {
   readonly savedRepliesLabel?: string;
   /** Send the text. A rejection keeps the text and shows the message. */
   readonly onSend: (text: string) => Promise<void>;
+  /** With it, a button next to the send button ignores the message. */
+  readonly onIgnore?: () => void;
   readonly errorMessage: (error: unknown) => string | null;
   readonly labels: ConversationLabels;
 }
@@ -35,7 +37,8 @@ const noSavedReplies: NonNullable<ReplyComposerProps["savedReplies"]> = [];
 
 /**
  * A reply box: suggestions, a textarea that grows, an emoji button, a
- * character counter and the send button. Enter sends. Shift+Enter adds a line.
+ * character counter, an optional ignore button and the send button. Enter
+ * sends. Shift+Enter adds a line.
  */
 export function ReplyComposer({
   errorMessage,
@@ -43,6 +46,7 @@ export function ReplyComposer({
   labels,
   limit = null,
   mention = "",
+  onIgnore,
   onSend,
   suggestions = noSuggestions,
   savedReplies = noSavedReplies,
@@ -143,6 +147,18 @@ export function ReplyComposer({
             <span className="od-reply-counter" data-invalid={tooLong}>
               {countFormat.format(length)} / {countFormat.format(limit)}
             </span>
+          )}
+          {onIgnore === undefined ? null : (
+            <Button
+              className="od-reply-ignore"
+              disabled={send.pending}
+              icon={<Icon name="eye-off" size={15} />}
+              onClick={onIgnore}
+              title={labels.ignore}
+              variant="secondary"
+            >
+              <span className="od-reply-ignore-label">{labels.ignore}</span>
+            </Button>
           )}
           <Button
             className="od-reply-send"

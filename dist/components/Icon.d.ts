@@ -25,6 +25,7 @@ declare const extraIconPaths: {
     readonly health: "M12 21s8-4.3 8-10.2V5.5L12 3 4 5.5v5.3C4 16.7 12 21 12 21z M8 12l2.5 2.5L16 9";
     readonly key: "M15 7a4 4 0 1 0-3.9 5H5v3h3v3h3v-3h2.1A4 4 0 0 0 15 7z M15 7h.01";
     readonly layers: "m12 3 9 5-9 5-9-5z M3 12l9 5 9-5 M3 16l9 5 9-5";
+    readonly languages: "M5 8l6 6 M4 14l6-6 2-3 M2 5h12 M7 2h1 M22 22l-5-10-5 10 M14 18h6";
     readonly list: "M8 6h12M8 12h12M8 18h12M4 6h.1M4 12h.1M4 18h.1";
     readonly lock: "M5 10h14v10H5zM8 10V7a4 4 0 0 1 8 0v3";
     readonly logout: "M10 17l5-5-5-5 M15 12H3 M21 19V5a2 2 0 0 0-2-2h-5";

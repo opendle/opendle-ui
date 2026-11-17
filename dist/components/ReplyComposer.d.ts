@@ -15,12 +15,15 @@ export interface ReplyComposerProps {
     readonly savedRepliesLabel?: string;
     /** Send the text. A rejection keeps the text and shows the message. */
     readonly onSend: (text: string) => Promise<void>;
+    /** With it, a button next to the send button ignores the message. */
+    readonly onIgnore?: () => void;
     readonly errorMessage: (error: unknown) => string | null;
     readonly labels: ConversationLabels;
 }
 /**
  * A reply box: suggestions, a textarea that grows, an emoji button, a
- * character counter and the send button. Enter sends. Shift+Enter adds a line.
+ * character counter, an optional ignore button and the send button. Enter
+ * sends. Shift+Enter adds a line.
  */
-export declare function ReplyComposer({ errorMessage, label, labels, limit, mention, onSend, suggestions, savedReplies, savedRepliesLabel, }: ReplyComposerProps): import("react").JSX.Element;
+export declare function ReplyComposer({ errorMessage, label, labels, limit, mention, onIgnore, onSend, suggestions, savedReplies, savedRepliesLabel, }: ReplyComposerProps): import("react").JSX.Element;
 //# sourceMappingURL=ReplyComposer.d.ts.map

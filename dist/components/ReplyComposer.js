@@ -12,9 +12,10 @@ const noSuggestions = [];
 const noSavedReplies = [];
 /**
  * A reply box: suggestions, a textarea that grows, an emoji button, a
- * character counter and the send button. Enter sends. Shift+Enter adds a line.
+ * character counter, an optional ignore button and the send button. Enter
+ * sends. Shift+Enter adds a line.
  */
-export function ReplyComposer({ errorMessage, label, labels, limit = null, mention = "", onSend, suggestions = noSuggestions, savedReplies = noSavedReplies, savedRepliesLabel = "Saved replies", }) {
+export function ReplyComposer({ errorMessage, label, labels, limit = null, mention = "", onIgnore, onSend, suggestions = noSuggestions, savedReplies = noSavedReplies, savedRepliesLabel = "Saved replies", }) {
     const prefix = mention === "" ? "" : `${mention} `;
     const [text, setText] = useState(prefix);
     const send = useAsyncAction(errorMessage);
@@ -57,6 +58,6 @@ export function ReplyComposer({ errorMessage, label, labels, limit = null, menti
                         }, maxHeight: null, onKeyDown: keyDown, ref: focusEnd, rows: 2, value: text }), _jsxs("div", { className: "od-reply-foot", children: [_jsx(EmojiPicker, { disabled: send.pending, label: labels.emoji, onSelect: insert }), savedReplies.length === 0 ? null : (_jsx(SavedReplyPicker, { disabled: send.pending, label: savedRepliesLabel, onSelect: (reply) => {
                                     setText(prefix + reply.text);
                                     areaRef.current?.focus();
-                                }, replies: savedReplies })), limit === null ? null : (_jsxs("span", { className: "od-reply-counter", "data-invalid": tooLong, children: [countFormat.format(length), " / ", countFormat.format(limit)] })), _jsx(Button, { className: "od-reply-send", disabled: !ready, icon: _jsx(Icon, { name: "send", size: 15 }), loading: send.pending, onClick: submit, children: labels.send })] })] }), send.failure === null ? null : (_jsx(InlineAlert, { tone: "error", children: send.failure }))] }));
+                                }, replies: savedReplies })), limit === null ? null : (_jsxs("span", { className: "od-reply-counter", "data-invalid": tooLong, children: [countFormat.format(length), " / ", countFormat.format(limit)] })), onIgnore === undefined ? null : (_jsx(Button, { className: "od-reply-ignore", disabled: send.pending, icon: _jsx(Icon, { name: "eye-off", size: 15 }), onClick: onIgnore, title: labels.ignore, variant: "secondary", children: _jsx("span", { className: "od-reply-ignore-label", children: labels.ignore }) })), _jsx(Button, { className: "od-reply-send", disabled: !ready, icon: _jsx(Icon, { name: "send", size: 15 }), loading: send.pending, onClick: submit, children: labels.send })] })] }), send.failure === null ? null : (_jsx(InlineAlert, { tone: "error", children: send.failure }))] }));
 }
 //# sourceMappingURL=ReplyComposer.js.map

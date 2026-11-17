@@ -98,8 +98,10 @@ export function Conversation({
       <ol className="od-conversation-thread">
         {messages.map((message) => {
           const canReply = message.canReply && !message.own;
-          const open =
-            openId === message.id && onReply !== undefined && canReply;
+          // A message with a reply box has its ignore button in that box.
+          const hasBox = onReply !== undefined && canReply;
+          const open = openId === message.id && hasBox;
+          const translation = message.translation ?? null;
           return (
             <li
               className="od-message"
@@ -126,6 +128,14 @@ export function Conversation({
                   <time dateTime={message.createdAt}>{message.when}</time>
                 </div>
                 <p className="od-message-text">{message.text}</p>
+                {translation === null ? null : (
+                  <p
+                    className="od-message-translation"
+                    lang={translation.language}
+                  >
+                    {translation.text}
+                  </p>
+                )}
                 {message.own ? null : (
                   <div className="od-message-actions">
                     {messageActions?.(message)}
@@ -187,7 +197,7 @@ export function Conversation({
                           <Icon name="eye" size={15} />
                         </button>
                       )
-                    ) : onIgnore === undefined ? null : (
+                    ) : onIgnore === undefined || hasBox ? null : (
                       <button
                         aria-label={labels.ignore}
                         className="od-message-action"
@@ -214,6 +224,14 @@ export function Conversation({
                       await onReply(message.id, text);
                       setOpenId(null);
                     }}
+                    {...(onIgnore === undefined || message.state !== "new"
+                      ? {}
+                      : {
+                          onIgnore: () => {
+                            onIgnore(message.id);
+                            setOpenId(null);
+                          },
+                        })}
                     suggestions={message.id === selectedId ? suggestions : []}
                     {...(savedReplies === undefined ? {} : { savedReplies })}
                     {...(savedRepliesLabel === undefined

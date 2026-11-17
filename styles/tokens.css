@@ -9092,6 +9092,24 @@ html:has(.od-dialog:modal) {
   container-type: inline-size;
 }
 
+/* Searchable multiple select */
+
+.od-multi-select-values {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.od-multi-select-value {
+  height: 26px;
+  gap: 2px;
+  padding-right: 3px;
+  color: var(--od-color-foreground);
+}
+
 /* Tag input */
 
 .od-tag-input {
@@ -9694,10 +9712,18 @@ html:has(.od-dialog:modal) {
   white-space: pre-line;
 }
 
+.od-message-translation {
+  margin-top: 6px;
+  padding-left: 10px;
+  border-left: 2px solid var(--od-color-border-strong);
+  overflow-wrap: anywhere;
+  white-space: pre-line;
+}
+
 .od-message:is([data-state="replied"], [data-state="ignored"]):not(
     [data-selected="true"]
   )
-  .od-message-text {
+  :is(.od-message-text, .od-message-translation) {
   color: var(--od-color-muted);
 }
 
@@ -9786,6 +9812,7 @@ button.od-message-action:hover {
 }
 
 .od-reply-field {
+  container-type: inline-size;
   border: 1px solid var(--od-color-border-strong);
   border-radius: var(--od-radius-md);
   background: var(--od-color-surface);
@@ -9816,6 +9843,7 @@ button.od-message-action:hover {
 
 .od-reply-counter {
   margin-left: auto;
+  white-space: nowrap;
   color: var(--od-color-muted);
   font-size: 0.75rem;
   font-variant-numeric: tabular-nums;
@@ -9826,12 +9854,31 @@ button.od-message-action:hover {
   font-weight: 600;
 }
 
+.od-reply-ignore,
 .od-reply-send {
   margin-left: auto;
 }
 
-.od-reply-counter + .od-reply-send {
+:is(.od-reply-counter, .od-reply-ignore)
+  + :is(.od-reply-ignore, .od-reply-send) {
   margin-left: 0;
+}
+
+/* A narrow reply box shows only the icon of the ignore button. */
+@container (max-width: 26rem) {
+  .od-reply-ignore {
+    width: var(--od-control-height);
+    padding-inline: 0;
+  }
+
+  .od-reply-ignore-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
 }
 
 .od-emoji {

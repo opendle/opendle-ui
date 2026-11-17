@@ -287,14 +287,26 @@ try {
       assert.equal(await likes.count(), 3);
       await likes.nth(1).click();
       assert.equal(await likes.nth(1).getAttribute("aria-pressed"), "true");
+      // A message with a reply box has its ignore button in the open box,
+      // next to the send button.
+      const ignore = page.getByRole("button", { name: "Ignore" });
+      assert.equal(await ignore.count(), 1);
       assert.equal(
-        await page.getByRole("button", { name: "Ignore" }).count(),
-        3,
+        await ignore.evaluate(
+          (button) =>
+            button.nextElementSibling?.classList.contains("od-reply-send") ??
+            false,
+        ),
+        true,
       );
       await page.getByRole("button", { name: "Move to the inbox" }).click();
+      assert.equal(await ignore.count(), 1);
+      await ignore.click();
+      assert.equal(await page.locator(".od-reply").count(), 0);
+      assert.equal(await ignore.count(), 0);
       assert.equal(
-        await page.getByRole("button", { name: "Ignore" }).count(),
-        4,
+        await page.getByRole("button", { name: "Move to the inbox" }).count(),
+        1,
       );
 
       // The chart: a pointer or the arrow keys give the values of one day.

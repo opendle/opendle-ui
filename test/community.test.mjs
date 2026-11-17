@@ -6,6 +6,9 @@ import {
   Conversation,
   ChartLegend,
   InboxList,
+  SearchableMultiSelect,
+  languageName,
+  languageOptions,
   StackedBarChart,
   chartTicks,
   foldSeries,
@@ -73,6 +76,82 @@ test("a message shows only the actions that the host and the network permit", ()
   });
   assert.doesNotMatch(noLike, /aria-label="Like"|>Reply</);
   assert.match(noLike, /aria-label="Ignore"/);
+});
+
+test("the ignore button of a message with a reply box is next to the send button", () => {
+  const markup = render(Conversation, {
+    messages: [message("a"), message("b"), message("c", { state: "replied" })],
+    selectedId: "a",
+    onReply: async () => undefined,
+    onIgnore: () => undefined,
+  });
+  assert.doesNotMatch(markup, /aria-label="Ignore"/);
+  assert.match(
+    markup,
+    /class="od-button od-button-secondary od-reply-ignore"[^>]*>.*Ignore<\/span><\/button><button[^>]*class="od-button od-button-primary od-reply-send"/,
+  );
+  const replied = render(Conversation, {
+    messages: [message("c", { state: "replied" })],
+    selectedId: "c",
+    onReply: async () => undefined,
+    onIgnore: () => undefined,
+  });
+  assert.match(replied, /od-reply-send/);
+  assert.doesNotMatch(replied, /od-reply-ignore|aria-label="Ignore"/);
+});
+
+test("a translation shows below the text in its language", () => {
+  const markup = render(Conversation, {
+    messages: [
+      message("a", {
+        text: "Hola",
+        translation: { text: "Hello", language: "en" },
+      }),
+    ],
+  });
+  assert.match(
+    markup,
+    /<p class="od-message-text">Hola<\/p><p class="od-message-translation" lang="en">Hello<\/p>/,
+  );
+});
+
+test("language options have English names, native names and extra tags", () => {
+  const options = languageOptions(["x-test"]);
+  const french = options.find((option) => option.value === "fr");
+  assert.equal(french?.label, "French");
+  assert.equal(french?.description, "français");
+  assert.equal(
+    options.find((option) => option.value === "en")?.description,
+    undefined,
+  );
+  assert.ok(options.some((option) => option.value === "x-test"));
+  assert.equal(languageName("de"), "German");
+});
+
+test("a searchable multiple select shows the choices as removable chips", () => {
+  const markup = render(SearchableMultiSelect, {
+    label: "Languages",
+    value: ["fr"],
+    onChange: () => undefined,
+    options: [
+      { value: "en", label: "English" },
+      { value: "fr", label: "French" },
+    ],
+    removeLabel: "Remove",
+  });
+  assert.match(
+    markup,
+    /<ul aria-label="Languages" class="od-multi-select-values">/,
+  );
+  assert.match(markup, /French<button aria-label="Remove: French"/);
+  const none = render(SearchableMultiSelect, {
+    label: "Languages",
+    value: [],
+    onChange: () => undefined,
+    options: [],
+    removeLabel: "Remove",
+  });
+  assert.doesNotMatch(none, /<ul/);
 });
 
 test("InboxList marks the selected row and shows the empty text", () => {

@@ -18,6 +18,14 @@ export interface ConversationMessage {
     readonly state: "new" | "replied" | "ignored";
     readonly canReply: boolean;
     readonly canLike: boolean;
+    /** A translation that shows below the text. */
+    readonly translation?: ConversationTranslation | null;
+}
+/** The text of a message in an other language. */
+export interface ConversationTranslation {
+    readonly text: string;
+    /** The BCP 47 tag of the language of the text, for example "fr". */
+    readonly language: string;
 }
 export interface ConversationLabels {
     readonly reply: string;
