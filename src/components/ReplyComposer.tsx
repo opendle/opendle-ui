@@ -5,8 +5,8 @@ import { Button } from "./Button.js";
 import type { ConversationLabels } from "./conversationLabels.js";
 import { EmojiPicker } from "./EmojiPicker.js";
 import { Icon } from "./Icon.js";
-import { SelectControl } from "./FormControls.js";
 import { InlineAlert } from "./InlineAlert.js";
+import { SavedReplyPicker } from "./SavedReplyPicker.js";
 import { useAsyncAction } from "./useAsyncAction.js";
 
 export interface ReplyComposerProps {
@@ -89,29 +89,6 @@ export function ReplyComposer({
 
   return (
     <div className="od-reply">
-      {savedReplies.length === 0 ? null : (
-        <SelectControl
-          label={savedRepliesLabel}
-          value=""
-          disabled={send.pending}
-          onChange={(event) => {
-            const reply = savedReplies.find(
-              (entry) => entry.id === event.currentTarget.value,
-            );
-            if (reply !== undefined) {
-              setText(prefix + reply.text);
-              areaRef.current?.focus();
-            }
-          }}
-        >
-          <option value="">{savedRepliesLabel}</option>
-          {savedReplies.map((entry) => (
-            <option key={entry.id} value={entry.id}>
-              {entry.name}
-            </option>
-          ))}
-        </SelectControl>
-      )}
       {suggestions.length === 0 ? null : (
         <fieldset
           aria-label={labels.suggestions}
@@ -151,6 +128,17 @@ export function ReplyComposer({
             label={labels.emoji}
             onSelect={insert}
           />
+          {savedReplies.length === 0 ? null : (
+            <SavedReplyPicker
+              disabled={send.pending}
+              label={savedRepliesLabel}
+              onSelect={(reply) => {
+                setText(prefix + reply.text);
+                areaRef.current?.focus();
+              }}
+              replies={savedReplies}
+            />
+          )}
           {limit === null ? null : (
             <span className="od-reply-counter" data-invalid={tooLong}>
               {countFormat.format(length)} / {countFormat.format(limit)}

@@ -28,6 +28,11 @@ export interface ApplicationShellProps extends Omit<
    */
   readonly secondaryNavigation?: ReactNode;
   readonly secondaryNavigationLabel?: string;
+  /**
+   * Controls next to the product name, for example a notification
+   * `Popover`. On a phone they show in the top bar next to the workspace.
+   */
+  readonly actions?: ReactNode;
   /** A workspace menu above the main navigation. */
   readonly workspace?: ReactNode;
   /** An `AccountMenu` element at the end of the sidebar. */
@@ -54,6 +59,7 @@ const panelIcon = <Icon name="panel-left" />;
  */
 export function ApplicationShell({
   account,
+  actions,
   brandHref = "/",
   brandMark,
   brandName,
@@ -99,10 +105,15 @@ export function ApplicationShell({
         {skipLabel}
       </a>
       <aside className="od-application-sidebar">
-        <a className="od-application-brand" href={brandHref}>
-          {brandMark}
-          <span className="od-application-brand-name">{brandName}</span>
-        </a>
+        <div className="od-application-header">
+          <a className="od-application-brand" href={brandHref}>
+            {brandMark}
+            <span className="od-application-brand-name">{brandName}</span>
+          </a>
+          {actions === undefined || actions === null ? null : (
+            <div className="od-application-actions">{actions}</div>
+          )}
+        </div>
         {workspace === undefined || workspace === null ? null : (
           <div className="od-application-workspace">{workspace}</div>
         )}

@@ -4,8 +4,8 @@ import { AutoGrowTextarea } from "./AutoGrowTextarea.js";
 import { Button } from "./Button.js";
 import { EmojiPicker } from "./EmojiPicker.js";
 import { Icon } from "./Icon.js";
-import { SelectControl } from "./FormControls.js";
 import { InlineAlert } from "./InlineAlert.js";
+import { SavedReplyPicker } from "./SavedReplyPicker.js";
 import { useAsyncAction } from "./useAsyncAction.js";
 const countFormat = new Intl.NumberFormat();
 const noSuggestions = [];
@@ -49,17 +49,14 @@ export function ReplyComposer({ errorMessage, label, labels, limit = null, menti
         setText(text.slice(0, start) + emoji + text.slice(end));
         area?.focus();
     };
-    return (_jsxs("div", { className: "od-reply", children: [savedReplies.length === 0 ? null : (_jsxs(SelectControl, { label: savedRepliesLabel, value: "", disabled: send.pending, onChange: (event) => {
-                    const reply = savedReplies.find((entry) => entry.id === event.currentTarget.value);
-                    if (reply !== undefined) {
-                        setText(prefix + reply.text);
-                        areaRef.current?.focus();
-                    }
-                }, children: [_jsx("option", { value: "", children: savedRepliesLabel }), savedReplies.map((entry) => (_jsx("option", { value: entry.id, children: entry.name }, entry.id)))] })), suggestions.length === 0 ? null : (_jsx("fieldset", { "aria-label": labels.suggestions, className: "od-reply-suggestions", children: suggestions.map((suggestion) => (_jsx("button", { onClick: () => {
+    return (_jsxs("div", { className: "od-reply", children: [suggestions.length === 0 ? null : (_jsx("fieldset", { "aria-label": labels.suggestions, className: "od-reply-suggestions", children: suggestions.map((suggestion) => (_jsx("button", { onClick: () => {
                         setText(prefix + suggestion);
                         areaRef.current?.focus();
                     }, type: "button", children: suggestion }, suggestion))) })), _jsxs("div", { className: "od-reply-field", "data-invalid": tooLong, children: [_jsx(AutoGrowTextarea, { "aria-label": label, className: "od-reply-text", disabled: send.pending, onChange: (event) => {
                             setText(event.currentTarget.value);
-                        }, maxHeight: null, onKeyDown: keyDown, ref: focusEnd, rows: 2, value: text }), _jsxs("div", { className: "od-reply-foot", children: [_jsx(EmojiPicker, { disabled: send.pending, label: labels.emoji, onSelect: insert }), limit === null ? null : (_jsxs("span", { className: "od-reply-counter", "data-invalid": tooLong, children: [countFormat.format(length), " / ", countFormat.format(limit)] })), _jsx(Button, { className: "od-reply-send", disabled: !ready, icon: _jsx(Icon, { name: "send", size: 15 }), loading: send.pending, onClick: submit, children: labels.send })] })] }), send.failure === null ? null : (_jsx(InlineAlert, { tone: "error", children: send.failure }))] }));
+                        }, maxHeight: null, onKeyDown: keyDown, ref: focusEnd, rows: 2, value: text }), _jsxs("div", { className: "od-reply-foot", children: [_jsx(EmojiPicker, { disabled: send.pending, label: labels.emoji, onSelect: insert }), savedReplies.length === 0 ? null : (_jsx(SavedReplyPicker, { disabled: send.pending, label: savedRepliesLabel, onSelect: (reply) => {
+                                    setText(prefix + reply.text);
+                                    areaRef.current?.focus();
+                                }, replies: savedReplies })), limit === null ? null : (_jsxs("span", { className: "od-reply-counter", "data-invalid": tooLong, children: [countFormat.format(length), " / ", countFormat.format(limit)] })), _jsx(Button, { className: "od-reply-send", disabled: !ready, icon: _jsx(Icon, { name: "send", size: 15 }), loading: send.pending, onClick: submit, children: labels.send })] })] }), send.failure === null ? null : (_jsx(InlineAlert, { tone: "error", children: send.failure }))] }));
 }
 //# sourceMappingURL=ReplyComposer.js.map

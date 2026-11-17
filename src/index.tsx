@@ -27,6 +27,8 @@ export {
   type IconProps,
   type NetworkIconProps,
 } from "./components/Icon.js";
+export { formatAge } from "./components/formatAge.js";
+export { Popover, type PopoverProps } from "./components/Popover.js";
 export {
   networkLabel,
   networkNames,
@@ -327,7 +329,13 @@ export {
   ReplyComposer,
   type ReplyComposerProps,
 } from "./components/ReplyComposer.js";
-export { MetricTile, type MetricTileProps } from "./components/MetricTile.js";
+export {
+  MetricGrid,
+  MetricTile,
+  type MetricGridProps,
+  type MetricTileProps,
+} from "./components/MetricTile.js";
+export { balancedColumns } from "./components/metricColumns.js";
 export {
   chartSlots,
   chartTicks,
@@ -397,9 +405,11 @@ export {
 } from "./components/calendarLabels.js";
 export {
   PostDetailDialog,
+  PostDetailSection,
   type PostDetailDialogProps,
   type PostDetailMedia,
   type PostDetailMetric,
+  type PostDetailSectionProps,
   type PostDetailTarget,
 } from "./components/PostDetailDialog.js";
 export {
@@ -407,6 +417,10 @@ export {
   type SegmentedControlProps,
   type SegmentedOption,
 } from "./components/SegmentedControl.js";
+export {
+  SearchField,
+  type SearchFieldProps,
+} from "./components/SearchField.js";
 export {
   TagFilterBar,
   type TagFilterBarProps,
@@ -701,5 +715,7 @@ export {
   timeZoneDayKey,
   dateTimeInputValue,
   dateTimeInputInstant,
+  timeZoneOptions,
+  type TimeZoneOption,
   type TimeZoneParts,
 } from "./components/timeZones.js";

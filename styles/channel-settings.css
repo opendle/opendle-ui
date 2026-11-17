@@ -1,0 +1,20 @@
+/*
+ * Channel switches: on is filled, off has a solid border, and a function
+ * that the connection does not support has a faint dashed border.
+ */
+.od-channel-switches button.od-tag:disabled {
+  border-style: dashed;
+  opacity: 0.5;
+}
+
+/* A connection provider has a round mark as wide as a network badge. */
+.od-connect-option-icon {
+  display: grid;
+  width: 30px;
+  height: 30px;
+  flex: none;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--od-color-sunken);
+  color: var(--od-color-muted-strong);
+}

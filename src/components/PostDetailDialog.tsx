@@ -1,10 +1,12 @@
-import { useState, type ReactNode } from "react";
+import { useId, useState, type ReactNode } from "react";
 
 import { Button } from "./Button.js";
 import type { CalendarItemState } from "./calendarItems.js";
 import { postDetailLabels, type PostDetailLabels } from "./calendarLabels.js";
+import { classes } from "./classes.js";
 import { Dialog } from "./Dialog.js";
 import { Icon, NetworkIcon } from "./Icon.js";
+import { IconButton } from "./IconButton.js";
 import { InlineAlert } from "./InlineAlert.js";
 import type { NetworkName } from "./networks.js";
 import { TabPanel, Tabs } from "./Tabs.js";
@@ -41,7 +43,9 @@ export interface PostDetailTarget {
   /** The time of this network, already formatted. */
   readonly when: string;
   readonly media?: readonly PostDetailMedia[];
+  /** The channel has a button that changes its time. */
   readonly canReschedule?: boolean;
+  /** Not shown: a channel that cannot change its time has no button. */
   readonly scheduleDisabledReason?: string;
 }
 
@@ -63,7 +67,10 @@ export interface PostDetailDialogProps {
   readonly errorMessage: (error: unknown) => string | null;
   /** Key numbers of the post, already formatted. */
   readonly metrics?: readonly PostDetailMetric[];
-  /** More content at the end, for example the comments of the post. */
+  /**
+   * More content at the end, for example the comments of the post. Use
+   * `PostDetailSection` for each part so that all parts look the same.
+   */
   readonly children?: ReactNode;
   readonly labels?: PostDetailLabels;
 }
@@ -89,9 +96,34 @@ const stateTones: Record<CalendarItemState, "ok" | "bad" | "neutral"> = {
   cancelled: "neutral",
 };
 
-interface MediaTileProps {
-  readonly media: PostDetailMedia;
-  readonly playLabel: string;
+export interface PostDetailSectionProps {
+  readonly title: ReactNode;
+  /** Controls at the end of the heading, for example a small button. */
+  readonly actions?: ReactNode;
+  readonly children: ReactNode;
+  readonly className?: string;
+}
+
+/** One part of the post details below the content, with a small heading. */
+export function PostDetailSection({
+  actions,
+  children,
+  className,
+  title,
+}: PostDetailSectionProps) {
+  const id = useId();
+  return (
+    <section
+      aria-labelledby={id}
+      className={classes("od-post-detail-section", className)}
+    >
+      <div className="od-post-detail-section-heading">
+        <h3 id={id}>{title}</h3>
+        {actions}
+      </div>
+      {children}
+    </section>
+  );
 }
 
 function MediaGallery({
@@ -136,6 +168,11 @@ function MediaGallery({
       )}
     </div>
   );
+}
+
+interface MediaTileProps {
+  readonly media: PostDetailMedia;
+  readonly playLabel: string;
 }
 
 function MediaTile({ media, playLabel }: MediaTileProps) {
@@ -195,6 +232,8 @@ function MediaTile({ media, playLabel }: MediaTileProps) {
 
 interface TargetRowProps {
   readonly target: PostDetailTarget;
+  /** The time of the dialog heading. A different time shows in the row. */
+  readonly when: string | undefined;
   readonly labels: PostDetailLabels;
   readonly pending: boolean;
   readonly onRetry: ((targetId: string) => void) | null;
@@ -209,68 +248,112 @@ function TargetRow({
   rescheduleLabel,
   pending,
   target,
+  when,
 }: TargetRowProps) {
+  const failed = target.state === "failed";
+  const meta = [
+    labels.states[target.state],
+    target.when === when ? null : target.when,
+  ]
+    .filter((part) => part !== null)
+    .join(" · ");
+  const reschedule =
+    onReschedule !== undefined &&
+    target.canReschedule === true &&
+    (target.state === "scheduled" || failed);
   return (
     <li className="od-post-detail-target" data-state={target.state}>
       <NetworkIcon badge network={target.network} />
-      <span className="od-post-detail-target-name">{target.name}</span>
-      {target.state === "failed" ? (
-        <>
-          <span className="od-post-detail-target-note">
-            {target.error ?? labels.states.failed}
-          </span>
-          {onRetry === null ? null : (
-            <Button
-              icon={<Icon name="retry" size={15} />}
-              loading={pending}
-              onClick={() => {
-                onRetry(target.id);
-              }}
-              size="small"
-              variant="secondary"
-            >
-              {labels.retry}
-            </Button>
-          )}
-        </>
-      ) : target.url ? (
-        <a
-          className="od-post-detail-target-link"
-          href={target.url}
-          rel="noreferrer"
-          target="_blank"
-        >
-          {labels.open}
-          <Icon name="external-link" size={13} />
-        </a>
-      ) : (
-        <span className="od-post-detail-target-state">
-          {labels.states[target.state]}
-        </span>
-      )}
-      {onReschedule === undefined ||
-      (target.state !== "scheduled" && target.state !== "failed") ? null : (
-        <button
-          className="od-post-detail-target-schedule"
-          disabled={!target.canReschedule}
-          title={target.scheduleDisabledReason}
-          onClick={() => {
-            onReschedule(target.id);
-          }}
-          type="button"
-        >
-          <Icon name="calendar" size={13} />
-          {rescheduleLabel}
-        </button>
-      )}
+      <div className="od-post-detail-target-copy">
+        <span className="od-post-detail-target-name">{target.name}</span>
+        <span className="od-post-detail-target-meta">{meta}</span>
+        {failed && target.error ? (
+          <p className="od-post-detail-target-error">{target.error}</p>
+        ) : null}
+      </div>
+      <div className="od-post-detail-target-actions">
+        {failed && onRetry !== null ? (
+          <Button
+            icon={<Icon name="retry" size={14} />}
+            loading={pending}
+            onClick={() => {
+              onRetry(target.id);
+            }}
+            size="small"
+            variant="secondary"
+          >
+            {labels.retry}
+          </Button>
+        ) : null}
+        {reschedule ? (
+          <IconButton
+            className="od-post-detail-target-schedule"
+            icon={<Icon name="calendar" size={15} />}
+            label={`${rescheduleLabel} · ${target.name}`}
+            onClick={() => {
+              onReschedule(target.id);
+            }}
+          />
+        ) : null}
+        {target.url ? (
+          <a
+            className="od-button od-button-quiet od-post-detail-target-link"
+            data-size="small"
+            href={target.url}
+            rel="noreferrer"
+            target="_blank"
+          >
+            {labels.open}
+            <Icon name="external-link" size={13} />
+          </a>
+        ) : null}
+      </div>
     </li>
   );
 }
 
+/** Channels with the same text and media share one version of the post. */
+interface Version {
+  readonly id: string;
+  readonly targets: readonly PostDetailTarget[];
+}
+
+function versionsOf(targets: readonly PostDetailTarget[]): readonly Version[] {
+  const versions = new Map<string, PostDetailTarget[]>();
+  for (const target of targets) {
+    const key = JSON.stringify([target.text, target.media ?? null]);
+    const list = versions.get(key);
+    if (list === undefined) versions.set(key, [target]);
+    else list.push(target);
+  }
+  return [...versions.values()].map((list) => ({
+    id: list[0]?.id ?? "",
+    targets: list,
+  }));
+}
+
+function VersionLabel({ version }: { readonly version: Version }) {
+  const only = version.targets.length === 1 ? version.targets[0] : undefined;
+  return (
+    <span className="od-post-detail-version">
+      <span className="od-post-detail-version-networks">
+        {version.targets.map((target) => (
+          <NetworkIcon
+            aria-hidden={only === undefined ? undefined : true}
+            key={target.id}
+            network={target.network}
+          />
+        ))}
+      </span>
+      {only === undefined ? null : only.name}
+    </span>
+  );
+}
+
 /**
- * The details of one post: media, text, time, tags, the state of each
- * network and a link to each published post. When the text or the time
- * differs between networks, each network has a tab.
+ * The details of one post: media, text, time, tags, its numbers, and one row
+ * per channel with its state, its link, its error and its actions. When the
+ * text or the media differs between channels, a tab shows each version.
  */
 export function PostDetailDialog({
   children,
@@ -291,16 +374,11 @@ export function PostDetailDialog({
 }: PostDetailDialogProps) {
   const retry = useAsyncAction(errorMessage);
   const [selected, setSelected] = useState<string | null>(null);
-  const first = targets[0];
-  const differs = targets.some(
-    (target) =>
-      target.text !== first?.text ||
-      target.when !== first.when ||
-      JSON.stringify(target.media) !== JSON.stringify(first.media),
-  );
-  const shown =
-    (differs ? targets.find((target) => target.id === selected) : undefined) ??
-    first;
+  const versions = versionsOf(targets);
+  const version =
+    versions.find((entry) => entry.id === selected) ?? versions[0];
+  const shown = version?.targets[0];
+  const when = targets[0]?.when;
   const counts = stateOrder.flatMap((state) => {
     const count = targets.filter((target) => target.state === state).length;
     return count > 0 ? [{ state, count }] : [];
@@ -329,15 +407,6 @@ export function PostDetailDialog({
             <p key={`${String(index)}:${line}`}>{line}</p>
           ))}
         <div className="od-post-detail-metadata">
-          {tags.length === 0 ? null : (
-            <div className="od-post-detail-tags">
-              {tags.map((tag) => (
-                <TagChip color={tagColors?.[tag]} key={tag}>
-                  #{tag}
-                </TagChip>
-              ))}
-            </div>
-          )}
           <p className="od-post-detail-states">
             {counts.map(({ count, state }) => (
               <span
@@ -352,22 +421,19 @@ export function PostDetailDialog({
               </span>
             ))}
           </p>
+          {tags.length === 0 ? null : (
+            <div className="od-post-detail-tags">
+              {tags.map((tag) => (
+                <TagChip color={tagColors?.[tag]} key={tag}>
+                  #{tag}
+                </TagChip>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>
   );
-
-  const metricCards =
-    metrics.length === 0 ? null : (
-      <dl className="od-post-detail-metrics">
-        {metrics.map((metric) => (
-          <div key={metric.label}>
-            <dt>{metric.label}</dt>
-            <dd>{metric.value}</dd>
-          </div>
-        ))}
-      </dl>
-    );
 
   return (
     <Dialog
@@ -376,7 +442,7 @@ export function PostDetailDialog({
       closeLabel={labels.close}
       description={
         onReschedule === undefined ? (
-          shown?.when
+          when
         ) : (
           <button
             className="od-post-detail-date"
@@ -387,7 +453,7 @@ export function PostDetailDialog({
             title={rescheduleLabel}
             type="button"
           >
-            {shown?.when}
+            {when}
             <Icon name="calendar" size={14} />
           </button>
         )
@@ -397,59 +463,66 @@ export function PostDetailDialog({
       title={title}
     >
       {scheduleEditor}
-      {differs && shown !== undefined ? (
-        <>
-          <Tabs
-            className="od-post-detail-tabs"
-            idBase="od-post-detail"
-            items={targets.map((target) => ({
-              id: target.id,
-              label: (
-                <>
-                  <NetworkIcon network={target.network} />
-                  {target.name}
-                </>
-              ),
-            }))}
-            label={labels.variants}
-            onChange={setSelected}
-            value={shown.id}
-          />
-          <TabPanel id={shown.id} idBase="od-post-detail">
-            {body}
-          </TabPanel>
-        </>
-      ) : (
-        body
-      )}
-      {metricCards}
-      {retry.failure === null ? null : (
-        <InlineAlert className="od-post-detail-alert" tone="error">
-          {retry.failure}
-        </InlineAlert>
-      )}
-      <ul aria-label={labels.channels} className="od-post-detail-targets">
-        {targets.map((target) => (
-          <TargetRow
-            key={target.id}
-            labels={labels}
-            onRetry={
-              onRetry === undefined
-                ? null
-                : (targetId) => {
-                    void retry.run(() => onRetry(targetId));
-                  }
-            }
-            onReschedule={onReschedule}
-            rescheduleLabel={rescheduleLabel}
-            pending={retry.pending}
-            target={target}
-          />
-        ))}
-      </ul>
-      {children === undefined || children === null ? null : (
-        <div className="od-post-detail-extra">{children}</div>
-      )}
+      <div className="od-post-detail-content">
+        {versions.length > 1 && version !== undefined ? (
+          <>
+            <Tabs
+              className="od-post-detail-versions"
+              idBase="od-post-detail"
+              items={versions.map((entry) => ({
+                id: entry.id,
+                label: <VersionLabel version={entry} />,
+              }))}
+              label={labels.variants}
+              onChange={setSelected}
+              value={version.id}
+            />
+            <TabPanel id={version.id} idBase="od-post-detail">
+              {body}
+            </TabPanel>
+          </>
+        ) : (
+          body
+        )}
+        {metrics.length === 0 ? null : (
+          <dl className="od-post-detail-metrics">
+            {metrics.map((metric) => (
+              <div key={metric.label}>
+                <dt>{metric.label}</dt>
+                <dd>{metric.value}</dd>
+              </div>
+            ))}
+          </dl>
+        )}
+      </div>
+      <PostDetailSection title={labels.channels}>
+        {retry.failure === null ? null : (
+          <InlineAlert className="od-post-detail-alert" tone="error">
+            {retry.failure}
+          </InlineAlert>
+        )}
+        <ul className="od-post-detail-targets">
+          {targets.map((target) => (
+            <TargetRow
+              key={target.id}
+              labels={labels}
+              onRetry={
+                onRetry === undefined
+                  ? null
+                  : (targetId) => {
+                      void retry.run(() => onRetry(targetId));
+                    }
+              }
+              onReschedule={onReschedule}
+              rescheduleLabel={rescheduleLabel}
+              pending={retry.pending}
+              target={target}
+              when={when}
+            />
+          ))}
+        </ul>
+      </PostDetailSection>
+      {children}
     </Dialog>
   );
 }

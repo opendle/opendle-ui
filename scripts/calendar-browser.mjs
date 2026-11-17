@@ -481,16 +481,19 @@ try {
             .locator(".od-calendar-timeline .od-calendar-item")
             .first()
             .evaluate((card) => {
-              const top = card
-                .querySelector(".od-calendar-item-top")
-                .getBoundingClientRect();
+              const time = card.querySelector("time").getBoundingClientRect();
               const title = card
                 .querySelector(".od-calendar-item-title")
                 .getBoundingClientRect();
-              return title.left >= top.right - 1;
+              const networks = card
+                .querySelector(".od-calendar-item-networks")
+                .getBoundingClientRect();
+              return (
+                title.left >= time.right - 1 && networks.left >= title.right - 1
+              );
             }),
           true,
-          "in a row, the title comes after the time and the marks",
+          "in a row, the title is between the time and the networks",
         );
       }
       await todayRow.scrollIntoViewIfNeeded();
@@ -499,14 +502,14 @@ try {
       await todayRow.scrollIntoViewIfNeeded();
       await audit(page, `${name}-timeline`);
 
-      // Text or time that differs between networks gives one tab for each.
+      // Each version of the text and media has one tab with its networks.
       await page.goto(`${pageUrl}#variants`);
       await page.reload();
       await page
         .getByRole("button", { name: "18:30, Take Me With You, Failed" })
         .click();
       const variants = page.getByRole("dialog", { name: "Take Me With You" });
-      assert.equal(await variants.getByRole("tab").count(), 9);
+      assert.equal(await variants.getByRole("tab").count(), 2);
       await variants.getByRole("tab", { name: "X" }).click();
       await variants.getByText("Take Me With You. Out now.").waitFor();
       await variants.getByRole("img", { name: "Front cover" }).waitFor();

@@ -13,6 +13,11 @@ export interface ApplicationShellProps extends Omit<HTMLAttributes<HTMLDivElemen
      */
     readonly secondaryNavigation?: ReactNode;
     readonly secondaryNavigationLabel?: string;
+    /**
+     * Controls next to the product name, for example a notification
+     * `Popover`. On a phone they show in the top bar next to the workspace.
+     */
+    readonly actions?: ReactNode;
     /** A workspace menu above the main navigation. */
     readonly workspace?: ReactNode;
     /** An `AccountMenu` element at the end of the sidebar. */
@@ -32,5 +37,5 @@ export interface ApplicationShellProps extends Omit<HTMLAttributes<HTMLDivElemen
  * The application frame: a left sidebar that becomes an icon rail on a medium
  * window, or when the user collapses it, and a bottom bar on a phone.
  */
-export declare function ApplicationShell({ account, brandHref, brandMark, brandName, children, className, closeLabel, collapsed, collapseLabel, expandLabel, mainProps, navigation, navigationLabel, onCollapsedChange, secondaryNavigation, secondaryNavigationLabel, skipLabel, workspace, ...props }: ApplicationShellProps): import("react").JSX.Element;
+export declare function ApplicationShell({ account, actions, brandHref, brandMark, brandName, children, className, closeLabel, collapsed, collapseLabel, expandLabel, mainProps, navigation, navigationLabel, onCollapsedChange, secondaryNavigation, secondaryNavigationLabel, skipLabel, workspace, ...props }: ApplicationShellProps): import("react").JSX.Element;
 //# sourceMappingURL=ApplicationShell.d.ts.map

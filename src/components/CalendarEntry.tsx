@@ -140,20 +140,22 @@ export function CalendarEntry({
               />
             ))}
           </span>
-          {marks.map((mark) => (
-            <span
-              className="od-calendar-item-follow-up"
-              data-state={mark.state}
-              key={mark.kind}
-              title={`${followUpLabels[mark.kind]}: ${stateLabels[mark.state]}`}
-            >
-              <Icon
-                name={mark.kind === "comment" ? "message" : "heart"}
-                size={12}
-              />
-              {mark.count > 1 ? mark.count : null}
-            </span>
-          ))}
+          <span className="od-calendar-item-follow-ups">
+            {marks.map((mark) => (
+              <span
+                className="od-calendar-item-follow-up"
+                data-state={mark.state}
+                key={mark.kind}
+                title={`${followUpLabels[mark.kind]}: ${stateLabels[mark.state]}`}
+              >
+                <Icon
+                  name={mark.kind === "comment" ? "message" : "heart"}
+                  size={12}
+                />
+                {mark.count > 1 ? mark.count : null}
+              </span>
+            ))}
+          </span>
         </span>
         <span className="od-calendar-item-title">
           {item.title}

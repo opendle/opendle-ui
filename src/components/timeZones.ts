@@ -141,3 +141,47 @@ export function dateTimeInputInstant(
   const choice = disambiguation === "earlier" ? choices[0] : choices.at(-1);
   return choice === undefined ? null : new Date(choice).toISOString();
 }
+
+export interface TimeZoneOption {
+  /** The IANA name, for example "Europe/Paris". */
+  readonly value: string;
+  /** The name for a person, for example "Europe/Paris". */
+  readonly label: string;
+  /** The offset from UTC now, for example "UTC+01:00". */
+  readonly description: string;
+  readonly searchText: string;
+}
+
+function offsetOf(timeZone: string, now: Date): string {
+  const name =
+    new Intl.DateTimeFormat("en-US", {
+      timeZone,
+      timeZoneName: "longOffset",
+    })
+      .formatToParts(now)
+      .find((part) => part.type === "timeZoneName")?.value ?? "GMT";
+  return name === "GMT" ? "UTC" : name.replace("GMT", "UTC");
+}
+
+/**
+ * The IANA time zones for a select control, UTC first, with the offset of
+ * each zone now. `extra` adds zones that the runtime does not list.
+ */
+export function timeZoneOptions(
+  extra: readonly string[] = [],
+  now: Date = new Date(),
+): readonly TimeZoneOption[] {
+  const names = [...new Set([...Intl.supportedValuesOf("timeZone"), ...extra])]
+    .filter((name) => name !== "" && name !== "UTC")
+    .sort();
+  return ["UTC", ...names].map((value) => {
+    const label = value.replaceAll("_", " ");
+    const description = offsetOf(value, now);
+    return {
+      value,
+      label,
+      description,
+      searchText: `${label} ${value} ${description}`,
+    };
+  });
+}

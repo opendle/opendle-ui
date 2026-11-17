@@ -1,0 +1,146 @@
+/*
+ * A calendar entry on one line, in the timeline and in the lists of posts:
+ * the state, the time, the title, then the networks and the follow-ups at
+ * the end. Each part has its own column, so the titles of a list align.
+ */
+
+.od-calendar-item-follow-ups {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 6px;
+}
+
+.od-calendar-item[data-layout="row"] {
+  --od-calendar-preview: 40px;
+
+  display: grid;
+  grid-template-columns: auto auto auto minmax(0, 1fr) auto auto auto;
+  grid-template-areas: "bar state time title networks marks preview";
+  align-items: center;
+  column-gap: 10px;
+  min-height: 44px;
+  padding: 6px 12px 6px 8px;
+}
+
+.od-calendar-item[data-layout="row"]
+  :is(.od-calendar-item-main, .od-calendar-item-top) {
+  display: contents;
+}
+
+.od-calendar-item[data-layout="row"] .od-calendar-item-bar {
+  align-self: stretch;
+}
+
+.od-calendar-item[data-layout="row"] .od-calendar-item-state {
+  grid-area: state;
+}
+
+.od-calendar-item[data-layout="row"] time {
+  grid-area: time;
+  color: var(--od-color-muted);
+  font-size: 0.78125rem;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.od-calendar-item[data-layout="row"] .od-calendar-item-networks {
+  flex-wrap: nowrap;
+  grid-area: networks;
+  gap: 4px;
+  padding: 0;
+}
+
+.od-calendar-item[data-layout="row"] .od-calendar-item-network {
+  --od-network-size: 20px;
+
+  margin: 0;
+}
+
+.od-calendar-item[data-layout="row"] .od-calendar-item-follow-ups {
+  grid-area: marks;
+  color: var(--od-color-muted);
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.od-calendar-item[data-layout="row"] .od-calendar-item-title {
+  display: block;
+  grid-area: title;
+  font-size: 0.875rem;
+  line-height: 1.35;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.od-calendar-item[data-layout="row"] .od-calendar-item-summary {
+  display: inline;
+  margin-left: 12px;
+}
+
+.od-calendar-item[data-layout="row"] .od-calendar-item-preview {
+  grid-area: preview;
+}
+
+/* A list of posts shares its columns: each time has the same width. */
+.od-entry-list {
+  grid-template-columns: auto auto auto minmax(0, 1fr) auto auto auto;
+  column-gap: 10px;
+}
+
+.od-entry-list > .od-calendar-item {
+  grid-column: 1 / -1;
+}
+
+@container (min-width: 561px) {
+  .od-entry-list > .od-calendar-item[data-layout="row"] {
+    grid-template-columns: subgrid;
+  }
+}
+
+/* A narrow place: the state, the time and the marks above the title. */
+@container (max-width: 560px) {
+  .od-calendar-item[data-layout="row"] {
+    grid-template-columns: auto auto auto auto minmax(0, 1fr) auto;
+    grid-template-areas:
+      "bar state time networks marks preview"
+      "bar title title title title preview";
+    row-gap: 4px;
+    column-gap: 8px;
+    padding-block: 8px;
+  }
+
+  .od-calendar-item[data-layout="row"] .od-calendar-item-network {
+    --od-network-size: 18px;
+  }
+
+  .od-calendar-item[data-layout="row"] .od-calendar-item-follow-ups {
+    justify-self: start;
+  }
+
+  .od-calendar-item[data-layout="row"] .od-calendar-item-title {
+    white-space: normal;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+  }
+
+  .od-calendar-item[data-layout="row"] .od-calendar-item-summary {
+    display: block;
+    margin: 2px 0 0;
+  }
+}
+
+/* The times and the marks keep one width, so the titles and icons align. */
+.od-calendar-item[data-layout="row"] time {
+  min-width: 2.75em;
+}
+
+.od-calendar-item[data-layout="row"] .od-calendar-item-follow-ups {
+  min-width: 2.25em;
+}
+
+.od-calendar-item[data-layout="card"] .od-calendar-item-follow-ups:empty {
+  display: none;
+}

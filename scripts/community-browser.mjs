@@ -156,9 +156,16 @@ try {
       await audit(page, `${name}-conversation`);
 
       // A saved reply keeps the mention and returns focus without sending.
+      await page.getByRole("button", { name: "Saved replies" }).click();
       await page
-        .getByRole("combobox", { name: "Saved replies" })
-        .selectOption("thanks");
+        .getByRole("menu", { name: "Saved replies" })
+        .getByRole("menuitem", { name: /Thank you/ })
+        .click();
+      assert.equal(
+        await page.getByRole("menu", { name: "Saved replies" }).count(),
+        0,
+        "the list closes after a choice",
+      );
       assert.equal(await box.inputValue(), "@mara.keys Thanks for listening");
       assert.equal(
         await box.evaluate((area) => area === document.activeElement),

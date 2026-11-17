@@ -6,7 +6,10 @@ import {
   AccountMenu,
   CalendarBoard,
   ChannelList,
+  MetricGrid,
   MetricTile,
+  balancedColumns,
+  timeZoneOptions,
   TagInput,
   CalendarHeader,
   PostDetailDialog,
@@ -277,6 +280,33 @@ test("TagFilterBar has one group of tags and shows only groups with entries", ()
   assert.match(full, /aria-label="Tag logic"/);
 });
 
+test("TagFilterBar puts the controls of the host first", () => {
+  const props = { value: emptyTagFilter, onChange: () => undefined };
+  const search = React.createElement("input", { type: "search" });
+  const plain = render(TagFilterBar, { ...props, channels: [], tags: ["a"] });
+  assert.doesNotMatch(plain, /data-controls|od-tag-filter-controls/);
+  const alone = render(TagFilterBar, {
+    ...props,
+    channels: [],
+    tags: [],
+    controls: search,
+  });
+  assert.match(
+    alone,
+    /data-controls="true"><div class="od-tag-filter-controls"><input type="search"\/><\/div><\/fieldset>/,
+  );
+  const both = render(TagFilterBar, {
+    ...props,
+    channels: [],
+    tags: ["a"],
+    controls: search,
+  });
+  assert.match(
+    both,
+    /od-tag-filter-controls"><input[^>]*\/><\/div><div class="od-tag-filter-choices"><fieldset aria-label="Tags"/,
+  );
+});
+
 const detailTarget = (id, network, state, extra = {}) => ({
   id,
   network,
@@ -315,6 +345,27 @@ test("PostDetailDialog links each published network and shows a failure", () => 
   assert.match(markup, /aria-label="Play"/);
   assert.match(markup, />#reel</);
   assert.doesNotMatch(markup, /role="tablist"/);
+});
+
+test("PostDetailDialog has one tab for each version of the text", () => {
+  const markup = render(PostDetailDialog, {
+    open: true,
+    onClose: () => undefined,
+    errorMessage: () => "Failed",
+    title: "Take Me With You",
+    targets: [
+      detailTarget("p1", "instagram", "published"),
+      detailTarget("p2", "x", "published", { text: "Short text" }),
+      detailTarget("p3", "threads", "published"),
+      detailTarget("p4", "bluesky", "published", {
+        when: "Friday 13 November, 09:00",
+      }),
+    ],
+  });
+  // A different time is not a different version: the row shows the time.
+  assert.equal(markup.match(/role="tab"/g).length, 2);
+  assert.match(markup, /published · Friday 13 November, 09:00/);
+  assert.equal(markup.match(/class="od-post-detail-target"/g).length, 4);
 });
 
 test("PostDetailDialog has a tab for each network when the text differs", () => {
@@ -452,8 +503,9 @@ test("post dates can change for eligible channels in a mixed group", () => {
     metrics: [{ label: "Views", value: "12" }],
   });
   assert.match(markup, /class="od-post-detail-date"(?! disabled)/);
-  assert.match(markup, /disabled="" title="Held by network"/);
-  assert.equal(markup.match(/od-post-detail-target-schedule/g).length, 2);
+  // Only the channel that can change its time has a button.
+  assert.equal(markup.match(/od-post-detail-target-schedule/g).length, 1);
+  assert.match(markup, /aria-label="Change date and time · facebook"/);
   assert.match(markup, /preload="metadata" src="\/video.mp4"/);
   assert.match(markup, /od-post-detail-metrics/);
 });
@@ -491,4 +543,40 @@ test("draft media review uses the selected target carousel and alternative text"
     calendarItemState({ ...items[0], targets: [target("a", "x", "draft")] }),
     "draft",
   );
+});
+
+test("MetricTile draws bars of the days for a value of each day", () => {
+  const markup = render(MetricTile, {
+    label: "Views",
+    value: "128",
+    chart: "bars",
+    points: [null, null, 127, 1],
+  });
+  assert.equal(markup.match(/class="od-metric-spark-bar"/g).length, 2);
+  assert.equal(markup.match(/class="od-metric-spark-empty"/g).length, 2);
+});
+
+test("MetricGrid keeps the rows of tiles even", () => {
+  assert.equal(balancedColumns(5, 2), 2);
+  assert.equal(balancedColumns(5, 3), 3);
+  assert.equal(balancedColumns(5, 6), 5);
+  assert.equal(balancedColumns(8, 6), 4);
+  assert.equal(balancedColumns(7, 3), 3);
+  const markup = render(
+    MetricGrid,
+    {},
+    React.createElement(MetricTile, { label: "A", value: "1", key: "a" }),
+    React.createElement(MetricTile, { label: "B", value: "2", key: "b" }),
+    React.createElement(MetricTile, { label: "C", value: "3", key: "c" }),
+  );
+  assert.match(markup, /--od-metric-columns-medium:3/);
+  assert.match(markup, /--od-metric-columns-narrow:2/);
+});
+
+test("timeZoneOptions lists UTC first with the offset of each zone", () => {
+  const options = timeZoneOptions([], new Date("2026-07-01T00:00:00Z"));
+  assert.equal(options[0].value, "UTC");
+  const paris = options.find((option) => option.value === "Europe/Paris");
+  assert.equal(paris.description, "UTC+02:00");
+  assert.match(paris.searchText, /Europe\/Paris/);
 });

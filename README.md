@@ -17,10 +17,10 @@ light and a dark theme that follow `prefers-color-scheme`.
 | --------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
 | Frame                 | `ApplicationShell`, `NavigationLink`, `NavigationItem`, `AccountMenu`, `PageHeading`, `Section`, `Card`, `ItemList`, `ItemRow`     |
 | Controls              | `Button`, `IconButton`, `SegmentedControl`, `TagChip`, `Tabs`, `TabPanel`, `TextControl`, `AutoGrowTextarea`, `InlineEditableText` |
-| Overlays and feedback | `Dialog`, `ConfirmationDialog`, `InlineAlert`, `Toast`, `useToastQueue`, `SecretValue`, `SecretRevealPanel`                        |
+| Overlays and feedback | `Dialog`, `ConfirmationDialog`, `Popover`, `InlineAlert`, `Toast`, `useToastQueue`, `SecretValue`, `SecretRevealPanel`             |
 | Identity              | `SessionPage`, `SignInCard`, `PasskeyList`, `ApiTokenList`, `AvatarUpload`, `Avatar`                                               |
 | Calendar              | `CalendarHeader`, `CalendarBoard`, `TagFilterBar`, `PostDetailDialog`, `calendarPeriod`, `calendarTitle`, `shiftCalendarAnchor`    |
-| Marks                 | `Icon`, `NetworkIcon`, `DateTime`                                                                                                  |
+| Marks                 | `Icon`, `NetworkIcon`, `DateTime`, `formatAge`                                                                                     |
 
 `ApplicationShell` is a left sidebar with icons. It becomes an icon rail below
 1100 px and a bottom bar below 720 px. The host owns routes: give each
@@ -43,6 +43,16 @@ menu button with sections of actions and choices. Use `appearance="workspace"`
 for a workspace card with an optional `detail` and an explicit accessible
 `label`. Its menu opens below the card. Put it in `ApplicationShell.workspace`
 to show it above navigation, in the icon rail, and in a top bar on phones.
+`ApplicationShell.actions` puts controls next to the product name, below the
+mark in the icon rail, and next to the workspace in the top bar on phones.
+
+`Popover` is an icon button with an optional `count` badge that opens a
+non-modal panel. The panel content mounts when it opens and gets the focus.
+Escape, a press outside, a used link, or a move of the focus out of the panel
+closes it; Escape returns the focus to the button. In `ApplicationShell.actions`
+on a phone, the panel is a full-width sheet below the top bar. `formatAge`
+gives a short age such as `5m ago`. `Section.id` makes a section the target of
+a fragment link.
 
 `ChannelList` shows connected accounts: name edited in place, tags
 (`TagInput`), switches, the warning for an ended authorization, connect and
@@ -53,8 +63,10 @@ from opening. Set `ChannelItem.connectionLabel` to show a host-owned connection
 route beside the handle. It stays visible with an ended authorization and in
 read-only lists. Omit it for a connection that needs no route label.
 `MetricTile` in a `dl.od-metrics` shows a key number with its
-change, and with `points` a small smooth line of the days of the period in
-the colour of the change. `CalendarEntry` is one calendar entry for a list outside the board.
+change, and with `points` a small chart of the days of the period in the
+colour of the change: a smooth line by default, or `chart="bars"` for a value
+of each day. A day without a value has no bar. `MetricGrid` puts tiles in
+complete rows for each width; a shorter last row fills its width. `CalendarEntry` is one calendar entry for a list outside the board.
 
 `Conversation` shows the comments of a post in thread order with one open
 reply box (`ReplyComposer`: suggestions, a textarea that grows, emoji, a
@@ -71,6 +83,9 @@ top of the stack first and mark the series under the pointer. `ChartLegend` is o
 legend for several charts. `DateRangeControl` and `RecordTable`
 complete an analytics view. `RecordTable` has a named, keyboard-focusable
 scroll region for wide tables.
+
+`SearchField` is a compact search input with a search icon for a toolbar.
+Its `label` is the accessible name and the default placeholder.
 
 `NetworkIcon` always has the network name as its accessible name and its
 tooltip. `LoadingIndicator` is the one loading sign; `Button` shows it with
@@ -93,8 +108,9 @@ and the time to the present minute in the week view, with a line at the
 present. The week view has a time axis of 24 hours; a row is one half hour and grows
 with its entries. The timeline opens at the present and asks for earlier or later entries
 through `onLoadEarlier` and `onLoadLater`. `TagFilterBar` holds the channel
-and tag selection with the AND or OR logic. The host owns
-the data and the requests.
+and tag selection with the AND or OR logic. Its `controls` put other filters
+of the view, for example a `SearchField` and a `SegmentedControl`, first in
+the same row. The host owns the data and the requests.
 
 `InboxList.groups` accepts post cards and their comments in host order. Each
 group has `id`, `title`, optional `thumbnailUrl`, and `items`. The host groups
@@ -119,10 +135,15 @@ the value is invalid, missing during a clock change, or repeated during a
 clock change. An explicit third argument, `earlier` or `later`, selects that
 clock-change rule. The default rejects both cases. Keep this conversion
 separate from the browser zone when the user selects a named zone.
+`timeZoneOptions()` gives the IANA zones for a `SearchableSelect`, UTC first,
+with the current UTC offset of each zone.
 
 `PostDetailDialog.onReschedule` receives a target ID for a channel, or `null`
-for the whole post. Targets declare `canReschedule` and an optional
-`scheduleDisabledReason`. The host supplies its form through `scheduleEditor`.
+for the whole post. A target with `canReschedule` has a time button in its
+row; other targets have none. The host supplies its form through
+`scheduleEditor`. Targets with the same text and media share one version tab.
+A target time that differs from the first target shows in its row. Wrap each
+part that the host adds in `PostDetailSection`.
 
 `TagChip` supports `disabled` and a native `title` for unavailable actions.
 Unselected tags use a dashed border and 60% opacity for the complete chip,

@@ -1,0 +1,46 @@
+/*
+ * Metric tiles in complete rows. The host component sets the count of
+ * columns for each width; a shorter last row fills all of its width.
+ */
+.od-metric-grid {
+  --od-metric-gap: 12px;
+
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--od-metric-gap);
+  margin: 0;
+  container-type: inline-size;
+}
+
+.od-metric-grid > .od-metric {
+  --od-metric-columns: var(--od-metric-columns-narrow, 2);
+
+  min-width: 0;
+  flex: 1 1
+    calc(
+      (100% - (var(--od-metric-columns) - 1) * var(--od-metric-gap)) /
+        var(--od-metric-columns)
+    );
+}
+
+@container (min-width: 480px) {
+  .od-metric-grid > .od-metric {
+    --od-metric-columns: var(--od-metric-columns-medium, 3);
+  }
+}
+
+@container (min-width: 640px) {
+  .od-metric-grid > .od-metric {
+    --od-metric-columns: var(--od-metric-columns-wide, 6);
+  }
+}
+
+/* Bars of the days: a day without a value keeps a faint mark on the base. */
+.od-metric-spark-bar {
+  fill: var(--od-metric-spark-color);
+  fill-opacity: 0.55;
+}
+
+.od-metric-spark-empty {
+  fill: var(--od-color-border-strong);
+}

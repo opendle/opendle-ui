@@ -1,9 +1,11 @@
 import { jsx as _jsx, jsxs as _jsxs, Fragment as _Fragment } from "react/jsx-runtime";
-import { useState } from "react";
+import { useId, useState } from "react";
 import { Button } from "./Button.js";
 import { postDetailLabels } from "./calendarLabels.js";
+import { classes } from "./classes.js";
 import { Dialog } from "./Dialog.js";
 import { Icon, NetworkIcon } from "./Icon.js";
+import { IconButton } from "./IconButton.js";
 import { InlineAlert } from "./InlineAlert.js";
 import { TabPanel, Tabs } from "./Tabs.js";
 import { TagChip } from "./TagChip.js";
@@ -26,6 +28,11 @@ const stateTones = {
     failed: "bad",
     cancelled: "neutral",
 };
+/** One part of the post details below the content, with a small heading. */
+export function PostDetailSection({ actions, children, className, title, }) {
+    const id = useId();
+    return (_jsxs("section", { "aria-labelledby": id, className: classes("od-post-detail-section", className), children: [_jsxs("div", { className: "od-post-detail-section-heading", children: [_jsx("h3", { id: id, children: title }), actions] }), children] }));
+}
 function MediaGallery({ media, playLabel, }) {
     const [index, setIndex] = useState(0);
     const shown = media[index] ?? media[0];
@@ -49,28 +56,54 @@ function MediaTile({ media, playLabel }) {
                     setPlaying(true);
                 }, title: playLabel, type: "button", children: _jsx(Icon, { name: "play" }) }), media.duration ? (_jsx("span", { className: "od-post-detail-duration", children: media.duration })) : null] }));
 }
-function TargetRow({ labels, onRetry, onReschedule, rescheduleLabel, pending, target, }) {
-    return (_jsxs("li", { className: "od-post-detail-target", "data-state": target.state, children: [_jsx(NetworkIcon, { badge: true, network: target.network }), _jsx("span", { className: "od-post-detail-target-name", children: target.name }), target.state === "failed" ? (_jsxs(_Fragment, { children: [_jsx("span", { className: "od-post-detail-target-note", children: target.error ?? labels.states.failed }), onRetry === null ? null : (_jsx(Button, { icon: _jsx(Icon, { name: "retry", size: 15 }), loading: pending, onClick: () => {
+function TargetRow({ labels, onRetry, onReschedule, rescheduleLabel, pending, target, when, }) {
+    const failed = target.state === "failed";
+    const meta = [
+        labels.states[target.state],
+        target.when === when ? null : target.when,
+    ]
+        .filter((part) => part !== null)
+        .join(" · ");
+    const reschedule = onReschedule !== undefined &&
+        target.canReschedule === true &&
+        (target.state === "scheduled" || failed);
+    return (_jsxs("li", { className: "od-post-detail-target", "data-state": target.state, children: [_jsx(NetworkIcon, { badge: true, network: target.network }), _jsxs("div", { className: "od-post-detail-target-copy", children: [_jsx("span", { className: "od-post-detail-target-name", children: target.name }), _jsx("span", { className: "od-post-detail-target-meta", children: meta }), failed && target.error ? (_jsx("p", { className: "od-post-detail-target-error", children: target.error })) : null] }), _jsxs("div", { className: "od-post-detail-target-actions", children: [failed && onRetry !== null ? (_jsx(Button, { icon: _jsx(Icon, { name: "retry", size: 14 }), loading: pending, onClick: () => {
                             onRetry(target.id);
-                        }, size: "small", variant: "secondary", children: labels.retry }))] })) : target.url ? (_jsxs("a", { className: "od-post-detail-target-link", href: target.url, rel: "noreferrer", target: "_blank", children: [labels.open, _jsx(Icon, { name: "external-link", size: 13 })] })) : (_jsx("span", { className: "od-post-detail-target-state", children: labels.states[target.state] })), onReschedule === undefined ||
-                (target.state !== "scheduled" && target.state !== "failed") ? null : (_jsxs("button", { className: "od-post-detail-target-schedule", disabled: !target.canReschedule, title: target.scheduleDisabledReason, onClick: () => {
-                    onReschedule(target.id);
-                }, type: "button", children: [_jsx(Icon, { name: "calendar", size: 13 }), rescheduleLabel] }))] }));
+                        }, size: "small", variant: "secondary", children: labels.retry })) : null, reschedule ? (_jsx(IconButton, { className: "od-post-detail-target-schedule", icon: _jsx(Icon, { name: "calendar", size: 15 }), label: `${rescheduleLabel} · ${target.name}`, onClick: () => {
+                            onReschedule(target.id);
+                        } })) : null, target.url ? (_jsxs("a", { className: "od-button od-button-quiet od-post-detail-target-link", "data-size": "small", href: target.url, rel: "noreferrer", target: "_blank", children: [labels.open, _jsx(Icon, { name: "external-link", size: 13 })] })) : null] })] }));
+}
+function versionsOf(targets) {
+    const versions = new Map();
+    for (const target of targets) {
+        const key = JSON.stringify([target.text, target.media ?? null]);
+        const list = versions.get(key);
+        if (list === undefined)
+            versions.set(key, [target]);
+        else
+            list.push(target);
+    }
+    return [...versions.values()].map((list) => ({
+        id: list[0]?.id ?? "",
+        targets: list,
+    }));
+}
+function VersionLabel({ version }) {
+    const only = version.targets.length === 1 ? version.targets[0] : undefined;
+    return (_jsxs("span", { className: "od-post-detail-version", children: [_jsx("span", { className: "od-post-detail-version-networks", children: version.targets.map((target) => (_jsx(NetworkIcon, { "aria-hidden": only === undefined ? undefined : true, network: target.network }, target.id))) }), only === undefined ? null : only.name] }));
 }
 /**
- * The details of one post: media, text, time, tags, the state of each
- * network and a link to each published post. When the text or the time
- * differs between networks, each network has a tab.
+ * The details of one post: media, text, time, tags, its numbers, and one row
+ * per channel with its state, its link, its error and its actions. When the
+ * text or the media differs between channels, a tab shows each version.
  */
 export function PostDetailDialog({ children, errorMessage, labels = postDetailLabels, media = null, metrics = noMetrics, onClose, onRetry, onReschedule, rescheduleLabel = "Change date and time", scheduleEditor, open, tagColors, tags = noTags, targets, title, }) {
     const retry = useAsyncAction(errorMessage);
     const [selected, setSelected] = useState(null);
-    const first = targets[0];
-    const differs = targets.some((target) => target.text !== first?.text ||
-        target.when !== first.when ||
-        JSON.stringify(target.media) !== JSON.stringify(first.media));
-    const shown = (differs ? targets.find((target) => target.id === selected) : undefined) ??
-        first;
+    const versions = versionsOf(targets);
+    const version = versions.find((entry) => entry.id === selected) ?? versions[0];
+    const shown = version?.targets[0];
+    const when = targets[0]?.when;
     const counts = stateOrder.flatMap((state) => {
         const count = targets.filter((target) => target.state === state).length;
         return count > 0 ? [{ state, count }] : [];
@@ -84,17 +117,16 @@ export function PostDetailDialog({ children, errorMessage, labels = postDetailLa
     const body = (_jsxs("div", { className: "od-post-detail-main", "data-media": shownMedia.length > 0, children: [_jsx(MediaGallery, { media: shownMedia, playLabel: labels.play }, shown?.id ?? "media"), _jsxs("div", { className: "od-post-detail-text", children: [(shown?.text ?? "")
                         .split(/\n+/)
                         .filter((line) => line.trim() !== "")
-                        .map((line, index) => (_jsx("p", { children: line }, `${String(index)}:${line}`))), _jsxs("div", { className: "od-post-detail-metadata", children: [tags.length === 0 ? null : (_jsx("div", { className: "od-post-detail-tags", children: tags.map((tag) => (_jsxs(TagChip, { color: tagColors?.[tag], children: ["#", tag] }, tag))) })), _jsx("p", { className: "od-post-detail-states", children: counts.map(({ count, state }) => (_jsxs("span", { className: "od-post-detail-pill", "data-tone": stateTones[state], children: [state === "published" ? _jsx(Icon, { name: "check", size: 13 }) : null, state === "failed" ? _jsx(Icon, { name: "alert", size: 13 }) : null, state === "scheduled" ? _jsx(Icon, { name: "clock", size: 13 }) : null, count, " ", labels.states[state]] }, state))) })] })] })] }));
-    const metricCards = metrics.length === 0 ? null : (_jsx("dl", { className: "od-post-detail-metrics", children: metrics.map((metric) => (_jsxs("div", { children: [_jsx("dt", { children: metric.label }), _jsx("dd", { children: metric.value })] }, metric.label))) }));
-    return (_jsxs(Dialog, { bodyClassName: "od-post-detail-body", className: "od-post-detail", closeLabel: labels.close, description: onReschedule === undefined ? (shown?.when) : (_jsxs("button", { className: "od-post-detail-date", disabled: !targets.some((target) => target.canReschedule), onClick: () => {
+                        .map((line, index) => (_jsx("p", { children: line }, `${String(index)}:${line}`))), _jsxs("div", { className: "od-post-detail-metadata", children: [_jsx("p", { className: "od-post-detail-states", children: counts.map(({ count, state }) => (_jsxs("span", { className: "od-post-detail-pill", "data-tone": stateTones[state], children: [state === "published" ? _jsx(Icon, { name: "check", size: 13 }) : null, state === "failed" ? _jsx(Icon, { name: "alert", size: 13 }) : null, state === "scheduled" ? _jsx(Icon, { name: "clock", size: 13 }) : null, count, " ", labels.states[state]] }, state))) }), tags.length === 0 ? null : (_jsx("div", { className: "od-post-detail-tags", children: tags.map((tag) => (_jsxs(TagChip, { color: tagColors?.[tag], children: ["#", tag] }, tag))) }))] })] })] }));
+    return (_jsxs(Dialog, { bodyClassName: "od-post-detail-body", className: "od-post-detail", closeLabel: labels.close, description: onReschedule === undefined ? (when) : (_jsxs("button", { className: "od-post-detail-date", disabled: !targets.some((target) => target.canReschedule), onClick: () => {
                 onReschedule(null);
-            }, title: rescheduleLabel, type: "button", children: [shown?.when, _jsx(Icon, { name: "calendar", size: 14 })] })), onClose: close, open: open, title: title, children: [scheduleEditor, differs && shown !== undefined ? (_jsxs(_Fragment, { children: [_jsx(Tabs, { className: "od-post-detail-tabs", idBase: "od-post-detail", items: targets.map((target) => ({
-                            id: target.id,
-                            label: (_jsxs(_Fragment, { children: [_jsx(NetworkIcon, { network: target.network }), target.name] })),
-                        })), label: labels.variants, onChange: setSelected, value: shown.id }), _jsx(TabPanel, { id: shown.id, idBase: "od-post-detail", children: body })] })) : (body), metricCards, retry.failure === null ? null : (_jsx(InlineAlert, { className: "od-post-detail-alert", tone: "error", children: retry.failure })), _jsx("ul", { "aria-label": labels.channels, className: "od-post-detail-targets", children: targets.map((target) => (_jsx(TargetRow, { labels: labels, onRetry: onRetry === undefined
-                        ? null
-                        : (targetId) => {
-                            void retry.run(() => onRetry(targetId));
-                        }, onReschedule: onReschedule, rescheduleLabel: rescheduleLabel, pending: retry.pending, target: target }, target.id))) }), children === undefined || children === null ? null : (_jsx("div", { className: "od-post-detail-extra", children: children }))] }));
+            }, title: rescheduleLabel, type: "button", children: [when, _jsx(Icon, { name: "calendar", size: 14 })] })), onClose: close, open: open, title: title, children: [scheduleEditor, _jsxs("div", { className: "od-post-detail-content", children: [versions.length > 1 && version !== undefined ? (_jsxs(_Fragment, { children: [_jsx(Tabs, { className: "od-post-detail-versions", idBase: "od-post-detail", items: versions.map((entry) => ({
+                                    id: entry.id,
+                                    label: _jsx(VersionLabel, { version: entry }),
+                                })), label: labels.variants, onChange: setSelected, value: version.id }), _jsx(TabPanel, { id: version.id, idBase: "od-post-detail", children: body })] })) : (body), metrics.length === 0 ? null : (_jsx("dl", { className: "od-post-detail-metrics", children: metrics.map((metric) => (_jsxs("div", { children: [_jsx("dt", { children: metric.label }), _jsx("dd", { children: metric.value })] }, metric.label))) }))] }), _jsxs(PostDetailSection, { title: labels.channels, children: [retry.failure === null ? null : (_jsx(InlineAlert, { className: "od-post-detail-alert", tone: "error", children: retry.failure })), _jsx("ul", { className: "od-post-detail-targets", children: targets.map((target) => (_jsx(TargetRow, { labels: labels, onRetry: onRetry === undefined
+                                ? null
+                                : (targetId) => {
+                                    void retry.run(() => onRetry(targetId));
+                                }, onReschedule: onReschedule, rescheduleLabel: rescheduleLabel, pending: retry.pending, target: target, when: when }, target.id))) })] }), children] }));
 }
 //# sourceMappingURL=PostDetailDialog.js.map

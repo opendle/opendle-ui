@@ -117,7 +117,9 @@ export function ConnectChannelDialog({
                 }}
                 type="button"
               >
-                {entry.icon ?? <Icon name="link" />}
+                <span className="od-connect-option-icon">
+                  {entry.icon ?? <Icon name="link" size={16} />}
+                </span>
                 <span>{entry.label}</span>
                 <Icon name="chevron-right" size={15} />
               </button>

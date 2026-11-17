@@ -4,22 +4,7 @@ import { conversationEmoji } from "./conversationLabels.js";
 import { emojiData, searchEmoji } from "./emojiData.js";
 import { Icon } from "./Icon.js";
 import { IconButton } from "./IconButton.js";
-const gap = 4;
-const margin = 8;
-/**
- * Put the grid below the button, or above it when the window has no room
- * below. The grid is fixed to the window, so a container that hides its
- * overflow does not cut it.
- */
-function place(button, grid) {
-    const bounds = button.getBoundingClientRect();
-    const height = grid.offsetHeight;
-    const width = grid.offsetWidth;
-    const below = bounds.bottom + gap + height <= window.innerHeight - margin;
-    grid.style.top = `${String(below ? bounds.bottom + gap : Math.max(margin, bounds.top - gap - height))}px`;
-    grid.style.left = `${String(Math.max(margin, Math.min(bounds.left, window.innerWidth - width - margin)))}px`;
-    grid.dataset.side = below ? "below" : "above";
-}
+import { placePanel } from "./placePanel.js";
 /** A button that opens a grid of emoji with a search field. */
 export function EmojiPicker({ disabled = false, emoji = conversationEmoji, emptyLabel = "No emoji", label, onSelect, searchLabel = "Search emoji", }) {
     const [open, setOpen] = useState(false);
@@ -36,7 +21,7 @@ export function EmojiPicker({ disabled = false, emoji = conversationEmoji, empty
         if (!open || !button || !grid)
             return undefined;
         const update = () => {
-            place(button, grid);
+            placePanel(button, grid);
         };
         update();
         window.addEventListener("resize", update);

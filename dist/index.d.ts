@@ -5,6 +5,8 @@ export { CapabilityTag, type CapabilityTagProps, type CapabilityTagTone, } from 
 /** Public package version. Keep this value aligned with package.json. */
 export declare const OPENDLE_UI_VERSION: "0.4.0";
 export { Icon, NetworkIcon, type IconName, type IconProps, type NetworkIconProps, } from "./components/Icon.js";
+export { formatAge } from "./components/formatAge.js";
+export { Popover, type PopoverProps } from "./components/Popover.js";
 export { networkLabel, networkNames, type NetworkName, } from "./components/networks.js";
 /** Shared token names. Values are defined in styles/tokens.css. */
 export declare const designTokens: {
@@ -111,7 +113,8 @@ export { ConversationPost, type ConversationPostProps, } from "./components/Conv
 export { EmojiPicker, type EmojiPickerProps, } from "./components/EmojiPicker.js";
 export { InboxList, type InboxEntry, type InboxListProps, } from "./components/InboxList.js";
 export { ReplyComposer, type ReplyComposerProps, } from "./components/ReplyComposer.js";
-export { MetricTile, type MetricTileProps } from "./components/MetricTile.js";
+export { MetricGrid, MetricTile, type MetricGridProps, type MetricTileProps, } from "./components/MetricTile.js";
+export { balancedColumns } from "./components/metricColumns.js";
 export { chartSlots, chartTicks, foldSeries, type ChartSeries, } from "./components/chartScale.js";
 export { DateRangeControl, type DateRangeControlProps, } from "./components/DateRangeControl.js";
 export { lastDays, type DateRange, type DateRangePreset, } from "./components/dateRange.js";
@@ -122,8 +125,9 @@ export { calendarBoardLabels, calendarItemState, type CalendarBoardLabels, type 
 export { calendarDayDate, calendarDayKey, calendarGridDays, calendarPeriod, calendarTitle, shiftCalendarAnchor, type CalendarMode, type CalendarPeriod, } from "./components/calendarDates.js";
 export { CalendarHeader, type CalendarHeaderProps, } from "./components/CalendarHeader.js";
 export { calendarHeaderLabels, emptyTagFilter, postDetailLabels, tagFilterLabels, type CalendarHeaderLabels, type PostDetailLabels, type TagColors, type TagFilterChannel, type TagFilterLabels, type TagFilterMatch, type TagFilterValue, } from "./components/calendarLabels.js";
-export { PostDetailDialog, type PostDetailDialogProps, type PostDetailMedia, type PostDetailMetric, type PostDetailTarget, } from "./components/PostDetailDialog.js";
+export { PostDetailDialog, PostDetailSection, type PostDetailDialogProps, type PostDetailMedia, type PostDetailMetric, type PostDetailSectionProps, type PostDetailTarget, } from "./components/PostDetailDialog.js";
 export { SegmentedControl, type SegmentedControlProps, type SegmentedOption, } from "./components/SegmentedControl.js";
+export { SearchField, type SearchFieldProps, } from "./components/SearchField.js";
 export { TagFilterBar, type TagFilterBarProps, } from "./components/TagFilterBar.js";
 export { Card, type CardProps } from "./components/Card.js";
 export { ChainStep, type ChainStepProps } from "./components/ChainStep.js";
@@ -165,5 +169,5 @@ export { OntologyInheritanceTree, type OntologyInheritanceTreeProps, } from "./c
 export { SavedViewCanvas, type SavedViewCanvasProps, } from "./components/SavedViewCanvas.js";
 export { ONTOLOGY_GRAPH_LIMIT, ONTOLOGY_LABEL_LIMIT, ONTOLOGY_OCCURRENCE_LIMIT, ONTOLOGY_PAGE_LIMIT, ONTOLOGY_PROPERTY_LIMIT, ONTOLOGY_TYPE_LIMIT, assertBoundedItems, assertFiniteNumber, assertIdentifier, assertUniqueIdentifiers, countOccurrences, formatOntologyFileSize, moveCanvasPosition, type OntologyCanvasPosition, type OntologyFileMetadata, type OntologyGraphLink, type OntologyGraphObject, type OntologyMetadataBag, type OntologyPropertyMap, type OntologyPropertyOccurrence, type OntologyRecordSummary, type OntologyTypeDefinition, } from "./OntologyExplorerContract.js";
 export { RadioGroup, type RadioGroupOption, type RadioGroupProps, } from "./components/RadioGroup.js";
-export { timeZoneParts, timeZoneDayKey, dateTimeInputValue, dateTimeInputInstant, type TimeZoneParts, } from "./components/timeZones.js";
+export { timeZoneParts, timeZoneDayKey, dateTimeInputValue, dateTimeInputInstant, timeZoneOptions, type TimeZoneOption, type TimeZoneParts, } from "./components/timeZones.js";
 //# sourceMappingURL=index.d.ts.map

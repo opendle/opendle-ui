@@ -138,12 +138,25 @@ function focusInitialElement(
     explicitTarget.focus({ preventScroll: true });
     return;
   }
-  const target =
-    dialog.querySelector<HTMLElement>(
-      "[data-dialog-initial-focus]:not(:disabled)",
-    ) ??
-    dialog.querySelector<HTMLElement>("[data-dialog-close]:not(:disabled)") ??
-    dialog.querySelector<HTMLElement>(focusableSelector);
+  const chosen = dialog.querySelector<HTMLElement>(
+    "[data-dialog-initial-focus]:not(:disabled)",
+  );
+  if (chosen !== null) {
+    chosen.focus({ preventScroll: true });
+    return;
+  }
+  // The close button holds the first focus without a ring: a ring on open
+  // looks like a selected action. The ring shows after the next key press.
+  const close = dialog.querySelector<HTMLElement>(
+    "[data-dialog-close]:not(:disabled)",
+  );
+  if (close !== null) {
+    // The native dialog can focus the button first, with its ring.
+    if (close.ownerDocument.activeElement === close) close.blur();
+    close.focus({ preventScroll: true, focusVisible: false });
+    return;
+  }
+  const target = dialog.querySelector<HTMLElement>(focusableSelector);
   (target ?? dialog).focus({ preventScroll: true });
 }
 

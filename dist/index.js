@@ -5,6 +5,8 @@ export { CapabilityTag, } from "./components/CapabilityTag.js";
 /** Public package version. Keep this value aligned with package.json. */
 export const OPENDLE_UI_VERSION = "0.4.0";
 export { Icon, NetworkIcon, } from "./components/Icon.js";
+export { formatAge } from "./components/formatAge.js";
+export { Popover } from "./components/Popover.js";
 export { networkLabel, networkNames, } from "./components/networks.js";
 /** Shared token names. Values are defined in styles/tokens.css. */
 export const designTokens = {
@@ -111,7 +113,8 @@ export { ConversationPost, } from "./components/ConversationPost.js";
 export { EmojiPicker, } from "./components/EmojiPicker.js";
 export { InboxList, } from "./components/InboxList.js";
 export { ReplyComposer, } from "./components/ReplyComposer.js";
-export { MetricTile } from "./components/MetricTile.js";
+export { MetricGrid, MetricTile, } from "./components/MetricTile.js";
+export { balancedColumns } from "./components/metricColumns.js";
 export { chartSlots, chartTicks, foldSeries, } from "./components/chartScale.js";
 export { DateRangeControl, } from "./components/DateRangeControl.js";
 export { lastDays, } from "./components/dateRange.js";
@@ -122,8 +125,9 @@ export { calendarBoardLabels, calendarItemState, } from "./components/calendarIt
 export { calendarDayDate, calendarDayKey, calendarGridDays, calendarPeriod, calendarTitle, shiftCalendarAnchor, } from "./components/calendarDates.js";
 export { CalendarHeader, } from "./components/CalendarHeader.js";
 export { calendarHeaderLabels, emptyTagFilter, postDetailLabels, tagFilterLabels, } from "./components/calendarLabels.js";
-export { PostDetailDialog, } from "./components/PostDetailDialog.js";
+export { PostDetailDialog, PostDetailSection, } from "./components/PostDetailDialog.js";
 export { SegmentedControl, } from "./components/SegmentedControl.js";
+export { SearchField, } from "./components/SearchField.js";
 export { TagFilterBar, } from "./components/TagFilterBar.js";
 export { Card } from "./components/Card.js";
 export { ChainStep } from "./components/ChainStep.js";
@@ -165,5 +169,5 @@ export { OntologyInheritanceTree, } from "./components/OntologyInheritanceTree.j
 export { SavedViewCanvas, } from "./components/SavedViewCanvas.js";
 export { ONTOLOGY_GRAPH_LIMIT, ONTOLOGY_LABEL_LIMIT, ONTOLOGY_OCCURRENCE_LIMIT, ONTOLOGY_PAGE_LIMIT, ONTOLOGY_PROPERTY_LIMIT, ONTOLOGY_TYPE_LIMIT, assertBoundedItems, assertFiniteNumber, assertIdentifier, assertUniqueIdentifiers, countOccurrences, formatOntologyFileSize, moveCanvasPosition, } from "./OntologyExplorerContract.js";
 export { RadioGroup, } from "./components/RadioGroup.js";
-export { timeZoneParts, timeZoneDayKey, dateTimeInputValue, dateTimeInputInstant, } from "./components/timeZones.js";
+export { timeZoneParts, timeZoneDayKey, dateTimeInputValue, dateTimeInputInstant, timeZoneOptions, } from "./components/timeZones.js";
 //# sourceMappingURL=index.js.map

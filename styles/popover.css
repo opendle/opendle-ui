@@ -1,0 +1,155 @@
+/* Popover: an icon button and the panel that it opens. */
+.od-popover {
+  position: relative;
+  display: inline-flex;
+  flex: none;
+}
+
+.od-popover-button {
+  position: relative;
+}
+
+.od-popover-button[aria-expanded="true"] {
+  background: var(--od-color-hover);
+  color: var(--od-color-foreground);
+}
+
+.od-popover-count.od-count {
+  position: absolute;
+  top: 1px;
+  right: 0;
+  min-width: 16px;
+  height: 16px;
+  margin: 0;
+  padding: 0 4px;
+  border-radius: 8px;
+  box-shadow: 0 0 0 2px var(--od-color-background);
+  font-size: 0.625rem;
+  line-height: 1;
+  pointer-events: none;
+}
+
+.od-popover-panel {
+  position: absolute;
+  z-index: 40;
+  inset: calc(100% + 8px) auto auto 0;
+  display: flex;
+  width: min(384px, calc(100vw - 24px));
+  height: auto;
+  margin: 0;
+  padding: 0;
+  max-height: min(560px, calc(100dvh - 96px));
+  flex-direction: column;
+  overflow: hidden auto;
+  overscroll-behavior: contain;
+  border: 1px solid var(--od-color-border);
+  border-radius: var(--od-radius-lg);
+  background: var(--od-color-surface);
+  box-shadow: var(--od-shadow);
+  color: var(--od-color-foreground);
+}
+
+.od-popover-panel:focus {
+  outline: none;
+}
+
+.od-popover-panel[data-align="end"] {
+  inset-inline: auto 0;
+}
+
+/* Application shell: the product name and its actions. */
+.od-application-header {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 4px;
+  padding-bottom: 14px;
+}
+
+.od-application-header > .od-application-brand {
+  min-width: 0;
+  flex: 1;
+  padding-bottom: 4px;
+}
+
+.od-application-actions {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 2px;
+}
+
+/* An open panel or menu of the sidebar shows above the main content. */
+.od-application-sidebar:has(.od-popover-panel, .od-account-popup) {
+  z-index: 30;
+}
+
+@media (min-width: 721px) and (max-width: 1100px) {
+  .od-application-header {
+    flex-direction: column;
+    gap: 12px;
+  }
+}
+
+@media (min-width: 1101px) {
+  .od-application-shell[data-collapsed="true"] .od-application-header {
+    flex-direction: column;
+    gap: 12px;
+  }
+}
+
+/* On a phone, the actions show in the top bar, next to the workspace. */
+@media (max-width: 720px) {
+  .od-application-shell {
+    --od-application-top-height: 69px;
+    --od-application-bottom-height: calc(57px + env(safe-area-inset-bottom));
+  }
+
+  .od-application-header {
+    display: contents;
+  }
+
+  .od-application-shell:has(.od-application-actions) .od-application-workspace {
+    padding-right: 64px;
+  }
+
+  .od-application-shell:has(.od-application-workspace) .od-application-actions {
+    position: fixed;
+    z-index: 21;
+    top: 0;
+    right: 12px;
+    height: var(--od-application-top-height);
+  }
+
+  .od-application-shell:has(.od-application-workspace small) {
+    --od-application-top-height: 81px;
+  }
+
+  .od-application-actions .od-popover {
+    position: static;
+  }
+
+  .od-application-actions .od-popover-panel {
+    position: fixed;
+    top: var(--od-application-top-height);
+    right: 0;
+    left: 0;
+    width: auto;
+    max-height: calc(
+      100dvh - var(--od-application-top-height) -
+        var(--od-application-bottom-height)
+    );
+    border-width: 0 0 1px;
+    border-radius: 0 0 var(--od-radius-lg) var(--od-radius-lg);
+  }
+
+  .od-application-shell:not(:has(.od-application-workspace))
+    .od-application-actions
+    .od-popover-panel {
+    top: auto;
+    bottom: var(--od-application-bottom-height);
+    max-height: calc(100dvh - var(--od-application-bottom-height) - 12px);
+    border-width: 1px 0 0;
+    border-radius: var(--od-radius-lg) var(--od-radius-lg) 0 0;
+  }
+}

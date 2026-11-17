@@ -299,7 +299,10 @@ test("saved replies and host message actions are available in the conversation",
     messageActions: () =>
       React.createElement("button", { type: "button" }, "Hide"),
   });
-  assert.match(markup, /<select[^>]*>/);
-  assert.match(markup, /<option value="thanks">Thank you<\/option>/);
+  assert.doesNotMatch(markup, /<select/);
+  assert.match(
+    markup,
+    /<button[^>]*aria-expanded="false"[^>]*aria-label="Saved replies"/,
+  );
   assert.match(markup, />Hide<\/button>/);
 });

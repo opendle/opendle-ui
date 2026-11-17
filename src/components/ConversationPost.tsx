@@ -102,7 +102,6 @@ export function ConversationPost({
         <div className="od-conversation-post-head">
           <NetworkIcon network={network} />
           <strong>{title}</strong>
-          {when === undefined ? null : <time>{when}</time>}
           {url === null ? null : (
             <a
               aria-label={openLabel}
@@ -116,6 +115,9 @@ export function ConversationPost({
             </a>
           )}
         </div>
+        {when === undefined ? null : (
+          <time className="od-conversation-post-time">{when}</time>
+        )}
         {text === "" ? null : (
           <PostText
             key={text}

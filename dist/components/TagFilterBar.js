@@ -1,4 +1,4 @@
-import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
+import { jsx as _jsx, jsxs as _jsxs, Fragment as _Fragment } from "react/jsx-runtime";
 import { classes } from "./classes.js";
 import { NetworkIcon } from "./Icon.js";
 import { tagFilterLabels, } from "./calendarLabels.js";
@@ -14,10 +14,12 @@ function toggled(list, item) {
  * Filters for channels and tags, with the AND or OR logic of the tags. A
  * group with no entry does not show.
  */
-export function TagFilterBar({ channels, className, labels = tagFilterLabels, onChange, tagColors = noColors, tags, value, }) {
-    if (channels.length === 0 && tags.length === 0)
+export function TagFilterBar({ channels, className, controls, labels = tagFilterLabels, onChange, tagColors = noColors, tags, value, }) {
+    const hasControls = controls !== undefined && controls !== null;
+    const hasChoices = channels.length > 0 || tags.length > 0;
+    if (!hasControls && !hasChoices)
         return null;
-    return (_jsxs("fieldset", { "aria-label": labels.filters, className: classes("od-tag-filter", className), children: [channels.length === 0 ? null : (_jsx("fieldset", { "aria-label": labels.channels, className: "od-tag-filter-group", children: _jsx("span", { className: "od-tag-filter-channels", "data-filtered": value.channels.length > 0, children: channels.map((channel) => (_jsx("button", { "aria-label": channel.label, "aria-pressed": value.channels.includes(channel.id), className: "od-tag-filter-channel", onClick: () => {
+    const choices = (_jsxs(_Fragment, { children: [channels.length === 0 ? null : (_jsx("fieldset", { "aria-label": labels.channels, className: "od-tag-filter-group", children: _jsx("span", { className: "od-tag-filter-channels", "data-filtered": value.channels.length > 0, children: channels.map((channel) => (_jsx("button", { "aria-label": channel.label, "aria-pressed": value.channels.includes(channel.id), className: "od-tag-filter-channel", onClick: () => {
                             onChange({
                                 ...value,
                                 channels: toggled(value.channels, channel.id),
@@ -30,5 +32,9 @@ export function TagFilterBar({ channels, className, labels = tagFilterLabels, on
                     { value: "all", label: labels.matchAll },
                     { value: "any", label: labels.matchAny },
                 ], size: "small", value: value.match }))] }));
+    if (!hasControls) {
+        return (_jsx("fieldset", { "aria-label": labels.filters, className: classes("od-tag-filter", className), children: choices }));
+    }
+    return (_jsxs("fieldset", { "aria-label": labels.filters, className: classes("od-tag-filter", className), "data-controls": "true", children: [_jsx("div", { className: "od-tag-filter-controls", children: controls }), hasChoices ? (_jsx("div", { className: "od-tag-filter-choices", children: choices })) : null] }));
 }
 //# sourceMappingURL=TagFilterBar.js.map

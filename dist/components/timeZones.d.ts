@@ -19,4 +19,18 @@ export declare function dateTimeInputValue(value: Date | string, timeZone?: stri
  * the same clock-change rule as Temporal disambiguation.
  */
 export declare function dateTimeInputInstant(value: string, timeZone?: string, disambiguation?: "reject" | "earlier" | "later"): string | null;
+export interface TimeZoneOption {
+    /** The IANA name, for example "Europe/Paris". */
+    readonly value: string;
+    /** The name for a person, for example "Europe/Paris". */
+    readonly label: string;
+    /** The offset from UTC now, for example "UTC+01:00". */
+    readonly description: string;
+    readonly searchText: string;
+}
+/**
+ * The IANA time zones for a select control, UTC first, with the offset of
+ * each zone now. `extra` adds zones that the runtime does not list.
+ */
+export declare function timeZoneOptions(extra?: readonly string[], now?: Date): readonly TimeZoneOption[];
 //# sourceMappingURL=timeZones.d.ts.map

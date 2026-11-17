@@ -30,7 +30,9 @@ export interface PostDetailTarget {
     /** The time of this network, already formatted. */
     readonly when: string;
     readonly media?: readonly PostDetailMedia[];
+    /** The channel has a button that changes its time. */
     readonly canReschedule?: boolean;
+    /** Not shown: a channel that cannot change its time has no button. */
     readonly scheduleDisabledReason?: string;
 }
 export interface PostDetailDialogProps {
@@ -51,14 +53,26 @@ export interface PostDetailDialogProps {
     readonly errorMessage: (error: unknown) => string | null;
     /** Key numbers of the post, already formatted. */
     readonly metrics?: readonly PostDetailMetric[];
-    /** More content at the end, for example the comments of the post. */
+    /**
+     * More content at the end, for example the comments of the post. Use
+     * `PostDetailSection` for each part so that all parts look the same.
+     */
     readonly children?: ReactNode;
     readonly labels?: PostDetailLabels;
 }
+export interface PostDetailSectionProps {
+    readonly title: ReactNode;
+    /** Controls at the end of the heading, for example a small button. */
+    readonly actions?: ReactNode;
+    readonly children: ReactNode;
+    readonly className?: string;
+}
+/** One part of the post details below the content, with a small heading. */
+export declare function PostDetailSection({ actions, children, className, title, }: PostDetailSectionProps): import("react").JSX.Element;
 /**
- * The details of one post: media, text, time, tags, the state of each
- * network and a link to each published post. When the text or the time
- * differs between networks, each network has a tab.
+ * The details of one post: media, text, time, tags, its numbers, and one row
+ * per channel with its state, its link, its error and its actions. When the
+ * text or the media differs between channels, a tab shows each version.
  */
 export declare function PostDetailDialog({ children, errorMessage, labels, media, metrics, onClose, onRetry, onReschedule, rescheduleLabel, scheduleEditor, open, tagColors, tags, targets, title, }: PostDetailDialogProps): import("react").JSX.Element;
 //# sourceMappingURL=PostDetailDialog.d.ts.map
