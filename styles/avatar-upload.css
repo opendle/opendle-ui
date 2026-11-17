@@ -1,0 +1,122 @@
+/* Avatar frames and the picture crop of AvatarUpload. */
+.od-avatar[data-shape="circle"] {
+  border-radius: 50%;
+}
+
+.od-avatar[data-shape="square"] {
+  border-radius: 0;
+}
+
+.od-avatar-upload .od-avatar {
+  width: calc(var(--od-avatar-size) * var(--od-avatar-ratio, 1));
+}
+
+/* The picture above its buttons, for a column in a host card. */
+.od-avatar-upload[data-appearance="inline"] {
+  min-width: 0;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  align-items: center;
+  gap: 14px;
+}
+
+.od-avatar-upload[data-appearance="inline"] .od-avatar {
+  --od-avatar-size: 112px;
+}
+
+.od-avatar-upload[data-appearance="inline"] .od-avatar-upload-actions {
+  justify-content: center;
+}
+
+.od-avatar-upload[data-appearance="inline"] > .od-section-alert {
+  width: 100%;
+  margin: 0;
+}
+
+.od-picture-crop {
+  display: grid;
+  align-content: start;
+  gap: 18px;
+}
+
+/* The picture moves under a fixed frame. Outside the frame it is dim. */
+.od-picture-crop-stage {
+  position: relative;
+  display: grid;
+  overflow: hidden;
+  padding: 28px;
+  border-radius: var(--od-radius-lg);
+  background: var(--od-color-sunken);
+  cursor: grab;
+  place-items: center;
+  touch-action: none;
+  user-select: none;
+}
+
+.od-picture-crop-stage:active {
+  cursor: grabbing;
+}
+
+.od-picture-crop-stage[data-pending] {
+  cursor: progress;
+}
+
+.od-picture-crop-frame {
+  position: relative;
+  width: min(100%, calc(18rem * var(--od-picture-ratio)));
+  aspect-ratio: var(--od-picture-ratio);
+  border-radius: calc(12% * min(1, 1 / var(--od-picture-ratio))) /
+    calc(12% * min(1, var(--od-picture-ratio)));
+}
+
+.od-picture-crop-frame[data-shape="circle"] {
+  border-radius: 50%;
+}
+
+.od-picture-crop-frame[data-shape="square"] {
+  border-radius: 0;
+}
+
+.od-picture-crop-frame > img {
+  position: absolute;
+  max-width: none;
+  pointer-events: none;
+}
+
+.od-picture-crop-frame::after {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  box-shadow:
+    0 0 0 1px rgb(255 255 255 / 85%),
+    0 0 0 100vmax rgb(0 0 0 / 52%);
+  content: "";
+  pointer-events: none;
+}
+
+.od-picture-crop-frame:focus-visible {
+  outline: 2px solid var(--od-color-focus);
+  outline-offset: 4px;
+}
+
+.od-picture-crop-zoom {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--od-color-muted);
+}
+
+.od-picture-crop-zoom > input {
+  min-width: 0;
+  flex: 1;
+  height: 24px;
+  margin: 0;
+  accent-color: var(--od-color-brand);
+  cursor: pointer;
+}
+
+.od-picture-crop-zoom > input:disabled {
+  cursor: default;
+}

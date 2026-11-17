@@ -24,7 +24,7 @@ export const postDetailLabels = {
 export const emptyTagFilter = {
     channels: [],
     tags: [],
-    match: "all",
+    match: "any",
 };
 export const tagFilterLabels = {
     filters: "Filters",

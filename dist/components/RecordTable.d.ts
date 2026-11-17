@@ -1,9 +1,15 @@
-import type { ReactNode } from "react";
+import type { CSSProperties, ReactNode } from "react";
 export interface RecordTableColumn {
     readonly id: string;
     readonly label: string;
     /** Right-align numbers. */
     readonly numeric?: boolean;
+    /**
+     * The width of the column. A width on a column gives the table a fixed
+     * layout: tables with the same columns and widths align their columns.
+     * Columns without a width share the free space.
+     */
+    readonly width?: CSSProperties["width"];
 }
 export interface RecordTableRow {
     readonly id: string;
@@ -21,8 +27,10 @@ export interface RecordTableProps {
     readonly columns: readonly RecordTableColumn[];
     readonly rows: readonly RecordTableRow[];
     readonly onOpen?: (id: string) => void;
+    /** Below this width, the table scrolls horizontally. */
+    readonly minimumWidth?: CSSProperties["minWidth"];
     readonly className?: string;
 }
 /** A plain table of records. The first cell of a row opens the record. */
-export declare function RecordTable({ className, columns, label, onOpen, rows, }: RecordTableProps): import("react").JSX.Element;
+export declare function RecordTable({ className, columns, label, minimumWidth, onOpen, rows, }: RecordTableProps): import("react").JSX.Element;
 //# sourceMappingURL=RecordTable.d.ts.map

@@ -14,6 +14,7 @@ export const calendarBoardLabels = {
         cancelled: "Cancelled",
     },
     followUps: { comment: "Comments", like: "Like" },
+    create: "New post",
 };
 const statePriority = [
     "failed",

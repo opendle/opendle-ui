@@ -30,6 +30,11 @@ export {
 export { formatAge } from "./components/formatAge.js";
 export { Popover, type PopoverProps } from "./components/Popover.js";
 export {
+  ActionMenu,
+  type ActionMenuItem,
+  type ActionMenuProps,
+} from "./components/ActionMenu.js";
+export {
   networkLabel,
   networkNames,
   type NetworkName,
@@ -191,7 +196,11 @@ export {
   type ApiTokenItem,
   type ApiTokenListProps,
 } from "./components/ApiTokenList.js";
-export { Avatar, type AvatarProps } from "./components/Avatar.js";
+export {
+  Avatar,
+  type AvatarProps,
+  type AvatarShape,
+} from "./components/Avatar.js";
 export {
   AvatarUpload,
   type AvatarUploadProps,
@@ -221,6 +230,7 @@ export {
   type SecretValueProps,
 } from "./components/SecretValue.js";
 export { squarePicture } from "./components/squarePicture.js";
+export type { PictureOutput, PictureType } from "./components/pictureCrop.js";
 export {
   TabPanel,
   Tabs,
@@ -335,6 +345,41 @@ export {
   type ReplyComposerProps,
 } from "./components/ReplyComposer.js";
 export {
+  CharacterCount,
+  type CharacterCountProps,
+} from "./components/CharacterCount.js";
+export { characterCount } from "./components/characterLength.js";
+export {
+  ChannelPicker,
+  type ChannelPickerItem,
+  type ChannelPickerProps,
+} from "./components/ChannelPicker.js";
+export {
+  MediaAttachmentList,
+  type MediaAttachment,
+  type MediaAttachmentKind,
+  type MediaAttachmentListProps,
+} from "./components/MediaAttachmentList.js";
+export {
+  mediaAttachmentListLabels,
+  type MediaAttachmentListLabels,
+} from "./components/mediaAttachmentLabels.js";
+export {
+  MediaGridPicker,
+  type MediaGridItem,
+  type MediaGridPickerProps,
+} from "./components/MediaGridPicker.js";
+export {
+  SocialPostPreview,
+  type SocialPostPreviewProps,
+  type SocialPreviewLayout,
+  type SocialPreviewMedia,
+} from "./components/SocialPostPreview.js";
+export {
+  socialPreviewLabels,
+  type SocialPreviewLabels,
+} from "./components/socialPreviewLabels.js";
+export {
   MetricGrid,
   MetricTile,
   type MetricGridProps,
@@ -396,6 +441,10 @@ export {
   type CalendarHeaderProps,
 } from "./components/CalendarHeader.js";
 export {
+  CalendarViewTabs,
+  type CalendarViewTabsProps,
+} from "./components/CalendarViewTabs.js";
+export {
   calendarHeaderLabels,
   emptyTagFilter,
   postDetailLabels,
@@ -426,6 +475,10 @@ export {
   SearchField,
   type SearchFieldProps,
 } from "./components/SearchField.js";
+export {
+  FilterToolbar,
+  type FilterToolbarProps,
+} from "./components/FilterToolbar.js";
 export {
   TagFilterBar,
   type TagFilterBarProps,

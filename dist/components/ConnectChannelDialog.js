@@ -8,10 +8,10 @@ import { InlineAlert } from "./InlineAlert.js";
 import { useAsyncAction } from "./useAsyncAction.js";
 const noConnectionProviders = [];
 /** Select a network, then go to its authorization or give an app password. */
-export function ConnectChannelDialog({ connectionProviders = noConnectionProviders, errorMessage, labels, network = null, networks, onClose, onPasswordConnect, open, }) {
+export function ConnectChannelDialog({ connectionProviders = noConnectionProviders, errorMessage, handle: initialHandle = "", labels, network = null, networks, onClose, onPasswordConnect, open, title, }) {
     const formId = useId();
     const [selected, setSelected] = useState(null);
-    const [handle, setHandle] = useState("");
+    const [handle, setHandle] = useState(initialHandle);
     const [password, setPassword] = useState("");
     const connect = useAsyncAction(errorMessage);
     const current = selected ?? network;
@@ -37,7 +37,7 @@ export function ConnectChannelDialog({ connectionProviders = noConnectionProvide
     return (_jsxs(Dialog, { actions: form === null ? undefined : (_jsxs(_Fragment, { children: [network === null ? (_jsx(Button, { disabled: connect.pending, onClick: () => {
                         setSelected(null);
                         connect.reset();
-                    }, variant: "quiet", children: labels.back })) : null, _jsx(Button, { disabled: handle.trim() === "" || password === "", loading: connect.pending, form: formId, type: "submit", children: labels.submit })] })), className: "od-connect-dialog", closeDisabled: connect.pending, closeLabel: labels.close, onClose: close, open: open, size: "narrow", title: form === null ? labels.connectTitle : form.label, children: [form === null ? (_jsxs("ul", { className: "od-connect-options", children: [connectionProviders.map((entry) => (_jsx("li", { children: _jsxs("button", { className: "od-connect-option", onClick: () => {
+                    }, variant: "quiet", children: labels.back })) : null, _jsx(Button, { disabled: handle.trim() === "" || password === "", loading: connect.pending, form: formId, type: "submit", children: labels.submit })] })), className: "od-connect-dialog", closeDisabled: connect.pending, closeLabel: labels.close, onClose: close, open: open, size: "narrow", title: form === null ? labels.connectTitle : (title ?? form.label), children: [form === null ? (_jsxs("ul", { className: "od-connect-options", children: [connectionProviders.map((entry) => (_jsx("li", { children: _jsxs("button", { className: "od-connect-option", onClick: () => {
                                 close();
                                 entry.onSelect();
                             }, type: "button", children: [_jsx("span", { className: "od-connect-option-icon", children: entry.icon ?? _jsx(Icon, { name: "link", size: 16 }) }), _jsx("span", { children: entry.label }), _jsx(Icon, { name: "chevron-right", size: 15 })] }) }, entry.id))), networks.map((entry) => (_jsx("li", { children: entry.href === undefined ? (_jsxs("button", { className: "od-connect-option", onClick: () => {

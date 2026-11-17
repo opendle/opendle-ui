@@ -43,8 +43,9 @@ test("Popover hides a zero count and shortens a large count", () => {
   );
 });
 
-test("the application shell puts its actions next to the product name", () => {
+test("the application shell puts its actions next to the account", () => {
   const markup = render(ApplicationShell, {
+    account: "Account control",
     actions: "Alert control",
     brandMark: null,
     brandName: "Product",
@@ -56,10 +57,7 @@ test("the application shell puts its actions next to the product name", () => {
   });
   assert.match(
     markup,
-    /<div class="od-application-header"><a class="od-application-brand"[^>]*>.*Product<\/span><\/a><div class="od-application-actions">Alert control<\/div><\/div>/,
-  );
-  assert.ok(
-    markup.indexOf("Alert control") < markup.indexOf("Workspace control"),
+    /<div class="od-application-footer">Account control<div class="od-application-actions">Alert control<\/div><\/div>/,
   );
   assert.doesNotMatch(
     render(ApplicationShell, {
@@ -72,6 +70,33 @@ test("the application shell puts its actions next to the product name", () => {
     }),
     /od-application-actions/,
   );
+});
+
+test("the application shell puts the collapse button next to the product name", () => {
+  const props = {
+    brandMark: null,
+    brandName: "Product",
+    collapseLabel: "Collapse",
+    expandLabel: "Expand",
+    navigationLabel: "Main",
+    skipLabel: "Skip",
+    navigation: null,
+    children: null,
+    onCollapsedChange: () => {},
+  };
+  const header = /<div class="od-application-header">.*?<\/div>/;
+  const expanded = render(ApplicationShell, props).match(header)?.[0] ?? "";
+  assert.match(
+    expanded,
+    /Product<\/span><\/a><button[^>]*aria-pressed="false"/,
+  );
+  assert.match(expanded, /aria-label="Collapse"/);
+  const collapsed =
+    render(ApplicationShell, { ...props, collapsed: true }).match(
+      header,
+    )?.[0] ?? "";
+  assert.match(collapsed, /aria-pressed="true"/);
+  assert.match(collapsed, /aria-label="Expand"/);
 });
 
 test("Section can be the target of a fragment link", () => {

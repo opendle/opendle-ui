@@ -2,6 +2,8 @@ import { useRef, useState, type KeyboardEvent } from "react";
 
 import { AutoGrowTextarea } from "./AutoGrowTextarea.js";
 import { Button } from "./Button.js";
+import { CharacterCount } from "./CharacterCount.js";
+import { characterCount } from "./characterLength.js";
 import type { ConversationLabels } from "./conversationLabels.js";
 import { EmojiPicker } from "./EmojiPicker.js";
 import { Icon } from "./Icon.js";
@@ -31,7 +33,6 @@ export interface ReplyComposerProps {
   readonly labels: ConversationLabels;
 }
 
-const countFormat = new Intl.NumberFormat();
 const noSuggestions: readonly string[] = [];
 const noSavedReplies: NonNullable<ReplyComposerProps["savedReplies"]> = [];
 
@@ -56,7 +57,7 @@ export function ReplyComposer({
   const [text, setText] = useState(prefix);
   const send = useAsyncAction(errorMessage);
   const areaRef = useRef<HTMLTextAreaElement | null>(null);
-  const length = Array.from(text).length;
+  const length = characterCount(text);
   const tooLong = limit !== null && length > limit;
   const ready = text.trim() !== "" && text.trim() !== mention && !tooLong;
 
@@ -144,9 +145,11 @@ export function ReplyComposer({
             />
           )}
           {limit === null ? null : (
-            <span className="od-reply-counter" data-invalid={tooLong}>
-              {countFormat.format(length)} / {countFormat.format(limit)}
-            </span>
+            <CharacterCount
+              className="od-reply-counter"
+              limit={limit}
+              value={length}
+            />
           )}
           {onIgnore === undefined ? null : (
             <Button

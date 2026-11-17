@@ -43,6 +43,8 @@ export interface CalendarBoardLabels {
     readonly time: string;
     readonly states: Readonly<Record<CalendarItemState, string>>;
     readonly followUps: CalendarFollowUpLabels;
+    /** The name of the action that creates an entry at a day or a time. */
+    readonly create?: string;
 }
 export declare const calendarBoardLabels: CalendarBoardLabels;
 /** The most urgent state of a list of states. */

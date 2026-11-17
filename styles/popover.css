@@ -57,7 +57,7 @@
   inset-inline: auto 0;
 }
 
-/* Application shell: the product name and its actions. */
+/* Application shell: the product name and the collapse button. */
 .od-application-header {
   display: flex;
   min-width: 0;
@@ -72,11 +72,19 @@
   padding-bottom: 4px;
 }
 
+/* The actions are next to the account, at the end of the sidebar. */
 .od-application-actions {
   display: flex;
   flex: none;
   align-items: center;
   gap: 2px;
+}
+
+/* A panel of the actions opens beside the sidebar, from its end. */
+@media (min-width: 721px) {
+  .od-application-actions .od-popover-panel {
+    inset: auto auto 0 calc(100% + 20px);
+  }
 }
 
 /* An open panel or menu of the sidebar shows above the main content. */

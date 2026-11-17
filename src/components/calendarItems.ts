@@ -50,6 +50,8 @@ export interface CalendarBoardLabels {
   readonly time: string;
   readonly states: Readonly<Record<CalendarItemState, string>>;
   readonly followUps: CalendarFollowUpLabels;
+  /** The name of the action that creates an entry at a day or a time. */
+  readonly create?: string;
 }
 
 export const calendarBoardLabels: CalendarBoardLabels = {
@@ -68,6 +70,7 @@ export const calendarBoardLabels: CalendarBoardLabels = {
     cancelled: "Cancelled",
   },
   followUps: { comment: "Comments", like: "Like" },
+  create: "New post",
 };
 
 const statePriority: readonly CalendarItemState[] = [

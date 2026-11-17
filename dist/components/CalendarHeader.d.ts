@@ -1,17 +1,19 @@
 import type { ReactNode } from "react";
-import type { CalendarMode } from "./calendarDates.js";
 import { type CalendarHeaderLabels } from "./calendarLabels.js";
 export interface CalendarHeaderProps {
     readonly title: ReactNode;
-    readonly mode: CalendarMode;
-    readonly onModeChange: (mode: CalendarMode) => void;
     /** Without these, the header has no period navigation. */
     readonly onPrevious?: () => void;
     readonly onNext?: () => void;
     readonly onToday: () => void;
+    /** Page actions at the end of the row, for example a create button. */
+    readonly actions?: ReactNode;
     readonly labels?: CalendarHeaderLabels;
     readonly className?: string;
 }
-/** The page heading of a calendar: period, navigation and the view switch. */
-export declare function CalendarHeader({ className, labels, mode, onModeChange, onNext, onPrevious, onToday, title, }: CalendarHeaderProps): import("react").JSX.Element;
+/**
+ * The page heading of a calendar: the period and its navigation. Put the
+ * view switch, `CalendarViewTabs`, in a `FilterToolbar` below it.
+ */
+export declare function CalendarHeader({ actions, className, labels, onNext, onPrevious, onToday, title, }: CalendarHeaderProps): import("react").JSX.Element;
 //# sourceMappingURL=CalendarHeader.d.ts.map

@@ -72,6 +72,8 @@ export interface PostDetailDialogProps {
    * `PostDetailSection` for each part so that all parts look the same.
    */
   readonly children?: ReactNode;
+  /** Actions next to the close button, for example an edit button. */
+  readonly actions?: ReactNode;
   readonly labels?: PostDetailLabels;
 }
 
@@ -356,6 +358,7 @@ function VersionLabel({ version }: { readonly version: Version }) {
  * text or the media differs between channels, a tab shows each version.
  */
 export function PostDetailDialog({
+  actions,
   children,
   errorMessage,
   labels = postDetailLabels,
@@ -458,6 +461,7 @@ export function PostDetailDialog({
           </button>
         )
       }
+      headerActions={actions}
       onClose={close}
       open={open}
       title={title}

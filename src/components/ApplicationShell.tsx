@@ -29,8 +29,8 @@ export interface ApplicationShellProps extends Omit<
   readonly secondaryNavigation?: ReactNode;
   readonly secondaryNavigationLabel?: string;
   /**
-   * Controls next to the product name, for example a notification
-   * `Popover`. On a phone they show in the top bar next to the workspace.
+   * Controls next to the account, for example a notification `Popover`. On a
+   * phone they show in the top bar next to the workspace.
    */
   readonly actions?: ReactNode;
   /** A workspace menu above the main navigation. */
@@ -39,7 +39,7 @@ export interface ApplicationShellProps extends Omit<
   readonly account?: ReactNode;
   /** Show the sidebar as an icon rail. */
   readonly collapsed?: boolean;
-  /** With it, a button next to the account collapses the sidebar. */
+  /** With it, a button next to the product name collapses the sidebar. */
   readonly onCollapsedChange?: (collapsed: boolean) => void;
   readonly collapseLabel?: string;
   readonly expandLabel?: string;
@@ -110,8 +110,16 @@ export function ApplicationShell({
             {brandMark}
             <span className="od-application-brand-name">{brandName}</span>
           </a>
-          {actions === undefined || actions === null ? null : (
-            <div className="od-application-actions">{actions}</div>
+          {onCollapsedChange === undefined ? null : (
+            <IconButton
+              aria-pressed={collapsed}
+              className="od-application-collapse"
+              icon={panelIcon}
+              label={collapsed ? expandLabel : collapseLabel}
+              onClick={() => {
+                onCollapsedChange(!collapsed);
+              }}
+            />
           )}
         </div>
         {workspace === undefined || workspace === null ? null : (
@@ -140,16 +148,8 @@ export function ApplicationShell({
         ) : null}
         <div className="od-application-footer">
           {account}
-          {onCollapsedChange === undefined ? null : (
-            <IconButton
-              aria-pressed={collapsed}
-              className="od-application-collapse"
-              icon={panelIcon}
-              label={collapsed ? expandLabel : collapseLabel}
-              onClick={() => {
-                onCollapsedChange(!collapsed);
-              }}
-            />
+          {actions === undefined || actions === null ? null : (
+            <div className="od-application-actions">{actions}</div>
           )}
         </div>
       </aside>

@@ -8,6 +8,7 @@ import {
 } from "./calendarDates.js";
 import { CalendarEntry } from "./CalendarEntry.js";
 import { CalendarWeek } from "./CalendarWeek.js";
+import { Icon } from "./Icon.js";
 import {
   calendarBoardLabels,
   type CalendarBoardLabels,
@@ -28,6 +29,11 @@ export interface CalendarBoardProps {
   readonly canMove?: (item: CalendarItem) => boolean;
   /** A month keeps the local time. A week uses the destination half hour. */
   readonly onMove?: (item: CalendarItem, start: string) => void;
+  /**
+   * Create an entry on a day that is not past. The week view also gives the
+   * half-hour slot (0 to 47) of a click on an empty part of a row.
+   */
+  readonly onCreate?: (day: string, slot?: number) => void;
   /** Timeline: more entries exist before the first one. */
   readonly hasEarlier?: boolean;
   /** Timeline: more entries exist after the last one. */
@@ -86,6 +92,7 @@ interface GridProps {
   readonly formats: Formats;
   readonly labels: CalendarBoardLabels;
   readonly onSelect: (item: CalendarItem) => void;
+  readonly onCreate: ((day: string, slot?: number) => void) | undefined;
 }
 
 function Grid({
@@ -95,6 +102,7 @@ function Grid({
   groups,
   labels,
   mode,
+  onCreate,
   onSelect,
   today,
 }: GridProps) {
@@ -133,6 +141,19 @@ function Grid({
                 </span>
                 <span className="od-calendar-day-number">{date.getDate()}</span>
               </time>
+              {onCreate === undefined || day < today ? null : (
+                <button
+                  aria-label={`${labels.create ?? "New post"}: ${formats.fullDay.format(date)}`}
+                  className="od-calendar-create"
+                  onClick={() => {
+                    onCreate(day);
+                  }}
+                  title={labels.create ?? "New post"}
+                  type="button"
+                >
+                  <Icon name="plus" size={14} />
+                </button>
+              )}
               {items.map((item) => (
                 <CalendarEntry
                   item={item}
@@ -326,6 +347,7 @@ export function CalendarBoard({
   mode,
   now,
   onLoadEarlier,
+  onCreate,
   onLoadLater,
   onMove,
   onSelect,
@@ -390,6 +412,7 @@ export function CalendarBoard({
               groups={groups}
               labels={labels}
               now={now}
+              onCreate={onCreate}
               onSelect={onSelect}
               today={today}
               timeZone={timeZone}
@@ -402,6 +425,7 @@ export function CalendarBoard({
             groups={groups}
             labels={labels}
             mode={mode}
+            onCreate={onCreate}
             onSelect={onSelect}
             today={today}
           />

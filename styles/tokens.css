@@ -8522,10 +8522,6 @@ html:has(.od-dialog:modal) {
   gap: 4px;
 }
 
-.od-calendar-header-views {
-  margin-left: auto;
-}
-
 /* Calendar */
 
 .od-calendar[data-mode="month"],
@@ -8709,16 +8705,6 @@ html:has(.od-dialog:modal) {
   .od-calendar-header h1 {
     flex: 1;
     font-size: 1.5rem;
-  }
-
-  .od-calendar-header-views {
-    display: flex;
-    width: 100%;
-    margin-left: 0;
-  }
-
-  .od-calendar-header-views button {
-    flex: 1;
   }
 
   .od-tag-filter {
@@ -9427,18 +9413,13 @@ html:has(.od-dialog:modal) {
 /* The period controls sit on the bottom of the title. */
 
 /* 0.16em of the title is the space below its baseline. */
-.od-calendar-header-navigation,
-.od-calendar-header-views {
+.od-calendar-header-navigation {
   margin-bottom: 6px;
 }
 
 @media (max-width: 720px) {
   .od-calendar-header-navigation {
     margin-bottom: 4px;
-  }
-
-  .od-calendar-header-views {
-    margin-bottom: 0;
   }
 }
 
@@ -10523,6 +10504,20 @@ button.od-message-action:hover {
   font-variant-numeric: tabular-nums;
 }
 
+.od-record-table table[data-layout="fixed"] {
+  table-layout: fixed;
+}
+
+.od-record-table table[data-layout="fixed"] :is(th, td) {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.od-record-table table[data-layout="fixed"] thead th {
+  vertical-align: bottom;
+  white-space: normal;
+}
+
 .od-section-heading {
   flex-wrap: wrap;
 }
@@ -10792,16 +10787,33 @@ button.od-tag[data-color][aria-pressed="true"] {
   }
 }
 
-/* The filter groups have no visible name. A line separates them. */
+/*
+ * The filter groups have no visible name. A line in the gap separates them.
+ * The clip hides the line of a group at the start of a wrapped row.
+ */
 
 .od-tag-filter {
   gap: 10px 16px;
 }
 
+@media (min-width: 721px) {
+  .od-tag-filter {
+    overflow: clip;
+    overflow-clip-margin: 4px;
+  }
+}
+
 .od-tag-filter-group + .od-tag-filter-group {
-  padding-left: 16px;
+  position: relative;
+}
+
+.od-tag-filter-group + .od-tag-filter-group::before {
+  position: absolute;
+  top: 2px;
+  bottom: 2px;
+  left: -9px;
   border-left: 1px solid var(--od-color-border-strong);
-  border-radius: 0;
+  content: "";
 }
 
 /*
@@ -11118,8 +11130,7 @@ button.od-tag[data-color][aria-pressed="true"] {
   align-self: baseline;
 }
 
-.od-calendar-header-navigation,
-.od-calendar-header-views {
+.od-calendar-header-navigation {
   margin-bottom: 0;
 }
 
@@ -11153,8 +11164,7 @@ button.od-tag[data-color][aria-pressed="true"] {
 }
 
 @media (max-width: 720px) {
-  .od-calendar-header-navigation,
-  .od-calendar-header-views {
+  .od-calendar-header-navigation {
     margin-bottom: 0;
   }
 

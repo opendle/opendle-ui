@@ -58,6 +58,8 @@ export interface PostDetailDialogProps {
      * `PostDetailSection` for each part so that all parts look the same.
      */
     readonly children?: ReactNode;
+    /** Actions next to the close button, for example an edit button. */
+    readonly actions?: ReactNode;
     readonly labels?: PostDetailLabels;
 }
 export interface PostDetailSectionProps {
@@ -74,5 +76,5 @@ export declare function PostDetailSection({ actions, children, className, title,
  * per channel with its state, its link, its error and its actions. When the
  * text or the media differs between channels, a tab shows each version.
  */
-export declare function PostDetailDialog({ children, errorMessage, labels, media, metrics, onClose, onRetry, onReschedule, rescheduleLabel, scheduleEditor, open, tagColors, tags, targets, title, }: PostDetailDialogProps): import("react").JSX.Element;
+export declare function PostDetailDialog({ actions, children, errorMessage, labels, media, metrics, onClose, onRetry, onReschedule, rescheduleLabel, scheduleEditor, open, tagColors, tags, targets, title, }: PostDetailDialogProps): import("react").JSX.Element;
 //# sourceMappingURL=PostDetailDialog.d.ts.map

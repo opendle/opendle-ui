@@ -14,8 +14,8 @@ export interface ApplicationShellProps extends Omit<HTMLAttributes<HTMLDivElemen
     readonly secondaryNavigation?: ReactNode;
     readonly secondaryNavigationLabel?: string;
     /**
-     * Controls next to the product name, for example a notification
-     * `Popover`. On a phone they show in the top bar next to the workspace.
+     * Controls next to the account, for example a notification `Popover`. On a
+     * phone they show in the top bar next to the workspace.
      */
     readonly actions?: ReactNode;
     /** A workspace menu above the main navigation. */
@@ -24,7 +24,7 @@ export interface ApplicationShellProps extends Omit<HTMLAttributes<HTMLDivElemen
     readonly account?: ReactNode;
     /** Show the sidebar as an icon rail. */
     readonly collapsed?: boolean;
-    /** With it, a button next to the account collapses the sidebar. */
+    /** With it, a button next to the product name collapses the sidebar. */
     readonly onCollapsedChange?: (collapsed: boolean) => void;
     readonly collapseLabel?: string;
     readonly expandLabel?: string;

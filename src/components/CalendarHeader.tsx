@@ -1,7 +1,6 @@
 import type { ReactNode } from "react";
 
 import { Button } from "./Button.js";
-import type { CalendarMode } from "./calendarDates.js";
 import {
   calendarHeaderLabels,
   type CalendarHeaderLabels,
@@ -9,28 +8,27 @@ import {
 import { classes } from "./classes.js";
 import { Icon } from "./Icon.js";
 import { IconButton } from "./IconButton.js";
-import { SegmentedControl } from "./SegmentedControl.js";
 
 export interface CalendarHeaderProps {
   readonly title: ReactNode;
-  readonly mode: CalendarMode;
-  readonly onModeChange: (mode: CalendarMode) => void;
   /** Without these, the header has no period navigation. */
   readonly onPrevious?: () => void;
   readonly onNext?: () => void;
   readonly onToday: () => void;
+  /** Page actions at the end of the row, for example a create button. */
+  readonly actions?: ReactNode;
   readonly labels?: CalendarHeaderLabels;
   readonly className?: string;
 }
 
-const modes: readonly CalendarMode[] = ["month", "week", "timeline"];
-
-/** The page heading of a calendar: period, navigation and the view switch. */
+/**
+ * The page heading of a calendar: the period and its navigation. Put the
+ * view switch, `CalendarViewTabs`, in a `FilterToolbar` below it.
+ */
 export function CalendarHeader({
+  actions,
   className,
   labels = calendarHeaderLabels,
-  mode,
-  onModeChange,
   onNext,
   onPrevious,
   onToday,
@@ -58,13 +56,11 @@ export function CalendarHeader({
           />
         )}
       </div>
-      <SegmentedControl
-        className="od-calendar-header-views"
-        label={labels.view}
-        onChange={onModeChange}
-        options={modes.map((value) => ({ value, label: labels.modes[value] }))}
-        value={mode}
-      />
+      {actions ? (
+        <div className="od-heading-actions od-calendar-header-actions">
+          {actions}
+        </div>
+      ) : null}
     </header>
   );
 }

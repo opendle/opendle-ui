@@ -28,6 +28,10 @@ export interface ConnectChannelDialogProps {
   ) => Promise<void>;
   readonly errorMessage: (error: unknown) => string | null;
   readonly labels: ChannelListLabels;
+  /** The first value of the handle field. */
+  readonly handle?: string;
+  /** A title in place of the network name, for example for a reconnection. */
+  readonly title?: string;
 }
 
 const noConnectionProviders: readonly ChannelConnectionProvider[] = [];
@@ -36,16 +40,18 @@ const noConnectionProviders: readonly ChannelConnectionProvider[] = [];
 export function ConnectChannelDialog({
   connectionProviders = noConnectionProviders,
   errorMessage,
+  handle: initialHandle = "",
   labels,
   network = null,
   networks,
   onClose,
   onPasswordConnect,
   open,
+  title,
 }: ConnectChannelDialogProps) {
   const formId = useId();
   const [selected, setSelected] = useState<NetworkName | null>(null);
-  const [handle, setHandle] = useState("");
+  const [handle, setHandle] = useState(initialHandle);
   const [password, setPassword] = useState("");
   const connect = useAsyncAction(errorMessage);
   const current = selected ?? network;
@@ -103,7 +109,7 @@ export function ConnectChannelDialog({
       onClose={close}
       open={open}
       size="narrow"
-      title={form === null ? labels.connectTitle : form.label}
+      title={form === null ? labels.connectTitle : (title ?? form.label)}
     >
       {form === null ? (
         <ul className="od-connect-options">

@@ -37,6 +37,14 @@ export interface AvatarUploadLabels {
     readonly upload: string;
     readonly replace: string;
     readonly remove: string;
+    /** The title of the crop dialog. */
+    readonly cropTitle: string;
+    /** The accessible name of the frame that moves the picture. */
+    readonly position: string;
+    readonly zoom: string;
+    readonly save: string;
+    readonly cancel: string;
+    readonly close: string;
 }
 export declare const avatarUploadLabels: AvatarUploadLabels;
 //# sourceMappingURL=identityLabels.d.ts.map

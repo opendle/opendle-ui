@@ -1,0 +1,1 @@
+{"version":3,"file":"mediaAttachmentLabels.js","sourceRoot":"","sources":["../../src/components/mediaAttachmentLabels.ts"],"names":[],"mappings":"AASA,MAAM,CAAC,MAAM,yBAAyB,GAA8B;IAClE,IAAI,EAAE,OAAO;IACb,IAAI,EAAE,MAAM;IACZ,MAAM,EAAE,QAAQ;IAChB,WAAW,EAAE,cAAc;IAC3B,SAAS,EAAE,YAAY;IACvB,SAAS,EAAE,WAAW;CACvB,CAAC"}

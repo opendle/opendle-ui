@@ -1,3 +1,4 @@
+import { type ReactNode } from "react";
 import { type ChannelConnectionProvider, type ChannelItem, type ChannelListLabels, type ChannelNetwork } from "./channelLabels.js";
 import type { NetworkName } from "./networks.js";
 export interface ChannelListProps {
@@ -18,6 +19,16 @@ export interface ChannelListProps {
     readonly onSwitchChange: (id: string, switchId: string, on: boolean) => Promise<void>;
     readonly onDisconnect: (id: string) => Promise<void>;
     readonly onPasswordConnect: (network: NetworkName, handle: string, password: string) => Promise<void>;
+    /**
+     * Give a connected account of a network without an authorization address
+     * a new app password. Without it, a reconnection uses `onPasswordConnect`.
+     */
+    readonly onPasswordReconnect?: (id: string, handle: string, password: string) => Promise<void>;
+    /** The title and the effects in the confirmation of a disconnection. */
+    readonly disconnectConfirmation?: (item: ChannelItem) => {
+        readonly title: ReactNode;
+        readonly description: ReactNode;
+    };
     readonly errorMessage: (error: unknown) => string | null;
     readonly labels?: ChannelListLabels;
 }
@@ -25,5 +36,5 @@ export interface ChannelListProps {
  * The connected accounts of the networks: name, tags, switches, the warning
  * for an ended authorization, and the connect and disconnect actions.
  */
-export declare function ChannelList({ connectOpen, onConnectOpenChange, connectionProviders, errorMessage, items, labels, networks, onDisconnect, onPasswordConnect, onRename, onSwitchChange, onTagsChange, readOnly, tagColors, }: ChannelListProps): import("react").JSX.Element;
+export declare function ChannelList({ connectOpen, onConnectOpenChange, connectionProviders, disconnectConfirmation, errorMessage, items, labels, networks, onDisconnect, onPasswordConnect, onPasswordReconnect, onRename, onSwitchChange, onTagsChange, readOnly, tagColors, }: ChannelListProps): import("react").JSX.Element;
 //# sourceMappingURL=ChannelList.d.ts.map

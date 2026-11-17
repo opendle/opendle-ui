@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import type { CSSProperties, ReactNode } from "react";
 
 import { classes } from "./classes.js";
 import { PanelContent } from "./PanelContent.js";
@@ -8,6 +8,12 @@ export interface RecordTableColumn {
   readonly label: string;
   /** Right-align numbers. */
   readonly numeric?: boolean;
+  /**
+   * The width of the column. A width on a column gives the table a fixed
+   * layout: tables with the same columns and widths align their columns.
+   * Columns without a width share the free space.
+   */
+  readonly width?: CSSProperties["width"];
 }
 
 export interface RecordTableRow {
@@ -27,6 +33,8 @@ export interface RecordTableProps {
   readonly columns: readonly RecordTableColumn[];
   readonly rows: readonly RecordTableRow[];
   readonly onOpen?: (id: string) => void;
+  /** Below this width, the table scrolls horizontally. */
+  readonly minimumWidth?: CSSProperties["minWidth"];
   readonly className?: string;
 }
 
@@ -35,16 +43,30 @@ export function RecordTable({
   className,
   columns,
   label,
+  minimumWidth,
   onOpen,
   rows,
 }: RecordTableProps) {
+  const fixed = columns.some((column) => column.width !== undefined);
   return (
     <PanelContent
       aria-label={`${label} scrollable table`}
       className={classes("od-record-table", className)}
     >
-      <table>
+      <table
+        data-layout={fixed ? "fixed" : undefined}
+        style={
+          minimumWidth === undefined ? undefined : { minWidth: minimumWidth }
+        }
+      >
         <caption className="od-visually-hidden">{label}</caption>
+        {fixed ? (
+          <colgroup>
+            {columns.map((column) => (
+              <col key={column.id} style={{ width: column.width }} />
+            ))}
+          </colgroup>
+        ) : null}
         <thead>
           <tr>
             {columns.map((column) => (

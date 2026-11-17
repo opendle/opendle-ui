@@ -67,7 +67,7 @@ export interface TagFilterValue {
 export const emptyTagFilter: TagFilterValue = {
   channels: [],
   tags: [],
-  match: "all",
+  match: "any",
 };
 
 export interface TagFilterLabels {

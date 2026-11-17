@@ -1,0 +1,155 @@
+/*
+ * The toolbar of a list view: tabs, then filters, then a compact search at
+ * the right end. When the row has no room, the filters and the search go on
+ * a line above the tabs, so that the tabs stay on the line of the content.
+ * A narrow toolbar puts each part on its own line. On a phone, the filters
+ * are one line that scrolls.
+ */
+
+.od-filter-toolbar {
+  margin-bottom: 16px;
+  container-type: inline-size;
+}
+
+.od-filter-toolbar[data-tabs="true"] {
+  margin-bottom: 20px;
+  border-bottom: 1px solid var(--od-color-border);
+}
+
+.od-filter-toolbar-row {
+  display: flex;
+  /* The first line, with the tabs, is at the bottom. */
+  flex-wrap: wrap-reverse;
+  /* In a reversed wrap, flex-start is the bottom of the line. */
+  align-items: flex-start;
+  gap: 10px 24px;
+}
+
+.od-filter-toolbar-tabs {
+  display: flex;
+  min-width: 0;
+  flex: 0 1 auto;
+}
+
+.od-filter-toolbar-tabs > .od-tabs {
+  min-width: 0;
+  overflow-x: auto;
+  border-bottom: 0;
+  scrollbar-width: none;
+}
+
+/* A tab is taller than a control, so their middles are on one line. */
+.od-filter-toolbar-tabs .od-tab {
+  height: calc(var(--od-control-height) + 10px);
+  flex: none;
+}
+
+/* The filters and the search are one unit: they share a line. */
+.od-filter-toolbar-controls {
+  display: flex;
+  min-width: 0;
+  flex: 1 1 auto;
+  align-items: center;
+  gap: 10px 16px;
+}
+
+.od-filter-toolbar[data-tabs="true"] .od-filter-toolbar-controls {
+  padding-bottom: 5px;
+}
+
+.od-filter-toolbar-filters {
+  display: flex;
+  min-width: 0;
+  flex: 1 1 auto;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 16px;
+}
+
+.od-filter-toolbar-filters:empty {
+  display: none;
+}
+
+/* When the filters wrap, the search stays on their first line. */
+.od-filter-toolbar-search {
+  display: flex;
+  min-width: 9rem;
+  flex: 0 1 13rem;
+  align-self: flex-start;
+  margin-left: auto;
+}
+
+.od-filter-toolbar-search > .od-search-field {
+  flex: 1;
+}
+
+.od-filter-toolbar-search .od-search-field > input {
+  min-height: var(--od-control-height);
+}
+
+/* A tag filter in the toolbar takes the spacing of the toolbar. */
+.od-filter-toolbar .od-tag-filter {
+  min-width: 0;
+  flex: 0 1 auto;
+  margin: 0;
+  padding: 0;
+  overflow: clip;
+  overflow-clip-margin: 4px;
+}
+
+.od-filter-toolbar .od-tag-filter-match {
+  margin-left: 0;
+}
+
+.od-filter-toolbar .od-segmented {
+  flex: none;
+}
+
+/* A narrow toolbar: each part takes the full width. */
+@container (max-width: 60rem) {
+  .od-filter-toolbar-row {
+    row-gap: 12px;
+  }
+
+  .od-filter-toolbar-tabs {
+    flex-basis: 100%;
+  }
+
+  /* The search is above the filters when they do not share a line. */
+  .od-filter-toolbar-controls {
+    flex-basis: 100%;
+    flex-wrap: wrap-reverse;
+    gap: 12px;
+  }
+
+  .od-filter-toolbar[data-tabs="true"] .od-filter-toolbar-controls {
+    padding-bottom: 0;
+  }
+
+  .od-filter-toolbar-search {
+    min-width: 10rem;
+    flex: 1 1 10rem;
+    align-self: auto;
+  }
+}
+
+@media (max-width: 720px) {
+  .od-filter-toolbar,
+  .od-filter-toolbar[data-tabs="true"] {
+    margin-bottom: 14px;
+  }
+
+  /* The padding keeps the focus ring inside the scroll area. */
+  .od-filter-toolbar-filters {
+    flex-wrap: nowrap;
+    margin: -3px;
+    padding: 3px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .od-filter-toolbar .od-tag-filter {
+    flex: none;
+    flex-wrap: nowrap;
+  }
+}

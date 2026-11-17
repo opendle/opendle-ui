@@ -1,6 +1,7 @@
 import type { CSSProperties } from "react";
 
 import { CalendarEntry } from "./CalendarEntry.js";
+import { Icon } from "./Icon.js";
 import {
   calendarDayDate,
   calendarDayKey,
@@ -27,6 +28,8 @@ export interface CalendarWeekProps {
   readonly formats: CalendarWeekFormats;
   readonly labels: CalendarBoardLabels;
   readonly onSelect: (item: CalendarItem) => void;
+  /** Create an entry at a day, or at a half-hour slot of a day. */
+  readonly onCreate?: ((day: string, slot?: number) => void) | undefined;
   /** The present time. Without it, the clock of the browser gives it. */
   readonly now?: Date | undefined;
   readonly timeZone?: string | undefined;
@@ -50,6 +53,7 @@ export function CalendarWeek({
   groups,
   labels,
   now,
+  onCreate,
   onSelect,
   today,
   timeZone,
@@ -87,6 +91,19 @@ export function CalendarWeek({
                     {date.getDate()}
                   </span>
                 </span>
+                {onCreate === undefined || day < today ? null : (
+                  <button
+                    aria-label={`${labels.create ?? "New post"}: ${formats.fullDay.format(date)}`}
+                    className="od-calendar-create"
+                    onClick={() => {
+                      onCreate(day);
+                    }}
+                    title={labels.create ?? "New post"}
+                    type="button"
+                  >
+                    <Icon name="plus" size={14} />
+                  </button>
+                )}
               </th>
             );
           })}
@@ -110,13 +127,12 @@ export function CalendarWeek({
                 const entries = (groups.get(day) ?? []).filter(
                   (item) => slotOf(item, timeZone) === slot,
                 );
+                const past =
+                  day < today || (day === today && onToday && slot < nowSlot);
                 return (
                   <td
                     data-now={current || undefined}
-                    data-past={
-                      day < today ||
-                      (day === today && onToday && slot < nowSlot)
-                    }
+                    data-past={past}
                     data-today={day === today}
                     key={day}
                     {...drag.target(day, formats.time, slot)}
@@ -128,6 +144,20 @@ export function CalendarWeek({
                         : undefined
                     }
                   >
+                    {onCreate === undefined || past ? null : (
+                      // The day header has the keyboard action. This is a
+                      // pointer shortcut for one half hour.
+                      <button
+                        aria-hidden="true"
+                        className="od-calendar-week-slot"
+                        onClick={() => {
+                          onCreate(day, slot);
+                        }}
+                        tabIndex={-1}
+                        title={`${labels.create ?? "New post"} · ${(formats.hour ?? formats.time).format(new Date(2000, 0, 1, hour, (slot % 2) * 30))}`}
+                        type="button"
+                      />
+                    )}
                     {entries.length === 0 ? null : (
                       <div className="od-calendar-week-cell">
                         {entries.map((item) => (

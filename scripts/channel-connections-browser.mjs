@@ -28,7 +28,8 @@ function App() {
  connectOpen={connectOpen} onConnectOpenChange={setConnectOpen}
  readOnly={readonly} networks={native ? [{network:"pinterest",label:"Pinterest",href:"#native"},{network:"bluesky",label:"Bluesky"}] : []}
  connectionProviders={[{id:"gateway",label:"External gateway",onSelect:()=>setOpen(true)}]}
- errorMessage={()=>"Failed"} onRename={nothing} onTagsChange={nothing} onSwitchChange={nothing} onDisconnect={nothing} onPasswordConnect={nothing}/>
+ errorMessage={()=>"Failed"} onRename={nothing} onTagsChange={nothing} onSwitchChange={nothing} onDisconnect={nothing} onPasswordConnect={nothing}
+ disconnectConfirmation={(item)=>({title:"Delete " + item.name + "?", description:<ul><li>Scheduled posts are cancelled.</li></ul>})}/>
  {open ? <Dialog open title="External gateway" onClose={()=>setOpen(false)}><TextControl label="API key" type="password" value={secret} onChange={event=>setSecret(event.currentTarget.value)} data-dialog-initial-focus/></Dialog> : null}
  </main>;
 }
@@ -43,7 +44,7 @@ const directory = mkdtempSync(join(tmpdir(), "opendle-channel-connections-"));
 const pagePath = join(directory, "index.html");
 writeFileSync(
   pagePath,
-  `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Channel connections</title><link rel="stylesheet" href="${pathToFileURL(join(root, "styles/tokens.css")).href}"></head><body><div id="root"></div><script>${bundle.outputFiles[0].text.replaceAll("</script", "<\\/script")}</script></body></html>`,
+  `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Channel connections</title><link rel="stylesheet" href="${pathToFileURL(join(root, "styles/tokens.css")).href}"><link rel="stylesheet" href="${pathToFileURL(join(root, "styles/action-menu.css")).href}"></head><body><div id="root"></div><script>${bundle.outputFiles[0].text.replaceAll("</script", "<\\/script")}</script></body></html>`,
 );
 const browser = await chromium.launch({ headless: true });
 try {
@@ -122,6 +123,54 @@ try {
       "#native",
     );
 
+    // The menu of a row holds Reconnect and the destructive action.
+    const more = nativeRow.getByRole("button", {
+      name: "More actions: Native",
+      exact: true,
+    });
+    await more.click();
+    const menu = page.getByRole("menu", { name: "More actions: Native" });
+    const reconnectItem = menu.getByRole("menuitem", { name: "Reconnect" });
+    assert.equal(await reconnectItem.getAttribute("href"), "#native");
+    assert.equal(
+      await reconnectItem.evaluate((node) => node === document.activeElement),
+      true,
+    );
+    const box = await menu.boundingBox();
+    assert.ok(box !== null && box.x >= 0 && box.x + box.width <= width);
+    assert.deepEqual(
+      (await new AxeBuilder({ page }).analyze()).violations.map(
+        (item) => item.id,
+      ),
+      [],
+    );
+    await page.keyboard.press("Escape");
+    await menu.waitFor({ state: "detached" });
+    assert.equal(
+      await more.evaluate((node) => node === document.activeElement),
+      true,
+    );
+    await page.keyboard.press("Enter");
+    await menu.waitFor();
+    await page.keyboard.press("ArrowDown");
+    await page.keyboard.press("Enter");
+    const confirmation = page.getByRole("dialog", { name: "Delete Native?" });
+    await confirmation.getByText("Scheduled posts are cancelled.").waitFor();
+    await confirmation.getByRole("button", { name: "Cancel" }).click();
+    await confirmation.waitFor({ state: "hidden" });
+    await more.click();
+    await page.mouse.click(2, 2);
+    await menu.waitFor({ state: "detached" });
+    await bufferRow
+      .getByRole("button", { name: "More actions: Music", exact: true })
+      .click();
+    await page
+      .getByRole("menu", { name: "More actions: Music" })
+      .getByRole("menuitem", { name: "Reconnect" })
+      .click();
+    await gateway.waitFor();
+    await page.keyboard.press("Escape");
+
     // Existing password connections still work and mask their app passwords.
     await add.click();
     await picker.getByRole("button", { name: /Bluesky/ }).click();
@@ -159,6 +208,10 @@ try {
       await page
         .getByRole("button", { name: "Reconnect", exact: true })
         .count(),
+      0,
+    );
+    assert.equal(
+      await page.getByRole("button", { name: /^More actions/ }).count(),
       0,
     );
     assert.equal(

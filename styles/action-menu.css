@@ -1,0 +1,71 @@
+/* A "more actions" button and its short menu of actions. */
+.od-action-menu {
+  display: inline-flex;
+  flex: none;
+}
+
+.od-action-menu-button[aria-expanded="true"] {
+  background: var(--od-color-hover);
+  color: var(--od-color-foreground);
+}
+
+.od-action-menu-panel {
+  position: fixed;
+  z-index: 60;
+  top: 0;
+  left: 0;
+  display: grid;
+  min-width: 11rem;
+  max-width: min(18rem, calc(100vw - 16px));
+  gap: 1px;
+  padding: 4px;
+  border: 1px solid var(--od-color-border);
+  border-radius: var(--od-radius-lg);
+  background: var(--od-color-surface);
+  box-shadow: var(--od-shadow);
+  outline: 0;
+}
+
+.od-action-menu-item {
+  display: flex;
+  min-height: 34px;
+  align-items: center;
+  gap: 10px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: var(--od-radius-md);
+  background: none;
+  color: var(--od-color-foreground);
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 500;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.od-action-menu-item > span {
+  min-width: 0;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.od-action-menu-item > .od-icon:first-child {
+  color: var(--od-color-muted);
+}
+
+.od-action-menu-item[data-tone="danger"],
+.od-action-menu-item[data-tone="danger"] > .od-icon:first-child {
+  color: var(--od-color-danger);
+}
+
+.od-action-menu-item:is(:hover, :focus-visible) {
+  background: var(--od-color-hover);
+  outline: 0;
+}
+
+.od-action-menu-item[data-tone="danger"]:is(:hover, :focus-visible) {
+  background: var(--od-color-danger-soft);
+}

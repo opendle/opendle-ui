@@ -9,6 +9,7 @@ export const channelListLabels = {
     removeTag: "Remove tag",
     reconnect: "Reconnect",
     reconnectNeeded: "Authorization ended",
+    moreActions: "More actions",
     disconnect: "Disconnect",
     disconnectTitle: "Disconnect this channel?",
     handle: "Handle",

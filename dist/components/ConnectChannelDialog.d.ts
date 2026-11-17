@@ -11,7 +11,11 @@ export interface ConnectChannelDialogProps {
     readonly onPasswordConnect: (network: NetworkName, handle: string, password: string) => Promise<void>;
     readonly errorMessage: (error: unknown) => string | null;
     readonly labels: ChannelListLabels;
+    /** The first value of the handle field. */
+    readonly handle?: string;
+    /** A title in place of the network name, for example for a reconnection. */
+    readonly title?: string;
 }
 /** Select a network, then go to its authorization or give an app password. */
-export declare function ConnectChannelDialog({ connectionProviders, errorMessage, labels, network, networks, onClose, onPasswordConnect, open, }: ConnectChannelDialogProps): import("react").JSX.Element;
+export declare function ConnectChannelDialog({ connectionProviders, errorMessage, handle: initialHandle, labels, network, networks, onClose, onPasswordConnect, open, title, }: ConnectChannelDialogProps): import("react").JSX.Element;
 //# sourceMappingURL=ConnectChannelDialog.d.ts.map

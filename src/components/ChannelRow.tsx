@@ -1,9 +1,8 @@
+import { ActionMenu, type ActionMenuItem } from "./ActionMenu.js";
 import { Button } from "./Button.js";
 import type { ChannelItem, ChannelListLabels } from "./channelLabels.js";
 import { Icon, NetworkIcon } from "./Icon.js";
-import { IconButton } from "./IconButton.js";
 import { InlineEditableText } from "./InlineEditableText.js";
-import type { NetworkName } from "./networks.js";
 import { TagChip } from "./TagChip.js";
 import { TagInput } from "./TagInput.js";
 
@@ -12,12 +11,14 @@ export interface ChannelRowProps {
   readonly labels: ChannelListLabels;
   readonly readOnly: boolean;
   readonly tagColors: Readonly<Record<string, number>> | undefined;
-  /** The authorization address of the network, or `null` for a form. */
-  readonly reconnectHref: string | null;
+  /**
+   * How to connect the account again: an authorization address, a host flow,
+   * or `null` when the user cannot connect it from here.
+   */
+  readonly reconnect: { readonly href: string } | (() => void) | null;
   readonly onRename: (name: string) => Promise<void>;
   readonly onTagsChange: (tags: readonly string[]) => void;
   readonly onSwitchChange: (switchId: string, on: boolean) => void;
-  readonly onReconnect: (network: NetworkName) => void;
   readonly onDisconnect: (item: ChannelItem) => void;
 }
 
@@ -26,14 +27,36 @@ export function ChannelRow({
   item,
   labels,
   onDisconnect,
-  onReconnect,
   onRename,
   onSwitchChange,
   onTagsChange,
   readOnly,
-  reconnectHref,
+  reconnect,
   tagColors,
 }: ChannelRowProps) {
+  const actions: readonly ActionMenuItem[] = [
+    ...(reconnect === null
+      ? []
+      : [
+          {
+            id: "reconnect",
+            label: labels.reconnect,
+            icon: <Icon name="retry" size={15} />,
+            ...(typeof reconnect === "function"
+              ? { onSelect: reconnect }
+              : { href: reconnect.href }),
+          },
+        ]),
+    {
+      id: "disconnect",
+      label: labels.disconnect,
+      icon: <Icon name="trash" size={15} />,
+      tone: "danger",
+      onSelect: () => {
+        onDisconnect(item);
+      },
+    },
+  ];
   return (
     <li className="od-channel-row" data-warning={item.needsReconnect}>
       <NetworkIcon badge className="od-channel-mark" network={item.network} />
@@ -99,32 +122,23 @@ export function ChannelRow({
       </span>
       {readOnly ? null : (
         <span className="od-channel-actions">
-          {!item.needsReconnect ? null : reconnectHref === null ? (
-            <Button
-              onClick={() => {
-                onReconnect(item.network);
-              }}
-              size="small"
-              variant="secondary"
-            >
+          {!item.needsReconnect ||
+          reconnect === null ? null : typeof reconnect === "function" ? (
+            <Button onClick={reconnect} size="small" variant="secondary">
               {labels.reconnect}
             </Button>
           ) : (
             <a
               className="od-button od-button-secondary"
               data-size="small"
-              href={reconnectHref}
+              href={reconnect.href}
             >
               {labels.reconnect}
             </a>
           )}
-          <IconButton
-            icon={<Icon name="trash" />}
-            label={`${labels.disconnect}: ${item.name}`}
-            onClick={() => {
-              onDisconnect(item);
-            }}
-            tone="danger"
+          <ActionMenu
+            items={actions}
+            label={`${labels.moreActions}: ${item.name}`}
           />
         </span>
       )}

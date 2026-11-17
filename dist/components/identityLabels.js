@@ -35,5 +35,11 @@ export const avatarUploadLabels = {
     upload: "Upload picture",
     replace: "Replace",
     remove: "Remove",
+    cropTitle: "Adjust picture",
+    position: "Picture position",
+    zoom: "Zoom",
+    save: "Save",
+    cancel: "Cancel",
+    close: "Close",
 };
 //# sourceMappingURL=identityLabels.js.map

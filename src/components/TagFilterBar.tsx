@@ -1,5 +1,3 @@
-import type { ReactNode } from "react";
-
 import { classes } from "./classes.js";
 import { NetworkIcon } from "./Icon.js";
 import {
@@ -21,11 +19,6 @@ export interface TagFilterBarProps {
   readonly onChange: (value: TagFilterValue) => void;
   readonly labels?: TagFilterLabels;
   readonly className?: string;
-  /**
-   * Other filters of the view, for example a search field. They come first.
-   * The channel and tag choices follow them, or wrap below them as one row.
-   */
-  readonly controls?: ReactNode;
 }
 
 const noColors: TagColors = {};
@@ -38,23 +31,24 @@ function toggled(list: readonly string[], item: string): readonly string[] {
 
 /**
  * Filters for channels and tags, with the AND or OR logic of the tags. A
- * group with no entry does not show.
+ * group with no entry does not show. Put it in a `FilterToolbar` with the
+ * other filters and the search of the view.
  */
 export function TagFilterBar({
   channels,
   className,
-  controls,
   labels = tagFilterLabels,
   onChange,
   tagColors = noColors,
   tags,
   value,
 }: TagFilterBarProps) {
-  const hasControls = controls !== undefined && controls !== null;
-  const hasChoices = channels.length > 0 || tags.length > 0;
-  if (!hasControls && !hasChoices) return null;
-  const choices = (
-    <>
+  if (channels.length === 0 && tags.length === 0) return null;
+  return (
+    <fieldset
+      aria-label={labels.filters}
+      className={classes("od-tag-filter", className)}
+    >
       {channels.length === 0 ? null : (
         <fieldset aria-label={labels.channels} className="od-tag-filter-group">
           <span
@@ -113,28 +107,6 @@ export function TagFilterBar({
           value={value.match}
         />
       )}
-    </>
-  );
-  if (!hasControls) {
-    return (
-      <fieldset
-        aria-label={labels.filters}
-        className={classes("od-tag-filter", className)}
-      >
-        {choices}
-      </fieldset>
-    );
-  }
-  return (
-    <fieldset
-      aria-label={labels.filters}
-      className={classes("od-tag-filter", className)}
-      data-controls="true"
-    >
-      <div className="od-tag-filter-controls">{controls}</div>
-      {hasChoices ? (
-        <div className="od-tag-filter-choices">{choices}</div>
-      ) : null}
     </fieldset>
   );
 }

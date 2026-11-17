@@ -497,14 +497,15 @@ try {
       await form.waitFor({ state: "hidden" });
       await channelsRegion.getByText("vincent.bsky.social").first().waitFor();
       await channelsRegion
-        .getByRole("button", { name: "Disconnect: vincent.bsky.social" })
+        .getByRole("button", { name: "More actions: vincent.bsky.social" })
         .click();
+      await page.getByRole("menuitem", { name: "Disconnect" }).click();
       await page
         .getByRole("dialog", { name: "Disconnect this channel?" })
         .getByRole("button", { name: "Disconnect" })
         .click();
       await channelsRegion
-        .getByRole("button", { name: "Disconnect: vincent.bsky.social" })
+        .getByRole("button", { name: "More actions: vincent.bsky.social" })
         .waitFor({ state: "detached" });
 
       // A token shows its secret one time.

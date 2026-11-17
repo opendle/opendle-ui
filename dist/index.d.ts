@@ -7,6 +7,7 @@ export declare const OPENDLE_UI_VERSION: "0.4.0";
 export { Icon, NetworkIcon, type IconName, type IconProps, type NetworkIconProps, } from "./components/Icon.js";
 export { formatAge } from "./components/formatAge.js";
 export { Popover, type PopoverProps } from "./components/Popover.js";
+export { ActionMenu, type ActionMenuItem, type ActionMenuProps, } from "./components/ActionMenu.js";
 export { networkLabel, networkNames, type NetworkName, } from "./components/networks.js";
 /** Shared token names. Values are defined in styles/tokens.css. */
 export declare const designTokens: {
@@ -83,7 +84,7 @@ export { YamlEditor, type YamlEditorCompletionSource, type YamlEditorDiagnostic,
 export { SecretRevealPanel, type SecretRevealPanelProps, } from "./components/SecretRevealPanel.js";
 export { ApplicationShell, type ApplicationShellProps, } from "./components/ApplicationShell.js";
 export { ApiTokenList, type ApiTokenItem, type ApiTokenListProps, } from "./components/ApiTokenList.js";
-export { Avatar, type AvatarProps } from "./components/Avatar.js";
+export { Avatar, type AvatarProps, type AvatarShape, } from "./components/Avatar.js";
 export { AvatarUpload, type AvatarUploadProps, } from "./components/AvatarUpload.js";
 export { apiTokenListLabels, avatarUploadLabels, passkeyListLabels, type ApiTokenListLabels, type AvatarUploadLabels, type PasskeyListLabels, } from "./components/identityLabels.js";
 export { InlineEditableText, type InlineEditableTextProps, } from "./components/InlineEditableText.js";
@@ -93,6 +94,7 @@ export { Section, type SectionProps } from "./components/Section.js";
 export { PasskeyList, type PasskeyItem, type PasskeyListProps, } from "./components/PasskeyList.js";
 export { SecretValue, type SecretValueProps, } from "./components/SecretValue.js";
 export { squarePicture } from "./components/squarePicture.js";
+export type { PictureOutput, PictureType } from "./components/pictureCrop.js";
 export { TabPanel, Tabs, type TabItem, type TabPanelProps, type TabsProps, } from "./components/Tabs.js";
 export { TagChip, type TagChipProps } from "./components/TagChip.js";
 export { Button, type ButtonProps, type ButtonVariant, } from "./components/Button.js";
@@ -114,6 +116,14 @@ export { ConversationPost, type ConversationPostProps, } from "./components/Conv
 export { EmojiPicker, type EmojiPickerProps, } from "./components/EmojiPicker.js";
 export { InboxList, type InboxEntry, type InboxListProps, } from "./components/InboxList.js";
 export { ReplyComposer, type ReplyComposerProps, } from "./components/ReplyComposer.js";
+export { CharacterCount, type CharacterCountProps, } from "./components/CharacterCount.js";
+export { characterCount } from "./components/characterLength.js";
+export { ChannelPicker, type ChannelPickerItem, type ChannelPickerProps, } from "./components/ChannelPicker.js";
+export { MediaAttachmentList, type MediaAttachment, type MediaAttachmentKind, type MediaAttachmentListProps, } from "./components/MediaAttachmentList.js";
+export { mediaAttachmentListLabels, type MediaAttachmentListLabels, } from "./components/mediaAttachmentLabels.js";
+export { MediaGridPicker, type MediaGridItem, type MediaGridPickerProps, } from "./components/MediaGridPicker.js";
+export { SocialPostPreview, type SocialPostPreviewProps, type SocialPreviewLayout, type SocialPreviewMedia, } from "./components/SocialPostPreview.js";
+export { socialPreviewLabels, type SocialPreviewLabels, } from "./components/socialPreviewLabels.js";
 export { MetricGrid, MetricTile, type MetricGridProps, type MetricTileProps, } from "./components/MetricTile.js";
 export { balancedColumns } from "./components/metricColumns.js";
 export { chartSlots, chartTicks, foldSeries, type ChartSeries, } from "./components/chartScale.js";
@@ -125,10 +135,12 @@ export { StackedBarChart, type StackedBarChartProps, } from "./components/Stacke
 export { calendarBoardLabels, calendarItemState, type CalendarBoardLabels, type CalendarFollowUp, type CalendarFollowUpLabels, type CalendarItem, type CalendarItemState, type CalendarItemTarget, } from "./components/calendarItems.js";
 export { calendarDayDate, calendarDayKey, calendarGridDays, calendarPeriod, calendarTitle, shiftCalendarAnchor, type CalendarMode, type CalendarPeriod, } from "./components/calendarDates.js";
 export { CalendarHeader, type CalendarHeaderProps, } from "./components/CalendarHeader.js";
+export { CalendarViewTabs, type CalendarViewTabsProps, } from "./components/CalendarViewTabs.js";
 export { calendarHeaderLabels, emptyTagFilter, postDetailLabels, tagFilterLabels, type CalendarHeaderLabels, type PostDetailLabels, type TagColors, type TagFilterChannel, type TagFilterLabels, type TagFilterMatch, type TagFilterValue, } from "./components/calendarLabels.js";
 export { PostDetailDialog, PostDetailSection, type PostDetailDialogProps, type PostDetailMedia, type PostDetailMetric, type PostDetailSectionProps, type PostDetailTarget, } from "./components/PostDetailDialog.js";
 export { SegmentedControl, type SegmentedControlProps, type SegmentedOption, } from "./components/SegmentedControl.js";
 export { SearchField, type SearchFieldProps, } from "./components/SearchField.js";
+export { FilterToolbar, type FilterToolbarProps, } from "./components/FilterToolbar.js";
 export { TagFilterBar, type TagFilterBarProps, } from "./components/TagFilterBar.js";
 export { Card, type CardProps } from "./components/Card.js";
 export { ChainStep, type ChainStepProps } from "./components/ChainStep.js";

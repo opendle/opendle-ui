@@ -74,6 +74,7 @@ try {
     assert.equal(await button.getAttribute("aria-expanded"), "true");
     const box = await panel.boundingBox();
     assert.ok(box.x >= 0 && box.x + box.width <= width, `${width}: in view`);
+    assert.ok(box.y >= 0 && box.y + box.height <= 800, `${width}: in height`);
     assert.deepEqual(
       (await new AxeBuilder({ page }).include(".od-popover").analyze())
         .violations,

@@ -12,6 +12,8 @@ import {
   timeZoneOptions,
   TagInput,
   CalendarHeader,
+  CalendarViewTabs,
+  FilterToolbar,
   PostDetailDialog,
   SegmentedControl,
   TagFilterBar,
@@ -217,8 +219,6 @@ test("an empty calendar has its empty text and no entry", () => {
 test("CalendarHeader has the period navigation only with its handlers", () => {
   const props = {
     title: "November 2026",
-    mode: "month",
-    onModeChange: () => undefined,
     onToday: () => undefined,
   };
   const timeline = render(CalendarHeader, props);
@@ -231,7 +231,49 @@ test("CalendarHeader has the period navigation only with its handlers", () => {
   });
   assert.match(month, /aria-label="Previous"/);
   assert.match(month, /aria-label="Next"/);
-  assert.match(month, /<button aria-pressed="true" type="button">Month</);
+  assert.doesNotMatch(month, /Month|role="tablist"/);
+});
+
+test("CalendarViewTabs selects the view of the calendar", () => {
+  const markup = render(CalendarViewTabs, {
+    idBase: "calendar",
+    value: "week",
+    onChange: () => undefined,
+  });
+  assert.match(
+    markup,
+    /^<div aria-label="View" class="od-tabs" role="tablist">/,
+  );
+  assert.match(
+    markup,
+    /aria-controls="calendar-panel-week" aria-selected="true"[^>]*>Week</,
+  );
+  assert.deepEqual(
+    [...markup.matchAll(/role="tab"[^>]*>(\w+)</g)].map((match) => match[1]),
+    ["Month", "Week", "Timeline"],
+  );
+});
+
+test("FilterToolbar puts the tabs first and the search last", () => {
+  const search = React.createElement("input", { type: "search" });
+  const full = render(
+    FilterToolbar,
+    { start: React.createElement("span", null, "tabs"), end: search },
+    React.createElement("span", null, "filters"),
+  );
+  assert.equal(
+    full,
+    '<div class="od-filter-toolbar" data-tabs="true"><div class="od-filter-toolbar-row"><div class="od-filter-toolbar-tabs"><span>tabs</span></div><div class="od-filter-toolbar-controls"><div class="od-filter-toolbar-filters"><span>filters</span></div><div class="od-filter-toolbar-search"><input type="search"/></div></div></div></div>',
+  );
+  const plain = render(FilterToolbar, {
+    className: "page-filters",
+    end: search,
+  });
+  assert.match(
+    plain,
+    /class="od-filter-toolbar page-filters" data-tabs="false"/,
+  );
+  assert.doesNotMatch(plain, /od-filter-toolbar-tabs/);
 });
 
 test("SegmentedControl marks the selected choice", () => {
@@ -280,31 +322,8 @@ test("TagFilterBar has one group of tags and shows only groups with entries", ()
   assert.match(full, /aria-label="Tag logic"/);
 });
 
-test("TagFilterBar puts the controls of the host first", () => {
-  const props = { value: emptyTagFilter, onChange: () => undefined };
-  const search = React.createElement("input", { type: "search" });
-  const plain = render(TagFilterBar, { ...props, channels: [], tags: ["a"] });
-  assert.doesNotMatch(plain, /data-controls|od-tag-filter-controls/);
-  const alone = render(TagFilterBar, {
-    ...props,
-    channels: [],
-    tags: [],
-    controls: search,
-  });
-  assert.match(
-    alone,
-    /data-controls="true"><div class="od-tag-filter-controls"><input type="search"\/><\/div><\/fieldset>/,
-  );
-  const both = render(TagFilterBar, {
-    ...props,
-    channels: [],
-    tags: ["a"],
-    controls: search,
-  });
-  assert.match(
-    both,
-    /od-tag-filter-controls"><input[^>]*\/><\/div><div class="od-tag-filter-choices"><fieldset aria-label="Tags"/,
-  );
+test("The tag filter starts with no selection and the OR logic", () => {
+  assert.deepEqual(emptyTagFilter, { channels: [], tags: [], match: "any" });
 });
 
 const detailTarget = (id, network, state, extra = {}) => ({
@@ -441,10 +460,10 @@ test("ChannelList warns about an ended authorization and hides writes", () => {
   assert.match(markup, /Authorization ended/);
   assert.match(markup, /href="\/oauth\/youtube\/start"[^>]*>Reconnect</);
   assert.match(markup, /aria-label="Rename: tubededentifrice"/);
-  assert.match(markup, /aria-label="Disconnect: tubededentifrice"/);
+  assert.match(markup, /aria-label="More actions: tubededentifrice"/);
   assert.match(markup, /aria-pressed="true"[^>]*>Publish</);
   const readOnly = render(ChannelList, { ...props, readOnly: true });
-  assert.doesNotMatch(readOnly, /Rename:|Disconnect:|Reconnect<|>Connect</);
+  assert.doesNotMatch(readOnly, /Rename:|More actions:|Reconnect<|>Connect</);
   assert.match(readOnly, /Authorization ended/);
 });
 

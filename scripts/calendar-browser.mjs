@@ -15,9 +15,10 @@ const fixture = `
 import React, {useMemo, useState} from "react";
 import {createRoot} from "react-dom/client";
 import {
-  AccountMenu, ApplicationShell, Avatar, CalendarBoard, CalendarHeader, Icon,
-  NavigationLink, PostDetailDialog, TagFilterBar, calendarTitle,
-  emptyTagFilter, shiftCalendarAnchor,
+  AccountMenu, ApplicationShell, Avatar, CalendarBoard, CalendarHeader,
+  CalendarViewTabs, FilterToolbar, Icon, NavigationLink, PostDetailDialog,
+  SearchField, TabPanel, TagFilterBar, calendarTitle, emptyTagFilter,
+  shiftCalendarAnchor,
 } from "./dist/index.js";
 
 const today = "2026-11-14";
@@ -51,6 +52,7 @@ function Mark() {
 function App() {
   const empty = location.hash === "#empty";
   const [mode, setMode] = useState("month");
+  const [search, setSearch] = useState("");
   const [anchor, setAnchor] = useState(today);
   const [filter, setFilter] = useState(emptyTagFilter);
   const [earlier, setEarlier] = useState(0);
@@ -87,20 +89,25 @@ function App() {
         <NavigationLink href="#settings" icon={<Icon name="settings"/>} label="Settings"/>
       </>}
       account={<AccountMenu href="#settings" avatar={<Avatar name="Vincent"/>} name="Vincent"/>}>
-      <CalendarHeader mode={mode} onModeChange={setMode}
+      <CalendarHeader
         title={mode === "timeline" ? "Timeline" : calendarTitle(mode, anchor, "en-GB")}
         onToday={() => setAnchor(today)}
         {...(mode === "timeline" ? {} : {
           onPrevious: () => setAnchor(shiftCalendarAnchor(mode, anchor, -1)),
           onNext: () => setAnchor(shiftCalendarAnchor(mode, anchor, 1)),
         })}/>
-      <TagFilterBar channels={channels} tags={["short","long","take-me-with-you","paper-lanterns","low-tide"]}
-        tagColors={{short: 8, long: 3, "take-me-with-you": 1, "paper-lanterns": 5, "low-tide": 7}} value={filter} onChange={setFilter}/>
-      <CalendarBoard mode={mode} anchor={anchor} today={today} items={items} locale="en-GB" now={new Date(2026, 10, 14, 13, 20)}
-        onSelect={(item) => { setRetried(false); setSelected(item); }}
-        canMove={(item) => item.targets.every((target) => target.state === "scheduled")}
-        onMove={(item, start) => setMoved((current) => ({...current, [item.id]: start}))}
-        hasEarlier={!empty && earlier < 3} onLoadEarlier={() => setEarlier((value) => Math.min(3, value + 1))}/>
+      <FilterToolbar start={<CalendarViewTabs idBase="calendar" value={mode} onChange={setMode}/>}
+        end={<SearchField label="Search posts" value={search} onChange={(event) => setSearch(event.currentTarget.value)}/>}>
+        <TagFilterBar channels={channels} tags={["short","long","take-me-with-you","paper-lanterns","low-tide"]}
+          tagColors={{short: 8, long: 3, "take-me-with-you": 1, "paper-lanterns": 5, "low-tide": 7}} value={filter} onChange={setFilter}/>
+      </FilterToolbar>
+      <TabPanel idBase="calendar" id={mode}>
+        <CalendarBoard mode={mode} anchor={anchor} today={today} items={items} locale="en-GB" now={new Date(2026, 10, 14, 13, 20)}
+          onSelect={(item) => { setRetried(false); setSelected(item); }}
+          canMove={(item) => item.targets.every((target) => target.state === "scheduled")}
+          onMove={(item, start) => setMoved((current) => ({...current, [item.id]: start}))}
+          hasEarlier={!empty && earlier < 3} onLoadEarlier={() => setEarlier((value) => Math.min(3, value + 1))}/>
+      </TabPanel>
       <PostDetailDialog open={selected !== null} onClose={() => setSelected(null)}
         title={selected?.title ?? ""} tags={["take-me-with-you","reel"]}
         media={{type: "video", src: "about:blank", duration: "0:38"}} targets={targets}
@@ -170,19 +177,14 @@ async function baselines(page, name) {
     const today = header.querySelector(
       ".od-calendar-header-navigation .od-button",
     );
-    const view = header.querySelector(".od-calendar-header-views button");
     const arrow = header.querySelector(".od-icon-button");
     const middle = (element) => {
       const box = element.getBoundingClientRect();
       return box.top + box.height / 2;
     };
-    const sameLine = (element) =>
-      element.getBoundingClientRect().top <
-      title.getBoundingClientRect().bottom;
     return {
       title: baseline(title),
       today: baseline(today),
-      view: sameLine(view) ? baseline(view) : null,
       arrow: arrow === null ? null : middle(arrow) - middle(today),
     };
   });
@@ -190,12 +192,6 @@ async function baselines(page, name) {
     Math.abs(result.title - result.today) <= 1.5,
     `${name}: ${JSON.stringify(result)}`,
   );
-  if (result.view !== null) {
-    assert.ok(
-      Math.abs(result.title - result.view) <= 1.5,
-      `${name}: ${JSON.stringify(result)}`,
-    );
-  }
   if (result.arrow !== null) {
     assert.ok(
       Math.abs(result.arrow) <= 1,
@@ -301,18 +297,48 @@ try {
       assert.equal(await page.getByText("Tags", { exact: true }).count(), 0);
       assert.equal(
         await tagGroup.evaluate(
-          (group) => getComputedStyle(group).borderLeftStyle,
+          (group) => getComputedStyle(group, "::before").borderLeftStyle,
         ),
         "solid",
         "a line separates the tags from the channels",
       );
+      // The tag logic starts with OR.
       const logic = page.getByRole("group", { name: "Tag logic" });
-      await logic.getByRole("button", { name: "OR" }).click();
       assert.equal(
         await logic
           .getByRole("button", { name: "OR" })
           .getAttribute("aria-pressed"),
         "true",
+      );
+      await logic.getByRole("button", { name: "AND" }).click();
+      assert.equal(
+        await logic
+          .getByRole("button", { name: "AND" })
+          .getAttribute("aria-pressed"),
+        "true",
+      );
+      // The search is at the right end of the toolbar, after the filters.
+      const toolbar = await page.evaluate(() => {
+        const box = (selector) =>
+          document.querySelector(selector).getBoundingClientRect();
+        return {
+          tabs: box(".od-filter-toolbar-tabs"),
+          tags: box(".od-tag-filter"),
+          search: box(".od-filter-toolbar-search"),
+          bar: box(".od-filter-toolbar"),
+        };
+      });
+      assert.ok(
+        Math.abs(toolbar.search.right - toolbar.bar.right) <= 1,
+        `${name}: ${JSON.stringify(toolbar)}`,
+      );
+      assert.ok(
+        toolbar.search.width <= 13 * 16 + 1 || toolbar.bar.width <= 60 * 16,
+      );
+      assert.ok(
+        toolbar.tabs.top >= toolbar.search.bottom - 1 ||
+          toolbar.tabs.right <= toolbar.tags.left,
+        "the tabs are left of the filters or below them",
       );
 
       // The details show each network. A failed network has a retry action.
@@ -340,8 +366,8 @@ try {
       await page.getByRole("heading", { name: "December 2026" }).waitFor();
       assert.equal(await page.locator(".od-calendar-item").count(), 0);
       await page.getByRole("button", { name: "Today" }).click();
-      const views = page.getByRole("group", { name: "View" });
-      await views.getByRole("button", { name: "Week" }).click();
+      const views = page.getByRole("tablist", { name: "View" });
+      await views.getByRole("tab", { name: "Week" }).click();
       await page.getByRole("heading", { name: /9.*15 Nov 2026/ }).waitFor();
       assert.equal(await page.locator(".od-calendar-day").count(), 7);
       assert.equal(await page.locator(".od-calendar-item:visible").count(), 7);
@@ -430,7 +456,7 @@ try {
       await audit(page, `${name}-week`);
 
       // The timeline opens at the present and loads earlier days on demand.
-      await views.getByRole("button", { name: "Timeline" }).click();
+      await views.getByRole("tab", { name: "Timeline" }).click();
       const todayRow = page.locator(
         '.od-calendar-timeline-day[data-today="true"]',
       );
@@ -613,8 +639,8 @@ try {
         );
 
         await page
-          .getByRole("group", { name: "View" })
-          .getByRole("button", { name: "Week", exact: true })
+          .getByRole("tablist", { name: "View" })
+          .getByRole("tab", { name: "Week", exact: true })
           .click();
         const weekSource = page
           .locator('.od-calendar-week .od-calendar-item[draggable="true"]')

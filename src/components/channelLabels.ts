@@ -25,6 +25,11 @@ export interface ChannelItem {
   readonly connectionProvider?: string;
   /** A visible host label for the connection route, for example `via Gateway`. */
   readonly connectionLabel?: string;
+  /**
+   * The address that starts a new authorization of this account. Without it,
+   * a reconnection uses the address of the network.
+   */
+  readonly reconnectHref?: string;
 }
 
 /** A network that the user can connect. */
@@ -43,6 +48,11 @@ export interface ChannelConnectionProvider {
   readonly icon?: ReactNode;
   /** Called after the network picker closes. The host owns the next dialog. */
   readonly onSelect: () => void;
+  /**
+   * Connect this account of the provider again. Without it, a reconnection
+   * calls `onSelect`.
+   */
+  readonly onReconnect?: (item: ChannelItem) => void;
 }
 
 export interface ChannelListLabels {
@@ -56,6 +66,8 @@ export interface ChannelListLabels {
   readonly removeTag: string;
   readonly reconnect: string;
   readonly reconnectNeeded: string;
+  /** The accessible name of the menu of a channel, before its name. */
+  readonly moreActions: string;
   readonly disconnect: string;
   readonly disconnectTitle: string;
   readonly handle: string;
@@ -77,6 +89,7 @@ export const channelListLabels: ChannelListLabels = {
   removeTag: "Remove tag",
   reconnect: "Reconnect",
   reconnectNeeded: "Authorization ended",
+  moreActions: "More actions",
   disconnect: "Disconnect",
   disconnectTitle: "Disconnect this channel?",
   handle: "Handle",

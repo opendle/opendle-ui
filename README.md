@@ -13,14 +13,15 @@ style sheet contains the tokens (`--od-*`), the self-hosted DM Sans and
 Playfair Display fonts, the base rules, and the component rules. It has a
 light and a dark theme that follow `prefers-color-scheme`.
 
-| Area                  | Components                                                                                                                         |
-| --------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
-| Frame                 | `ApplicationShell`, `NavigationLink`, `NavigationItem`, `AccountMenu`, `PageHeading`, `Section`, `Card`, `ItemList`, `ItemRow`     |
-| Controls              | `Button`, `IconButton`, `SegmentedControl`, `TagChip`, `Tabs`, `TabPanel`, `TextControl`, `AutoGrowTextarea`, `InlineEditableText` |
-| Overlays and feedback | `Dialog`, `ConfirmationDialog`, `Popover`, `InlineAlert`, `Toast`, `useToastQueue`, `SecretValue`, `SecretRevealPanel`             |
-| Identity              | `SessionPage`, `SignInCard`, `PasskeyList`, `ApiTokenList`, `AvatarUpload`, `Avatar`                                               |
-| Calendar              | `CalendarHeader`, `CalendarBoard`, `TagFilterBar`, `PostDetailDialog`, `calendarPeriod`, `calendarTitle`, `shiftCalendarAnchor`    |
-| Marks                 | `Icon`, `NetworkIcon`, `DateTime`, `formatAge`                                                                                     |
+| Area                  | Components                                                                                                                           |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| Frame                 | `ApplicationShell`, `NavigationLink`, `NavigationItem`, `AccountMenu`, `PageHeading`, `Section`, `Card`, `ItemList`, `ItemRow`       |
+| Controls              | `Button`, `IconButton`, `SegmentedControl`, `TagChip`, `Tabs`, `TabPanel`, `TextControl`, `AutoGrowTextarea`, `InlineEditableText`   |
+| Overlays and feedback | `Dialog`, `ConfirmationDialog`, `Popover`, `ActionMenu`, `InlineAlert`, `Toast`, `useToastQueue`, `SecretValue`, `SecretRevealPanel` |
+| Identity              | `SessionPage`, `SignInCard`, `PasskeyList`, `ApiTokenList`, `AvatarUpload`, `Avatar`                                                 |
+| Calendar              | `CalendarHeader`, `CalendarBoard`, `TagFilterBar`, `PostDetailDialog`, `calendarPeriod`, `calendarTitle`, `shiftCalendarAnchor`      |
+| Filters               | `FilterToolbar`, `CalendarViewTabs`, `TagFilterBar`, `SearchField`                                                                   |
+| Marks                 | `Icon`, `NetworkIcon`, `DateTime`, `formatAge`                                                                                       |
 
 `ApplicationShell` is a left sidebar with icons. It becomes an icon rail below
 1100 px and a bottom bar below 720 px. The host owns routes: give each
@@ -32,19 +33,42 @@ actions. Each has a `labels` property with English defaults. With `onRename`,
 a double click or the Enter key edits a passkey name in place.
 
 `Avatar` uses a rounded square frame and a solid brand colour for its initial.
+`Avatar.shape` sets the frame: `rounded` (default), `circle` or `square`.
 `AvatarUpload.disabled` shows the picture with its upload and remove controls
 disabled. Use it when the user cannot change the picture.
 
+`AvatarUpload` opens a crop dialog after the user selects a picture. A drag,
+a pinch, the wheel, the zoom slider, the arrow keys and the `+` and `-` keys
+move and zoom the picture in the frame. Shift and an arrow key move it
+farther. The visible part always stays in the picture. Save draws the visible
+part on a canvas and gives it to `onUpload`. Set these properties for each
+application:
+
+- `shape`: the frame of the preview and of the crop mask.
+- `aspectRatio`: the width divided by the height. The default is 1.
+- `output`: `width` in pixels (default 256; the height follows the aspect
+  ratio), `type` (`image/webp` by default, `image/png` or `image/jpeg`) and
+  `quality` (default 0.9). When the browser cannot encode the type, the
+  picture is a JPEG.
+- `appearance`: `section` (default) is a titled card. `inline` shows the
+  picture above its buttons, for a column in a host card. `labels.title` is
+  then the accessible name of the group.
+
+`labels` accepts a part of the labels; the other labels keep their English
+defaults. `output.width` replaces the removed `pixels` property.
+
 `ApplicationShell` takes a second list (`secondaryNavigation`), for example
 the channels. It scrolls in the sidebar and opens from one button of the
-bottom bar on a phone. With `onCollapsedChange`, a button next to the account
-collapses the sidebar to icons; the host stores the state. `AccountMenu` is a
+bottom bar on a phone. With `onCollapsedChange`, a button next to the product
+name collapses the sidebar to icons; the host stores the state. `AccountMenu` is a
 menu button with sections of actions and choices. Use `appearance="workspace"`
 for a workspace card with an optional `detail` and an explicit accessible
 `label`. Its menu opens below the card. Put it in `ApplicationShell.workspace`
 to show it above navigation, in the icon rail, and in a top bar on phones.
-`ApplicationShell.actions` puts controls next to the product name, below the
-mark in the icon rail, and next to the workspace in the top bar on phones.
+`ApplicationShell.actions` puts controls next to the account at the end of
+the sidebar, below the account in the icon rail, and next to the workspace in
+the top bar on phones. A `Popover` panel of the actions opens beside the
+sidebar.
 
 `Popover` is an icon button with an optional `count` badge that opens a
 non-modal panel. The panel content mounts when it opens and gets the focus.
@@ -54,9 +78,21 @@ on a phone, the panel is a full-width sheet below the top bar. `formatAge`
 gives a short age such as `5m ago`. `Section.id` makes a section the target of
 a fragment link.
 
+`ActionMenu` is a "more actions" icon button for one object, for example a
+row. Its menu has buttons (`onSelect`) and links (`href`); set
+`tone: "danger"` on an action that removes something. The arrow keys, Home and
+End move in the menu. Escape returns the focus to the button. The menu is fixed
+to the window, so a container that hides its overflow does not cut it.
+
 `ChannelList` shows connected accounts: name edited in place, tags
 (`TagInput`), switches, the warning for an ended authorization, connect and
-disconnect. Set `connectOpen` and `onConnectOpenChange` to control the connect
+disconnect. Reconnect and disconnect are in the `ActionMenu` of each row; an
+ended authorization also shows a Reconnect button. `ChannelItem.reconnectHref`
+starts the authorization of that account. `onPasswordReconnect` gives an
+account without an authorization address a new app password, and
+`ChannelConnectionProvider.onReconnect` reconnects one account of a host flow.
+`disconnectConfirmation` gives the title and the effects in the confirmation.
+Set `connectOpen` and `onConnectOpenChange` to control the connect
 dialog from the host, for example from a navigation link. The list keeps its
 own dialog state when these props are omitted. `readOnly` prevents the dialog
 from opening. Set `ChannelItem.connectionLabel` to show a host-owned connection
@@ -86,7 +122,9 @@ without a value keeps the last value. The values of the hovered day list the
 top of the stack first and mark the series under the pointer. `ChartLegend` is one
 legend for several charts. `DateRangeControl` and `RecordTable`
 complete an analytics view. `RecordTable` has a named, keyboard-focusable
-scroll region for wide tables.
+scroll region for wide tables. A `width` on a column gives the table a fixed
+layout, so stacked tables with the same columns align; `minimumWidth` sets
+the width below which the table scrolls.
 
 `SearchField` is a compact search input with a search icon for a toolbar.
 Its `label` is the accessible name and the default placeholder.
@@ -112,9 +150,19 @@ and the time to the present minute in the week view, with a line at the
 present. The week view has a time axis of 24 hours; a row is one half hour and grows
 with its entries. The timeline opens at the present and asks for earlier or later entries
 through `onLoadEarlier` and `onLoadLater`. `TagFilterBar` holds the channel
-and tag selection with the AND or OR logic. Its `controls` put other filters
-of the view, for example a `SearchField` and a `SegmentedControl`, first in
-the same row. The host owns the data and the requests.
+and tag selection with the AND or OR logic; `emptyTagFilter` starts with OR.
+The host owns the data and the requests.
+
+`FilterToolbar` is the one filter row of a list view. `start` takes the tabs
+of the view, the children are its filters (for example `TagFilterBar` or a
+`SegmentedControl`), and `end` takes a `SearchField`, which is always at the
+right end in a compact width. When the row has no room, the filters and the
+search go on a line above the tabs. A toolbar narrower than 60rem puts each
+part on its own line; on a phone the filters scroll on one line.
+`CalendarViewTabs` are the month, week and timeline tabs for `start`. Wrap
+the `CalendarBoard` in a `TabPanel` with the same `idBase`. `CalendarHeader`
+has no view switch. `TagFilterBar` has no `controls` prop: put the other
+filters and the search in a `FilterToolbar`.
 
 `InboxList.groups` accepts post cards and their comments in host order. Each
 group has `id`, `title`, optional `thumbnailUrl`, and `items`. The host groups
@@ -153,6 +201,21 @@ row; other targets have none. The host supplies its form through
 `scheduleEditor`. Targets with the same text and media share one version tab.
 A target time that differs from the first target shows in its row. Wrap each
 part that the host adds in `PostDetailSection`.
+
+Post composition parts: `ChannelPicker` is a multiple choice of channels as
+toggle buttons with picture, network mark and name; `invalid` marks selected
+channels with a problem. `CharacterCount` shows a count against an optional
+limit; `characterCount()` counts code points. `MediaAttachmentList` shows the
+ordered files of a post as square tiles: drag and drop or move buttons
+reorder them, each has a remove button, an optional open button and host
+`actions`, and an upload shows a `progress` bar. `MediaGridPicker` is a grid
+of toggle buttons for a choice of library files, with the place of each
+selected file. `SocialPostPreview` shows an approximate post in the layout of
+its network: a feed post, an Instagram photo, a pin, a YouTube video or a
+vertical video. `CalendarBoard.onCreate(day, slot?)` adds a `+` button to each
+day that is not past, and a pointer target on each future half hour of the
+week view. `CalendarHeader.actions` and `PostDetailDialog.actions` take page
+or dialog actions.
 
 `TagChip` supports `disabled` and a native `title` for unavailable actions.
 Unselected tags use a dashed border and 60% opacity for the complete chip,
