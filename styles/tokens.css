@@ -11153,6 +11153,16 @@ button.od-tag[data-color][aria-pressed="true"] {
   content: "\200b";
 }
 
+/* A text button with a leading icon takes its baseline from its text. */
+:is(.od-calendar-header, .od-heading-actions)
+  .od-button:not(.od-icon-button):has(
+    > :is(svg, .od-loading-ring):first-child
+  )::before {
+  width: 0;
+  margin-inline-end: -7px;
+  content: "\200b";
+}
+
 .od-date-range > .od-segmented {
   align-self: baseline;
 }

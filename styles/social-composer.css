@@ -737,6 +737,13 @@ button.od-attachment-preview {
   margin-inline-start: auto;
 }
 
+/* On a phone, the title has its own line when the header has actions. */
+@media (max-width: 720px) {
+  .od-calendar-header:has(.od-calendar-header-actions) h1 {
+    flex-basis: 100%;
+  }
+}
+
 @media (prefers-reduced-motion: no-preference) {
   .od-calendar-create,
   .od-channel-picker-item {
