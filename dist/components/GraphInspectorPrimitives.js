@@ -39,7 +39,7 @@ function useFactsFit() {
             // Measure the normal break opportunities in the actual styled content.
             // The temporary state ends before paint and never replaces a DOM node.
             facts.dataset.measuringFit = "true";
-            let stacked = false;
+            let stacked;
             try {
                 stacked = rows.some((row) => {
                     const [term, description] = row.children;

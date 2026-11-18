@@ -26,7 +26,7 @@ required_files=(
   "package.json"
   "package-lock.json"
   "react-doctor.config.json"
-  "renovate.json"
+  ".github/dependabot.yml"
   "tsconfig.json"
   "tsconfig.build.json"
   "src/index.tsx"
@@ -94,7 +94,7 @@ node --input-type=module -e "import('./dist/index.js').then((shared) => { for (c
 grep -qx "min-release-age=14" .npmrc
 grep -q 'OPENDLE_UI_DEPENDENCY_MIN_AGE_DAYS:-14' scripts/dependency-age-gate.sh
 jq -e . react-doctor.config.json >/dev/null
-jq -e . renovate.json >/dev/null
+test "$(grep -Fxc "      default-days: 14" .github/dependabot.yml)" -eq 2
 
 ./scripts/dependency-age-gate.sh check
 if OPENDLE_UI_DEPENDENCY_MIN_AGE_DAYS=13 ./scripts/dependency-age-gate.sh check >/dev/null 2>&1; then

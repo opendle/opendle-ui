@@ -38,8 +38,8 @@
   },
   "scripts": {
     "build": "tsc --project tsconfig.build.json",
-    "format": "prettier --write src test styles scripts/*.mjs scripts/tests/fixtures/*.json eslint.config.mjs package.json react-doctor.config.json renovate.json tsconfig.json tsconfig.build.json",
-    "format:check": "prettier --check src test styles scripts/*.mjs scripts/tests/fixtures/*.json eslint.config.mjs package.json react-doctor.config.json renovate.json tsconfig.json tsconfig.build.json",
+    "format": "prettier --write src test styles scripts/*.mjs scripts/tests/fixtures/*.json eslint.config.mjs package.json react-doctor.config.json .github/dependabot.yml tsconfig.json tsconfig.build.json",
+    "format:check": "prettier --check src test styles scripts/*.mjs scripts/tests/fixtures/*.json eslint.config.mjs package.json react-doctor.config.json .github/dependabot.yml tsconfig.json tsconfig.build.json",
     "lint": "eslint src --max-warnings 0",
     "prepare": "npm run build",
     "react-doctor": "react-doctor . --json --json-compact --full --fail-on none",
@@ -49,36 +49,36 @@
     "test": "npm run build && node --test"
   },
   "devDependencies": {
-    "@axe-core/playwright": "4.12.1",
-    "@eslint/js": "9.39.5",
-    "@playwright/test": "1.62.0",
-    "@types/react": "19.2.17",
-    "@types/react-dom": "19.2.3",
+    "@axe-core/playwright": "4.13.0",
+    "@eslint/js": "10.0.1",
+    "@playwright/test": "1.64.1",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
     "esbuild": "0.28.2",
-    "eslint": "10.8.0",
+    "eslint": "10.14.0",
     "eslint-plugin-react-hooks": "7.1.1",
-    "oxc-parser": "0.132.0",
-    "oxc-resolver": "11.19.1",
-    "prettier": "3.9.6",
-    "react": "19.2.8",
+    "oxc-parser": "0.157.0",
+    "oxc-resolver": "11.24.2",
+    "prettier": "3.9.10",
+    "react": "19.3.1",
     "react-doctor": "0.2.2",
-    "react-dom": "19.2.8",
+    "react-dom": "19.3.1",
     "typescript": "6.0.3",
-    "typescript-eslint": "8.65.0"
+    "typescript-eslint": "8.72.1"
   },
   "overrides": {
-    "brace-expansion": "5.0.12",
+    "minimatch": "11.0.4",
     "oxlint": "1.76.0",
     "oxlint-plugin-react-doctor": "0.2.3"
   },
   "dependencies": {
-    "@codemirror/autocomplete": "6.20.3",
-    "@codemirror/commands": "6.10.4",
+    "@codemirror/autocomplete": "6.20.4",
+    "@codemirror/commands": "6.11.1",
     "@codemirror/lang-yaml": "6.1.3",
-    "@codemirror/language": "6.12.4",
+    "@codemirror/language": "6.13.1",
     "@codemirror/lint": "6.9.7",
-    "@codemirror/search": "6.7.1",
-    "@codemirror/state": "6.7.1",
-    "@codemirror/view": "6.43.8"
+    "@codemirror/search": "6.7.2",
+    "@codemirror/state": "6.7.6",
+    "@codemirror/view": "6.43.15"
   }
 }

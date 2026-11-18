@@ -757,6 +757,14 @@ engine and `oxlint-plugin-react-doctor` `0.2.3` rules. The exact `oxc-parser`
 and `oxc-resolver` dependencies supply the native bindings omitted by the
 CLI package. The gate checks these tools and rejects skipped checks.
 
+The `minimatch` override uses `11.0.4` to fix `GHSA-g3hv-75wg-m249`. Remove it
+when `eslint`, `@eslint/config-array`, and `typescript-eslint` releases that
+require `minimatch` 11 are 14 days old.
+
+Dependabot opens grouped pull requests for npm and GitHub Actions each week.
+`.github/dependabot.yml` sets a 14-day cooldown and one group for version
+updates and one group for security updates in each ecosystem.
+
 Read [`AGENTS.md`](AGENTS.md) before work. Use the skills in
 [`.claude/skills/`](.claude/skills/) for design-system work, repository
 tooling, and self-review.
