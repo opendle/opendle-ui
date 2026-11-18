@@ -118,7 +118,7 @@ export { InboxList, type InboxEntry, type InboxListProps, } from "./components/I
 export { ReplyComposer, type ReplyComposerProps, } from "./components/ReplyComposer.js";
 export { CharacterCount, type CharacterCountProps, } from "./components/CharacterCount.js";
 export { characterCount } from "./components/characterLength.js";
-export { ChannelPicker, type ChannelPickerItem, type ChannelPickerProps, } from "./components/ChannelPicker.js";
+export { ChannelPicker, type ChannelPickerGroup, type ChannelPickerGroupChange, type ChannelPickerItem, type ChannelPickerProps, } from "./components/ChannelPicker.js";
 export { MediaAttachmentList, type MediaAttachment, type MediaAttachmentKind, type MediaAttachmentListProps, } from "./components/MediaAttachmentList.js";
 export { mediaAttachmentListLabels, type MediaAttachmentListLabels, } from "./components/mediaAttachmentLabels.js";
 export { MediaGridPicker, type MediaGridItem, type MediaGridPickerProps, } from "./components/MediaGridPicker.js";

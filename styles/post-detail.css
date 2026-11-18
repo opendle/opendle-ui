@@ -203,6 +203,7 @@
 }
 
 .od-post-detail-tags,
+.od-post-detail-tag-input,
 .od-post-detail-states {
   display: contents;
 }

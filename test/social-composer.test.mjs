@@ -51,6 +51,53 @@ test("ChannelPicker shows each channel as a toggle with its network", () => {
   assert.match(markup, /data-network="bluesky"/);
 });
 
+test("ChannelPicker groups select their channels and show when they are chosen", () => {
+  const props = {
+    label: "Channels",
+    groupsLabel: "Channels by tag",
+    items: [
+      { id: "one", network: "x", name: "Studio" },
+      { id: "two", network: "youtube", name: "Music" },
+      { id: "off", network: "bluesky", name: "Off", disabled: true },
+    ],
+    value: ["one"],
+    onChange: () => {},
+  };
+  const markup = renderToStaticMarkup(
+    element(ChannelPicker, {
+      ...props,
+      groups: [
+        { id: "short", label: "#short", color: 4, channelIds: ["one", "off"] },
+        { id: "long", label: "#long", channelIds: ["one", "two"] },
+        { id: "chosen", label: "#chosen", channelIds: ["one"], pressed: false },
+        { id: "empty", label: "#empty", channelIds: ["off"] },
+      ],
+    }),
+  );
+  assert.match(
+    markup,
+    /<fieldset aria-label="Channels by tag" class="od-channel-picker-groups">/,
+  );
+  // A disabled channel does not count: all enabled channels of #short are selected.
+  assert.match(
+    markup,
+    /<button aria-pressed="true" class="od-tag" data-color="4"[^>]*>#short<\/button>/,
+  );
+  assert.match(
+    markup,
+    /<button aria-pressed="false" class="od-tag"[^>]*>#long</,
+  );
+  assert.match(
+    markup,
+    /<button aria-pressed="false" class="od-tag"[^>]*>#chosen</,
+  );
+  assert.doesNotMatch(markup, /#empty/);
+  assert.doesNotMatch(
+    renderToStaticMarkup(element(ChannelPicker, props)),
+    /od-channel-picker-groups/,
+  );
+});
+
 test("MediaAttachmentList gives each item named move, remove and open buttons", () => {
   const markup = renderToStaticMarkup(
     element(

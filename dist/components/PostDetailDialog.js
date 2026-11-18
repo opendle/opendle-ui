@@ -9,6 +9,7 @@ import { IconButton } from "./IconButton.js";
 import { InlineAlert } from "./InlineAlert.js";
 import { TabPanel, Tabs } from "./Tabs.js";
 import { TagChip } from "./TagChip.js";
+import { TagInput } from "./TagInput.js";
 import { useAsyncAction } from "./useAsyncAction.js";
 const noTags = [];
 const noMetrics = [];
@@ -97,7 +98,7 @@ function VersionLabel({ version }) {
  * per channel with its state, its link, its error and its actions. When the
  * text or the media differs between channels, a tab shows each version.
  */
-export function PostDetailDialog({ actions, children, errorMessage, labels = postDetailLabels, media = null, metrics = noMetrics, onClose, onRetry, onReschedule, rescheduleLabel = "Change date and time", scheduleEditor, open, tagColors, tags = noTags, targets, title, }) {
+export function PostDetailDialog({ actions, children, errorMessage, labels = postDetailLabels, media = null, metrics = noMetrics, onClose, onRetry, onReschedule, onTagsChange, rescheduleLabel = "Change date and time", scheduleEditor, open, tagColors, tagSuggestions, tags = noTags, targets, title, }) {
     const retry = useAsyncAction(errorMessage);
     const [selected, setSelected] = useState(null);
     const versions = versionsOf(targets);
@@ -117,7 +118,9 @@ export function PostDetailDialog({ actions, children, errorMessage, labels = pos
     const body = (_jsxs("div", { className: "od-post-detail-main", "data-media": shownMedia.length > 0, children: [_jsx(MediaGallery, { media: shownMedia, playLabel: labels.play }, shown?.id ?? "media"), _jsxs("div", { className: "od-post-detail-text", children: [(shown?.text ?? "")
                         .split(/\n+/)
                         .filter((line) => line.trim() !== "")
-                        .map((line, index) => (_jsx("p", { children: line }, `${String(index)}:${line}`))), _jsxs("div", { className: "od-post-detail-metadata", children: [_jsx("p", { className: "od-post-detail-states", children: counts.map(({ count, state }) => (_jsxs("span", { className: "od-post-detail-pill", "data-tone": stateTones[state], children: [state === "published" ? _jsx(Icon, { name: "check", size: 13 }) : null, state === "failed" ? _jsx(Icon, { name: "alert", size: 13 }) : null, state === "scheduled" ? _jsx(Icon, { name: "clock", size: 13 }) : null, count, " ", labels.states[state]] }, state))) }), tags.length === 0 ? null : (_jsx("div", { className: "od-post-detail-tags", children: tags.map((tag) => (_jsxs(TagChip, { color: tagColors?.[tag], children: ["#", tag] }, tag))) }))] })] })] }));
+                        .map((line, index) => (_jsx("p", { children: line }, `${String(index)}:${line}`))), _jsxs("div", { className: "od-post-detail-metadata", children: [_jsx("p", { className: "od-post-detail-states", children: counts.map(({ count, state }) => (_jsxs("span", { className: "od-post-detail-pill", "data-tone": stateTones[state], children: [state === "published" ? _jsx(Icon, { name: "check", size: 13 }) : null, state === "failed" ? _jsx(Icon, { name: "alert", size: 13 }) : null, state === "scheduled" ? _jsx(Icon, { name: "clock", size: 13 }) : null, count, " ", labels.states[state]] }, state))) }), onTagsChange === undefined ? null : (_jsx(TagInput, { className: "od-post-detail-tag-input", label: labels.tags, onChange: onTagsChange, placeholder: labels.addTag, removeLabel: labels.removeTag, value: tags, ...(tagColors === undefined ? {} : { colors: tagColors }), ...(tagSuggestions === undefined
+                                    ? {}
+                                    : { suggestions: tagSuggestions }) })), onTagsChange !== undefined || tags.length === 0 ? null : (_jsx("div", { className: "od-post-detail-tags", children: tags.map((tag) => (_jsxs(TagChip, { color: tagColors?.[tag], children: ["#", tag] }, tag))) }))] })] })] }));
     return (_jsxs(Dialog, { bodyClassName: "od-post-detail-body", className: "od-post-detail", closeLabel: labels.close, description: onReschedule === undefined ? (when) : (_jsxs("button", { className: "od-post-detail-date", disabled: !targets.some((target) => target.canReschedule), onClick: () => {
                 onReschedule(null);
             }, title: rescheduleLabel, type: "button", children: [when, _jsx(Icon, { name: "calendar", size: 14 })] })), headerActions: actions, onClose: close, open: open, title: title, children: [scheduleEditor, _jsxs("div", { className: "od-post-detail-content", children: [versions.length > 1 && version !== undefined ? (_jsxs(_Fragment, { children: [_jsx(Tabs, { className: "od-post-detail-versions", idBase: "od-post-detail", items: versions.map((entry) => ({

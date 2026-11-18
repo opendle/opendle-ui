@@ -432,6 +432,54 @@ test("TagInput shows each tag with a remove button, or as text only", () => {
   assert.doesNotMatch(fixed, /<button|<input/);
 });
 
+test("TagInput suggests the known tags that are not in the list", () => {
+  const markup = render(TagInput, {
+    value: ["short"],
+    onChange: () => undefined,
+    label: "Tags",
+    removeLabel: "Remove tag",
+    suggestions: ["long", "short"],
+  });
+  const list = markup.match(/<input[^>]* list="([^"]+)"/)?.[1];
+  assert.ok(list);
+  assert.match(markup, new RegExp(`<datalist id="${list}">`));
+  assert.match(markup, /<option value="long">long<\/option>/);
+  assert.doesNotMatch(markup, /<option value="short">/);
+  const none = render(TagInput, {
+    value: ["short"],
+    onChange: () => undefined,
+    label: "Tags",
+    removeLabel: "Remove tag",
+    suggestions: ["short"],
+  });
+  assert.doesNotMatch(none, /<datalist| list=/);
+});
+
+test("PostDetailDialog tags are editable only with onTagsChange", () => {
+  const props = {
+    open: true,
+    onClose: () => undefined,
+    errorMessage: () => null,
+    title: "Post",
+    tags: ["long"],
+    tagColors: { long: 3 },
+    targets: [detailTarget("p", "youtube", "published")],
+  };
+  const fixed = render(PostDetailDialog, props);
+  assert.match(fixed, /<span class="od-tag" data-color="3">#long<\/span>/);
+  assert.doesNotMatch(fixed, /od-tag-input/);
+  const editable = render(PostDetailDialog, {
+    ...props,
+    onTagsChange: () => undefined,
+    tagSuggestions: ["long", "short"],
+  });
+  assert.match(editable, /class="od-tag-input od-post-detail-tag-input"/);
+  assert.match(editable, /class="od-tag od-tag-input-tag" data-color="3"/);
+  assert.match(editable, /aria-label="Remove tag: long"/);
+  assert.match(editable, /<input aria-label="Tags"[^>]*placeholder="Add tag"/);
+  assert.match(editable, /<option value="short">/);
+});
+
 test("ChannelList warns about an ended authorization and hides writes", () => {
   const props = {
     items: [

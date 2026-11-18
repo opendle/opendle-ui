@@ -1,4 +1,4 @@
-import { useState, type KeyboardEvent } from "react";
+import { useId, useState, type KeyboardEvent } from "react";
 
 import { classes } from "./classes.js";
 import { Icon } from "./Icon.js";
@@ -12,6 +12,8 @@ export interface TagInputProps {
   readonly removeLabel: string;
   /** The colour key, from 1 to 12, of each tag name. */
   readonly colors?: Readonly<Record<string, number>>;
+  /** Known tags that the input suggests. A chosen suggestion is added at once. */
+  readonly suggestions?: readonly string[];
   readonly placeholder?: string;
   readonly disabled?: boolean;
   readonly className?: string;
@@ -23,7 +25,8 @@ function clean(text: string): string {
 
 /**
  * A list of tags that the user edits in place. Enter or a comma adds the
- * typed tag. Backspace in the empty input removes the last tag.
+ * typed tag. Backspace in the empty input removes the last tag. The input
+ * suggests the known tags that are not in the list.
  */
 export function TagInput({
   className,
@@ -33,12 +36,15 @@ export function TagInput({
   onChange,
   placeholder,
   removeLabel,
+  suggestions,
   value,
 }: TagInputProps) {
   const [draft, setDraft] = useState("");
+  const listId = useId();
+  const offered = (suggestions ?? []).filter((tag) => !value.includes(tag));
 
-  function add() {
-    const tag = clean(draft);
+  function add(text = draft) {
+    const tag = clean(text);
     setDraft("");
     if (tag !== "" && !value.includes(tag)) onChange([...value, tag]);
   }
@@ -80,9 +86,19 @@ export function TagInput({
         <input
           aria-label={label}
           className="od-tag-input-field"
-          onBlur={add}
+          list={offered.length === 0 ? undefined : listId}
+          onBlur={() => {
+            add();
+          }}
           onChange={(event) => {
-            setDraft(event.currentTarget.value);
+            const text = event.currentTarget.value;
+            // A choice in the suggestion list replaces the text in one step.
+            const kind = (event.nativeEvent as Partial<InputEvent>).inputType;
+            const picked =
+              (kind === undefined || kind === "insertReplacementText") &&
+              offered.includes(clean(text));
+            if (picked) add(text);
+            else setDraft(text);
           }}
           onKeyDown={keyDown}
           placeholder={placeholder}
@@ -92,6 +108,15 @@ export function TagInput({
           )}
           value={draft}
         />
+      )}
+      {disabled || offered.length === 0 ? null : (
+        <datalist id={listId}>
+          {offered.map((tag) => (
+            <option key={tag} value={tag}>
+              {tag}
+            </option>
+          ))}
+        </datalist>
       )}
     </span>
   );

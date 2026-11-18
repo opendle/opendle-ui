@@ -44,6 +44,13 @@ export interface PostDetailDialogProps {
     readonly tags?: readonly string[];
     /** The colour key, from 1 to 12, of each tag name. */
     readonly tagColors?: Readonly<Record<string, number>>;
+    /**
+     * Change the tags in place. The host saves them and gives the new `tags`.
+     * Without it, the tags are read-only.
+     */
+    readonly onTagsChange?: (tags: readonly string[]) => void;
+    /** Known tags that the tag input suggests. */
+    readonly tagSuggestions?: readonly string[];
     readonly targets: readonly PostDetailTarget[];
     /** Send a failed network again. Without it, there is no retry button. */
     readonly onRetry?: (targetId: string) => Promise<void>;
@@ -76,5 +83,5 @@ export declare function PostDetailSection({ actions, children, className, title,
  * per channel with its state, its link, its error and its actions. When the
  * text or the media differs between channels, a tab shows each version.
  */
-export declare function PostDetailDialog({ actions, children, errorMessage, labels, media, metrics, onClose, onRetry, onReschedule, rescheduleLabel, scheduleEditor, open, tagColors, tags, targets, title, }: PostDetailDialogProps): import("react").JSX.Element;
+export declare function PostDetailDialog({ actions, children, errorMessage, labels, media, metrics, onClose, onRetry, onReschedule, onTagsChange, rescheduleLabel, scheduleEditor, open, tagColors, tagSuggestions, tags, targets, title, }: PostDetailDialogProps): import("react").JSX.Element;
 //# sourceMappingURL=PostDetailDialog.d.ts.map

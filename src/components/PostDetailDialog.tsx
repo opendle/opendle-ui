@@ -11,6 +11,7 @@ import { InlineAlert } from "./InlineAlert.js";
 import type { NetworkName } from "./networks.js";
 import { TabPanel, Tabs } from "./Tabs.js";
 import { TagChip } from "./TagChip.js";
+import { TagInput } from "./TagInput.js";
 import { useAsyncAction } from "./useAsyncAction.js";
 
 export interface PostDetailMedia {
@@ -58,6 +59,13 @@ export interface PostDetailDialogProps {
   readonly tags?: readonly string[];
   /** The colour key, from 1 to 12, of each tag name. */
   readonly tagColors?: Readonly<Record<string, number>>;
+  /**
+   * Change the tags in place. The host saves them and gives the new `tags`.
+   * Without it, the tags are read-only.
+   */
+  readonly onTagsChange?: (tags: readonly string[]) => void;
+  /** Known tags that the tag input suggests. */
+  readonly tagSuggestions?: readonly string[];
   readonly targets: readonly PostDetailTarget[];
   /** Send a failed network again. Without it, there is no retry button. */
   readonly onRetry?: (targetId: string) => Promise<void>;
@@ -367,10 +375,12 @@ export function PostDetailDialog({
   onClose,
   onRetry,
   onReschedule,
+  onTagsChange,
   rescheduleLabel = "Change date and time",
   scheduleEditor,
   open,
   tagColors,
+  tagSuggestions,
   tags = noTags,
   targets,
   title,
@@ -424,7 +434,21 @@ export function PostDetailDialog({
               </span>
             ))}
           </p>
-          {tags.length === 0 ? null : (
+          {onTagsChange === undefined ? null : (
+            <TagInput
+              className="od-post-detail-tag-input"
+              label={labels.tags}
+              onChange={onTagsChange}
+              placeholder={labels.addTag}
+              removeLabel={labels.removeTag}
+              value={tags}
+              {...(tagColors === undefined ? {} : { colors: tagColors })}
+              {...(tagSuggestions === undefined
+                ? {}
+                : { suggestions: tagSuggestions })}
+            />
+          )}
+          {onTagsChange !== undefined || tags.length === 0 ? null : (
             <div className="od-post-detail-tags">
               {tags.map((tag) => (
                 <TagChip color={tagColors?.[tag]} key={tag}>

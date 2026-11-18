@@ -351,6 +351,8 @@ export {
 export { characterCount } from "./components/characterLength.js";
 export {
   ChannelPicker,
+  type ChannelPickerGroup,
+  type ChannelPickerGroupChange,
   type ChannelPickerItem,
   type ChannelPickerProps,
 } from "./components/ChannelPicker.js";

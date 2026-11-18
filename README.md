@@ -200,11 +200,18 @@ for the whole post. A target with `canReschedule` has a time button in its
 row; other targets have none. The host supplies its form through
 `scheduleEditor`. Targets with the same text and media share one version tab.
 A target time that differs from the first target shows in its row. Wrap each
-part that the host adds in `PostDetailSection`.
+part that the host adds in `PostDetailSection`. With `onTagsChange`, the tags
+are a `TagInput` that suggests `tagSuggestions`; the host saves each change and
+gives the new `tags`. Without it, the tags are read-only.
 
 Post composition parts: `ChannelPicker` is a multiple choice of channels as
 toggle buttons with picture, network mark and name; `invalid` marks selected
-channels with a problem. `CharacterCount` shows a count against an optional
+channels with a problem. `groups` adds tag chips above the channels: a click
+selects or removes all enabled channels of the group, and `onChange` gets the
+group as its second argument. A group shows as chosen when all its enabled
+channels are selected, or as its `pressed` value says. `TagInput.suggestions`
+offers known tags in a native suggestion list; a chosen suggestion is added at
+once. `CharacterCount` shows a count against an optional
 limit; `characterCount()` counts code points. `MediaAttachmentList` shows the
 ordered files of a post as square tiles: drag and drop or move buttons
 reorder them, each has a remove button, an optional open button and host

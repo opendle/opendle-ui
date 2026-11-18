@@ -16,6 +16,10 @@ export interface PostDetailLabels {
     readonly play: string;
     readonly channels: string;
     readonly variants: string;
+    /** The accessible name of the tag input. */
+    readonly tags: string;
+    readonly addTag: string;
+    readonly removeTag: string;
     readonly states: Readonly<Record<CalendarItemState, string>>;
 }
 export declare const postDetailLabels: PostDetailLabels;
