@@ -163,6 +163,10 @@ part on its own line; on a phone the filters scroll on one line.
 the `CalendarBoard` in a `TabPanel` with the same `idBase`. `CalendarHeader`
 has no view switch. `TagFilterBar` has no `controls` prop: put the other
 filters and the search in a `FilterToolbar`.
+`Tabs` with `appearance="pills"` show each tab as a pill; the pills go on more
+lines and never scroll. `NoResults` shows a magnifier for a search or a filter
+without a match; `picture="media"` shows an empty picture frame for an empty
+media library.
 
 `InboxList.groups` accepts post cards and their comments in host order. Each
 group has `id`, `title`, optional `thumbnailUrl`, and `items`. The host groups
@@ -198,14 +202,22 @@ removable chips. The search shows only the options that are not selected.
 `PostDetailDialog.onReschedule` receives a target ID for a channel, or `null`
 for the whole post. A target with `canReschedule` has a time button in its
 row; other targets have none. The host supplies its form through
-`scheduleEditor`. Targets with the same text and media share one version tab.
-A target time that differs from the first target shows in its row. Wrap each
+`scheduleEditor`. With `scheduleTargetId`, the form opens in a panel next to
+the time button of that target, and Escape or a press outside calls
+`onScheduleDismiss`; without it, the form shows above the content. The
+heading time is the time of most targets. A target with another time shows
+it in its row, and `onResetSchedule` adds a button that gives it the heading
+time again. Web addresses in the text are links (`LinkedText`, `textParts`).
+Targets with the same text and media share one version tab. Wrap each
 part that the host adds in `PostDetailSection`. With `onTagsChange`, the tags
 are a `TagInput` that suggests `tagSuggestions`; the host saves each change and
 gives the new `tags`. Without it, the tags are read-only.
 
-Post composition parts: `ChannelPicker` is a multiple choice of channels as
-toggle buttons with picture, network mark and name; `invalid` marks selected
+Post composition parts: `ChannelAvatar` is the round channel picture with the
+network badge, in `small`, `default` or `large` size. `ChannelChip` is a pill
+with the `ChannelAvatar` and the channel name: static text, a button with
+`onClick`, or a toggle with `pressed`. `ChannelPicker` is a multiple choice of
+channels as `ChannelChip` toggle buttons; `invalid` marks selected
 channels with a problem. `groups` adds tag chips above the channels: a click
 selects or removes all enabled channels of the group, and `onChange` gets the
 group as its second argument. A group shows as chosen when all its enabled
@@ -612,7 +624,8 @@ on the search field after a pointer selection. Escape closes the options first.
 `SecretRevealPanel` supplies the show-once layout and copy interaction. The
 host must keep the secret in memory, clear it at the correct time, and block an
 unsafe route change. `FileDropZone` sends selected or dropped files to the
-host. The host must check file type, size, and authorization. `DateTime`
+host. Its `actions` go next to the browse label, in the same size; a click in
+the remaining zone opens the file choice. The host must check file type, size, and authorization. `DateTime`
 supplies a valid `time` element, locale formatting, and a safe fallback for an
 invalid value.
 

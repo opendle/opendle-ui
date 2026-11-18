@@ -12,6 +12,8 @@ export interface FileDropZoneProps extends Omit<
   InputHTMLAttributes<HTMLInputElement>,
   "children" | "onChange" | "title" | "type"
 > {
+  /** More controls next to the browse button, for example a library button. */
+  readonly actions?: ReactNode;
   readonly browseLabel?: ReactNode;
   readonly description?: ReactNode;
   readonly inputLabel?: string;
@@ -24,6 +26,7 @@ function isFileDrag(types: readonly string[]): boolean {
 }
 
 export function FileDropZone({
+  actions,
   browseLabel = "Choose files",
   className,
   description,
@@ -33,10 +36,13 @@ export function FileDropZone({
   onFiles,
   title,
   "aria-describedby": ariaDescribedBy,
+  "aria-labelledby": ariaLabelledBy,
   ...inputProps
 }: FileDropZoneProps) {
   const generatedId = useId();
   const descriptionId = useId();
+  const titleId = useId();
+  const browseId = useId();
   const inputId = id ?? generatedId;
   const inputRef = useRef<HTMLInputElement>(null);
   const dragDepth = useRef(0);
@@ -100,17 +106,30 @@ export function FileDropZone({
             .join(" ") || undefined
         }
         aria-label={inputLabel}
+        aria-labelledby={
+          ariaLabelledBy ??
+          (inputLabel === undefined ? `${titleId} ${browseId}` : undefined)
+        }
         className="od-file-drop-zone-input"
         disabled={disabled}
         id={inputId}
         onChange={selectFiles}
         type="file"
       />
-      <label className="od-file-drop-zone-label" htmlFor={inputId}>
-        <strong>{title}</strong>
+      <div className="od-file-drop-zone-label">
+        <strong id={titleId}>{title}</strong>
         {description ? <span id={descriptionId}>{description}</span> : null}
-        <span className="od-file-drop-zone-browse">{browseLabel}</span>
-      </label>
+        <div className="od-file-drop-zone-actions">
+          <label
+            className="od-file-drop-zone-browse"
+            htmlFor={inputId}
+            id={browseId}
+          >
+            {browseLabel}
+          </label>
+          {actions}
+        </div>
+      </div>
     </div>
   );
 }

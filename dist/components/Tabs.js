@@ -2,7 +2,7 @@ import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
 import { useRef } from "react";
 import { classes } from "./classes.js";
 /** A tab list with arrow-key movement. The host renders the `TabPanel`. */
-export function Tabs({ className, idBase, items, label, onChange, value, }) {
+export function Tabs({ appearance = "line", className, idBase, items, label, onChange, value, }) {
     const listRef = useRef(null);
     function move(event, index) {
         const last = items.length - 1;
@@ -29,7 +29,7 @@ export function Tabs({ className, idBase, items, label, onChange, value, }) {
             .item(target)
             .focus();
     }
-    return (_jsx("div", { "aria-label": label, className: classes("od-tabs", className), ref: listRef, role: "tablist", children: items.map((item, index) => (_jsxs("button", { "aria-controls": `${idBase}-panel-${item.id}`, "aria-selected": item.id === value, className: "od-tab", id: `${idBase}-tab-${item.id}`, onClick: () => {
+    return (_jsx("div", { "aria-label": label, className: classes("od-tabs", className), "data-appearance": appearance === "line" ? undefined : appearance, ref: listRef, role: "tablist", children: items.map((item, index) => (_jsxs("button", { "aria-controls": `${idBase}-panel-${item.id}`, "aria-selected": item.id === value, className: "od-tab", id: `${idBase}-tab-${item.id}`, onClick: () => {
                 onChange(item.id);
             }, onKeyDown: (event) => {
                 move(event, index);

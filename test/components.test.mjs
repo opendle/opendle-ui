@@ -1392,6 +1392,12 @@ test("no results shows a decorative picture, a title, a line and actions", () =>
   assert.match(markup, /class="od-no-results-description">Try another word\.</);
   assert.match(markup, /class="od-no-results-actions"><button>Clear search</);
   assert.match(bare, /<h2 class="od-no-results-title">Nothing<\/h2><\/div>$/);
+  assert.match(bare, /class="od-no-results-lens"/);
+  const media = renderToStaticMarkup(
+    React.createElement(NoResults, { picture: "media", title: "No image" }),
+  );
+  assert.match(media, /class="od-no-results-photo"/);
+  assert.doesNotMatch(media, /od-no-results-lens/);
 });
 
 test("state panels expose status, error, action, and heading states", () => {

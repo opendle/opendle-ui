@@ -13,7 +13,6 @@ export const postDetailLabels = {
     channels: "Channels",
     variants: "Channel versions",
     tags: "Tags",
-    addTag: "Add tag",
     removeTag: "Remove tag",
     states: {
         draft: "draft",

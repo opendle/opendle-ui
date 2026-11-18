@@ -56,7 +56,24 @@ export interface PostDetailDialogProps {
     readonly onRetry?: (targetId: string) => Promise<void>;
     readonly onReschedule?: (targetId: string | null) => void;
     readonly rescheduleLabel?: string;
+    /**
+     * The form that changes a time. Without `scheduleTargetId`, it shows above
+     * the content and changes the time of all channels.
+     */
     readonly scheduleEditor?: ReactNode;
+    /**
+     * The channel of `scheduleEditor`. The editor then opens in a small panel
+     * next to the calendar button of that channel.
+     */
+    readonly scheduleTargetId?: string | null;
+    /** Close the panel of `scheduleEditor` after Escape or a press outside. */
+    readonly onScheduleDismiss?: () => void;
+    /**
+     * Give a channel with its own time the time of the post again. Without it,
+     * there is no reset button.
+     */
+    readonly onResetSchedule?: (targetId: string) => void;
+    readonly resetScheduleLabel?: string;
     readonly errorMessage: (error: unknown) => string | null;
     /** Key numbers of the post, already formatted. */
     readonly metrics?: readonly PostDetailMetric[];
@@ -83,5 +100,5 @@ export declare function PostDetailSection({ actions, children, className, title,
  * per channel with its state, its link, its error and its actions. When the
  * text or the media differs between channels, a tab shows each version.
  */
-export declare function PostDetailDialog({ actions, children, errorMessage, labels, media, metrics, onClose, onRetry, onReschedule, onTagsChange, rescheduleLabel, scheduleEditor, open, tagColors, tagSuggestions, tags, targets, title, }: PostDetailDialogProps): import("react").JSX.Element;
+export declare function PostDetailDialog({ actions, children, errorMessage, labels, media, metrics, onClose, onResetSchedule, onRetry, onReschedule, onScheduleDismiss, onTagsChange, rescheduleLabel, resetScheduleLabel, scheduleEditor, scheduleTargetId, open, tagColors, tagSuggestions, tags, targets, title, }: PostDetailDialogProps): import("react").JSX.Element;
 //# sourceMappingURL=PostDetailDialog.d.ts.map

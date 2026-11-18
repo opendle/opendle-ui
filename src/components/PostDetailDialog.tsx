@@ -1,4 +1,12 @@
-import { useId, useState, type ReactNode } from "react";
+import {
+  useEffect,
+  useId,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type KeyboardEvent,
+  type ReactNode,
+} from "react";
 
 import { Button } from "./Button.js";
 import type { CalendarItemState } from "./calendarItems.js";
@@ -8,7 +16,9 @@ import { Dialog } from "./Dialog.js";
 import { Icon, NetworkIcon } from "./Icon.js";
 import { IconButton } from "./IconButton.js";
 import { InlineAlert } from "./InlineAlert.js";
+import { LinkedText } from "./LinkedText.js";
 import type { NetworkName } from "./networks.js";
+import { placePanel } from "./placePanel.js";
 import { TabPanel, Tabs } from "./Tabs.js";
 import { TagChip } from "./TagChip.js";
 import { TagInput } from "./TagInput.js";
@@ -71,7 +81,24 @@ export interface PostDetailDialogProps {
   readonly onRetry?: (targetId: string) => Promise<void>;
   readonly onReschedule?: (targetId: string | null) => void;
   readonly rescheduleLabel?: string;
+  /**
+   * The form that changes a time. Without `scheduleTargetId`, it shows above
+   * the content and changes the time of all channels.
+   */
   readonly scheduleEditor?: ReactNode;
+  /**
+   * The channel of `scheduleEditor`. The editor then opens in a small panel
+   * next to the calendar button of that channel.
+   */
+  readonly scheduleTargetId?: string | null;
+  /** Close the panel of `scheduleEditor` after Escape or a press outside. */
+  readonly onScheduleDismiss?: () => void;
+  /**
+   * Give a channel with its own time the time of the post again. Without it,
+   * there is no reset button.
+   */
+  readonly onResetSchedule?: (targetId: string) => void;
+  readonly resetScheduleLabel?: string;
   readonly errorMessage: (error: unknown) => string | null;
   /** Key numbers of the post, already formatted. */
   readonly metrics?: readonly PostDetailMetric[];
@@ -240,6 +267,91 @@ function MediaTile({ media, playLabel }: MediaTileProps) {
   );
 }
 
+interface SchedulePanelProps {
+  readonly anchor: HTMLElement | null;
+  readonly label: string;
+  readonly onDismiss: (() => void) | undefined;
+  readonly children: ReactNode;
+}
+
+/**
+ * The time form of one channel, next to its calendar button. The panel is
+ * fixed to the window, so the scroll area of the dialog does not cut it.
+ * Escape or a press outside closes it.
+ */
+function SchedulePanel({
+  anchor,
+  children,
+  label,
+  onDismiss,
+}: SchedulePanelProps) {
+  const panelRef = useRef<HTMLDialogElement>(null);
+  const dismissRef = useRef(onDismiss);
+  useEffect(() => {
+    dismissRef.current = onDismiss;
+  }, [onDismiss]);
+
+  useLayoutEffect(() => {
+    const panel = panelRef.current;
+    if (anchor === null || panel === null) return undefined;
+    const update = () => {
+      placePanel(anchor, panel, "end");
+    };
+    update();
+    panel
+      .querySelector<HTMLElement>("input, select, textarea, button")
+      ?.focus({ preventScroll: true });
+    const resize = new ResizeObserver(update);
+    resize.observe(panel);
+    window.addEventListener("resize", update);
+    window.addEventListener("scroll", update, true);
+    return () => {
+      resize.disconnect();
+      window.removeEventListener("resize", update);
+      window.removeEventListener("scroll", update, true);
+    };
+  }, [anchor]);
+
+  useEffect(() => {
+    const outside = (event: PointerEvent) => {
+      const node = event.target;
+      if (
+        node instanceof Node &&
+        panelRef.current?.contains(node) !== true &&
+        anchor?.contains(node) !== true
+      ) {
+        dismissRef.current?.();
+      }
+    };
+    document.addEventListener("pointerdown", outside);
+    return () => {
+      document.removeEventListener("pointerdown", outside);
+    };
+  }, [anchor]);
+
+  const keyDown = (event: KeyboardEvent<HTMLDialogElement>) => {
+    if (event.key !== "Escape") return;
+    // A prevented Escape does not close the dialog of the post.
+    event.preventDefault();
+    event.stopPropagation();
+    dismissRef.current?.();
+    anchor?.querySelector("button")?.focus();
+  };
+
+  return (
+    // react-doctor-disable-next-line react-doctor/no-noninteractive-element-interactions -- The panel contains Escape so that it closes before the dialog of the post.
+    <dialog
+      aria-label={label}
+      className="od-post-detail-schedule-panel"
+      onKeyDown={keyDown}
+      open
+      ref={panelRef}
+    >
+      {children}
+    </dialog>
+  );
+}
+
 interface TargetRowProps {
   readonly target: PostDetailTarget;
   /** The time of the dialog heading. A different time shows in the row. */
@@ -249,28 +361,37 @@ interface TargetRowProps {
   readonly onRetry: ((targetId: string) => void) | null;
   readonly onReschedule: ((targetId: string | null) => void) | undefined;
   readonly rescheduleLabel: string;
+  readonly onResetSchedule: ((targetId: string) => void) | undefined;
+  readonly resetScheduleLabel: string;
+  /** The time form of this channel, when it is open. */
+  readonly scheduleEditor: ReactNode;
+  readonly onScheduleDismiss: (() => void) | undefined;
 }
 
 function TargetRow({
   labels,
+  onResetSchedule,
   onRetry,
   onReschedule,
-  rescheduleLabel,
+  onScheduleDismiss,
   pending,
+  rescheduleLabel,
+  resetScheduleLabel,
+  scheduleEditor,
   target,
   when,
 }: TargetRowProps) {
+  const [anchor, setAnchor] = useState<HTMLSpanElement | null>(null);
   const failed = target.state === "failed";
-  const meta = [
-    labels.states[target.state],
-    target.when === when ? null : target.when,
-  ]
+  const ownTime = target.when !== when;
+  const meta = [labels.states[target.state], ownTime ? target.when : null]
     .filter((part) => part !== null)
     .join(" · ");
   const reschedule =
     onReschedule !== undefined &&
     target.canReschedule === true &&
     (target.state === "scheduled" || failed);
+  const editing = scheduleEditor !== null && scheduleEditor !== undefined;
   return (
     <li className="od-post-detail-target" data-state={target.state}>
       <NetworkIcon badge network={target.network} />
@@ -295,15 +416,30 @@ function TargetRow({
             {labels.retry}
           </Button>
         ) : null}
-        {reschedule ? (
+        {reschedule && ownTime && onResetSchedule !== undefined ? (
           <IconButton
             className="od-post-detail-target-schedule"
-            icon={<Icon name="calendar" size={15} />}
-            label={`${rescheduleLabel} · ${target.name}`}
+            icon={<Icon name="undo" size={15} />}
+            label={`${resetScheduleLabel} · ${target.name}`}
             onClick={() => {
-              onReschedule(target.id);
+              onResetSchedule(target.id);
             }}
           />
+        ) : null}
+        {reschedule ? (
+          <span className="od-post-detail-target-anchor" ref={setAnchor}>
+            <IconButton
+              aria-expanded={editing}
+              aria-haspopup="dialog"
+              className="od-post-detail-target-schedule"
+              icon={<Icon name="calendar" size={15} />}
+              label={`${rescheduleLabel} · ${target.name}`}
+              onClick={() => {
+                if (editing) onScheduleDismiss?.();
+                else onReschedule(target.id);
+              }}
+            />
+          </span>
         ) : null}
         {target.url ? (
           <a
@@ -318,8 +454,36 @@ function TargetRow({
           </a>
         ) : null}
       </div>
+      {editing ? (
+        <SchedulePanel
+          anchor={anchor}
+          label={`${rescheduleLabel} · ${target.name}`}
+          onDismiss={onScheduleDismiss}
+        >
+          {scheduleEditor}
+        </SchedulePanel>
+      ) : null}
     </li>
   );
+}
+
+/**
+ * The time of the post: the time of most channels. On a tie, the first
+ * channel wins.
+ */
+function commonWhen(targets: readonly PostDetailTarget[]): string | undefined {
+  const counts = new Map<string, number>();
+  for (const target of targets)
+    counts.set(target.when, (counts.get(target.when) ?? 0) + 1);
+  let best: string | undefined;
+  let most = 0;
+  for (const [when, count] of counts) {
+    if (count > most) {
+      best = when;
+      most = count;
+    }
+  }
+  return best;
 }
 
 /** Channels with the same text and media share one version of the post. */
@@ -373,11 +537,15 @@ export function PostDetailDialog({
   media = null,
   metrics = noMetrics,
   onClose,
+  onResetSchedule,
   onRetry,
   onReschedule,
+  onScheduleDismiss,
   onTagsChange,
   rescheduleLabel = "Change date and time",
+  resetScheduleLabel = "Use the time of the post",
   scheduleEditor,
+  scheduleTargetId = null,
   open,
   tagColors,
   tagSuggestions,
@@ -391,7 +559,11 @@ export function PostDetailDialog({
   const version =
     versions.find((entry) => entry.id === selected) ?? versions[0];
   const shown = version?.targets[0];
-  const when = targets[0]?.when;
+  const when = commonWhen(targets);
+  const editedTarget =
+    scheduleTargetId === null
+      ? undefined
+      : targets.find((target) => target.id === scheduleTargetId);
   const counts = stateOrder.flatMap((state) => {
     const count = targets.filter((target) => target.state === state).length;
     return count > 0 ? [{ state, count }] : [];
@@ -417,7 +589,9 @@ export function PostDetailDialog({
           .filter((line) => line.trim() !== "")
           .map((line, index) => (
             // react-doctor-disable-next-line react-doctor/no-array-index-key -- The lines of one text have no identity and no state.
-            <p key={`${String(index)}:${line}`}>{line}</p>
+            <p key={`${String(index)}:${line}`}>
+              <LinkedText className="od-post-detail-link" text={line} />
+            </p>
           ))}
         <div className="od-post-detail-metadata">
           <p className="od-post-detail-states">
@@ -439,7 +613,6 @@ export function PostDetailDialog({
               className="od-post-detail-tag-input"
               label={labels.tags}
               onChange={onTagsChange}
-              placeholder={labels.addTag}
               removeLabel={labels.removeTag}
               value={tags}
               {...(tagColors === undefined ? {} : { colors: tagColors })}
@@ -490,7 +663,7 @@ export function PostDetailDialog({
       open={open}
       title={title}
     >
-      {scheduleEditor}
+      {editedTarget === undefined ? scheduleEditor : null}
       <div className="od-post-detail-content">
         {versions.length > 1 && version !== undefined ? (
           <>
@@ -523,7 +696,10 @@ export function PostDetailDialog({
           </dl>
         )}
       </div>
-      <PostDetailSection title={labels.channels}>
+      <PostDetailSection
+        className="od-post-detail-channels"
+        title={labels.channels}
+      >
         {retry.failure === null ? null : (
           <InlineAlert className="od-post-detail-alert" tone="error">
             {retry.failure}
@@ -542,7 +718,13 @@ export function PostDetailDialog({
                     }
               }
               onReschedule={onReschedule}
+              onResetSchedule={onResetSchedule}
+              onScheduleDismiss={onScheduleDismiss}
               rescheduleLabel={rescheduleLabel}
+              resetScheduleLabel={resetScheduleLabel}
+              scheduleEditor={
+                editedTarget?.id === target.id ? scheduleEditor : null
+              }
               pending={retry.pending}
               target={target}
               when={when}

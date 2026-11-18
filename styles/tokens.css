@@ -764,6 +764,39 @@ span.od-tag {
   font-size: 0.65625rem;
 }
 
+/* Pill tabs wrap to more lines; they never scroll. */
+.od-tabs[data-appearance="pills"] {
+  flex-wrap: wrap;
+  gap: 6px;
+  border-bottom: 0;
+}
+
+.od-tabs[data-appearance="pills"] .od-tab {
+  height: 32px;
+  max-width: 100%;
+  margin: 0;
+  padding: 0 12px;
+  border: 1px solid var(--od-color-border);
+  border-radius: 16px;
+  background: var(--od-color-surface);
+  font-size: 0.8125rem;
+}
+
+.od-tabs[data-appearance="pills"] .od-tab:hover {
+  border-color: var(--od-color-border-strong);
+  background: var(--od-color-hover);
+}
+
+.od-tabs[data-appearance="pills"] .od-tab[aria-selected="true"] {
+  border-color: var(--od-color-brand);
+  background: var(--od-color-brand-soft);
+}
+
+.od-tabs[data-appearance="pills"] .od-tab:focus-visible {
+  outline: 2px solid var(--od-color-focus);
+  outline-offset: 2px;
+}
+
 /* Search field */
 
 .od-search-field {
@@ -6640,7 +6673,7 @@ samp {
   opacity: 0.58;
 }
 
-.od-file-drop-zone:focus-within {
+.od-file-drop-zone:has(> .od-file-drop-zone-input:focus-visible) {
   outline: 3px solid color-mix(in srgb, var(--od-color-focus) 58%, transparent);
   outline-offset: 2px;
 }
@@ -6672,19 +6705,49 @@ samp {
   line-height: 1.45;
 }
 
-.od-file-drop-zone-browse {
+/* The browse label and the host actions share one row and one look. */
+.od-file-drop-zone-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--od-space-sm);
+}
+
+.od-file-drop-zone-browse,
+.od-file-drop-zone-actions > .od-button {
   min-height: 2.75rem;
   display: inline-flex;
   padding: 0 0.875rem;
   align-items: center;
+  gap: 6px;
   border: 1px solid var(--od-color-border-strong);
   border-radius: var(--od-radius-md);
   background: var(--od-color-surface-raised);
+  color: var(--od-color-foreground);
   font-size: 0.75rem;
   font-weight: 700;
+  cursor: pointer;
 }
 
-.od-file-drop-zone[data-disabled="true"] .od-file-drop-zone-label {
+/* A click anywhere in the zone opens the file choice. */
+.od-file-drop-zone-browse::after {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  content: "";
+}
+
+.od-file-drop-zone-actions > :not(.od-file-drop-zone-browse) {
+  position: relative;
+}
+
+.od-file-drop-zone:not([data-disabled="true"]) .od-file-drop-zone-browse:hover,
+.od-file-drop-zone-actions > .od-button:hover:not(:disabled) {
+  border-color: var(--od-color-focus);
+  background: var(--od-color-hover);
+}
+
+.od-file-drop-zone[data-disabled="true"] .od-file-drop-zone-browse {
   cursor: not-allowed;
 }
 
@@ -9130,9 +9193,11 @@ html:has(.od-dialog:modal) {
   color: var(--od-color-foreground);
 }
 
+/* The padding adds to the width of the text, so a placeholder fits. */
 .od-tag-input-field {
+  box-sizing: content-box;
   min-width: 0;
-  height: 26px;
+  height: 24px;
   padding: 0 8px;
   border: 1px dashed var(--od-color-border-strong);
   border-radius: 13px;

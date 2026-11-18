@@ -1,6 +1,6 @@
-import { Avatar } from "./Avatar.js";
+import { ChannelChip } from "./ChannelChip.js";
 import { classes } from "./classes.js";
-import { Icon, NetworkIcon } from "./Icon.js";
+import { Icon } from "./Icon.js";
 import type { NetworkName } from "./networks.js";
 import { TagChip } from "./TagChip.js";
 
@@ -129,27 +129,24 @@ export function ChannelPicker({
         const pressed = selected.has(item.id);
         const warning = pressed && invalid?.has(item.id) === true;
         return (
-          <button
-            aria-pressed={pressed}
+          <ChannelChip
+            avatarUrl={item.avatarUrl}
             className="od-channel-picker-item"
-            data-invalid={warning || undefined}
             disabled={item.disabled}
+            invalid={warning}
             key={item.id}
+            name={item.name}
+            network={item.network}
             onClick={() => {
               toggle(item.id);
             }}
+            pressed={pressed}
             title={item.detail}
-            type="button"
           >
-            <span className="od-channel-picker-picture">
-              <Avatar name={item.name} shape="circle" src={item.avatarUrl} />
-              <NetworkIcon badge network={item.network} />
-            </span>
-            <span className="od-channel-picker-name">{item.name}</span>
             <span aria-hidden="true" className="od-channel-picker-mark">
               <Icon name={warning ? "alert" : "check"} size={12} />
             </span>
-          </button>
+          </ChannelChip>
         );
       })}
     </fieldset>

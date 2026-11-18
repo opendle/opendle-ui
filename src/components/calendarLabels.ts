@@ -27,7 +27,6 @@ export interface PostDetailLabels {
   readonly variants: string;
   /** The accessible name of the tag input. */
   readonly tags: string;
-  readonly addTag: string;
   readonly removeTag: string;
   readonly states: Readonly<Record<CalendarItemState, string>>;
 }
@@ -40,7 +39,6 @@ export const postDetailLabels: PostDetailLabels = {
   channels: "Channels",
   variants: "Channel versions",
   tags: "Tags",
-  addTag: "Add tag",
   removeTag: "Remove tag",
   states: {
     draft: "draft",

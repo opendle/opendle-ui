@@ -5,6 +5,7 @@
 
 .od-dialog.od-post-detail {
   --od-post-detail-inset: 24px;
+  --od-dialog-width: 60rem;
 }
 
 .od-dialog.od-post-detail .od-dialog-body {
@@ -95,11 +96,8 @@
   gap: 20px;
 }
 
+/* The still picture has the size of the playing video. */
 .od-post-detail-main[data-media="true"] {
-  grid-template-columns: 148px minmax(0, 1fr);
-}
-
-.od-post-detail-main:has([data-playing="true"]) {
   grid-template-columns: minmax(0, 260px) minmax(0, 1fr);
 }
 
@@ -192,6 +190,17 @@
 
 .od-post-detail-text > p {
   margin: 0;
+}
+
+.od-post-detail-link {
+  color: var(--od-color-brand-text);
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, currentcolor 40%, transparent);
+  text-underline-offset: 2px;
+}
+
+.od-post-detail-link:hover {
+  text-decoration-color: currentcolor;
 }
 
 .od-post-detail-metadata {
@@ -326,6 +335,18 @@
   border-top: 1px solid var(--od-color-border);
 }
 
+/* A wide dialog shows the channels in two columns. */
+@media (width >= 50rem) {
+  .od-post-detail-targets {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 32px;
+  }
+
+  .od-post-detail-target:nth-child(2) {
+    border-top: 0;
+  }
+}
+
 .od-post-detail-target > .od-network {
   --od-network-size: 30px;
 }
@@ -397,6 +418,34 @@
   height: 32px;
 }
 
+.od-post-detail-target-schedule[aria-expanded="true"] {
+  background: var(--od-color-hover);
+  color: var(--od-color-foreground);
+}
+
+.od-post-detail-target-anchor {
+  display: inline-flex;
+}
+
+/* The time form of one channel, next to its calendar button. */
+.od-post-detail-schedule-panel {
+  position: fixed;
+  z-index: 60;
+  top: 0;
+  right: auto;
+  bottom: auto;
+  left: 0;
+  width: min(340px, calc(100vw - 16px));
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid var(--od-color-border);
+  border-radius: var(--od-radius-lg);
+  background: var(--od-color-surface);
+  box-shadow: var(--od-shadow);
+  color: var(--od-color-foreground);
+}
+
 .od-post-detail-target-link.od-button {
   gap: 5px;
   color: var(--od-color-muted-strong);
@@ -429,8 +478,12 @@
   }
 
   .od-post-detail-main[data-media="true"] {
-    grid-template-columns: 104px minmax(0, 1fr);
+    grid-template-columns: 120px minmax(0, 1fr);
     gap: 14px;
+  }
+
+  .od-post-detail-main:has([data-playing="true"]) {
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .od-post-detail-text {

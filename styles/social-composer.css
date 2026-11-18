@@ -37,7 +37,43 @@
   border: 0;
 }
 
-.od-channel-picker-item {
+/* Channel avatar: a round picture with the network badge. */
+
+.od-channel-avatar {
+  --od-channel-avatar-size: 2rem;
+  --od-channel-avatar-badge: 1rem;
+
+  position: relative;
+  display: inline-flex;
+  flex: 0 0 auto;
+}
+
+.od-channel-avatar[data-size="small"] {
+  --od-channel-avatar-size: 1.5rem;
+  --od-channel-avatar-badge: 0.8125rem;
+}
+
+.od-channel-avatar[data-size="large"] {
+  --od-channel-avatar-size: 2.75rem;
+  --od-channel-avatar-badge: 1.25rem;
+}
+
+.od-channel-avatar .od-avatar {
+  --od-avatar-size: var(--od-channel-avatar-size);
+
+  transition: filter 0.12s;
+}
+
+.od-channel-avatar .od-network {
+  position: absolute;
+  right: calc(var(--od-channel-avatar-badge) / -4);
+  bottom: calc(var(--od-channel-avatar-badge) / -4);
+  --od-network-size: var(--od-channel-avatar-badge);
+}
+
+/* Channel chip: the avatar and the name in a pill. */
+
+.od-channel-chip {
   position: relative;
   display: inline-flex;
   max-inline-size: 100%;
@@ -51,60 +87,44 @@
   background: var(--od-color-surface);
   font: inherit;
   font-size: 0.8125rem;
+}
+
+button.od-channel-chip {
   cursor: pointer;
 }
 
-.od-channel-picker-item:hover:not(:disabled) {
+button.od-channel-chip:hover:not(:disabled) {
   border-color: var(--od-color-border-strong);
   background: var(--od-color-hover);
 }
 
-.od-channel-picker-item:focus-visible {
+.od-channel-chip:focus-visible {
   outline: 2px solid var(--od-color-focus);
   outline-offset: 2px;
 }
 
-.od-channel-picker-item:disabled {
+.od-channel-chip:disabled {
   cursor: not-allowed;
   opacity: 0.5;
 }
 
-.od-channel-picker-item[aria-pressed="true"] {
+.od-channel-chip[aria-pressed="true"] {
   border-color: var(--od-color-brand);
   color: var(--od-color-foreground);
   background: var(--od-color-brand-soft);
 }
 
-.od-channel-picker-item[data-invalid="true"] {
+.od-channel-chip[data-invalid="true"] {
   border-color: var(--od-color-danger-border);
   background: var(--od-color-danger-soft);
 }
 
-.od-channel-picker-picture {
-  position: relative;
-  display: inline-flex;
-  flex: 0 0 auto;
-}
-
-.od-channel-picker-picture .od-avatar {
-  --od-avatar-size: 2rem;
-
-  transition: filter 0.12s;
-}
-
-.od-channel-picker-item[aria-pressed="false"] .od-avatar {
+.od-channel-chip[aria-pressed="false"] .od-avatar {
   filter: grayscale(1);
   opacity: 0.7;
 }
 
-.od-channel-picker-picture .od-network {
-  position: absolute;
-  right: -0.25rem;
-  bottom: -0.25rem;
-  --od-network-size: 1rem;
-}
-
-.od-channel-picker-name {
+.od-channel-chip-name {
   min-inline-size: 0;
   overflow: hidden;
   font-weight: 500;
@@ -757,7 +777,7 @@ button.od-attachment-preview {
 
 @media (prefers-reduced-motion: no-preference) {
   .od-calendar-create,
-  .od-channel-picker-item {
+  .od-channel-chip {
     transition:
       opacity 0.12s,
       background-color 0.12s,

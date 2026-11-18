@@ -11,10 +11,15 @@ export interface TabsProps<Id extends string> {
     readonly items: readonly TabItem<Id>[];
     readonly value: Id;
     readonly onChange: (id: Id) => void;
+    /**
+     * `line` underlines the selected tab. `pills` shows each tab as a pill;
+     * the pills go on more lines when they do not fit.
+     */
+    readonly appearance?: "line" | "pills";
     readonly className?: string;
 }
 /** A tab list with arrow-key movement. The host renders the `TabPanel`. */
-export declare function Tabs<Id extends string>({ className, idBase, items, label, onChange, value, }: TabsProps<Id>): import("react").JSX.Element;
+export declare function Tabs<Id extends string>({ appearance, className, idBase, items, label, onChange, value, }: TabsProps<Id>): import("react").JSX.Element;
 export interface TabPanelProps {
     readonly idBase: string;
     readonly id: string;

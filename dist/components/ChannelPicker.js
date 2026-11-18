@@ -1,7 +1,7 @@
 import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
-import { Avatar } from "./Avatar.js";
+import { ChannelChip } from "./ChannelChip.js";
 import { classes } from "./classes.js";
-import { Icon, NetworkIcon } from "./Icon.js";
+import { Icon } from "./Icon.js";
 import { TagChip } from "./TagChip.js";
 /**
  * A multiple choice of channels. Each channel is a toggle button with its
@@ -42,9 +42,9 @@ export function ChannelPicker({ className, disabled = false, groups, groupsLabel
                     }, pressed: pressed, children: group.label }, group.id))) })), items.map((item) => {
                 const pressed = selected.has(item.id);
                 const warning = pressed && invalid?.has(item.id) === true;
-                return (_jsxs("button", { "aria-pressed": pressed, className: "od-channel-picker-item", "data-invalid": warning || undefined, disabled: item.disabled, onClick: () => {
+                return (_jsx(ChannelChip, { avatarUrl: item.avatarUrl, className: "od-channel-picker-item", disabled: item.disabled, invalid: warning, name: item.name, network: item.network, onClick: () => {
                         toggle(item.id);
-                    }, title: item.detail, type: "button", children: [_jsxs("span", { className: "od-channel-picker-picture", children: [_jsx(Avatar, { name: item.name, shape: "circle", src: item.avatarUrl }), _jsx(NetworkIcon, { badge: true, network: item.network })] }), _jsx("span", { className: "od-channel-picker-name", children: item.name }), _jsx("span", { "aria-hidden": "true", className: "od-channel-picker-mark", children: _jsx(Icon, { name: warning ? "alert" : "check", size: 12 }) })] }, item.id));
+                    }, pressed: pressed, title: item.detail, children: _jsx("span", { "aria-hidden": "true", className: "od-channel-picker-mark", children: _jsx(Icon, { name: warning ? "alert" : "check", size: 12 }) }) }, item.id));
             })] }));
 }
 //# sourceMappingURL=ChannelPicker.js.map

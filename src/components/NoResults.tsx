@@ -8,6 +8,11 @@ export interface NoResultsProps extends Omit<
   readonly title: ReactNode;
   readonly actions?: ReactNode;
   readonly headingLevel?: "h2" | "h3";
+  /**
+   * `search` (the default) is a magnifier for a search or a filter. `media`
+   * is an empty picture frame for a media library with no file.
+   */
+  readonly picture?: "search" | "media";
 }
 
 /** A puzzled magnifier over empty result cards. It follows the theme colours. */
@@ -92,12 +97,80 @@ function NoResultsPicture() {
   );
 }
 
-/** The result of a search or a filter that matches nothing. */
+/** An empty photo frame with a sleepy sun, before a video card. */
+function EmptyMediaPicture() {
+  return (
+    <svg
+      aria-hidden="true"
+      className="od-no-results-picture"
+      focusable="false"
+      viewBox="0 0 160 124"
+    >
+      <rect
+        className="od-no-results-card od-no-results-card-back"
+        height="60"
+        rx="11"
+        transform="rotate(8 104 48)"
+        width="80"
+        x="64"
+        y="18"
+      />
+      <path
+        className="od-no-results-play"
+        d="M111 39v18l15-9-15-9Z"
+        transform="rotate(8 104 48)"
+      />
+      <rect
+        className="od-no-results-card"
+        height="74"
+        rx="11"
+        width="96"
+        x="18"
+        y="34"
+      />
+      <rect
+        className="od-no-results-photo"
+        height="54"
+        rx="6"
+        width="78"
+        x="27"
+        y="43"
+      />
+      <path
+        className="od-no-results-hill"
+        d="M27 84 49 63l14 14 11-10 31 23v1a6 6 0 0 1-6 6H33a6 6 0 0 1-6-6Z"
+      />
+      <path
+        className="od-no-results-ridge"
+        d="M27 84 49 63l14 14 11-10 31 23"
+      />
+      <circle className="od-no-results-sun" cx="87" cy="59" r="10" />
+      <path
+        className="od-no-results-eyes"
+        d="M81.6 58.4q1.9 2 3.8 0M88.6 58.4q1.9 2 3.8 0"
+      />
+      <path
+        className="od-no-results-spark"
+        d="M136 82c1 6 3 8 9 9-6 1-8 3-9 9-1-6-3-8-9-9 6-1 8-3 9-9Z"
+      />
+      <path
+        className="od-no-results-spark od-no-results-spark-small"
+        d="M22 14c.6 3.6 1.8 4.8 5.4 5.4-3.6.6-4.8 1.8-5.4 5.4-.6-3.6-1.8-4.8-5.4-5.4 3.6-.6 4.8-1.8 5.4-5.4Z"
+      />
+    </svg>
+  );
+}
+
+/**
+ * The result of a search or a filter that matches nothing, or an empty
+ * collection.
+ */
 export function NoResults({
   actions,
   children,
   className,
   headingLevel = "h2",
+  picture = "search",
   title,
   ...props
 }: NoResultsProps) {
@@ -107,7 +180,7 @@ export function NoResults({
       {...props}
       className={["od-no-results", className].filter(Boolean).join(" ")}
     >
-      <NoResultsPicture />
+      {picture === "media" ? <EmptyMediaPicture /> : <NoResultsPicture />}
       <Heading className="od-no-results-title">{title}</Heading>
       {children ? (
         <div className="od-no-results-description">{children}</div>

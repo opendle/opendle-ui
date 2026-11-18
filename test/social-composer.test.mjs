@@ -5,6 +5,8 @@ import { renderToStaticMarkup } from "react-dom/server";
 import {
   CalendarBoard,
   CalendarHeader,
+  ChannelAvatar,
+  ChannelChip,
   ChannelPicker,
   CharacterCount,
   MediaAttachmentList,
@@ -32,6 +34,68 @@ test("CharacterCount counts code points and marks a count above the limit", () =
   );
 });
 
+test("ChannelAvatar shows the channel picture with its network badge", () => {
+  const markup = renderToStaticMarkup(
+    element(ChannelAvatar, {
+      name: "studio",
+      network: "youtube",
+      src: "/studio.jpg",
+      size: "large",
+    }),
+  );
+  assert.match(markup, /<span class="od-channel-avatar" data-size="large">/);
+  assert.match(markup, /class="od-avatar" data-shape="circle"/);
+  assert.match(markup, /<img alt="" src="\/studio.jpg"\/>/);
+  assert.match(markup, /data-badge="true" data-network="youtube"/);
+  assert.match(markup, /aria-label="YouTube"/);
+  const initial = renderToStaticMarkup(
+    element(ChannelAvatar, { name: "studio", network: "x" }),
+  );
+  assert.match(initial, /^<span class="od-channel-avatar">/);
+  assert.match(initial, />S<\/span>/);
+});
+
+test("ChannelChip is static text, a button or a toggle", () => {
+  const still = renderToStaticMarkup(
+    element(ChannelChip, { name: "Studio", network: "x", title: "@studio" }),
+  );
+  assert.match(still, /^<span class="od-channel-chip" title="@studio">/);
+  assert.match(still, /class="od-channel-avatar"/);
+  assert.match(still, /<span class="od-channel-chip-name">Studio<\/span>/);
+  assert.doesNotMatch(still, /<button/);
+  const action = renderToStaticMarkup(
+    element(ChannelChip, {
+      name: "Studio",
+      network: "x",
+      onClick: () => {},
+    }),
+  );
+  assert.match(action, /^<button class="od-channel-chip" type="button">/);
+  assert.doesNotMatch(action, /aria-pressed/);
+  const toggle = renderToStaticMarkup(
+    element(
+      ChannelChip,
+      {
+        className: "host-chip",
+        invalid: true,
+        name: "Studio",
+        network: "x",
+        pressed: false,
+        disabled: true,
+      },
+      element("span", { className: "host-mark" }),
+    ),
+  );
+  assert.match(
+    toggle,
+    /^<button aria-pressed="false" class="od-channel-chip host-chip" data-invalid="true" disabled="" type="button">/,
+  );
+  assert.match(
+    toggle,
+    /Studio<\/span><span class="host-mark"><\/span><\/button>$/,
+  );
+});
+
 test("ChannelPicker shows each channel as a toggle with its network", () => {
   const markup = renderToStaticMarkup(
     element(ChannelPicker, {
@@ -49,6 +113,8 @@ test("ChannelPicker shows each channel as a toggle with its network", () => {
   assert.match(markup, /aria-pressed="true"[^>]*data-invalid="true"/);
   assert.match(markup, /aria-pressed="false"[^>]*disabled=""/);
   assert.match(markup, /data-network="bluesky"/);
+  assert.match(markup, /class="od-channel-chip od-channel-picker-item"/);
+  assert.match(markup, /class="od-channel-avatar"/);
 });
 
 test("ChannelPicker groups select their channels and show when they are chosen", () => {

@@ -23,6 +23,7 @@ import {
   calendarTitle,
   emptyTagFilter,
   shiftCalendarAnchor,
+  textParts,
 } from "../dist/index.js";
 
 const render = (type, props, ...children) =>
@@ -403,6 +404,100 @@ test("PostDetailDialog has a tab for each network when the text differs", () => 
   assert.doesNotMatch(markup, />Retry<\/button>/);
 });
 
+test("PostDetailDialog links the web addresses of the text", () => {
+  const markup = render(PostDetailDialog, {
+    open: true,
+    onClose: () => undefined,
+    errorMessage: () => "Failed",
+    title: "Take Me With You",
+    targets: [
+      detailTarget("p1", "instagram", "scheduled", {
+        text: "Listen: https://open.spotify.com/track/1. Or www.youtube.com/watch?v=2",
+      }),
+    ],
+  });
+  assert.match(
+    markup,
+    /<a class="od-post-detail-link" href="https:\/\/open.spotify.com\/track\/1" rel="noreferrer" target="_blank">https:\/\/open.spotify.com\/track\/1<\/a>\./,
+  );
+  assert.match(markup, /href="https:\/\/www.youtube.com\/watch\?v=2"/);
+});
+
+test("textParts keeps the punctuation after an address out of the link", () => {
+  assert.deepEqual(textParts("See (https://a.b/c_(d)), then"), [
+    { text: "See (" },
+    { text: "https://a.b/c_(d)", href: "https://a.b/c_(d)" },
+    { text: "), then" },
+  ]);
+  assert.deepEqual(textParts("javascript:alert(1) www."), [
+    { text: "javascript:alert(1) www." },
+  ]);
+});
+
+test("PostDetailDialog shows the time of most channels and a reset for the others", () => {
+  const reschedule = {
+    canReschedule: true,
+    when: "Saturday 21 November, 11:00",
+  };
+  const markup = render(PostDetailDialog, {
+    open: true,
+    onClose: () => undefined,
+    errorMessage: () => "Failed",
+    title: "Take Me With You",
+    onReschedule: () => undefined,
+    onResetSchedule: () => undefined,
+    onTagsChange: () => undefined,
+    targets: [
+      detailTarget("p1", "tiktok", "scheduled", {
+        canReschedule: true,
+        when: "Saturday 21 November, 15:30",
+      }),
+      detailTarget("p2", "x", "scheduled", reschedule),
+      detailTarget("p3", "bluesky", "scheduled", reschedule),
+    ],
+  });
+  assert.match(
+    markup,
+    /class="od-post-detail-date"[^>]*>Saturday 21 November, 11:00/,
+  );
+  assert.match(markup, /scheduled · Saturday 21 November, 15:30/);
+  assert.equal(
+    markup.match(/aria-label="Use the time of the post · [^"]*"/g).length,
+    1,
+  );
+  assert.match(markup, /aria-label="Use the time of the post · tiktok"/);
+  // The tag input is an empty pill, without a placeholder.
+  assert.doesNotMatch(markup, /placeholder=/);
+});
+
+test("PostDetailDialog opens the time form of one channel next to its button", () => {
+  const props = {
+    open: true,
+    onClose: () => undefined,
+    errorMessage: () => "Failed",
+    title: "Take Me With You",
+    onReschedule: () => undefined,
+    scheduleEditor: React.createElement("form", { id: "time-form" }),
+    targets: [
+      detailTarget("p1", "x", "scheduled", { canReschedule: true }),
+      detailTarget("p2", "bluesky", "scheduled", { canReschedule: true }),
+    ],
+  };
+  const all = render(PostDetailDialog, props);
+  assert.doesNotMatch(all, /od-post-detail-schedule-panel/);
+  assert.match(all, /<form id="time-form">/);
+  const one = render(PostDetailDialog, { ...props, scheduleTargetId: "p2" });
+  assert.match(
+    one,
+    /aria-expanded="true"[^>]*aria-label="Change date and time · bluesky"/,
+  );
+  assert.match(
+    one,
+    /class="od-post-detail-schedule-panel" open=""><form id="time-form">/,
+  );
+  assert.equal(one.match(/<form id="time-form">/g).length, 1);
+});
+
 test("AccountMenu is a closed menu button until a press", () => {
   const markup = render(AccountMenu, {
     avatar: "V",
@@ -476,7 +571,8 @@ test("PostDetailDialog tags are editable only with onTagsChange", () => {
   assert.match(editable, /class="od-tag-input od-post-detail-tag-input"/);
   assert.match(editable, /class="od-tag od-tag-input-tag" data-color="3"/);
   assert.match(editable, /aria-label="Remove tag: long"/);
-  assert.match(editable, /<input aria-label="Tags"[^>]*placeholder="Add tag"/);
+  assert.match(editable, /<input aria-label="Tags" class="od-tag-input-field"/);
+  assert.doesNotMatch(editable, /placeholder=/);
   assert.match(editable, /<option value="short">/);
 });
 

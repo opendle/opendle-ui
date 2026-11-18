@@ -15,11 +15,17 @@ export interface TabsProps<Id extends string> {
   readonly items: readonly TabItem<Id>[];
   readonly value: Id;
   readonly onChange: (id: Id) => void;
+  /**
+   * `line` underlines the selected tab. `pills` shows each tab as a pill;
+   * the pills go on more lines when they do not fit.
+   */
+  readonly appearance?: "line" | "pills";
   readonly className?: string;
 }
 
 /** A tab list with arrow-key movement. The host renders the `TabPanel`. */
 export function Tabs<Id extends string>({
+  appearance = "line",
   className,
   idBase,
   items,
@@ -59,6 +65,7 @@ export function Tabs<Id extends string>({
     <div
       aria-label={label}
       className={classes("od-tabs", className)}
+      data-appearance={appearance === "line" ? undefined : appearance}
       ref={listRef}
       role="tablist"
     >

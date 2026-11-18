@@ -21,6 +21,7 @@ import {
   NavigationGroup,
   SecretValue,
   TagChip,
+  Tabs,
   TextControl,
   Toast,
   networkNames,
@@ -105,6 +106,35 @@ test("NetworkIcon covers each network and always names it", () => {
   assert.match(
     render(NetworkIcon, { network: "x", badge: true }),
     /data-badge="true"/,
+  );
+});
+
+test("Tabs take a pill appearance that wraps", () => {
+  const props = {
+    idBase: "version",
+    label: "Version",
+    items: [
+      { id: "all", label: "All" },
+      { id: "x", label: "X" },
+    ],
+    value: "x",
+    onChange: () => undefined,
+  };
+  assert.match(
+    render(Tabs, { ...props, appearance: "pills" }),
+    /^<div aria-label="Version" class="od-tabs" data-appearance="pills" role="tablist">/,
+  );
+  assert.match(
+    render(Tabs, props),
+    /^<div aria-label="Version" class="od-tabs" role="tablist">/,
+  );
+  const css = readFileSync(
+    new URL("../styles/tokens.css", import.meta.url),
+    "utf8",
+  );
+  assert.match(
+    css,
+    /\.od-tabs\[data-appearance="pills"\] \{\n  flex-wrap: wrap;/,
   );
 });
 

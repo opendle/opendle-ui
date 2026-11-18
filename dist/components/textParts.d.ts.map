@@ -1,0 +1,1 @@
+{"version":3,"file":"textParts.d.ts","sourceRoot":"","sources":["../../src/components/textParts.ts"],"names":[],"mappings":"AAAA,sEAAsE;AACtE,MAAM,WAAW,QAAQ;IACvB,QAAQ,CAAC,IAAI,EAAE,MAAM,CAAC;IACtB,oDAAoD;IACpD,QAAQ,CAAC,IAAI,CAAC,EAAE,MAAM,CAAC;CACxB;AAmBD;;;GAGG;AACH,wBAAgB,SAAS,CAAC,IAAI,EAAE,MAAM,GAAG,SAAS,QAAQ,EAAE,CAgB3D"}

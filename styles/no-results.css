@@ -35,6 +35,37 @@
   stroke-width: 6;
 }
 
+.od-no-results-photo {
+  fill: var(--od-color-sunken);
+}
+
+.od-no-results-hill {
+  fill: color-mix(in srgb, var(--od-color-brand-soft) 82%, transparent);
+}
+
+.od-no-results-ridge {
+  fill: none;
+  stroke: var(--od-color-brand);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 3;
+}
+
+.od-no-results-eyes {
+  fill: none;
+  stroke: var(--od-color-foreground);
+  stroke-linecap: round;
+  stroke-width: 1.9;
+}
+
+.od-no-results-play {
+  fill: var(--od-color-border-strong);
+}
+
+.od-no-results-sun {
+  fill: var(--od-color-lime-strong);
+}
+
 .od-no-results-handle {
   fill: none;
   stroke: var(--od-color-brand);

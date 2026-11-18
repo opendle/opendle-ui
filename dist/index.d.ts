@@ -77,6 +77,8 @@ export { CompactCheckboxGroup, type CompactCheckboxGroupOption, type CompactChec
 export { DateTime, type DateTimeProps } from "./components/DateTime.js";
 export { FileDropZone, type FileDropZoneProps, } from "./components/FileDropZone.js";
 export { InlineAlert, type InlineAlertProps, type InlineAlertTone, } from "./components/InlineAlert.js";
+export { LinkedText, type LinkedTextProps } from "./components/LinkedText.js";
+export { textParts, type TextPart } from "./components/textParts.js";
 export { SearchableSelect, type SearchableSelectOption, type SearchableSelectProps, } from "./components/SearchableSelect.js";
 export { SearchableMultiSelect, type SearchableMultiSelectProps, } from "./components/SearchableMultiSelect.js";
 export { AsyncSearchableSelect, type AsyncSearchableSelectPage, type AsyncSearchableSelectProps, type AsyncSearchableSelectRequest, } from "./components/AsyncSearchableSelect.js";
@@ -118,6 +120,8 @@ export { InboxList, type InboxEntry, type InboxListProps, } from "./components/I
 export { ReplyComposer, type ReplyComposerProps, } from "./components/ReplyComposer.js";
 export { CharacterCount, type CharacterCountProps, } from "./components/CharacterCount.js";
 export { characterCount } from "./components/characterLength.js";
+export { ChannelAvatar, type ChannelAvatarProps, } from "./components/ChannelAvatar.js";
+export { ChannelChip, type ChannelChipProps, } from "./components/ChannelChip.js";
 export { ChannelPicker, type ChannelPickerGroup, type ChannelPickerGroupChange, type ChannelPickerItem, type ChannelPickerProps, } from "./components/ChannelPicker.js";
 export { MediaAttachmentList, type MediaAttachment, type MediaAttachmentKind, type MediaAttachmentListProps, } from "./components/MediaAttachmentList.js";
 export { mediaAttachmentListLabels, type MediaAttachmentListLabels, } from "./components/mediaAttachmentLabels.js";

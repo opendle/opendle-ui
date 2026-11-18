@@ -474,6 +474,40 @@ test("FileDropZone keeps one accessible native file input", () => {
   assert.match(markup, /accept="image\/\*"/);
 });
 
+test("FileDropZone puts host actions next to the browse label", () => {
+  const markup = renderToStaticMarkup(
+    React.createElement(FileDropZone, {
+      actions: React.createElement("button", { type: "button" }, "Library"),
+      browseLabel: "Choose files",
+      onFiles: () => undefined,
+      title: "Drop images",
+    }),
+  );
+  const labelledBy = /<input[^>]*aria-labelledby="([^"]+) ([^"]+)"/.exec(
+    markup,
+  );
+  assert.ok(labelledBy);
+  assert.match(markup, new RegExp(`<strong id="${labelledBy[1]}">Drop images`));
+  assert.match(
+    markup,
+    new RegExp(
+      `<div class="od-file-drop-zone-actions"><label class="od-file-drop-zone-browse" for="[^"]+" id="${labelledBy[2]}">Choose files</label><button type="button">Library</button></div>`,
+    ),
+  );
+  const named = renderToStaticMarkup(
+    React.createElement(FileDropZone, {
+      inputLabel: "Media files",
+      onFiles: () => undefined,
+      title: "Drop images",
+    }),
+  );
+  assert.doesNotMatch(named, /aria-labelledby/);
+  assert.match(
+    named,
+    /class="od-file-drop-zone-actions"><label[^>]*>Choose files<\/label><\/div>/,
+  );
+});
+
 test("DateTime emits a machine value and a safe invalid fallback", () => {
   const defaultDateTime = renderToStaticMarkup(
     React.createElement(DateTime, {

@@ -161,6 +161,8 @@ export {
   type InlineAlertProps,
   type InlineAlertTone,
 } from "./components/InlineAlert.js";
+export { LinkedText, type LinkedTextProps } from "./components/LinkedText.js";
+export { textParts, type TextPart } from "./components/textParts.js";
 export {
   SearchableSelect,
   type SearchableSelectOption,
@@ -349,6 +351,14 @@ export {
   type CharacterCountProps,
 } from "./components/CharacterCount.js";
 export { characterCount } from "./components/characterLength.js";
+export {
+  ChannelAvatar,
+  type ChannelAvatarProps,
+} from "./components/ChannelAvatar.js";
+export {
+  ChannelChip,
+  type ChannelChipProps,
+} from "./components/ChannelChip.js";
 export {
   ChannelPicker,
   type ChannelPickerGroup,
