@@ -685,6 +685,7 @@ export {
   type StatePanelKind,
   type StatePanelProps,
 } from "./components/StatePanel.js";
+export { NoResults, type NoResultsProps } from "./components/NoResults.js";
 export {
   StatusDot,
   type StatusDotProps,

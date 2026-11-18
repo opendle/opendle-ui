@@ -36,6 +36,7 @@ import {
   IconButton,
   NavigationItem,
   NavigationLink,
+  NoResults,
   MediaLightbox,
   OperationPlayground,
   PageSurface,
@@ -1364,6 +1365,33 @@ test("session artwork stays decorative and keeps the page content named", () => 
   assert.match(markup, /aria-label="Session access"/);
   assert.match(markup, /<h1 id="[^"]+">Sign in<\/h1>/);
   assert.doesNotMatch(markup, /artwork="/);
+});
+
+test("no results shows a decorative picture, a title, a line and actions", () => {
+  const markup = renderToStaticMarkup(
+    React.createElement(
+      NoResults,
+      {
+        actions: React.createElement("button", null, "Clear search"),
+        className: "library-none",
+        headingLevel: "h3",
+        title: "No results for “song”",
+      },
+      "Try another word.",
+    ),
+  );
+  const bare = renderToStaticMarkup(
+    React.createElement(NoResults, { title: "Nothing" }),
+  );
+  assert.match(markup, /^<div class="od-no-results library-none">/);
+  assert.match(markup, /<svg aria-hidden="true"/);
+  assert.match(
+    markup,
+    /<h3 class="od-no-results-title">No results for “song”<\/h3>/,
+  );
+  assert.match(markup, /class="od-no-results-description">Try another word\.</);
+  assert.match(markup, /class="od-no-results-actions"><button>Clear search</);
+  assert.match(bare, /<h2 class="od-no-results-title">Nothing<\/h2><\/div>$/);
 });
 
 test("state panels expose status, error, action, and heading states", () => {

@@ -1,0 +1,90 @@
+/* No results: a centred picture, a title, a short line and actions. */
+
+.od-no-results {
+  display: grid;
+  justify-items: center;
+  padding: clamp(1.75rem, 5vw, 3.5rem) 1.25rem;
+  text-align: center;
+}
+
+.od-no-results-picture {
+  width: 9.5rem;
+  height: auto;
+  margin-bottom: 1.125rem;
+  overflow: visible;
+}
+
+.od-no-results-card {
+  fill: var(--od-color-surface);
+  stroke: var(--od-color-border-strong);
+  stroke-width: 1.5;
+}
+
+.od-no-results-card-back {
+  fill: var(--od-color-sunken);
+  stroke-dasharray: 4 4;
+}
+
+.od-no-results-line {
+  fill: var(--od-color-border);
+}
+
+.od-no-results-lens {
+  fill: color-mix(in srgb, var(--od-color-brand-soft) 82%, transparent);
+  stroke: var(--od-color-brand);
+  stroke-width: 6;
+}
+
+.od-no-results-handle {
+  fill: none;
+  stroke: var(--od-color-brand);
+  stroke-linecap: round;
+  stroke-width: 9;
+}
+
+.od-no-results-face {
+  fill: var(--od-color-foreground);
+}
+
+.od-no-results-mouth {
+  fill: none;
+  stroke: var(--od-color-foreground);
+  stroke-width: 2.2;
+}
+
+.od-no-results-spark {
+  fill: var(--od-color-lime-strong);
+}
+
+.od-no-results-spark-small {
+  fill: var(--od-color-brand);
+  opacity: 0.55;
+}
+
+.od-no-results-title {
+  max-width: 100%;
+  margin: 0;
+  overflow-wrap: anywhere;
+  font-size: 1.125rem;
+  font-weight: 650;
+}
+
+.od-no-results-description {
+  max-width: 32rem;
+  margin-top: 0.375rem;
+  color: var(--od-color-muted);
+  font-size: 0.875rem;
+  line-height: 1.55;
+}
+
+.od-no-results-description > p {
+  margin: 0;
+}
+
+.od-no-results-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--od-space-sm);
+  margin-top: 1.125rem;
+}
