@@ -1,11 +1,6 @@
 import { jsx as _jsx } from "react/jsx-runtime";
 import { useMemo } from "react";
-function parseDate(value) {
-    if (value === null || value === undefined || value === "")
-        return null;
-    const date = value instanceof Date ? new Date(value.getTime()) : new Date(value);
-    return Number.isFinite(date.getTime()) ? date : null;
-}
+import { parseDate } from "./dateValue.js";
 const displayOptionNames = [
     "dateStyle",
     "timeStyle",

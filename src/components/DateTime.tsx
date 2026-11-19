@@ -1,5 +1,7 @@
 import { useMemo, type ReactNode, type TimeHTMLAttributes } from "react";
 
+import { parseDate } from "./dateValue.js";
+
 export interface DateTimeProps extends Omit<
   TimeHTMLAttributes<HTMLTimeElement>,
   "children" | "dateTime"
@@ -8,15 +10,6 @@ export interface DateTimeProps extends Omit<
   readonly format?: Intl.DateTimeFormatOptions;
   readonly locale?: Intl.LocalesArgument;
   readonly value: Date | number | string | null | undefined;
-}
-
-function parseDate(
-  value: Date | number | string | null | undefined,
-): Date | null {
-  if (value === null || value === undefined || value === "") return null;
-  const date =
-    value instanceof Date ? new Date(value.getTime()) : new Date(value);
-  return Number.isFinite(date.getTime()) ? date : null;
 }
 
 const displayOptionNames: readonly (keyof Intl.DateTimeFormatOptions)[] = [

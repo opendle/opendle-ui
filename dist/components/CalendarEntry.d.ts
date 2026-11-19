@@ -6,6 +6,13 @@ export interface CalendarEntryProps {
     readonly time: string;
     /** A day before the time, for a list that is not grouped by day. */
     readonly date?: string;
+    /**
+     * Show the time relative to now, for example "in 3 hours". The date and the
+     * time go to the title and to the accessible name.
+     */
+    readonly relative?: boolean;
+    /** The time zone of the calendar days of a relative time. */
+    readonly timeZone?: string | undefined;
     readonly onSelect: (item: CalendarItem) => void;
     /** Drag behavior supplied by the calendar board. */
     readonly drag?: CalendarEntryDrag | undefined;
@@ -16,5 +23,5 @@ export interface CalendarEntryProps {
     readonly className?: string;
 }
 /** One entry of a calendar or of a list of posts, with its network badges. */
-export declare function CalendarEntry({ className, date, drag, item, followUpLabels, layout, onSelect, stateLabels, time, }: CalendarEntryProps): import("react").JSX.Element;
+export declare function CalendarEntry({ className, date, drag, item, followUpLabels, layout, onSelect, relative, stateLabels, time, timeZone, }: CalendarEntryProps): import("react").JSX.Element;
 //# sourceMappingURL=CalendarEntry.d.ts.map

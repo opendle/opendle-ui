@@ -21,7 +21,7 @@ light and a dark theme that follow `prefers-color-scheme`.
 | Identity              | `SessionPage`, `SignInCard`, `PasskeyList`, `ApiTokenList`, `AvatarUpload`, `Avatar`                                                 |
 | Calendar              | `CalendarHeader`, `CalendarBoard`, `TagFilterBar`, `PostDetailDialog`, `calendarPeriod`, `calendarTitle`, `shiftCalendarAnchor`      |
 | Filters               | `FilterToolbar`, `CalendarViewTabs`, `TagFilterBar`, `SearchField`                                                                   |
-| Marks                 | `Icon`, `NetworkIcon`, `DateTime`, `formatAge`                                                                                       |
+| Marks                 | `Icon`, `NetworkIcon`, `DateTime`, `RelativeTime`, `formatRelativeTime`, `formatAge`                                                 |
 
 `ApplicationShell` is a left sidebar with icons. It becomes an icon rail below
 1100 px and a bottom bar below 720 px. The host owns routes: give each
@@ -627,7 +627,11 @@ unsafe route change. `FileDropZone` sends selected or dropped files to the
 host. Its `actions` go next to the browse label, in the same size; a click in
 the remaining zone opens the file choice. The host must check file type, size, and authorization. `DateTime`
 supplies a valid `time` element, locale formatting, and a safe fallback for an
-invalid value.
+invalid value. `RelativeTime` shows an instant relative to now, for example
+`in 5 minutes`, `tomorrow` or `3 weeks ago`, and changes each minute. The
+precision decreases with the distance: minutes below one hour, hours below one
+day, then calendar days in `timeZone`, weeks, months and years. The title gives
+the full date. `CalendarEntry.relative` uses it for a list of posts.
 
 ```tsx
 <FormSection legend="Provider" columns={2}>

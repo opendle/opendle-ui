@@ -6,6 +6,9 @@ export { CapabilityTag, type CapabilityTagProps, type CapabilityTagTone, } from 
 export declare const OPENDLE_UI_VERSION: "0.4.0";
 export { Icon, NetworkIcon, type IconName, type IconProps, type NetworkIconProps, } from "./components/Icon.js";
 export { formatAge } from "./components/formatAge.js";
+export { formatRelativeTime, type RelativeTimeOptions, } from "./components/formatRelativeTime.js";
+export { RelativeTime, type RelativeTimeProps, } from "./components/RelativeTime.js";
+export { useMinute } from "./components/useMinute.js";
 export { Popover, type PopoverProps } from "./components/Popover.js";
 export { ActionMenu, type ActionMenuItem, type ActionMenuProps, } from "./components/ActionMenu.js";
 export { networkLabel, networkNames, type NetworkName, } from "./components/networks.js";

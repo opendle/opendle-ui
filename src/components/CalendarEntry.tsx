@@ -11,6 +11,7 @@ import {
 import { classes } from "./classes.js";
 import type { CalendarEntryDrag } from "./useCalendarDrag.js";
 import { Icon, NetworkIcon, type IconName } from "./Icon.js";
+import { RelativeTime } from "./RelativeTime.js";
 
 export interface CalendarEntryProps {
   readonly item: CalendarItem;
@@ -18,6 +19,13 @@ export interface CalendarEntryProps {
   readonly time: string;
   /** A day before the time, for a list that is not grouped by day. */
   readonly date?: string;
+  /**
+   * Show the time relative to now, for example "in 3 hours". The date and the
+   * time go to the title and to the accessible name.
+   */
+  readonly relative?: boolean;
+  /** The time zone of the calendar days of a relative time. */
+  readonly timeZone?: string | undefined;
   readonly onSelect: (item: CalendarItem) => void;
   /** Drag behavior supplied by the calendar board. */
   readonly drag?: CalendarEntryDrag | undefined;
@@ -76,10 +84,13 @@ export function CalendarEntry({
   followUpLabels = calendarBoardLabels.followUps,
   layout = "card",
   onSelect,
+  relative = false,
   stateLabels = calendarBoardLabels.states,
   time,
+  timeZone,
 }: CalendarEntryProps) {
   const dragged = useRef(false);
+  const when = date === undefined ? time : `${date}, ${time}`;
   const state = calendarItemState(item);
   const marks = followUpMarks(item);
   const style =
@@ -126,9 +137,11 @@ export function CalendarEntry({
           <span className="od-calendar-item-state" title={stateLabels[state]}>
             <Icon name={stateIcons[state]} size={13} />
           </span>
-          <time dateTime={item.start}>
-            {date === undefined ? time : `${date}, ${time}`}
-          </time>
+          {relative ? (
+            <RelativeTime timeZone={timeZone} title={when} value={item.start} />
+          ) : (
+            <time dateTime={item.start}>{when}</time>
+          )}
           <span className="od-calendar-item-networks">
             {item.targets.map((target) => (
               <NetworkIcon

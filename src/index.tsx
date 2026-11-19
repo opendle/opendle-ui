@@ -28,6 +28,15 @@ export {
   type NetworkIconProps,
 } from "./components/Icon.js";
 export { formatAge } from "./components/formatAge.js";
+export {
+  formatRelativeTime,
+  type RelativeTimeOptions,
+} from "./components/formatRelativeTime.js";
+export {
+  RelativeTime,
+  type RelativeTimeProps,
+} from "./components/RelativeTime.js";
+export { useMinute } from "./components/useMinute.js";
 export { Popover, type PopoverProps } from "./components/Popover.js";
 export {
   ActionMenu,

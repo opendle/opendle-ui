@@ -6751,7 +6751,8 @@ samp {
   cursor: not-allowed;
 }
 
-.od-date-time-invalid {
+.od-date-time-invalid,
+.od-relative-time-invalid {
   color: var(--od-color-muted);
 }
 
