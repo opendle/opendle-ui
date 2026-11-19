@@ -5,8 +5,8 @@ import { parseDate } from "./dateValue.js";
 import { formatRelativeTime } from "./formatRelativeTime.js";
 import { useMinute } from "./useMinute.js";
 /**
- * An instant relative to now, for example "in 5 minutes" or "yesterday". It
- * changes each minute. The title gives the full date and time.
+ * An instant relative to now, for example "in 5 minutes" or "1 day, 12 hours
+ * ago". It changes each minute. The title gives the full date and time.
  */
 export function RelativeTime({ className, fallback = "—", locale, timeZone, title, unitStyle, value, ...props }) {
     const now = useMinute();
@@ -26,7 +26,7 @@ export function RelativeTime({ className, fallback = "—", locale, timeZone, ti
     let label = null;
     if (date !== null && fullDate !== null) {
         try {
-            label = formatRelativeTime(date, { locale, now, timeZone, unitStyle });
+            label = formatRelativeTime(date, { locale, now, unitStyle });
         }
         catch {
             label = null;

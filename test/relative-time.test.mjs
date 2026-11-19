@@ -9,66 +9,51 @@ import {
 } from "../dist/index.js";
 
 const now = Date.parse("2026-11-19T10:00:00Z");
-const options = { locale: "en", now, timeZone: "UTC" };
-const at = (iso) => formatRelativeTime(iso, options);
+const minute = 60_000;
+const hour = 60 * minute;
+const day = 24 * hour;
+const at = (offset, unitStyle = "narrow") =>
+  formatRelativeTime(now + offset, { locale: "en", now, unitStyle });
 
-test("the precision decreases with the distance", () => {
-  assert.equal(at("2026-11-19T10:00:30Z"), "now");
-  assert.equal(at("2026-11-19T09:59:20Z"), "now");
-  assert.equal(at("2026-11-19T10:12:00Z"), "in 12 minutes");
-  assert.equal(at("2026-11-19T09:01:00Z"), "59 minutes ago");
-  assert.equal(at("2026-11-19T10:59:40Z"), "in 1 hour");
-  assert.equal(at("2026-11-19T13:40:00Z"), "in 4 hours");
-  assert.equal(at("2026-11-18T13:00:00Z"), "21 hours ago");
-  assert.equal(at("2026-11-20T09:50:00Z"), "tomorrow");
-  assert.equal(at("2026-11-17T23:00:00Z"), "2 days ago");
-  assert.equal(at("2026-11-25T08:00:00Z"), "in 6 days");
-  assert.equal(at("2026-11-26T08:00:00Z"), "in 1 week");
-  assert.equal(at("2026-11-02T08:00:00Z"), "2 weeks ago");
-  assert.equal(at("2027-01-20T08:00:00Z"), "in 2 months");
-  assert.equal(at("2025-12-01T08:00:00Z"), "1 year ago");
-  assert.equal(at("2024-10-01T08:00:00Z"), "2 years ago");
+test("one unit shows from 3, two units below 3", () => {
+  assert.equal(at(20_000), "now");
+  assert.equal(at(-30_000), "now");
+  assert.equal(at(13 * minute), "in 13m");
+  assert.equal(at(-47 * minute), "47m ago");
+  assert.equal(at(59.7 * minute), "in 1h");
+  assert.equal(at(2 * hour + 15 * minute), "in 2h 15m");
+  assert.equal(at(-(2 * hour + 59 * minute + 40_000)), "3h ago");
+  assert.equal(at(3 * hour + 20 * minute), "in 3h");
+  assert.equal(at(-23.7 * hour), "1d ago");
+  assert.equal(at(36 * hour), "in 1d 12h");
+  assert.equal(at(-(2 * day + 5 * hour)), "2d 5h ago");
+  assert.equal(at(3 * day + 5 * hour), "in 3d");
+  assert.equal(at(6.7 * day), "in 1w");
+  assert.equal(at(-16 * day), "2w 2d ago");
+  assert.equal(at(30 * day), "in 4w");
+  assert.equal(at(45 * day), "in 1mo 2w");
+  assert.equal(at(200 * day), "in 7mo");
+  assert.equal(at(-400 * day), "1y 1mo ago");
+  assert.equal(at(900 * day), "in 2y 6mo");
 });
 
-test("calendar days use the time zone", () => {
-  // 2026-11-21 04:00 UTC is 2026-11-20 23:00 in New York.
-  const instant = "2026-11-21T04:00:00Z";
-  assert.equal(at(instant), "in 2 days");
-  assert.equal(
-    formatRelativeTime(instant, { ...options, timeZone: "America/New_York" }),
-    "tomorrow",
-  );
-  // 2026-11-17 22:00 UTC is 2026-11-18 02:00 in Dubai.
-  const past = "2026-11-17T22:00:00Z";
-  assert.equal(at(past), "2 days ago");
-  assert.equal(
-    formatRelativeTime(past, { ...options, timeZone: "Asia/Dubai" }),
-    "yesterday",
-  );
+test("the unit style sets the unit length", () => {
+  assert.equal(at(36 * hour, "long"), "in 1 day 12 hours");
+  assert.equal(at(-(2 * hour + 15 * minute), "long"), "2 hours 15 minutes ago");
+  assert.equal(at(36 * hour, "short"), "in 1 day 12 hr.");
+  assert.equal(at(-5 * day, "long"), "5 days ago");
 });
 
-test("short and narrow unit styles are available", () => {
-  assert.equal(
-    formatRelativeTime("2026-11-19T13:00:00Z", {
-      ...options,
-      unitStyle: "narrow",
-    }),
-    "in 3h",
-  );
-  assert.equal(
-    formatRelativeTime("2026-11-05T09:00:00Z", {
-      ...options,
-      unitStyle: "narrow",
-    }),
-    "2w ago",
-  );
-  assert.equal(
-    formatRelativeTime("2026-11-19T13:00:00Z", {
-      ...options,
-      unitStyle: "short",
-    }),
-    "in 3 hr.",
-  );
+test("two units keep the word order of the locale", () => {
+  const of = (locale, offset) =>
+    formatRelativeTime(now + offset, { locale, now, unitStyle: "narrow" });
+  assert.equal(of("de", -36 * hour), "vor 1 Tag 12 Std.");
+  assert.equal(of("ja", -36 * hour), "1日 12時間前");
+  assert.equal(of("ko", 36 * hour), "1일 12시간 후");
+});
+
+test("an invalid date throws", () => {
+  assert.throws(() => formatRelativeTime("not a date", { now }), RangeError);
 });
 
 test("RelativeTime gives the full date in the title", () => {
@@ -123,16 +108,16 @@ test("CalendarEntry can show a relative time", () => {
     React.createElement(CalendarEntry, {
       ...props,
       relative: true,
-      timeZone: "UTC",
     }),
   );
   assert.match(relative, /aria-label="Thu 2 Jan, 08:00, Low Tide/);
+  assert.match(relative, /<button [^>]*title="Thu 2 Jan, 08:00"/);
+  assert.doesNotMatch(absolute, /<button [^>]*title=/);
   assert.match(relative, /title="Thu 2 Jan, 08:00">\d+ years ago<\/time>/);
   const narrow = renderToStaticMarkup(
     React.createElement(CalendarEntry, {
       ...props,
       relative: true,
-      timeZone: "UTC",
       unitStyle: "narrow",
     }),
   );

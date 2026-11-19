@@ -627,13 +627,11 @@ unsafe route change. `FileDropZone` sends selected or dropped files to the
 host. Its `actions` go next to the browse label, in the same size; a click in
 the remaining zone opens the file choice. The host must check file type, size, and authorization. `DateTime`
 supplies a valid `time` element, locale formatting, and a safe fallback for an
-invalid value. `RelativeTime` shows an instant relative to now, for example
-`in 5 minutes`, `tomorrow` or `3 weeks ago`, and changes each minute. The
-precision decreases with the distance: minutes below one hour, hours below one
-day, then calendar days in `timeZone`, weeks, months and years. The title gives
-the full date. `unitStyle="narrow"` gives a compact form such as `in 3h`.
-`CalendarEntry.relative` and `CalendarEntry.unitStyle` use it for a list of
-posts.
+invalid value. `RelativeTime` shows an instant relative to now in one or two
+units, for example `in 13 minutes`, `1 day, 12 hours ago` or `in 4 months`,
+and changes each minute. The second unit shows only while the first is below 3. The title gives the full date. `unitStyle="narrow"` gives a compact form
+such as `in 1d 12h`. `CalendarEntry.relative` and `CalendarEntry.unitStyle` use
+it for a list of posts, with the date and time in the title of the entry.
 
 ```tsx
 <FormSection legend="Provider" columns={2}>

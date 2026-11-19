@@ -2,14 +2,12 @@ export interface RelativeTimeOptions {
     /** The reference instant. The default is the current time. */
     readonly now?: Date | number;
     readonly locale?: Intl.LocalesArgument;
-    /** The time zone that sets the calendar days, for "tomorrow" or "yesterday". */
-    readonly timeZone?: string | undefined;
     readonly unitStyle?: Intl.RelativeTimeFormatStyle | undefined;
 }
 /**
- * An instant relative to now, with a precision that decreases with the
- * distance: "now", "in 5 minutes", "3 hours ago", "tomorrow", "in 4 days",
- * "2 weeks ago", "in 3 months", "2 years ago".
+ * An instant relative to now, in one or two units: "now", "in 13m",
+ * "2h 15m ago", "in 1d 12h", "5d ago", "in 1w 3d", "in 4mo", "1y 2mo ago".
+ * The second unit shows only while the first is below 3.
  */
-export declare function formatRelativeTime(value: Date | number | string, { locale, now, timeZone, unitStyle, }?: RelativeTimeOptions): string;
+export declare function formatRelativeTime(value: Date | number | string, { locale, now, unitStyle }?: RelativeTimeOptions): string;
 //# sourceMappingURL=formatRelativeTime.d.ts.map

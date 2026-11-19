@@ -20,12 +20,10 @@ export interface CalendarEntryProps {
   /** A day before the time, for a list that is not grouped by day. */
   readonly date?: string;
   /**
-   * Show the time relative to now, for example "in 3 hours". The date and the
-   * time go to the title and to the accessible name.
+   * Show the time relative to now, for example "in 1d 12h". The date and the
+   * time go to the title of the entry and to the accessible name.
    */
   readonly relative?: boolean;
-  /** The time zone of the calendar days of a relative time. */
-  readonly timeZone?: string | undefined;
   /** The unit length of a relative time: `narrow` gives "in 3h". */
   readonly unitStyle?: Intl.RelativeTimeFormatStyle | undefined;
   readonly onSelect: (item: CalendarItem) => void;
@@ -89,7 +87,6 @@ export function CalendarEntry({
   relative = false,
   stateLabels = calendarBoardLabels.states,
   time,
-  timeZone,
   unitStyle,
 }: CalendarEntryProps) {
   const dragged = useRef(false);
@@ -132,6 +129,7 @@ export function CalendarEntry({
         if (!dragged.current) onSelect(item);
       }}
       style={style}
+      title={relative ? when : undefined}
       type="button"
     >
       <span className="od-calendar-item-bar" />
@@ -142,7 +140,6 @@ export function CalendarEntry({
           </span>
           {relative ? (
             <RelativeTime
-              timeZone={timeZone}
               title={when}
               unitStyle={unitStyle}
               value={item.start}

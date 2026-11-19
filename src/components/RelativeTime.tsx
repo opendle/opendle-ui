@@ -12,14 +12,14 @@ export interface RelativeTimeProps extends Omit<
   readonly value: Date | number | string | null | undefined;
   readonly fallback?: ReactNode;
   readonly locale?: Intl.LocalesArgument;
-  /** The time zone of the calendar days and of the default title. */
+  /** The time zone of the default title. */
   readonly timeZone?: string | undefined;
   readonly unitStyle?: Intl.RelativeTimeFormatStyle | undefined;
 }
 
 /**
- * An instant relative to now, for example "in 5 minutes" or "yesterday". It
- * changes each minute. The title gives the full date and time.
+ * An instant relative to now, for example "in 5 minutes" or "1 day, 12 hours
+ * ago". It changes each minute. The title gives the full date and time.
  */
 export function RelativeTime({
   className,
@@ -47,7 +47,7 @@ export function RelativeTime({
   let label: string | null = null;
   if (date !== null && fullDate !== null) {
     try {
-      label = formatRelativeTime(date, { locale, now, timeZone, unitStyle });
+      label = formatRelativeTime(date, { locale, now, unitStyle });
     } catch {
       label = null;
     }
