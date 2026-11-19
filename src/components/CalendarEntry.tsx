@@ -26,6 +26,8 @@ export interface CalendarEntryProps {
   readonly relative?: boolean;
   /** The time zone of the calendar days of a relative time. */
   readonly timeZone?: string | undefined;
+  /** The unit length of a relative time: `narrow` gives "in 3h". */
+  readonly unitStyle?: Intl.RelativeTimeFormatStyle | undefined;
   readonly onSelect: (item: CalendarItem) => void;
   /** Drag behavior supplied by the calendar board. */
   readonly drag?: CalendarEntryDrag | undefined;
@@ -88,6 +90,7 @@ export function CalendarEntry({
   stateLabels = calendarBoardLabels.states,
   time,
   timeZone,
+  unitStyle,
 }: CalendarEntryProps) {
   const dragged = useRef(false);
   const when = date === undefined ? time : `${date}, ${time}`;
@@ -138,7 +141,12 @@ export function CalendarEntry({
             <Icon name={stateIcons[state]} size={13} />
           </span>
           {relative ? (
-            <RelativeTime timeZone={timeZone} title={when} value={item.start} />
+            <RelativeTime
+              timeZone={timeZone}
+              title={when}
+              unitStyle={unitStyle}
+              value={item.start}
+            />
           ) : (
             <time dateTime={item.start}>{when}</time>
           )}

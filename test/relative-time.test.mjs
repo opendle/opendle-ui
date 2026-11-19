@@ -47,7 +47,21 @@ test("calendar days use the time zone", () => {
   );
 });
 
-test("a short unit style is available", () => {
+test("short and narrow unit styles are available", () => {
+  assert.equal(
+    formatRelativeTime("2026-11-19T13:00:00Z", {
+      ...options,
+      unitStyle: "narrow",
+    }),
+    "in 3h",
+  );
+  assert.equal(
+    formatRelativeTime("2026-11-05T09:00:00Z", {
+      ...options,
+      unitStyle: "narrow",
+    }),
+    "2w ago",
+  );
   assert.equal(
     formatRelativeTime("2026-11-19T13:00:00Z", {
       ...options,
@@ -114,4 +128,13 @@ test("CalendarEntry can show a relative time", () => {
   );
   assert.match(relative, /aria-label="Thu 2 Jan, 08:00, Low Tide/);
   assert.match(relative, /title="Thu 2 Jan, 08:00">\d+ years ago<\/time>/);
+  const narrow = renderToStaticMarkup(
+    React.createElement(CalendarEntry, {
+      ...props,
+      relative: true,
+      timeZone: "UTC",
+      unitStyle: "narrow",
+    }),
+  );
+  assert.match(narrow, /title="Thu 2 Jan, 08:00">\d+y ago<\/time>/);
 });

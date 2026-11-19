@@ -13,6 +13,8 @@ export interface CalendarEntryProps {
     readonly relative?: boolean;
     /** The time zone of the calendar days of a relative time. */
     readonly timeZone?: string | undefined;
+    /** The unit length of a relative time: `narrow` gives "in 3h". */
+    readonly unitStyle?: Intl.RelativeTimeFormatStyle | undefined;
     readonly onSelect: (item: CalendarItem) => void;
     /** Drag behavior supplied by the calendar board. */
     readonly drag?: CalendarEntryDrag | undefined;
@@ -23,5 +25,5 @@ export interface CalendarEntryProps {
     readonly className?: string;
 }
 /** One entry of a calendar or of a list of posts, with its network badges. */
-export declare function CalendarEntry({ className, date, drag, item, followUpLabels, layout, onSelect, relative, stateLabels, time, timeZone, }: CalendarEntryProps): import("react").JSX.Element;
+export declare function CalendarEntry({ className, date, drag, item, followUpLabels, layout, onSelect, relative, stateLabels, time, timeZone, unitStyle, }: CalendarEntryProps): import("react").JSX.Element;
 //# sourceMappingURL=CalendarEntry.d.ts.map

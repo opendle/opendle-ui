@@ -631,7 +631,9 @@ invalid value. `RelativeTime` shows an instant relative to now, for example
 `in 5 minutes`, `tomorrow` or `3 weeks ago`, and changes each minute. The
 precision decreases with the distance: minutes below one hour, hours below one
 day, then calendar days in `timeZone`, weeks, months and years. The title gives
-the full date. `CalendarEntry.relative` uses it for a list of posts.
+the full date. `unitStyle="narrow"` gives a compact form such as `in 3h`.
+`CalendarEntry.relative` and `CalendarEntry.unitStyle` use it for a list of
+posts.
 
 ```tsx
 <FormSection legend="Provider" columns={2}>
