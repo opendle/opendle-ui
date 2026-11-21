@@ -1,0 +1,7 @@
+{
+  "supportEntry": [
+    "scripts/*-browser.mjs",
+    "scripts/check-react-doctor-report.mjs",
+    "scripts/check-react-doctor-runtime.mjs"
+  ]
+}

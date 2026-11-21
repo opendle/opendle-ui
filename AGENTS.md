@@ -30,6 +30,10 @@ data in this repository. Keep this package independent of any one host app.
 8. Use ASD-STE100 Simplified Technical English in reports, documentation,
    pull requests, comments, and agent-created content.
 9. Run the self-review skill and `./scripts/check-repository.sh` before commit.
+10. Before each commit that changes JS or TS code, run `fallow audit` in the
+    repository root. It must pass.
+11. After a large change, run `jscpd --silent src styles`. Merge the
+    duplicates that the change adds. Do not make jscpd a gate.
 
 ## Agent improvement
 
