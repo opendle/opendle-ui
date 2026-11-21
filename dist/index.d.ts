@@ -181,7 +181,7 @@ export { StatePanel, type StatePanelKind, type StatePanelProps, } from "./compon
 export { NoResults, type NoResultsProps } from "./components/NoResults.js";
 export { StatusDot, type StatusDotProps, type StatusTone, } from "./components/StatusDot.js";
 export { StatusPill, type StatusPillProps } from "./components/StatusPill.js";
-export { Toast, useToastQueue, type ToastMessage, type ToastProps, type ToastQueue, type ToastTone, } from "./components/Toast.js";
+export { Toast, ToastStack, useToastQueue, type ToastMessage, type ToastProps, type ToastStackProps, type ToastQueue, type ToastTone, } from "./components/Toast.js";
 export { WorkspaceSelector, type WorkspaceSelectorProps, } from "./components/WorkspaceSelector.js";
 export { BoundedDataExplorer, OntologyLabelList, type BoundedDataExplorerProps, type OntologyLabelListProps, } from "./components/BoundedDataExplorer.js";
 export { ChangeTimeline, type ChangeTimelineProps, type OntologyChangeItem, } from "./components/ChangeTimeline.js";

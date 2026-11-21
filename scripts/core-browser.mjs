@@ -18,7 +18,7 @@ import {
   AccountMenu, ApiTokenList, ChannelList, LoadingIndicator, MetricTile, ApplicationShell, AutoGrowTextarea, Avatar,
   AvatarUpload, Button, Card, Icon, InlineAlert, NavigationLink, NetworkIcon,
   PageHeading, PasskeyList, Section, SessionPage, SignInCard, TabPanel, Tabs, NavigationGroup,
-  TagChip, Toast, networkNames, useToastQueue,
+  TagChip, ToastStack, networkNames, useToastQueue,
 } from "./dist/index.js";
 
 const message = () => "The request failed.";
@@ -40,7 +40,7 @@ function App() {
       switches: [{id: "publish", label: "Publish", on: true}, {id: "community", label: "Community", on: false, disabled: true, disabledReason: "Community is not supported"}, {id: "analytics", label: "Analytics", on: false}]},
   ]);
   const patch = (id, change) => setChannels((list) => list.map((c) => c.id === id ? {...c, ...change(c)} : c));
-  const {toast, showToast} = useToastQueue(60000);
+  const {toasts, showToast, dismissToast, pauseToasts} = useToastQueue(60000);
   if (location.hash === "#sign-in") {
     return <SessionPage><SignInCard icon={<Mark/>} title="Poster" actionLabel="Sign in with a passkey"
       actionIcon={<Icon name="passkey"/>} pendingLabel="Waiting for passkey…"
@@ -121,7 +121,7 @@ function App() {
           </TabPanel>
         </Card>
       </Section>
-      {toast === null ? null : <Toast key={toast.id} tone={toast.tone}>{toast.message}</Toast>}
+      <ToastStack toasts={toasts} onDismiss={dismissToast} onPause={pauseToasts}/>
     </ApplicationShell>
   );
 }
@@ -398,9 +398,12 @@ try {
         await page.getByRole("button", { name: /^Remove:/ }).count(),
         0,
       );
-      // A new message replaces the old one: one toast shows at a time.
+      // The toasts stack: the newest is the last.
       await page.getByText("Passkey removed").waitFor();
-      assert.equal(await page.locator(".od-toast").count(), 1);
+      assert.equal(
+        await page.locator(".od-toast").last().textContent(),
+        "Passkey removed",
+      );
 
       // A double click edits the name. Enter saves and Escape cancels.
       await page.getByRole("button", { name: "Rename: MacBook" }).dblclick();

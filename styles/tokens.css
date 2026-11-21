@@ -8193,8 +8193,58 @@ html:has(.od-dialog:modal) {
   cursor: pointer;
 }
 
+/*
+ * Several toasts, one above the other: the newest is nearest the edge of
+ * the screen. A toast that closes fades and gives its place back.
+ */
+.od-toast-stack {
+  position: fixed;
+  z-index: 60;
+  inset: auto 0 24px;
+  display: flex;
+  width: fit-content;
+  max-width: calc(100vw - 32px);
+  flex-direction: column;
+  align-items: center;
+  margin: 0 auto;
+  padding: 0;
+  overflow: visible;
+  border: 0;
+  background: transparent;
+  color: inherit;
+}
+
+.od-toast-stack[popover]:not(:popover-open) {
+  display: none;
+}
+
+.od-toast-slot {
+  display: grid;
+  max-width: 100%;
+  grid-template-rows: 1fr;
+  justify-items: center;
+}
+
+.od-toast-slot + .od-toast-slot {
+  padding-top: 8px;
+}
+
+.od-toast-slot > .od-toast {
+  position: static;
+  max-width: 100%;
+  min-height: 0;
+}
+
+.od-toast-slot[data-leaving] {
+  grid-template-rows: 0fr;
+  overflow: hidden;
+  padding-top: 0;
+  opacity: 0;
+}
+
 @media (max-width: 720px) {
-  .od-toast {
+  .od-toast,
+  .od-toast-stack {
     bottom: calc(76px + env(safe-area-inset-bottom));
   }
 }
@@ -8202,6 +8252,13 @@ html:has(.od-dialog:modal) {
 @media (prefers-reduced-motion: no-preference) {
   .od-toast {
     animation: od-toast-in 0.18s ease-out;
+  }
+
+  .od-toast-slot {
+    transition:
+      grid-template-rows 0.2s ease,
+      opacity 0.15s ease,
+      padding-top 0.2s ease;
   }
 
   @keyframes od-toast-in {

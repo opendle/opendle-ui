@@ -136,36 +136,21 @@ function createToastPortalContainer() {
   return container;
 }
 
-export function Toast({
-  children,
-  className,
-  onDismiss,
-  tone = "neutral",
-  ...props
-}: ToastProps) {
+interface ToastLayerProps {
+  /** One element with the `popover` attribute. */
+  readonly children: ReactNode;
+}
+
+/**
+ * Show the popover of the toasts in the top layer, inside the active modal
+ * dialog when there is one, so the toasts show above the dialog and outside
+ * its clip.
+ */
+function ToastLayer({ children }: ToastLayerProps) {
   const activeDialog = useActiveModalDialog();
   const hasHydrated = useHasHydrated();
   const inlineHostRef = useRef<HTMLSpanElement>(null);
   const [portalContainer] = useState(createToastPortalContainer);
-  // The top layer keeps the toast above a dialog and outside its clip.
-  const toast = (
-    <output
-      {...props}
-      className={classes("od-toast", className)}
-      data-tone={tone}
-      popover={hasHydrated ? "manual" : undefined}
-    >
-      {tone === "neutral" ? null : (
-        <Icon name={tone === "error" ? "alert" : "check"} size={16} />
-      )}
-      <span>{children}</span>
-      {onDismiss ? (
-        <button type="button" aria-label="Dismiss message" onClick={onDismiss}>
-          ×
-        </button>
-      ) : null}
-    </output>
-  );
 
   useLayoutEffect(() => {
     if (!hasHydrated) return;
@@ -173,13 +158,13 @@ export function Toast({
     if (portalContainer === null || target === null) return;
     target.append(portalContainer);
     // A move in the document closes a popover, so show it again.
-    const output = portalContainer.querySelector<HTMLElement>(".od-toast");
+    const popover = portalContainer.firstElementChild;
     if (
-      output?.isConnected === true &&
-      typeof output.showPopover === "function" &&
-      !output.matches(":popover-open")
+      popover instanceof HTMLElement &&
+      typeof popover.showPopover === "function" &&
+      !popover.matches(":popover-open")
     ) {
-      output.showPopover();
+      popover.showPopover();
     }
   }, [activeDialog, hasHydrated, portalContainer]);
 
@@ -190,12 +175,69 @@ export function Toast({
     [portalContainer],
   );
 
-  if (!hasHydrated || portalContainer === null) return toast;
+  if (!hasHydrated || portalContainer === null) return children;
   return (
     <>
       <span data-od-toast-inline-host="" ref={inlineHostRef} />
-      {createPortal(toast, portalContainer)}
+      {createPortal(children, portalContainer)}
     </>
+  );
+}
+
+interface ToastContentProps {
+  readonly children: ReactNode;
+  readonly tone: ToastTone;
+  readonly onDismiss: (() => void) | undefined;
+  readonly dismissLabel: string;
+}
+
+function ToastContent({
+  children,
+  dismissLabel,
+  onDismiss,
+  tone,
+}: ToastContentProps) {
+  return (
+    <>
+      {tone === "neutral" ? null : (
+        <Icon name={tone === "error" ? "alert" : "check"} size={16} />
+      )}
+      <span>{children}</span>
+      {onDismiss ? (
+        <button type="button" aria-label={dismissLabel} onClick={onDismiss}>
+          ×
+        </button>
+      ) : null}
+    </>
+  );
+}
+
+/** One message above all content, also above an open dialog. */
+export function Toast({
+  children,
+  className,
+  onDismiss,
+  tone = "neutral",
+  ...props
+}: ToastProps) {
+  const hasHydrated = useHasHydrated();
+  return (
+    <ToastLayer>
+      <output
+        {...props}
+        className={classes("od-toast", className)}
+        data-tone={tone}
+        popover={hasHydrated ? "manual" : undefined}
+      >
+        <ToastContent
+          dismissLabel="Dismiss message"
+          onDismiss={onDismiss}
+          tone={tone}
+        >
+          {children}
+        </ToastContent>
+      </output>
+    </ToastLayer>
   );
 }
 
@@ -203,99 +245,213 @@ export interface ToastMessage {
   readonly id: number;
   readonly message: string;
   readonly tone: ToastTone;
+  /** The toast closes: it stays for the time of its leave animation. */
+  readonly leaving?: boolean;
+}
+
+export interface ToastStackProps {
+  /** The toasts, the oldest first. The newest is nearest the screen edge. */
+  readonly toasts: readonly ToastMessage[];
+  /** Close one toast. An error has a close button. */
+  readonly onDismiss: (id: number) => void;
+  /** Stop (`true`) or continue the time of the toasts. */
+  readonly onPause?: (paused: boolean) => void;
+  /** The accessible name of the close button. */
+  readonly dismissLabel?: string;
+  readonly className?: string;
+}
+
+/**
+ * The toasts of a `useToastQueue`, one above the other. A pointer or the
+ * focus on the stack stops the time of all its toasts.
+ */
+export function ToastStack({
+  className,
+  dismissLabel = "Dismiss message",
+  onDismiss,
+  onPause,
+  toasts,
+}: ToastStackProps) {
+  const hasHydrated = useHasHydrated();
+  if (toasts.length === 0) return null;
+  return (
+    <ToastLayer>
+      {/* react-doctor-disable-next-line react-doctor/no-noninteractive-element-interactions, react-doctor/no-static-element-interactions -- A pointer or the focus on the stack only stops the time of the toasts. */}
+      <div
+        className={classes("od-toast-stack", className)}
+        onBlur={(event) => {
+          if (!event.currentTarget.contains(event.relatedTarget))
+            onPause?.(false);
+        }}
+        onFocus={() => onPause?.(true)}
+        onPointerEnter={() => onPause?.(true)}
+        onPointerLeave={() => onPause?.(false)}
+        popover={hasHydrated ? "manual" : undefined}
+      >
+        {toasts.map((toast) => (
+          <div
+            className="od-toast-slot"
+            data-leaving={toast.leaving === true || undefined}
+            key={toast.id}
+          >
+            <output className="od-toast" data-tone={toast.tone}>
+              <ToastContent
+                dismissLabel={dismissLabel}
+                onDismiss={
+                  toast.tone === "error"
+                    ? () => {
+                        onDismiss(toast.id);
+                      }
+                    : undefined
+                }
+                tone={toast.tone}
+              >
+                {toast.message}
+              </ToastContent>
+            </output>
+          </div>
+        ))}
+      </div>
+    </ToastLayer>
+  );
 }
 
 export interface ToastQueue {
-  /** The one visible message, or `null`. */
-  readonly toast: ToastMessage | null;
+  /** The toasts, the oldest first. Render them with `ToastStack`. */
+  readonly toasts: readonly ToastMessage[];
   readonly showToast: (message: string, tone?: ToastTone) => void;
-  /** Close the visible message. A message that waits shows next. */
-  readonly dismissToast: () => void;
-  /**
-   * Give these to the `Toast`: a pointer or the focus on the toast stops the
-   * time, and an error has a close button.
-   */
-  readonly toastProps: Pick<
-    ToastProps,
-    "onBlur" | "onDismiss" | "onFocus" | "onPointerEnter" | "onPointerLeave"
-  >;
+  readonly dismissToast: (id: number) => void;
+  /** Stop (`true`) or continue the time of all toasts. */
+  readonly pauseToasts: (paused: boolean) => void;
 }
 
-interface ToastState {
-  readonly shown: ToastMessage | null;
-  /** A message that waits for the end of an error. */
-  readonly waiting: ToastMessage | null;
+interface ToastTimer {
+  /** The time that the toast has left, in milliseconds. */
+  readonly left: number;
+  readonly start: number;
+  readonly handle: ReturnType<typeof setTimeout> | null;
 }
 
-const noToast: ToastState = { shown: null, waiting: null };
+/** The time of the leave animation, in milliseconds. */
+const leaveTime = 200;
 
 /**
- * Hold one message: a message for `duration` milliseconds, an error for
- * `errorDuration`. A new message replaces a message, and a new error
- * replaces the message or the error. A message that comes during an error
- * waits until the error ends or the user closes it. A pointer or the focus
- * on the toast stops the time. Render it as
- * `<Toast key={toast.id} tone={toast.tone} {...toastProps}>`.
+ * Several toasts at a time, each with its own time: a message shows for
+ * `duration` milliseconds and an error for `errorDuration`. When a toast
+ * comes and `limit` toasts show, the oldest message closes, or the oldest
+ * error when all are errors. The same message with the same tone does not
+ * show two times: its time starts again. Render the toasts with
+ * `<ToastStack toasts={toasts} onDismiss={dismissToast} onPause={pauseToasts}/>`.
  */
 export function useToastQueue(
   duration = 4000,
   errorDuration = duration * 2,
+  limit = 3,
 ): ToastQueue {
-  const [state, setState] = useState<ToastState>(noToast);
-  const [paused, setPaused] = useState(false);
+  const [toasts, setToasts] = useState<readonly ToastMessage[]>([]);
+  const list = useRef<readonly ToastMessage[]>([]);
+  const timers = useRef(new Map<number, ToastTimer>());
+  const leaves = useRef(new Set<ReturnType<typeof setTimeout>>());
+  const paused = useRef(false);
   const nextId = useRef(1);
-  // The time that the shown message has left, in milliseconds.
-  const timing = useRef({ id: 0, left: 0 });
-  const { shown } = state;
 
-  const dismissToast = useCallback(() => {
-    setPaused(false);
-    setState(({ waiting }) => ({ shown: waiting, waiting: null }));
+  const commit = useCallback((next: readonly ToastMessage[]) => {
+    list.current = next;
+    setToasts(next);
   }, []);
+
+  const dismissToast = useCallback(
+    (id: number) => {
+      const timer = timers.current.get(id);
+      if (timer?.handle) clearTimeout(timer.handle);
+      timers.current.delete(id);
+      if (!list.current.some((toast) => toast.id === id && !toast.leaving))
+        return;
+      commit(
+        list.current.map((toast) =>
+          toast.id === id ? { ...toast, leaving: true } : toast,
+        ),
+      );
+      const leave = setTimeout(() => {
+        leaves.current.delete(leave);
+        commit(list.current.filter((toast) => toast.id !== id));
+      }, leaveTime);
+      leaves.current.add(leave);
+    },
+    [commit],
+  );
+
+  const run = useCallback(
+    (id: number, left: number) => {
+      const old = timers.current.get(id);
+      if (old?.handle) clearTimeout(old.handle);
+      timers.current.set(id, {
+        left,
+        start: Date.now(),
+        handle: paused.current
+          ? null
+          : setTimeout(() => {
+              dismissToast(id);
+            }, left),
+      });
+    },
+    [dismissToast],
+  );
 
   const showToast = useCallback(
     (message: string, tone: ToastTone = "success") => {
-      const toast = { id: nextId.current++, message, tone };
-      setPaused(false);
-      setState(({ shown: current, waiting }) =>
-        tone !== "error" && current?.tone === "error"
-          ? { shown: current, waiting: toast }
-          : { shown: toast, waiting: tone === "error" ? waiting : null },
+      const time = tone === "error" ? errorDuration : duration;
+      const shown = list.current.filter((toast) => !toast.leaving);
+      const same = shown.find(
+        (toast) => toast.message === message && toast.tone === tone,
       );
+      if (same !== undefined) {
+        run(same.id, time);
+        return;
+      }
+      if (shown.length >= limit) {
+        const oldest =
+          shown.find((toast) => toast.tone !== "error") ?? shown[0];
+        if (oldest !== undefined) dismissToast(oldest.id);
+      }
+      const id = nextId.current++;
+      commit([...list.current, { id, message, tone }]);
+      run(id, time);
     },
-    [],
+    [commit, dismissToast, duration, errorDuration, limit, run],
+  );
+
+  const pauseToasts = useCallback(
+    (pause: boolean) => {
+      if (paused.current === pause) return;
+      paused.current = pause;
+      const now = Date.now();
+      for (const [id, timer] of timers.current) {
+        if (pause) {
+          if (timer.handle) clearTimeout(timer.handle);
+          timers.current.set(id, {
+            left: timer.left - (now - timer.start),
+            start: now,
+            handle: null,
+          });
+        } else {
+          run(id, timer.left);
+        }
+      }
+    },
+    [run],
   );
 
   useEffect(() => {
-    if (shown === null || paused) return undefined;
-    if (timing.current.id !== shown.id) {
-      timing.current = {
-        id: shown.id,
-        left: shown.tone === "error" ? errorDuration : duration,
-      };
-    }
-    const start = Date.now();
-    const timer = setTimeout(dismissToast, timing.current.left);
+    const running = timers.current;
+    const leaving = leaves.current;
     return () => {
-      clearTimeout(timer);
-      timing.current.left -= Date.now() - start;
+      for (const timer of running.values()) {
+        if (timer.handle) clearTimeout(timer.handle);
+      }
+      for (const leave of leaving) clearTimeout(leave);
     };
-  }, [dismissToast, duration, errorDuration, paused, shown]);
+  }, []);
 
-  const toastProps: ToastQueue["toastProps"] = {
-    onBlur: (event) => {
-      if (!event.currentTarget.contains(event.relatedTarget)) setPaused(false);
-    },
-    onFocus: () => {
-      setPaused(true);
-    },
-    onPointerEnter: () => {
-      setPaused(true);
-    },
-    onPointerLeave: () => {
-      setPaused(false);
-    },
-    ...(shown?.tone === "error" ? { onDismiss: dismissToast } : {}),
-  };
-  return { toast: shown, showToast, dismissToast, toastProps };
+  return { toasts, showToast, dismissToast, pauseToasts };
 }

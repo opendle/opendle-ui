@@ -180,7 +180,7 @@ export { StatePanel, } from "./components/StatePanel.js";
 export { NoResults } from "./components/NoResults.js";
 export { StatusDot, } from "./components/StatusDot.js";
 export { StatusPill } from "./components/StatusPill.js";
-export { Toast, useToastQueue, } from "./components/Toast.js";
+export { Toast, ToastStack, useToastQueue, } from "./components/Toast.js";
 export { WorkspaceSelector, } from "./components/WorkspaceSelector.js";
 export { BoundedDataExplorer, OntologyLabelList, } from "./components/BoundedDataExplorer.js";
 export { ChangeTimeline, } from "./components/ChangeTimeline.js";

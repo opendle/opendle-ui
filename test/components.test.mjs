@@ -52,6 +52,7 @@ import {
   StatePanel,
   StatusPill,
   Toast,
+  ToastStack,
   WorkspaceSelector,
   clampGraphPosition,
   clampGraphViewport,
@@ -1622,4 +1623,45 @@ test("DockedPanelLayout omits a closed panel without changing outer placement", 
   );
   assert.doesNotMatch(markup, /data-position="inner"/);
   assert.match(markup, /data-position="outer"/);
+});
+
+test("ToastStack shows the toasts in order, each an output", () => {
+  const markup = renderToStaticMarkup(
+    React.createElement(ToastStack, {
+      toasts: [
+        { id: 1, message: "Saved", tone: "success" },
+        { id: 2, message: "Upload failed", tone: "error" },
+        { id: 3, message: "Copied", tone: "neutral", leaving: true },
+      ],
+      onDismiss: () => undefined,
+    }),
+  );
+  const items = [
+    ...markup.matchAll(
+      /<div class="od-toast-slot"( data-leaving="true")?><output class="od-toast" data-tone="(\w+)">(.*?)<\/output>/g,
+    ),
+  ];
+  assert.deepEqual(
+    items.map((item) => [item[2], Boolean(item[1])]),
+    [
+      ["success", false],
+      ["error", false],
+      ["neutral", true],
+    ],
+  );
+  // Only an error has a close button.
+  assert.doesNotMatch(items[0][3], /<button/);
+  assert.match(
+    items[1][3],
+    /<button type="button" aria-label="Dismiss message"/,
+  );
+  assert.equal(
+    renderToStaticMarkup(
+      React.createElement(ToastStack, {
+        toasts: [],
+        onDismiss: () => undefined,
+      }),
+    ),
+    "",
+  );
 });

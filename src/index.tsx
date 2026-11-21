@@ -724,9 +724,11 @@ export {
 export { StatusPill, type StatusPillProps } from "./components/StatusPill.js";
 export {
   Toast,
+  ToastStack,
   useToastQueue,
   type ToastMessage,
   type ToastProps,
+  type ToastStackProps,
   type ToastQueue,
   type ToastTone,
 } from "./components/Toast.js";

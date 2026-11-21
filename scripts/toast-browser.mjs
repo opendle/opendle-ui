@@ -3,22 +3,28 @@ import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
+import AxeBuilder from "@axe-core/playwright";
 import { chromium } from "@playwright/test";
 import { build } from "esbuild";
 
-// The toast queue: the time of each tone, the pause, the close button of an
-// error, and a message that waits for the end of an error.
-assert.equal(process.argv.length, 2, "This check accepts no arguments.");
+// The toast stack: the order, the time of each toast, the pause, the limit
+// of three toasts, one toast for the same message, and the place above a
+// modal dialog.
+assert.ok(process.argv.length <= 3, "This check accepts one optional path.");
+const screenshots = process.argv[2] ?? null;
 const root = fileURLToPath(new URL("..", import.meta.url));
 const fixture = `
-import React from "react";
+import React, {useState} from "react";
 import {createRoot} from "react-dom/client";
-import {Toast, useToastQueue} from "./dist/index.js";
+import {Dialog, ToastStack, useToastQueue} from "./dist/index.js";
 function App() {
-  const {toast, showToast, toastProps} = useToastQueue();
+  const {toasts, showToast, dismissToast, pauseToasts} = useToastQueue();
+  const [open, setOpen] = useState(false);
   window.showToast = showToast;
+  window.openDialog = () => setOpen(true);
   return <main><h1>Toasts</h1>
-    {toast === null ? null : <Toast key={toast.id} role="status" tone={toast.tone} {...toastProps}>{toast.message}</Toast>}
+    <Dialog open={open} onClose={() => setOpen(false)} title="Settings"><p>Body</p></Dialog>
+    <ToastStack toasts={toasts} onDismiss={dismissToast} onPause={pauseToasts}/>
   </main>;
 }
 createRoot(document.getElementById("root")).render(<App/>);`;
@@ -37,88 +43,149 @@ writeFileSync(
 const browser = await chromium.launch({ headless: true });
 
 try {
-  const page = await browser.newPage();
-  const errors = [];
-  page.on("pageerror", (error) => errors.push(error.message));
-  // A paused clock: only runFor moves the time.
-  await page.clock.install({ time: new Date("2029-01-01T00:00:00Z") });
-  await page.goto(pathToFileURL(pagePath).href);
-  await page.getByRole("heading", { name: "Toasts" }).waitFor();
-  await page.clock.pauseAt(new Date("2029-01-01T00:01:00Z"));
-  const toast = page.locator(".od-toast");
-  const text = async () =>
-    (await toast.count()) === 0
-      ? null
-      : await toast.locator("span").first().textContent();
-  const show = (message, tone) =>
-    page.evaluate(([m, t]) => window.showToast(m, t), [message, tone]);
+  for (const colorScheme of ["light", "dark"]) {
+    const page = await browser.newPage({ colorScheme });
+    const errors = [];
+    page.on("pageerror", (error) => errors.push(error.message));
+    // A paused clock: only runFor moves the time.
+    await page.clock.install({ time: new Date("2029-01-01T00:00:00Z") });
+    await page.goto(pathToFileURL(pagePath).href);
+    const heading = page.getByRole("heading", { name: "Toasts" });
+    await heading.waitFor();
+    await page.clock.pauseAt(new Date("2029-01-01T00:01:00Z"));
+    const toasts = page.locator(".od-toast-slot:not([data-leaving]) .od-toast");
+    const shown = () => toasts.locator("span").allTextContents();
+    const show = (message, tone) =>
+      page.evaluate(([m, t]) => window.showToast(m, t), [message, tone]);
 
-  // A message shows for 4 s, without a close button.
-  await show("Saved", "success");
-  assert.equal(await text(), "Saved");
-  assert.equal(await toast.getByRole("button").count(), 0);
-  await page.clock.runFor(3900);
-  assert.equal(await text(), "Saved");
-  await page.clock.runFor(200);
-  assert.equal(await text(), null);
+    // The toasts stack, the newest last, each with its own time.
+    await show("Saved", "success");
+    await page.clock.runFor(1000);
+    await show("Upload failed", "error");
+    await page.clock.runFor(1000);
+    await show("Copied", "success");
+    assert.deepEqual(await shown(), ["Saved", "Upload failed", "Copied"]);
+    const tops = await toasts.evaluateAll((nodes) =>
+      nodes.map((node) => node.getBoundingClientRect().top),
+    );
+    assert.ok(tops[0] < tops[1] && tops[1] < tops[2], "newest lowest");
+    assert.equal(await toasts.getByRole("button").count(), 1);
+    // Each toast is an output element: its role is status.
+    assert.equal(
+      await page.locator(".od-toast-stack").getByRole("status").count(),
+      3,
+    );
+    // The message ends at 4 s, the second message at 6 s, the error at 9 s.
+    await page.clock.runFor(2100);
+    assert.deepEqual(await shown(), ["Upload failed", "Copied"]);
+    await page.clock.runFor(2000);
+    assert.deepEqual(await shown(), ["Upload failed"]);
+    await page.clock.runFor(2800);
+    assert.deepEqual(await shown(), ["Upload failed"]);
+    await page.clock.runFor(200);
+    assert.deepEqual(await shown(), []);
+    await page.clock.runFor(300);
+    assert.equal(await page.locator(".od-toast").count(), 0);
 
-  // An error shows for 8 s, with a close button.
-  await show("Upload failed", "error");
-  assert.equal(
-    await toast.getByRole("button", { name: "Dismiss message" }).count(),
-    1,
-  );
-  await page.clock.runFor(7900);
-  assert.equal(await text(), "Upload failed");
-  await page.clock.runFor(200);
-  assert.equal(await text(), null);
+    // The same message does not show two times: its time starts again.
+    await show("Saved", "success");
+    await page.clock.runFor(3000);
+    await show("Saved", "success");
+    assert.deepEqual(await shown(), ["Saved"]);
+    await page.clock.runFor(3000);
+    assert.deepEqual(await shown(), ["Saved"]);
+    await page.clock.runFor(1100);
+    assert.deepEqual(await shown(), []);
 
-  // A message during an error waits until the error ends.
-  await show("First error", "error");
-  await page.clock.runFor(1000);
-  await show("Saved later", "success");
-  assert.equal(await text(), "First error");
-  // A new error replaces the error; the message still waits.
-  await show("Second error", "error");
-  assert.equal(await text(), "Second error");
-  await page.clock.runFor(7900);
-  assert.equal(await text(), "Second error");
-  await page.clock.runFor(200);
-  assert.equal(await text(), "Saved later");
-  await page.clock.runFor(4100);
-  assert.equal(await text(), null);
+    // At most three toasts: the oldest message closes first, then the
+    // oldest error when all are errors.
+    await show("Error one", "error");
+    await show("Message", "success");
+    await show("Error two", "error");
+    await show("Error three", "error");
+    assert.deepEqual(await shown(), ["Error one", "Error two", "Error three"]);
+    await show("Error four", "error");
+    assert.deepEqual(await shown(), ["Error two", "Error three", "Error four"]);
 
-  // The close button ends the error, and the waiting message shows.
-  await show("Third error", "error");
-  await show("Saved again", "success");
-  await toast.getByRole("button", { name: "Dismiss message" }).click();
-  assert.equal(await text(), "Saved again");
-  await page.clock.runFor(4100);
-  assert.equal(await text(), null);
+    // The close button closes one error.
+    await page.clock.runFor(300);
+    await toasts
+      .nth(1)
+      .getByRole("button", { name: "Dismiss message" })
+      .click();
+    assert.deepEqual(await shown(), ["Error two", "Error four"]);
+    await page.mouse.move(0, 0);
+    await heading.click();
 
-  // A pointer on the toast stops the time; the time left continues after.
-  await page.mouse.move(0, 0);
-  await show("Hover me", "success");
-  await page.clock.runFor(3000);
-  await toast.hover();
-  await page.clock.runFor(10000);
-  assert.equal(await text(), "Hover me");
-  await page.mouse.move(0, 0);
-  await page.clock.runFor(900);
-  assert.equal(await text(), "Hover me");
-  await page.clock.runFor(200);
-  assert.equal(await text(), null);
+    // A pointer on the stack stops the time of all its toasts.
+    await page.clock.runFor(8100);
+    assert.deepEqual(await shown(), []);
+    await show("First", "success");
+    await page.clock.runFor(1000);
+    await show("Second", "success");
+    await toasts.nth(0).hover();
+    await page.clock.runFor(20000);
+    assert.deepEqual(await shown(), ["First", "Second"]);
+    await page.mouse.move(0, 0);
+    await page.clock.runFor(3100);
+    assert.deepEqual(await shown(), ["Second"]);
+    await page.clock.runFor(1000);
+    assert.deepEqual(await shown(), []);
 
-  // The focus on the close button stops the time of an error.
-  await show("Focus me", "error");
-  await toast.getByRole("button", { name: "Dismiss message" }).focus();
-  await page.clock.runFor(20000);
-  assert.equal(await text(), "Focus me");
-  await page.getByRole("heading", { name: "Toasts" }).click();
-  await page.clock.runFor(8100);
-  assert.equal(await text(), null);
+    // The focus on a close button stops the time.
+    await show("Focus me", "error");
+    await toasts.getByRole("button", { name: "Dismiss message" }).focus();
+    await page.clock.runFor(20000);
+    assert.deepEqual(await shown(), ["Focus me"]);
+    await heading.click();
+    await page.clock.runFor(8100);
+    assert.deepEqual(await shown(), []);
 
-  assert.deepEqual(errors, []);
+    // Above a modal dialog, the stack shows over the dialog.
+    await page.clock.runFor(300);
+    await page.evaluate(() => window.openDialog());
+    await page.getByRole("dialog", { name: "Settings" }).waitFor();
+    await show("Over the dialog", "success");
+    const box = await toasts.first().boundingBox();
+    const top = await page.evaluate(
+      ([x, y]) =>
+        document.elementFromPoint(x, y)?.closest(".od-toast")?.textContent,
+      [box.x + box.width / 2, box.y + box.height / 2],
+    );
+    assert.equal(top, "Over the dialog");
+
+    assert.deepEqual(errors, []);
+    await page.close();
+
+    // Accessibility and look, with the real clock.
+    const context = await browser.newContext({
+      colorScheme,
+      reducedMotion: "reduce",
+    });
+    const plain = await context.newPage();
+    await plain.goto(pathToFileURL(pagePath).href);
+    await plain.getByRole("heading", { name: "Toasts" }).waitFor();
+    await plain.evaluate(() => {
+      window.showToast("Saved");
+      window.showToast("Upload failed", "error");
+      window.showToast("Copied", "neutral");
+    });
+    await plain.locator(".od-toast").nth(2).waitFor();
+    assert.deepEqual(
+      (
+        await new AxeBuilder({ page: plain })
+          .include(".od-toast-stack")
+          .analyze()
+      ).violations.map((violation) => violation.id),
+      [],
+    );
+    if (screenshots !== null) {
+      await plain.screenshot({
+        path: join(screenshots, `toasts-${colorScheme}.png`),
+      });
+    }
+    await context.close();
+  }
 } finally {
   await browser.close();
   rmSync(directory, { recursive: true, force: true });

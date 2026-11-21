@@ -161,12 +161,23 @@ it is disabled, has a flat muted fill and a blocked mark, and keeps its
 `title`.
 
 `Toast` shows above all content, also above an open dialog. `useToastQueue`
-holds one message: a message shows for `duration` (4 s by default) and an
-error for `errorDuration` (two times `duration`). A new message replaces a
-message, and a new error replaces the message or the error. A message that
-comes during an error waits until the error ends or the user closes it.
-Give `toastProps` to the `Toast`: a pointer or the focus on the toast stops
-the time, and an error has a close button. `dismissToast` closes the toast.
+holds several toasts, and `ToastStack` shows them one above the other, the
+newest nearest the edge of the screen, each in an `output` element (role `status`). A message
+shows for `duration` (4 s by default) and an error for `errorDuration` (two
+times `duration`); an error has a close button. A pointer or the focus on the
+stack stops the time of all its toasts. When a toast comes and `limit`
+(default 3) toasts show, the oldest message closes, or the oldest error when
+all are errors. The same message with the same tone does not show two times:
+its time starts again.
+
+```tsx
+const { toasts, showToast, dismissToast, pauseToasts } = useToastQueue();
+<ToastStack toasts={toasts} onDismiss={dismissToast} onPause={pauseToasts} />;
+```
+
+Breaking change: `useToastQueue` returns `toasts`, `showToast`,
+`dismissToast(id)` and `pauseToasts(paused)`. The `toast` and `toastProps`
+values do not exist.
 
 `CalendarBoard` shows entries in a month view, a week view or a continuous
 timeline. One entry can go to several networks and shows one badge for each.
