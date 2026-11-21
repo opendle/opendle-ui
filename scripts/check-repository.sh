@@ -147,4 +147,17 @@ npm run security
 git diff --check
 git diff --cached --check
 
+# Report fallow findings and copied code in the changed files. This report does not fail the check.
+if command -v fallow >/dev/null; then
+  FALLOW_UPDATE_CHECK=off fallow review --brief || true
+else
+  echo "fallow is not installed: no fallow report."
+fi
+if command -v jscpd >/dev/null; then
+  jscpd --changed --baseline "$(git rev-parse --git-dir)/jscpd-baseline.json" \
+    --reporters ai --no-colors src styles || true
+else
+  echo "jscpd is not installed: no duplicate report."
+fi
+
 echo "Repository checks passed."
