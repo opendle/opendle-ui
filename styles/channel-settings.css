@@ -15,6 +15,63 @@
   background: var(--od-color-hover);
 }
 
+.od-channel-switch {
+  position: relative;
+  gap: 6px;
+}
+
+.od-channel-switch-icon {
+  position: relative;
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+}
+
+/*
+ * An unavailable switch with an icon: a line across the icon replaces the
+ * blocked mark, so the icon stays readable without its label.
+ */
+.od-channel-switch[data-unavailable="true"]:has(.od-channel-switch-icon)
+  > .od-icon {
+  display: none;
+}
+
+.od-channel-switch[data-unavailable="true"] .od-channel-switch-icon::after {
+  position: absolute;
+  inset: -2px auto -2px 50%;
+  width: 1.5px;
+  border-radius: 1px;
+  background: currentColor;
+  box-shadow: 0 0 0 1px var(--od-color-sunken);
+  content: "";
+  rotate: -45deg;
+}
+
+/* Without enough width, a switch with an icon shows only its icon. */
+@container ((min-width: 981px) and (max-width: 1200px)) or (max-width: 560px) {
+  .od-channel-switch:has(.od-channel-switch-icon) {
+    min-width: 2.75rem;
+    padding-inline: 0;
+  }
+
+  .od-channel-switch:has(.od-channel-switch-icon) .od-channel-switch-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+}
+
+/* On a phone, the icons of the switches share narrow columns. */
+@container (max-width: 560px) {
+  .od-channel-switches:has(.od-channel-switch-icon) {
+    grid-column: 2 / -1;
+    grid-template-columns: repeat(auto-fill, 2.75rem);
+  }
+}
+
 /* A connection provider has a round mark as wide as a network badge. */
 .od-connect-option-icon {
   display: grid;

@@ -1,12 +1,19 @@
 import type { ReactNode } from "react";
 
+import type { IconName } from "./Icon.js";
 import type { NetworkName } from "./networks.js";
 
 export interface ChannelSwitch {
   readonly id: string;
   readonly label: string;
   readonly on: boolean;
+  /** The mark of the switch. In a narrow list, the switch shows only it. */
+  readonly icon?: IconName;
+  /** What the switch does. It shows on hover. */
+  readonly description?: string;
+  /** The connection does not support the function. */
   readonly disabled?: boolean;
+  /** Why the function is not available. It shows on hover. */
   readonly disabledReason?: string;
 }
 

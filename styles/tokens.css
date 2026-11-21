@@ -11086,6 +11086,11 @@ button.od-tag[data-color][aria-pressed="true"] {
   border-color: var(--od-color-border-strong);
 }
 
+/* The space at the end of the preview is the space below it. */
+.od-calendar-item:has(> .od-calendar-item-preview) {
+  padding-right: 6px;
+}
+
 .od-calendar-item-bar {
   width: 3px;
   flex: none;

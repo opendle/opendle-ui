@@ -16,11 +16,21 @@ export interface ToastQueue {
     /** The one visible message, or `null`. */
     readonly toast: ToastMessage | null;
     readonly showToast: (message: string, tone?: ToastTone) => void;
+    /** Close the visible message. A message that waits shows next. */
+    readonly dismissToast: () => void;
+    /**
+     * Give these to the `Toast`: a pointer or the focus on the toast stops the
+     * time, and an error has a close button.
+     */
+    readonly toastProps: Pick<ToastProps, "onBlur" | "onDismiss" | "onFocus" | "onPointerEnter" | "onPointerLeave">;
 }
 /**
- * Hold one message for `duration` milliseconds. A new message replaces the
- * old one, so only one toast shows at a time. Render it as
- * `<Toast key={toast.id}>`.
+ * Hold one message: a message for `duration` milliseconds, an error for
+ * `errorDuration`. A new message replaces a message, and a new error
+ * replaces the message or the error. A message that comes during an error
+ * waits until the error ends or the user closes it. A pointer or the focus
+ * on the toast stops the time. Render it as
+ * `<Toast key={toast.id} tone={toast.tone} {...toastProps}>`.
  */
-export declare function useToastQueue(duration?: number): ToastQueue;
+export declare function useToastQueue(duration?: number, errorDuration?: number): ToastQueue;
 //# sourceMappingURL=Toast.d.ts.map

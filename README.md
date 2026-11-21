@@ -100,7 +100,11 @@ route beside the handle. It stays visible with an ended authorization and in
 read-only lists. Omit it for a connection that needs no route label.
 A switch with `disabled` is a function that the connection does not support.
 It shows as an unavailable `TagChip`, with `disabledReason` as its title.
-The rows share the columns of the list: each switch ID has one column, so the
+`ChannelSwitch.icon` gives a switch an icon, and `description` its help
+text on hover. An unavailable switch shows `disabledReason` instead, and a
+line across its icon. In a list from 981 px to 1200 px wide, and below
+561 px, a switch with an icon shows only the icon; its label stays its
+accessible name. The rows share the columns of the list: each switch ID has one column, so the
 switches and the actions of all rows align. In a list narrower than 980 px,
 the switches go below the account in columns of one width.
 `MetricTile` in a `dl.od-metrics` shows a key number with its
@@ -157,7 +161,12 @@ it is disabled, has a flat muted fill and a blocked mark, and keeps its
 `title`.
 
 `Toast` shows above all content, also above an open dialog. `useToastQueue`
-holds one message: a new message replaces the old one.
+holds one message: a message shows for `duration` (4 s by default) and an
+error for `errorDuration` (two times `duration`). A new message replaces a
+message, and a new error replaces the message or the error. A message that
+comes during an error waits until the error ends or the user closes it.
+Give `toastProps` to the `Toast`: a pointer or the focus on the toast stops
+the time, and an error has a close button. `dismissToast` closes the toast.
 
 `CalendarBoard` shows entries in a month view, a week view or a continuous
 timeline. One entry can go to several networks and shows one badge for each.

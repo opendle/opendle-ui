@@ -113,6 +113,81 @@ test("ChannelList disables an unsupported switch and gives its reason", () => {
   );
   assert.match(
     markup,
-    /<button aria-pressed="false" class="od-tag" data-unavailable="true" disabled="" title="Community is not supported"[^>]*><svg aria-hidden="true"[^>]*>.*?<\/svg>Community<\/button>/,
+    /<button aria-pressed="false" class="od-tag od-channel-switch" data-unavailable="true" disabled="" title="Community is not supported"[^>]*><svg aria-hidden="true"[^>]*>.*?<\/svg><span class="od-channel-switch-label">Community<\/span><\/button>/,
+  );
+});
+
+test("ChannelList switches show their icon and their help text", () => {
+  const props = {
+    networks: [],
+    onRename: async () => {},
+    onTagsChange: async () => {},
+    onSwitchChange: async () => {},
+    onDisconnect: async () => {},
+    onPasswordConnect: async () => {},
+    errorMessage: () => "Failed",
+  };
+  const channel = (switches) => ({
+    id: "channel",
+    network: "youtube",
+    name: "Music",
+    handle: "@music",
+    tags: [],
+    needsReconnect: false,
+    switches,
+  });
+  const markup = renderToStaticMarkup(
+    element(ChannelList, {
+      ...props,
+      items: [
+        channel([
+          {
+            id: "publish",
+            label: "Publish",
+            on: true,
+            icon: "send",
+            description: "Publish posts to this channel",
+          },
+          {
+            id: "messages",
+            label: "Messages",
+            on: false,
+            icon: "mail",
+            description: "Read direct messages",
+            disabled: true,
+            disabledReason: "Messages are not supported",
+          },
+        ]),
+      ],
+    }),
+  );
+  assert.match(
+    markup,
+    /<button aria-pressed="true" class="od-tag od-channel-switch" title="Publish posts to this channel" type="button"><span class="od-channel-switch-icon"><svg[^>]*>.*?<\/svg><\/span><span class="od-channel-switch-label">Publish<\/span><\/button>/,
+  );
+  // An unavailable switch shows its reason, not its help text.
+  assert.match(markup, /title="Messages are not supported"/);
+  assert.doesNotMatch(markup, /Read direct messages/);
+  // A read-only switch keeps its help text.
+  const fixed = renderToStaticMarkup(
+    element(ChannelList, {
+      ...props,
+      readOnly: true,
+      items: [
+        channel([
+          {
+            id: "publish",
+            label: "Publish",
+            on: true,
+            icon: "send",
+            description: "Publish posts to this channel",
+          },
+        ]),
+      ],
+    }),
+  );
+  assert.match(
+    fixed,
+    /<span class="od-tag od-channel-switch" title="Publish posts to this channel">/,
   );
 });

@@ -1,4 +1,4 @@
-import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
+import { jsx as _jsx, Fragment as _Fragment, jsxs as _jsxs } from "react/jsx-runtime";
 import { ActionMenu } from "./ActionMenu.js";
 import { Button } from "./Button.js";
 import { Icon, NetworkIcon } from "./Icon.js";
@@ -13,11 +13,15 @@ function SwitchCell({ entry, onChange, readOnly }) {
     if (entry === undefined || (readOnly && !entry.on)) {
         return _jsx("span", { "aria-hidden": "true", className: "od-channel-switch-gap" });
     }
-    if (readOnly)
-        return _jsx(TagChip, { children: entry.label });
-    return (_jsx(TagChip, { unavailable: entry.disabled ?? false, title: entry.disabledReason, onPressedChange: (on) => {
+    const content = (_jsxs(_Fragment, { children: [entry.icon === undefined ? null : (_jsx("span", { className: "od-channel-switch-icon", children: _jsx(Icon, { name: entry.icon, size: 14 }) })), _jsx("span", { className: "od-channel-switch-label", children: entry.label })] }));
+    const unavailable = entry.disabled ?? false;
+    const title = unavailable ? entry.disabledReason : entry.description;
+    if (readOnly) {
+        return (_jsx(TagChip, { className: "od-channel-switch", title: title, children: content }));
+    }
+    return (_jsx(TagChip, { className: "od-channel-switch", unavailable: unavailable, title: title, onPressedChange: (on) => {
             onChange(entry.id, on);
-        }, pressed: entry.on, children: entry.label }));
+        }, pressed: entry.on, children: content }));
 }
 /** One connected account in a `ChannelList`. */
 export function ChannelRow({ item, labels, onDisconnect, onRename, onSwitchChange, onTagsChange, readOnly, reconnect, switchIds, tagColors, tagSuggestions, }) {

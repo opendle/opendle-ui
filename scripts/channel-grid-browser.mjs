@@ -18,6 +18,8 @@ import {ChannelList} from "./dist/index.js";
 
 const names = ["publish", "community", "messages", "analytics"];
 const labels = {publish: "Publish", community: "Comments & mentions", messages: "Messages", analytics: "Analytics"};
+const icons = {publish: "send", community: "message", messages: "mail", analytics: "chart"};
+const help = {publish: "Publish posts to this channel", community: "Read comments and mentions", messages: "Read direct messages", analytics: "Collect analytics"};
 // 1 is on, 0 is off, and - is unavailable.
 const rows = [
   ["youtube", "tubededentifrice", "@tubededentifrice", "11-1", ["long", "music"]],
@@ -34,13 +36,13 @@ const items = rows.map(([network, name, handle, states, tags, connectionLabel], 
   id: "c" + index, network, name, handle, tags, needsReconnect: index === 4,
   ...(connectionLabel ? {connectionLabel} : {}),
   switches: names.map((id, place) => ({
-    id, label: labels[id], on: states[place] === "1",
+    id, label: labels[id], on: states[place] === "1", icon: icons[id], description: help[id],
     ...(states[place] === "-" ? {disabled: true, disabledReason: labels[id] + " is not supported"} : {}),
   })),
 }));
 const nothing = async () => {};
 createRoot(document.getElementById("root")).render(
-  <main style={{padding: 16, maxWidth: 1240, margin: "0 auto"}}>
+  <main style={{padding: 16, maxWidth: 1600, margin: "0 auto"}}>
     <ChannelList items={items} networks={[]} errorMessage={() => "Failed"} tagColors={{long: 2, short: 5, music: 8}}
       onRename={nothing} onTagsChange={nothing} onSwitchChange={nothing} onDisconnect={nothing} onPasswordConnect={nothing}/>
   </main>,
@@ -74,7 +76,7 @@ const edges = (page, selector) =>
 
 try {
   for (const colorScheme of ["light", "dark"]) {
-    for (const width of [1280, 920, 390]) {
+    for (const width of [1400, 1100, 920, 390]) {
       const context = await browser.newContext({
         colorScheme,
         reducedMotion: "reduce",
@@ -102,6 +104,39 @@ try {
           `${name}: switch column ${String(column)} ${JSON.stringify(cells)}`,
         );
       }
+      // A switch shows its icon, and its label when the width permits. The
+      // label stays its accessible name, and its help text shows on hover.
+      const collapsed = width === 1100 || width === 390;
+      const label = page
+        .locator(".od-channel-row")
+        .first()
+        .locator(".od-channel-switch-label")
+        .first();
+      assert.equal(
+        ((await label.boundingBox())?.width ?? 0) <= 1,
+        collapsed,
+        `${name}: collapsed labels`,
+      );
+      const publish = page.getByRole("button", { name: "Publish" }).first();
+      assert.equal(
+        await publish.getAttribute("title"),
+        "Publish posts to this channel",
+      );
+      assert.equal(await publish.locator("svg").count(), 1);
+      const unavailable = page
+        .getByRole("button", { name: "Messages" })
+        .first();
+      assert.equal(await unavailable.isDisabled(), true);
+      assert.equal(
+        await unavailable.getAttribute("title"),
+        "Messages is not supported",
+      );
+      // One icon with a line across it: the blocked mark does not show.
+      assert.equal(
+        await unavailable.locator("svg:visible").count(),
+        1,
+        `${name}: unavailable icon`,
+      );
       if (width > 1100) {
         const actions = await edges(page, ".od-action-menu");
         assert.equal(

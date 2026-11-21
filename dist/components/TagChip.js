@@ -8,7 +8,7 @@ import { Icon } from "./Icon.js";
  */
 export function TagChip({ children, className, color, disabled = false, title, onPressedChange, pressed = false, unavailable = false, }) {
     if (onPressedChange === undefined) {
-        return (_jsx("span", { className: classes("od-tag", className), "data-color": color, children: children }));
+        return (_jsx("span", { className: classes("od-tag", className), "data-color": color, title: title, children: children }));
     }
     return (_jsxs("button", { "aria-pressed": pressed, className: classes("od-tag", className), "data-color": color, "data-unavailable": unavailable || undefined, disabled: disabled || unavailable, title: title, onClick: () => {
             onPressedChange(!pressed);

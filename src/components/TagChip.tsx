@@ -38,7 +38,11 @@ export function TagChip({
 }: TagChipProps) {
   if (onPressedChange === undefined) {
     return (
-      <span className={classes("od-tag", className)} data-color={color}>
+      <span
+        className={classes("od-tag", className)}
+        data-color={color}
+        title={title}
+      >
         {children}
       </span>
     );

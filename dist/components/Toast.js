@@ -1,5 +1,5 @@
 import { jsx as _jsx, jsxs as _jsxs, Fragment as _Fragment } from "react/jsx-runtime";
-import { useCallback, useLayoutEffect, useRef, useState, useSyncExternalStore, } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore, } from "react";
 import { createPortal } from "react-dom";
 import { classes } from "./classes.js";
 import { Icon } from "./Icon.js";
@@ -124,21 +124,65 @@ export function Toast({ children, className, onDismiss, tone = "neutral", ...pro
         return toast;
     return (_jsxs(_Fragment, { children: [_jsx("span", { "data-od-toast-inline-host": "", ref: inlineHostRef }), createPortal(toast, portalContainer)] }));
 }
+const noToast = { shown: null, waiting: null };
 /**
- * Hold one message for `duration` milliseconds. A new message replaces the
- * old one, so only one toast shows at a time. Render it as
- * `<Toast key={toast.id}>`.
+ * Hold one message: a message for `duration` milliseconds, an error for
+ * `errorDuration`. A new message replaces a message, and a new error
+ * replaces the message or the error. A message that comes during an error
+ * waits until the error ends or the user closes it. A pointer or the focus
+ * on the toast stops the time. Render it as
+ * `<Toast key={toast.id} tone={toast.tone} {...toastProps}>`.
  */
-export function useToastQueue(duration = 4000) {
-    const [toast, setToast] = useState(null);
+export function useToastQueue(duration = 4000, errorDuration = duration * 2) {
+    const [state, setState] = useState(noToast);
+    const [paused, setPaused] = useState(false);
     const nextId = useRef(1);
+    // The time that the shown message has left, in milliseconds.
+    const timing = useRef({ id: 0, left: 0 });
+    const { shown } = state;
+    const dismissToast = useCallback(() => {
+        setPaused(false);
+        setState(({ waiting }) => ({ shown: waiting, waiting: null }));
+    }, []);
     const showToast = useCallback((message, tone = "success") => {
-        const id = nextId.current++;
-        setToast({ id, message, tone });
-        setTimeout(() => {
-            setToast((current) => (current?.id === id ? null : current));
-        }, duration);
-    }, [duration]);
-    return { toast, showToast };
+        const toast = { id: nextId.current++, message, tone };
+        setPaused(false);
+        setState(({ shown: current, waiting }) => tone !== "error" && current?.tone === "error"
+            ? { shown: current, waiting: toast }
+            : { shown: toast, waiting: tone === "error" ? waiting : null });
+    }, []);
+    useEffect(() => {
+        if (shown === null || paused)
+            return undefined;
+        if (timing.current.id !== shown.id) {
+            timing.current = {
+                id: shown.id,
+                left: shown.tone === "error" ? errorDuration : duration,
+            };
+        }
+        const start = Date.now();
+        const timer = setTimeout(dismissToast, timing.current.left);
+        return () => {
+            clearTimeout(timer);
+            timing.current.left -= Date.now() - start;
+        };
+    }, [dismissToast, duration, errorDuration, paused, shown]);
+    const toastProps = {
+        onBlur: (event) => {
+            if (!event.currentTarget.contains(event.relatedTarget))
+                setPaused(false);
+        },
+        onFocus: () => {
+            setPaused(true);
+        },
+        onPointerEnter: () => {
+            setPaused(true);
+        },
+        onPointerLeave: () => {
+            setPaused(false);
+        },
+        ...(shown?.tone === "error" ? { onDismiss: dismissToast } : {}),
+    };
+    return { toast: shown, showToast, dismissToast, toastProps };
 }
 //# sourceMappingURL=Toast.js.map

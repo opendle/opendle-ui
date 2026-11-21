@@ -44,17 +44,36 @@ function SwitchCell({ entry, onChange, readOnly }: SwitchCellProps) {
   if (entry === undefined || (readOnly && !entry.on)) {
     return <span aria-hidden="true" className="od-channel-switch-gap" />;
   }
-  if (readOnly) return <TagChip>{entry.label}</TagChip>;
+  const content = (
+    <>
+      {entry.icon === undefined ? null : (
+        <span className="od-channel-switch-icon">
+          <Icon name={entry.icon} size={14} />
+        </span>
+      )}
+      <span className="od-channel-switch-label">{entry.label}</span>
+    </>
+  );
+  const unavailable = entry.disabled ?? false;
+  const title = unavailable ? entry.disabledReason : entry.description;
+  if (readOnly) {
+    return (
+      <TagChip className="od-channel-switch" title={title}>
+        {content}
+      </TagChip>
+    );
+  }
   return (
     <TagChip
-      unavailable={entry.disabled ?? false}
-      title={entry.disabledReason}
+      className="od-channel-switch"
+      unavailable={unavailable}
+      title={title}
       onPressedChange={(on) => {
         onChange(entry.id, on);
       }}
       pressed={entry.on}
     >
-      {entry.label}
+      {content}
     </TagChip>
   );
 }

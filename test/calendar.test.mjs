@@ -608,7 +608,10 @@ test("ChannelList warns about an ended authorization and hides writes", () => {
   assert.match(markup, /href="\/oauth\/youtube\/start"[^>]*>Reconnect</);
   assert.match(markup, /aria-label="Rename: tubededentifrice"/);
   assert.match(markup, /aria-label="More actions: tubededentifrice"/);
-  assert.match(markup, /aria-pressed="true"[^>]*>Publish</);
+  assert.match(
+    markup,
+    /aria-pressed="true"[^>]*><span class="od-channel-switch-label">Publish</,
+  );
   const readOnly = render(ChannelList, { ...props, readOnly: true });
   assert.doesNotMatch(readOnly, /Rename:|More actions:|Reconnect<|>Connect</);
   assert.match(readOnly, /Authorization ended/);

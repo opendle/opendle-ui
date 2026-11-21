@@ -1,5 +1,6 @@
 import {
   useCallback,
+  useEffect,
   useLayoutEffect,
   useRef,
   useState,
@@ -208,25 +209,93 @@ export interface ToastQueue {
   /** The one visible message, or `null`. */
   readonly toast: ToastMessage | null;
   readonly showToast: (message: string, tone?: ToastTone) => void;
+  /** Close the visible message. A message that waits shows next. */
+  readonly dismissToast: () => void;
+  /**
+   * Give these to the `Toast`: a pointer or the focus on the toast stops the
+   * time, and an error has a close button.
+   */
+  readonly toastProps: Pick<
+    ToastProps,
+    "onBlur" | "onDismiss" | "onFocus" | "onPointerEnter" | "onPointerLeave"
+  >;
 }
 
+interface ToastState {
+  readonly shown: ToastMessage | null;
+  /** A message that waits for the end of an error. */
+  readonly waiting: ToastMessage | null;
+}
+
+const noToast: ToastState = { shown: null, waiting: null };
+
 /**
- * Hold one message for `duration` milliseconds. A new message replaces the
- * old one, so only one toast shows at a time. Render it as
- * `<Toast key={toast.id}>`.
+ * Hold one message: a message for `duration` milliseconds, an error for
+ * `errorDuration`. A new message replaces a message, and a new error
+ * replaces the message or the error. A message that comes during an error
+ * waits until the error ends or the user closes it. A pointer or the focus
+ * on the toast stops the time. Render it as
+ * `<Toast key={toast.id} tone={toast.tone} {...toastProps}>`.
  */
-export function useToastQueue(duration = 4000): ToastQueue {
-  const [toast, setToast] = useState<ToastMessage | null>(null);
+export function useToastQueue(
+  duration = 4000,
+  errorDuration = duration * 2,
+): ToastQueue {
+  const [state, setState] = useState<ToastState>(noToast);
+  const [paused, setPaused] = useState(false);
   const nextId = useRef(1);
+  // The time that the shown message has left, in milliseconds.
+  const timing = useRef({ id: 0, left: 0 });
+  const { shown } = state;
+
+  const dismissToast = useCallback(() => {
+    setPaused(false);
+    setState(({ waiting }) => ({ shown: waiting, waiting: null }));
+  }, []);
+
   const showToast = useCallback(
     (message: string, tone: ToastTone = "success") => {
-      const id = nextId.current++;
-      setToast({ id, message, tone });
-      setTimeout(() => {
-        setToast((current) => (current?.id === id ? null : current));
-      }, duration);
+      const toast = { id: nextId.current++, message, tone };
+      setPaused(false);
+      setState(({ shown: current, waiting }) =>
+        tone !== "error" && current?.tone === "error"
+          ? { shown: current, waiting: toast }
+          : { shown: toast, waiting: tone === "error" ? waiting : null },
+      );
     },
-    [duration],
+    [],
   );
-  return { toast, showToast };
+
+  useEffect(() => {
+    if (shown === null || paused) return undefined;
+    if (timing.current.id !== shown.id) {
+      timing.current = {
+        id: shown.id,
+        left: shown.tone === "error" ? errorDuration : duration,
+      };
+    }
+    const start = Date.now();
+    const timer = setTimeout(dismissToast, timing.current.left);
+    return () => {
+      clearTimeout(timer);
+      timing.current.left -= Date.now() - start;
+    };
+  }, [dismissToast, duration, errorDuration, paused, shown]);
+
+  const toastProps: ToastQueue["toastProps"] = {
+    onBlur: (event) => {
+      if (!event.currentTarget.contains(event.relatedTarget)) setPaused(false);
+    },
+    onFocus: () => {
+      setPaused(true);
+    },
+    onPointerEnter: () => {
+      setPaused(true);
+    },
+    onPointerLeave: () => {
+      setPaused(false);
+    },
+    ...(shown?.tone === "error" ? { onDismiss: dismissToast } : {}),
+  };
+  return { toast: shown, showToast, dismissToast, toastProps };
 }

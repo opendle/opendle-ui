@@ -533,6 +533,27 @@ try {
           "in a row, the title is between the time and the networks",
         );
       }
+      // The space at the end of a preview is the space at its top.
+      const spaces = await page
+        .locator(".od-calendar-timeline .od-calendar-item")
+        .evaluateAll((cards) =>
+          cards.flatMap((card) => {
+            const preview = card.querySelector(".od-calendar-item-preview");
+            if (preview === null) return [];
+            const outer = card.getBoundingClientRect();
+            const inner = preview.getBoundingClientRect();
+            return [
+              [
+                Math.round(inner.top - outer.top),
+                Math.round(outer.right - inner.right),
+              ],
+            ];
+          }),
+        );
+      assert.ok(spaces.length > 0, `${name}: previews in the timeline`);
+      for (const [top, end] of spaces) {
+        assert.ok(Math.abs(top - end) <= 1, `${name}: ${String([top, end])}`);
+      }
       await todayRow.scrollIntoViewIfNeeded();
       await page.evaluate(() => window.scrollTo(0, 0));
       await baselines(page, `${name} timeline`);
