@@ -9616,15 +9616,19 @@ html:has(.od-dialog:modal) {
 .od-conversation-post {
   display: flex;
   gap: 14px;
+  container-type: inline-size;
   padding: 16px 20px;
   border-bottom: 1px solid var(--od-color-border);
 }
 
+/* The picture keeps its proportions at about the height of a short text.
+   In a narrow post it is lower, so a 16:9 picture is not cut. */
 .od-conversation-post-media {
-  width: 44px;
+  width: auto;
+  max-width: 40%;
+  height: min(8.5rem, 20cqi);
   flex: none;
   align-self: start;
-  aspect-ratio: 9 / 16;
   border-radius: var(--od-radius-sm);
   object-fit: cover;
 }
