@@ -14,11 +14,16 @@ export interface PasskeyListProps {
     readonly onRename?: (id: string, label: string) => Promise<void>;
     /** Return `null` to show nothing, for example after the user cancels. */
     readonly errorMessage: (error: unknown) => string | null;
+    /**
+     * Show a failure outside the component, for example in a toast. With it,
+     * the component shows no failure of its own.
+     */
+    readonly onError?: (message: string) => void;
     readonly labels?: PasskeyListLabels;
 }
 /**
  * The passkeys of one account. The last passkey has no remove button, because
  * the account must keep one.
  */
-export declare function PasskeyList({ errorMessage, items, labels, onAdd, onRemove, onRename, }: PasskeyListProps): import("react").JSX.Element;
+export declare function PasskeyList({ errorMessage, items, labels, onAdd, onError, onRemove, onRename, }: PasskeyListProps): import("react").JSX.Element;
 //# sourceMappingURL=PasskeyList.d.ts.map

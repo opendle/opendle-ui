@@ -8,12 +8,12 @@ import { InlineAlert } from "./InlineAlert.js";
 import { useAsyncAction } from "./useAsyncAction.js";
 const noConnectionProviders = [];
 /** Select a network, then go to its authorization or give an app password. */
-export function ConnectChannelDialog({ connectionProviders = noConnectionProviders, errorMessage, handle: initialHandle = "", labels, network = null, networks, onClose, onPasswordConnect, open, title, }) {
+export function ConnectChannelDialog({ connectionProviders = noConnectionProviders, errorMessage, handle: initialHandle = "", labels, network = null, networks, onClose, onError, onPasswordConnect, open, title, }) {
     const formId = useId();
     const [selected, setSelected] = useState(null);
     const [handle, setHandle] = useState(initialHandle);
     const [password, setPassword] = useState("");
-    const connect = useAsyncAction(errorMessage);
+    const connect = useAsyncAction(errorMessage, onError);
     const current = selected ?? network;
     const form = networks.find((entry) => entry.network === current) ?? null;
     const close = () => {

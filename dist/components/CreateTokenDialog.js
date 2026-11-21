@@ -15,7 +15,7 @@ function focusWhenShown(button) {
     button?.focus();
 }
 /** Ask for a token name, create the token, then show its secret one time. */
-export function CreateTokenDialog({ errorMessage, labels, onClose, onCreate, open, }) {
+export function CreateTokenDialog({ errorMessage, labels, onClose, onCreate, onError, open, }) {
     const formId = useId();
     const [state, setState] = useState(initialState);
     const { failure, name, pending, secret } = state;
@@ -38,13 +38,15 @@ export function CreateTokenDialog({ errorMessage, labels, onClose, onCreate, ope
             }));
         }
         catch (error) {
+            const message = errorMessage(error);
+            onError?.(message);
             setState((current) => ({
                 ...current,
                 pending: false,
-                failure: errorMessage(error),
+                failure: onError === undefined ? message : null,
             }));
         }
-    }, [errorMessage, name, onCreate, pending]);
+    }, [errorMessage, name, onCreate, onError, pending]);
     const actions = secret === null ? (_jsxs(_Fragment, { children: [_jsx(Button, { disabled: pending, onClick: close, variant: "secondary", children: labels.cancel }), _jsx(Button, { disabled: name.trim() === "", loading: pending, form: formId, type: "submit", children: labels.submit })] })) : (_jsx(Button, { onClick: close, ref: focusWhenShown, children: labels.done }));
     return (_jsxs(Dialog, { actions: actions, className: "od-token-dialog", closeDisabled: pending, closeLabel: labels.close, onClose: close, open: open, size: "narrow", title: secret === null ? labels.createTitle : labels.createdTitle, children: [secret === null ? (_jsx("form", { id: formId, onSubmit: (event) => void submit(event), children: _jsx(TextControl, { autoComplete: "off", "data-dialog-initial-focus": "true", label: labels.name, maxLength: 80, onChange: (event) => {
                         const next = event.currentTarget.value;

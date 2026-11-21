@@ -101,6 +101,11 @@ export interface PostDetailDialogProps {
   readonly onResetSchedule?: (targetId: string) => void;
   readonly resetScheduleLabel?: string;
   readonly errorMessage: (error: unknown) => string | null;
+  /**
+   * Show a failure outside the component, for example in a toast. With it,
+   * the component shows no failure of its own.
+   */
+  readonly onError?: (message: string) => void;
   /** Key numbers of the post, already formatted. */
   readonly metrics?: readonly PostDetailMetric[];
   /**
@@ -555,6 +560,7 @@ export function PostDetailDialog({
   media = null,
   metrics = noMetrics,
   onClose,
+  onError,
   onResetSchedule,
   onRetry,
   onReschedule,
@@ -571,7 +577,7 @@ export function PostDetailDialog({
   targets,
   title,
 }: PostDetailDialogProps) {
-  const retry = useAsyncAction(errorMessage);
+  const retry = useAsyncAction(errorMessage, onError);
   const [selected, setSelected] = useState<string | null>(null);
   const versions = versionsOf(targets);
   const version =

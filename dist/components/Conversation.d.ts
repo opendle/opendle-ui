@@ -25,6 +25,11 @@ export interface ConversationProps {
     readonly onIgnore?: (id: string) => void;
     readonly onRestore?: (id: string) => void;
     readonly errorMessage?: (error: unknown) => string | null;
+    /**
+     * Show a failure outside the component, for example in a toast. With it,
+     * the component shows no failure of its own.
+     */
+    readonly onError?: (message: string) => void;
     readonly labels?: ConversationLabels;
     readonly className?: string;
 }
@@ -32,5 +37,5 @@ export interface ConversationProps {
  * The comments of one post, or the messages of one thread, in order. One
  * message at a time has an open reply box.
  */
-export declare function Conversation({ className, emoji, errorMessage, labels, limit, mention, messages, onIgnore, onLike, onReply, onReplyRequest, onRestore, post, selectedId, suggestions, savedReplies, savedRepliesLabel, messageActions, }: ConversationProps): import("react").JSX.Element;
+export declare function Conversation({ className, emoji, errorMessage, labels, limit, mention, messages, onError, onIgnore, onLike, onReply, onReplyRequest, onRestore, post, selectedId, suggestions, savedReplies, savedRepliesLabel, messageActions, }: ConversationProps): import("react").JSX.Element;
 //# sourceMappingURL=Conversation.d.ts.map

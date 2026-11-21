@@ -22,10 +22,10 @@ function TokenRow({ item, labels, onRevoke }) {
     return (_jsx(ItemRow, { actions: actions, icon: keyIcon, meta: meta, title: item.name }));
 }
 /** The API tokens of one account, with create, reveal-once and revoke. */
-export function ApiTokenList({ errorMessage, items, labels = apiTokenListLabels, onCreate, onRevoke, }) {
+export function ApiTokenList({ errorMessage, items, labels = apiTokenListLabels, onCreate, onError, onRevoke, }) {
     const [creating, setCreating] = useState(false);
     const [revoking, setRevoking] = useState(null);
-    const revoke = useAsyncAction(errorMessage);
+    const revoke = useAsyncAction(errorMessage, onError);
     const closeRevoke = () => {
         revoke.reset();
         setRevoking(null);
@@ -33,7 +33,7 @@ export function ApiTokenList({ errorMessage, items, labels = apiTokenListLabels,
     const create = (_jsx(Button, { icon: _jsx(Icon, { name: "plus", size: 15 }), onClick: () => {
             setCreating(true);
         }, variant: "secondary", children: labels.create }));
-    return (_jsxs(Section, { actions: create, title: labels.title, children: [_jsx(Card, { children: _jsx(ItemList, { empty: labels.empty, children: items.map((item) => (_jsx(TokenRow, { item: item, labels: labels, onRevoke: setRevoking }, item.id))) }) }), _jsx(CreateTokenDialog, { errorMessage: errorMessage, labels: labels, onClose: () => {
+    return (_jsxs(Section, { actions: create, title: labels.title, children: [_jsx(Card, { children: _jsx(ItemList, { empty: labels.empty, children: items.map((item) => (_jsx(TokenRow, { item: item, labels: labels, onRevoke: setRevoking }, item.id))) }) }), _jsx(CreateTokenDialog, { errorMessage: errorMessage, ...(onError === undefined ? {} : { onError }), labels: labels, onClose: () => {
                     setCreating(false);
                 }, onCreate: onCreate, open: creating }), _jsx(ConfirmationDialog, { cancelLabel: labels.cancel, confirmLabel: labels.revoke, description: revoking?.name ?? "", error: revoke.failure, onCancel: closeRevoke, onConfirm: () => {
                     if (revoking === null)

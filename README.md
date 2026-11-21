@@ -100,6 +100,9 @@ route beside the handle. It stays visible with an ended authorization and in
 read-only lists. Omit it for a connection that needs no route label.
 A switch with `disabled` is a function that the connection does not support.
 It shows as an unavailable `TagChip`, with `disabledReason` as its title.
+The rows share the columns of the list: each switch ID has one column, so the
+switches and the actions of all rows align. In a list narrower than 980 px,
+the switches go below the account in columns of one width.
 `MetricTile` in a `dl.od-metrics` shows a key number with its
 change, and with `points` a small chart of the days of the period in the
 colour of the change: a smooth line by default, or `chart="bars"` for a value
@@ -594,6 +597,11 @@ the label. The complete direction remains in the accessible name. Set
 properties and keep these buttons separate from node selection. Hosts own
 capability meaning, tone mapping, and filtering. The `close` icon is available
 for a clear-filter action.
+
+`onError` on `AvatarUpload`, `PasskeyList`, `ApiTokenList`, `ChannelList`,
+`Conversation`, `ReplyComposer` and `PostDetailDialog` gives each failure
+message to the host, for example for a toast. With it, the component shows no
+failure of its own. Without it, the component shows the failure in place.
 
 ## Forms and input
 

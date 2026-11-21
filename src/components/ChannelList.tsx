@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from "react";
+import { useState, type CSSProperties, type ReactNode } from "react";
 
 import { Button } from "./Button.js";
 import { Card } from "./Card.js";
@@ -61,6 +61,11 @@ export interface ChannelListProps {
     readonly description: ReactNode;
   };
   readonly errorMessage: (error: unknown) => string | null;
+  /**
+   * Show a failure outside the component, for example in a toast. With it,
+   * the component shows no failure of its own.
+   */
+  readonly onError?: (message: string) => void;
   readonly labels?: ChannelListLabels;
 }
 
@@ -86,6 +91,7 @@ export function ChannelList({
   labels = channelListLabels,
   networks,
   onDisconnect,
+  onError,
   onPasswordConnect,
   onPasswordReconnect,
   onRename,
@@ -95,8 +101,8 @@ export function ChannelList({
   tagColors,
   tagSuggestions,
 }: ChannelListProps) {
-  const change = useAsyncAction(errorMessage);
-  const removal = useAsyncAction(errorMessage);
+  const change = useAsyncAction(errorMessage, onError);
+  const removal = useAsyncAction(errorMessage, onError);
   const [connection, setConnection] = useState<Connection>(null);
   const [removing, setRemoving] = useState<ChannelItem | null>(null);
   const { run } = change;
@@ -129,6 +135,10 @@ export function ChannelList({
     };
   };
   const reconnecting = connection?.item;
+  // Each switch has one column, so the switches of all rows align.
+  const switchIds = [
+    ...new Set(items.flatMap((item) => item.switches.map(({ id }) => id))),
+  ];
   const confirmation =
     removing === null
       ? null
@@ -165,33 +175,44 @@ export function ChannelList({
         {items.length === 0 ? (
           <p className="od-list-empty">{labels.empty}</p>
         ) : (
-          <ul className="od-channel-list">
-            {items.map((item) => (
-              <ChannelRow
-                item={item}
-                key={item.id}
-                labels={labels}
-                onDisconnect={setRemoving}
-                onRename={(name) => guarded(() => onRename(item.id, name))}
-                onSwitchChange={(switchId, on) => {
-                  void run(() => onSwitchChange(item.id, switchId, on));
-                }}
-                onTagsChange={(tags) => {
-                  void run(() => onTagsChange(item.id, tags));
-                }}
-                readOnly={readOnly}
-                reconnect={reconnectOf(item)}
-                tagColors={tagColors}
-                tagSuggestions={tagSuggestions}
-              />
-            ))}
-          </ul>
+          <div className="od-channel-table">
+            <ul
+              className="od-channel-list"
+              style={
+                {
+                  "--od-channel-switch-columns": Math.max(1, switchIds.length),
+                } as CSSProperties
+              }
+            >
+              {items.map((item) => (
+                <ChannelRow
+                  switchIds={switchIds}
+                  item={item}
+                  key={item.id}
+                  labels={labels}
+                  onDisconnect={setRemoving}
+                  onRename={(name) => guarded(() => onRename(item.id, name))}
+                  onSwitchChange={(switchId, on) => {
+                    void run(() => onSwitchChange(item.id, switchId, on));
+                  }}
+                  onTagsChange={(tags) => {
+                    void run(() => onTagsChange(item.id, tags));
+                  }}
+                  readOnly={readOnly}
+                  reconnect={reconnectOf(item)}
+                  tagColors={tagColors}
+                  tagSuggestions={tagSuggestions}
+                />
+              ))}
+            </ul>
+          </div>
         )}
       </Card>
       <ConnectChannelDialog
         connectionProviders={connectionProviders}
         errorMessage={errorMessage}
         key={reconnecting?.id ?? ""}
+        {...(onError === undefined ? {} : { onError })}
         labels={labels}
         network={connection?.network ?? null}
         networks={networks}

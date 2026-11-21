@@ -29,6 +29,11 @@ export interface ApiTokenListProps {
   readonly onCreate: (name: string) => Promise<string>;
   readonly onRevoke: (id: string) => Promise<void>;
   readonly errorMessage: (error: unknown) => string;
+  /**
+   * Show a failure outside the component, for example in a toast. With it,
+   * the component shows no failure of its own.
+   */
+  readonly onError?: (message: string) => void;
   readonly labels?: ApiTokenListLabels;
 }
 
@@ -81,11 +86,12 @@ export function ApiTokenList({
   items,
   labels = apiTokenListLabels,
   onCreate,
+  onError,
   onRevoke,
 }: ApiTokenListProps) {
   const [creating, setCreating] = useState(false);
   const [revoking, setRevoking] = useState<ApiTokenItem | null>(null);
-  const revoke = useAsyncAction(errorMessage);
+  const revoke = useAsyncAction(errorMessage, onError);
   const closeRevoke = () => {
     revoke.reset();
     setRevoking(null);
@@ -119,6 +125,7 @@ export function ApiTokenList({
       </Card>
       <CreateTokenDialog
         errorMessage={errorMessage}
+        {...(onError === undefined ? {} : { onError })}
         labels={labels}
         onClose={() => {
           setCreating(false);

@@ -92,6 +92,8 @@ node --check scripts/core-browser.mjs
 node --check scripts/calendar-browser.mjs
 node --check scripts/community-browser.mjs
 node --check scripts/tag-input-browser.mjs
+node --check scripts/on-error-browser.mjs
+node --check scripts/channel-grid-browser.mjs
 node --input-type=module -e "import('./dist/index.js').then((shared) => { for (const name of ['AccountMenu', 'AdvancedFieldsDisclosure', 'BoundedDataExplorer', 'ChangeTimeline', 'DateTime', 'Dialog', 'ExplorerWorkspace', 'FileDropZone', 'FormActions', 'FormField', 'FormSection', 'InlineAlert', 'ManagedFileList', 'MetadataBagList', 'OntologyInheritanceTree', 'OperationPlayground', 'PanelContent', 'CalendarBoard', 'PasskeyList', 'PostDetailDialog', 'ReviewPlanCard', 'SavedViewCanvas', 'TagFilterBar', 'SearchableSelect', 'SecretRevealPanel', 'WorkspaceSelector']) if (!(name in shared)) throw new Error('Missing shared export: ' + name); })"
 
 grep -qx "min-release-age=14" .npmrc
@@ -145,6 +147,8 @@ node scripts/channel-connections-browser.mjs
 node scripts/calendar-browser.mjs
 node scripts/community-browser.mjs
 node scripts/tag-input-browser.mjs
+node scripts/on-error-browser.mjs
+node scripts/channel-grid-browser.mjs
 npm run security
 ./scripts/react-doctor-gate.sh
 

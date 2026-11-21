@@ -11,12 +11,20 @@ import { initialPictureCrop, pictureArea, renderPicture, } from "./pictureCrop.j
 import { Section } from "./Section.js";
 const uploadIcon = _jsx(Icon, { name: "upload", size: 15 });
 /** Show, crop, replace and remove the picture of an account. */
-export function AvatarUpload({ appearance = "section", aspectRatio = 1, disabled = false, errorMessage, labels, name, onRemove, onUpload, output, shape = "rounded", src, }) {
+export function AvatarUpload({ appearance = "section", aspectRatio = 1, disabled = false, errorMessage, labels, name, onError, onRemove, onUpload, output, shape = "rounded", src, }) {
     const text = { ...avatarUploadLabels, ...labels };
     const inputRef = useRef(null);
     const [pending, setPending] = useState(false);
     const [failure, setFailure] = useState(null);
     const [editing, setEditing] = useState(null);
+    /** The message to show in the component, or `null` when the host shows it. */
+    const failureOf = useCallback((error) => {
+        const message = errorMessage(error);
+        if (onError === undefined)
+            return message;
+        onError(message);
+        return null;
+    }, [errorMessage, onError]);
     const remove = useCallback(async () => {
         setPending(true);
         setFailure(null);
@@ -24,12 +32,12 @@ export function AvatarUpload({ appearance = "section", aspectRatio = 1, disabled
             await onRemove();
         }
         catch (error) {
-            setFailure(errorMessage(error));
+            setFailure(failureOf(error));
         }
         finally {
             setPending(false);
         }
-    }, [errorMessage, onRemove]);
+    }, [failureOf, onRemove]);
     const select = useCallback(async (event) => {
         const file = event.currentTarget.files?.[0];
         event.currentTarget.value = "";
@@ -51,9 +59,9 @@ export function AvatarUpload({ appearance = "section", aspectRatio = 1, disabled
             });
         }
         catch (error) {
-            setFailure(errorMessage(error));
+            setFailure(failureOf(error));
         }
-    }, [errorMessage]);
+    }, [failureOf]);
     const close = useCallback(() => {
         if (editing === null)
             return;
@@ -75,11 +83,12 @@ export function AvatarUpload({ appearance = "section", aspectRatio = 1, disabled
             close();
         }
         catch (error) {
+            const failed = failureOf(error);
             setEditing((current) => current === null
                 ? null
-                : { ...current, failure: errorMessage(error), saving: false });
+                : { ...current, failure: failed, saving: false });
         }
-    }, [aspectRatio, close, editing, errorMessage, onUpload, output]);
+    }, [aspectRatio, close, editing, failureOf, onUpload, output]);
     const saving = editing?.saving ?? false;
     const busy = disabled || pending || saving;
     const style = { "--od-avatar-ratio": String(aspectRatio) };

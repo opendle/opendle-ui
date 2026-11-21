@@ -10,6 +10,11 @@ export interface ConnectChannelDialogProps {
     /** Connect a network that has no authorization address. */
     readonly onPasswordConnect: (network: NetworkName, handle: string, password: string) => Promise<void>;
     readonly errorMessage: (error: unknown) => string | null;
+    /**
+     * Show a failure outside the component, for example in a toast. With it,
+     * the component shows no failure of its own.
+     */
+    readonly onError?: (message: string) => void;
     readonly labels: ChannelListLabels;
     /** The first value of the handle field. */
     readonly handle?: string;
@@ -17,5 +22,5 @@ export interface ConnectChannelDialogProps {
     readonly title?: string;
 }
 /** Select a network, then go to its authorization or give an app password. */
-export declare function ConnectChannelDialog({ connectionProviders, errorMessage, handle: initialHandle, labels, network, networks, onClose, onPasswordConnect, open, title, }: ConnectChannelDialogProps): import("react").JSX.Element;
+export declare function ConnectChannelDialog({ connectionProviders, errorMessage, handle: initialHandle, labels, network, networks, onClose, onError, onPasswordConnect, open, title, }: ConnectChannelDialogProps): import("react").JSX.Element;
 //# sourceMappingURL=ConnectChannelDialog.d.ts.map

@@ -27,6 +27,11 @@ export interface ConnectChannelDialogProps {
     password: string,
   ) => Promise<void>;
   readonly errorMessage: (error: unknown) => string | null;
+  /**
+   * Show a failure outside the component, for example in a toast. With it,
+   * the component shows no failure of its own.
+   */
+  readonly onError?: (message: string) => void;
   readonly labels: ChannelListLabels;
   /** The first value of the handle field. */
   readonly handle?: string;
@@ -45,6 +50,7 @@ export function ConnectChannelDialog({
   network = null,
   networks,
   onClose,
+  onError,
   onPasswordConnect,
   open,
   title,
@@ -53,7 +59,7 @@ export function ConnectChannelDialog({
   const [selected, setSelected] = useState<NetworkName | null>(null);
   const [handle, setHandle] = useState(initialHandle);
   const [password, setPassword] = useState("");
-  const connect = useAsyncAction(errorMessage);
+  const connect = useAsyncAction(errorMessage, onError);
   const current = selected ?? network;
   const form = networks.find((entry) => entry.network === current) ?? null;
 

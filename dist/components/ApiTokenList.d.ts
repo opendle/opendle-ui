@@ -11,8 +11,13 @@ export interface ApiTokenListProps {
     readonly onCreate: (name: string) => Promise<string>;
     readonly onRevoke: (id: string) => Promise<void>;
     readonly errorMessage: (error: unknown) => string;
+    /**
+     * Show a failure outside the component, for example in a toast. With it,
+     * the component shows no failure of its own.
+     */
+    readonly onError?: (message: string) => void;
     readonly labels?: ApiTokenListLabels;
 }
 /** The API tokens of one account, with create, reveal-once and revoke. */
-export declare function ApiTokenList({ errorMessage, items, labels, onCreate, onRevoke, }: ApiTokenListProps): import("react").JSX.Element;
+export declare function ApiTokenList({ errorMessage, items, labels, onCreate, onError, onRevoke, }: ApiTokenListProps): import("react").JSX.Element;
 //# sourceMappingURL=ApiTokenList.d.ts.map

@@ -16,10 +16,10 @@ const noSavedReplies = [];
  * character counter, an optional ignore button and the send button. Enter
  * sends. Shift+Enter adds a line.
  */
-export function ReplyComposer({ emoji, errorMessage, label, labels, limit = null, mention = "", onIgnore, onSend, suggestions = noSuggestions, savedReplies = noSavedReplies, savedRepliesLabel = "Saved replies", }) {
+export function ReplyComposer({ emoji, errorMessage, label, labels, limit = null, mention = "", onError, onIgnore, onSend, suggestions = noSuggestions, savedReplies = noSavedReplies, savedRepliesLabel = "Saved replies", }) {
     const prefix = mention === "" ? "" : `${mention} `;
     const [text, setText] = useState(prefix);
-    const send = useAsyncAction(errorMessage);
+    const send = useAsyncAction(errorMessage, onError);
     const areaRef = useRef(null);
     const length = characterCount(text);
     const tooLong = limit !== null && length > limit;

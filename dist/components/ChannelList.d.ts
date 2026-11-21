@@ -32,11 +32,16 @@ export interface ChannelListProps {
         readonly description: ReactNode;
     };
     readonly errorMessage: (error: unknown) => string | null;
+    /**
+     * Show a failure outside the component, for example in a toast. With it,
+     * the component shows no failure of its own.
+     */
+    readonly onError?: (message: string) => void;
     readonly labels?: ChannelListLabels;
 }
 /**
  * The connected accounts of the networks: name, tags, switches, the warning
  * for an ended authorization, and the connect and disconnect actions.
  */
-export declare function ChannelList({ connectOpen, onConnectOpenChange, connectionProviders, disconnectConfirmation, errorMessage, items, labels, networks, onDisconnect, onPasswordConnect, onPasswordReconnect, onRename, onSwitchChange, onTagsChange, readOnly, tagColors, tagSuggestions, }: ChannelListProps): import("react").JSX.Element;
+export declare function ChannelList({ connectOpen, onConnectOpenChange, connectionProviders, disconnectConfirmation, errorMessage, items, labels, networks, onDisconnect, onError, onPasswordConnect, onPasswordReconnect, onRename, onSwitchChange, onTagsChange, readOnly, tagColors, tagSuggestions, }: ChannelListProps): import("react").JSX.Element;
 //# sourceMappingURL=ChannelList.d.ts.map

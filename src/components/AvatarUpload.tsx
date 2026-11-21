@@ -33,6 +33,11 @@ export interface AvatarUploadProps {
   readonly onUpload: (picture: Blob) => Promise<void>;
   readonly onRemove: () => Promise<void>;
   readonly errorMessage: (error: unknown) => string;
+  /**
+   * Show a failure outside the component, for example in a toast. With it,
+   * the component shows no failure of its own.
+   */
+  readonly onError?: (message: string) => void;
   /** The frame of the preview and of the crop. The default is `rounded`. */
   readonly shape?: AvatarShape;
   /** The width divided by the height of the picture. The default is 1. */
@@ -67,6 +72,7 @@ export function AvatarUpload({
   errorMessage,
   labels,
   name,
+  onError,
   onRemove,
   onUpload,
   output,
@@ -79,17 +85,28 @@ export function AvatarUpload({
   const [failure, setFailure] = useState<string | null>(null);
   const [editing, setEditing] = useState<Editing | null>(null);
 
+  /** The message to show in the component, or `null` when the host shows it. */
+  const failureOf = useCallback(
+    (error: unknown): string | null => {
+      const message = errorMessage(error);
+      if (onError === undefined) return message;
+      onError(message);
+      return null;
+    },
+    [errorMessage, onError],
+  );
+
   const remove = useCallback(async () => {
     setPending(true);
     setFailure(null);
     try {
       await onRemove();
     } catch (error) {
-      setFailure(errorMessage(error));
+      setFailure(failureOf(error));
     } finally {
       setPending(false);
     }
-  }, [errorMessage, onRemove]);
+  }, [failureOf, onRemove]);
 
   const select = useCallback(
     async (event: ChangeEvent<HTMLInputElement>) => {
@@ -111,10 +128,10 @@ export function AvatarUpload({
           saving: false,
         });
       } catch (error) {
-        setFailure(errorMessage(error));
+        setFailure(failureOf(error));
       }
     },
-    [errorMessage],
+    [failureOf],
   );
 
   const close = useCallback(() => {
@@ -142,13 +159,14 @@ export function AvatarUpload({
       await onUpload(blob);
       close();
     } catch (error) {
+      const failed = failureOf(error);
       setEditing((current) =>
         current === null
           ? null
-          : { ...current, failure: errorMessage(error), saving: false },
+          : { ...current, failure: failed, saving: false },
       );
     }
-  }, [aspectRatio, close, editing, errorMessage, onUpload, output]);
+  }, [aspectRatio, close, editing, failureOf, onUpload, output]);
 
   const saving = editing?.saving ?? false;
   const busy = disabled || pending || saving;

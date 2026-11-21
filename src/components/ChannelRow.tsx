@@ -1,6 +1,10 @@
 import { ActionMenu, type ActionMenuItem } from "./ActionMenu.js";
 import { Button } from "./Button.js";
-import type { ChannelItem, ChannelListLabels } from "./channelLabels.js";
+import type {
+  ChannelItem,
+  ChannelListLabels,
+  ChannelSwitch,
+} from "./channelLabels.js";
 import { Icon, NetworkIcon } from "./Icon.js";
 import { InlineEditableText } from "./InlineEditableText.js";
 import { TagChip } from "./TagChip.js";
@@ -13,6 +17,8 @@ export interface ChannelRowProps {
   readonly tagColors: Readonly<Record<string, number>> | undefined;
   /** Known tags that the tag input suggests. */
   readonly tagSuggestions: readonly string[] | undefined;
+  /** The switch IDs of all rows, in column order. */
+  readonly switchIds: readonly string[];
   /**
    * How to connect the account again: an authorization address, a host flow,
    * or `null` when the user cannot connect it from here.
@@ -22,6 +28,35 @@ export interface ChannelRowProps {
   readonly onTagsChange: (tags: readonly string[]) => void;
   readonly onSwitchChange: (switchId: string, on: boolean) => void;
   readonly onDisconnect: (item: ChannelItem) => void;
+}
+
+interface SwitchCellProps {
+  readonly entry: ChannelSwitch | undefined;
+  readonly readOnly: boolean;
+  readonly onChange: (switchId: string, on: boolean) => void;
+}
+
+/**
+ * One switch in its column. A row without the switch, or a read-only switch
+ * that is off, keeps an empty cell.
+ */
+function SwitchCell({ entry, onChange, readOnly }: SwitchCellProps) {
+  if (entry === undefined || (readOnly && !entry.on)) {
+    return <span aria-hidden="true" className="od-channel-switch-gap" />;
+  }
+  if (readOnly) return <TagChip>{entry.label}</TagChip>;
+  return (
+    <TagChip
+      unavailable={entry.disabled ?? false}
+      title={entry.disabledReason}
+      onPressedChange={(on) => {
+        onChange(entry.id, on);
+      }}
+      pressed={entry.on}
+    >
+      {entry.label}
+    </TagChip>
+  );
 }
 
 /** One connected account in a `ChannelList`. */
@@ -34,6 +69,7 @@ export function ChannelRow({
   onTagsChange,
   readOnly,
   reconnect,
+  switchIds,
   tagColors,
   tagSuggestions,
 }: ChannelRowProps) {
@@ -106,25 +142,14 @@ export function ChannelRow({
         value={item.tags}
       />
       <span className="od-channel-switches">
-        {item.switches.map((entry) =>
-          readOnly ? (
-            entry.on ? (
-              <TagChip key={entry.id}>{entry.label}</TagChip>
-            ) : null
-          ) : (
-            <TagChip
-              unavailable={entry.disabled ?? false}
-              title={entry.disabledReason}
-              key={entry.id}
-              onPressedChange={(on) => {
-                onSwitchChange(entry.id, on);
-              }}
-              pressed={entry.on}
-            >
-              {entry.label}
-            </TagChip>
-          ),
-        )}
+        {switchIds.map((id) => (
+          <SwitchCell
+            entry={item.switches.find((entry) => entry.id === id)}
+            key={id}
+            onChange={onSwitchChange}
+            readOnly={readOnly}
+          />
+        ))}
       </span>
       {readOnly ? null : (
         <span className="od-channel-actions">

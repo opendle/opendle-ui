@@ -39,6 +39,11 @@ export interface ConversationProps {
   readonly onIgnore?: (id: string) => void;
   readonly onRestore?: (id: string) => void;
   readonly errorMessage?: (error: unknown) => string | null;
+  /**
+   * Show a failure outside the component, for example in a toast. With it,
+   * the component shows no failure of its own.
+   */
+  readonly onError?: (message: string) => void;
   readonly labels?: ConversationLabels;
   readonly className?: string;
 }
@@ -59,6 +64,7 @@ export function Conversation({
   limit = null,
   mention,
   messages,
+  onError,
   onIgnore,
   onLike,
   onReply,
@@ -220,6 +226,7 @@ export function Conversation({
                     key={message.id}
                     {...(emoji === undefined ? {} : { emoji })}
                     errorMessage={errorMessage}
+                    {...(onError === undefined ? {} : { onError })}
                     label={`${labels.replyTo} ${message.authorName}`}
                     labels={labels}
                     limit={limit}

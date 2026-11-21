@@ -32,6 +32,11 @@ export interface ReplyComposerProps {
   /** With it, a button next to the send button ignores the message. */
   readonly onIgnore?: () => void;
   readonly errorMessage: (error: unknown) => string | null;
+  /**
+   * Show a failure outside the component, for example in a toast. With it,
+   * the component shows no failure of its own.
+   */
+  readonly onError?: (message: string) => void;
   readonly labels: ConversationLabels;
 }
 
@@ -50,6 +55,7 @@ export function ReplyComposer({
   labels,
   limit = null,
   mention = "",
+  onError,
   onIgnore,
   onSend,
   suggestions = noSuggestions,
@@ -58,7 +64,7 @@ export function ReplyComposer({
 }: ReplyComposerProps) {
   const prefix = mention === "" ? "" : `${mention} `;
   const [text, setText] = useState(prefix);
-  const send = useAsyncAction(errorMessage);
+  const send = useAsyncAction(errorMessage, onError);
   const areaRef = useRef<HTMLTextAreaElement | null>(null);
   const length = characterCount(text);
   const tooLong = limit !== null && length > limit;

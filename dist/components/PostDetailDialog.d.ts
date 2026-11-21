@@ -75,6 +75,11 @@ export interface PostDetailDialogProps {
     readonly onResetSchedule?: (targetId: string) => void;
     readonly resetScheduleLabel?: string;
     readonly errorMessage: (error: unknown) => string | null;
+    /**
+     * Show a failure outside the component, for example in a toast. With it,
+     * the component shows no failure of its own.
+     */
+    readonly onError?: (message: string) => void;
     /** Key numbers of the post, already formatted. */
     readonly metrics?: readonly PostDetailMetric[];
     /**
@@ -100,5 +105,5 @@ export declare function PostDetailSection({ actions, children, className, title,
  * per channel with its state, its link, its error and its actions. When the
  * text or the media differs between channels, a tab shows each version.
  */
-export declare function PostDetailDialog({ actions, children, errorMessage, labels, media, metrics, onClose, onResetSchedule, onRetry, onReschedule, onScheduleDismiss, onTagsChange, rescheduleLabel, resetScheduleLabel, scheduleEditor, scheduleTargetId, open, tagColors, tagSuggestions, tags, targets, title, }: PostDetailDialogProps): import("react").JSX.Element;
+export declare function PostDetailDialog({ actions, children, errorMessage, labels, media, metrics, onClose, onError, onResetSchedule, onRetry, onReschedule, onScheduleDismiss, onTagsChange, rescheduleLabel, resetScheduleLabel, scheduleEditor, scheduleTargetId, open, tagColors, tagSuggestions, tags, targets, title, }: PostDetailDialogProps): import("react").JSX.Element;
 //# sourceMappingURL=PostDetailDialog.d.ts.map

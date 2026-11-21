@@ -12,7 +12,7 @@ const noSuggestions = [];
  * The comments of one post, or the messages of one thread, in order. One
  * message at a time has an open reply box.
  */
-export function Conversation({ className, emoji, errorMessage = noError, labels = conversationLabels, limit = null, mention, messages, onIgnore, onLike, onReply, onReplyRequest, onRestore, post, selectedId = null, suggestions = noSuggestions, savedReplies, savedRepliesLabel, messageActions, }) {
+export function Conversation({ className, emoji, errorMessage = noError, labels = conversationLabels, limit = null, mention, messages, onError, onIgnore, onLike, onReply, onReplyRequest, onRestore, post, selectedId = null, suggestions = noSuggestions, savedReplies, savedRepliesLabel, messageActions, }) {
     // Until the user opens or closes a reply box, the selected message has it.
     const [chosenId, setOpenId] = useState(undefined);
     const openId = chosenId === undefined ? selectedId : chosenId;
@@ -58,7 +58,7 @@ export function Conversation({ className, emoji, errorMessage = noError, labels 
                                                     onRestore(message.id);
                                                 }, title: labels.restore, type: "button", children: _jsx(Icon, { name: "eye", size: 15 }) }))) : onIgnore === undefined || hasBox ? null : (_jsx("button", { "aria-label": labels.ignore, className: "od-message-action", onClick: () => {
                                                     onIgnore(message.id);
-                                                }, title: labels.ignore, type: "button", children: _jsx(Icon, { name: "eye-off", size: 15 }) }))] })), open ? (_jsx(ReplyComposer, { ...(emoji === undefined ? {} : { emoji }), errorMessage: errorMessage, label: `${labels.replyTo} ${message.authorName}`, labels: labels, limit: limit, mention: mention?.(message) ?? "", onSend: async (text) => {
+                                                }, title: labels.ignore, type: "button", children: _jsx(Icon, { name: "eye-off", size: 15 }) }))] })), open ? (_jsx(ReplyComposer, { ...(emoji === undefined ? {} : { emoji }), errorMessage: errorMessage, ...(onError === undefined ? {} : { onError }), label: `${labels.replyTo} ${message.authorName}`, labels: labels, limit: limit, mention: mention?.(message) ?? "", onSend: async (text) => {
                                             await onReply(message.id, text);
                                             setOpenId(null);
                                         }, ...(onIgnore === undefined || message.state !== "new"

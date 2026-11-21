@@ -9305,19 +9305,39 @@ html:has(.od-dialog:modal) {
 
 /* Channel list */
 
+.od-channel-table {
+  container-type: inline-size;
+}
+
+/*
+ * The rows share the columns of the list: each switch has one column, so
+ * the switches and the actions of all rows align.
+ */
 .od-channel-list {
+  display: grid;
   margin: 0;
   padding: 4px 0;
+  grid-template-columns:
+    auto minmax(140px, 1.2fr) minmax(0, 2fr)
+    repeat(var(--od-channel-switch-columns, 1), auto) auto;
+  column-gap: 6px;
   list-style: none;
-  container-type: inline-size;
 }
 
 .od-channel-row {
   display: grid;
-  grid-template-columns: auto minmax(140px, 1.2fr) minmax(0, 2fr) auto auto;
+  grid-column: 1 / -1;
+  grid-template-columns: subgrid;
   align-items: center;
-  gap: 8px 16px;
+  row-gap: 8px;
   padding: 12px 12px 12px 20px;
+}
+
+/* The gap of the list is the gap of the switches; the text needs more. */
+.od-channel-mark,
+.od-channel-identity,
+.od-channel-tags {
+  margin-right: 10px;
 }
 
 .od-channel-row + .od-channel-row {
@@ -9374,31 +9394,56 @@ html:has(.od-dialog:modal) {
   font-weight: 500;
 }
 
-.od-channel-switches,
+.od-channel-switches {
+  display: contents;
+}
+
+/* Each switch fills its column. */
+.od-channel-switches > .od-tag {
+  justify-content: center;
+  justify-self: stretch;
+}
+
 .od-channel-actions {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 6px;
-}
-
-.od-channel-actions {
   justify-content: flex-end;
+  gap: 6px;
+  margin-left: 4px;
 }
 
 .od-channel-actions a.od-button {
   text-decoration: none;
 }
 
-@container (max-width: 860px) {
+@container (max-width: 980px) {
+  .od-channel-list {
+    display: block;
+  }
+
   .od-channel-row {
     grid-template-columns: auto minmax(0, 1fr) auto;
+    column-gap: 14px;
     padding-left: 16px;
   }
 
-  .od-channel-tags,
-  .od-channel-switches {
+  .od-channel-mark,
+  .od-channel-identity,
+  .od-channel-tags {
+    margin-right: 0;
+  }
+
+  .od-channel-tags {
     grid-column: 2 / -1;
+  }
+
+  /* The switches use the full width, in columns of one width in all rows. */
+  .od-channel-switches {
+    display: grid;
+    grid-column: 1 / -1;
+    grid-template-columns: repeat(auto-fill, minmax(9.5rem, 1fr));
+    gap: 6px;
   }
 
   .od-channel-actions {

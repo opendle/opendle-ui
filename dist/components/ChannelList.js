@@ -15,9 +15,9 @@ const noConnectionProviders = [];
  * The connected accounts of the networks: name, tags, switches, the warning
  * for an ended authorization, and the connect and disconnect actions.
  */
-export function ChannelList({ connectOpen, onConnectOpenChange, connectionProviders = noConnectionProviders, disconnectConfirmation, errorMessage, items, labels = channelListLabels, networks, onDisconnect, onPasswordConnect, onPasswordReconnect, onRename, onSwitchChange, onTagsChange, readOnly = false, tagColors, tagSuggestions, }) {
-    const change = useAsyncAction(errorMessage);
-    const removal = useAsyncAction(errorMessage);
+export function ChannelList({ connectOpen, onConnectOpenChange, connectionProviders = noConnectionProviders, disconnectConfirmation, errorMessage, items, labels = channelListLabels, networks, onDisconnect, onError, onPasswordConnect, onPasswordReconnect, onRename, onSwitchChange, onTagsChange, readOnly = false, tagColors, tagSuggestions, }) {
+    const change = useAsyncAction(errorMessage, onError);
+    const removal = useAsyncAction(errorMessage, onError);
     const [connection, setConnection] = useState(null);
     const [removing, setRemoving] = useState(null);
     const { run } = change;
@@ -50,6 +50,10 @@ export function ChannelList({ connectOpen, onConnectOpenChange, connectionProvid
         };
     };
     const reconnecting = connection?.item;
+    // Each switch has one column, so the switches of all rows align.
+    const switchIds = [
+        ...new Set(items.flatMap((item) => item.switches.map(({ id }) => id))),
+    ];
     const confirmation = removing === null
         ? null
         : (disconnectConfirmation?.(removing) ?? {
@@ -60,11 +64,13 @@ export function ChannelList({ connectOpen, onConnectOpenChange, connectionProvid
             (networks.length === 0 && connectionProviders.length === 0) ? null : (_jsx(Button, { icon: _jsx(Icon, { name: "plus", size: 15 }), onClick: () => {
                 setConnection({ network: null });
                 onConnectOpenChange?.(true);
-            }, variant: "secondary", children: labels.connect })), title: labels.title, children: [change.failure === null ? null : (_jsx(InlineAlert, { className: "od-section-alert", tone: "error", children: change.failure })), _jsx(Card, { children: items.length === 0 ? (_jsx("p", { className: "od-list-empty", children: labels.empty })) : (_jsx("ul", { className: "od-channel-list", children: items.map((item) => (_jsx(ChannelRow, { item: item, labels: labels, onDisconnect: setRemoving, onRename: (name) => guarded(() => onRename(item.id, name)), onSwitchChange: (switchId, on) => {
-                            void run(() => onSwitchChange(item.id, switchId, on));
-                        }, onTagsChange: (tags) => {
-                            void run(() => onTagsChange(item.id, tags));
-                        }, readOnly: readOnly, reconnect: reconnectOf(item), tagColors: tagColors, tagSuggestions: tagSuggestions }, item.id))) })) }), _jsx(ConnectChannelDialog, { connectionProviders: connectionProviders, errorMessage: errorMessage, labels: labels, network: connection?.network ?? null, networks: networks, onClose: () => {
+            }, variant: "secondary", children: labels.connect })), title: labels.title, children: [change.failure === null ? null : (_jsx(InlineAlert, { className: "od-section-alert", tone: "error", children: change.failure })), _jsx(Card, { children: items.length === 0 ? (_jsx("p", { className: "od-list-empty", children: labels.empty })) : (_jsx("div", { className: "od-channel-table", children: _jsx("ul", { className: "od-channel-list", style: {
+                            "--od-channel-switch-columns": Math.max(1, switchIds.length),
+                        }, children: items.map((item) => (_jsx(ChannelRow, { switchIds: switchIds, item: item, labels: labels, onDisconnect: setRemoving, onRename: (name) => guarded(() => onRename(item.id, name)), onSwitchChange: (switchId, on) => {
+                                void run(() => onSwitchChange(item.id, switchId, on));
+                            }, onTagsChange: (tags) => {
+                                void run(() => onTagsChange(item.id, tags));
+                            }, readOnly: readOnly, reconnect: reconnectOf(item), tagColors: tagColors, tagSuggestions: tagSuggestions }, item.id))) }) })) }), _jsx(ConnectChannelDialog, { connectionProviders: connectionProviders, errorMessage: errorMessage, ...(onError === undefined ? {} : { onError }), labels: labels, network: connection?.network ?? null, networks: networks, onClose: () => {
                     setConnection(null);
                     onConnectOpenChange?.(false);
                 }, onPasswordConnect: reconnecting === undefined || onPasswordReconnect === undefined

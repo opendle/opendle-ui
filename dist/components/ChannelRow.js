@@ -5,8 +5,22 @@ import { Icon, NetworkIcon } from "./Icon.js";
 import { InlineEditableText } from "./InlineEditableText.js";
 import { TagChip } from "./TagChip.js";
 import { TagInput } from "./TagInput.js";
+/**
+ * One switch in its column. A row without the switch, or a read-only switch
+ * that is off, keeps an empty cell.
+ */
+function SwitchCell({ entry, onChange, readOnly }) {
+    if (entry === undefined || (readOnly && !entry.on)) {
+        return _jsx("span", { "aria-hidden": "true", className: "od-channel-switch-gap" });
+    }
+    if (readOnly)
+        return _jsx(TagChip, { children: entry.label });
+    return (_jsx(TagChip, { unavailable: entry.disabled ?? false, title: entry.disabledReason, onPressedChange: (on) => {
+            onChange(entry.id, on);
+        }, pressed: entry.on, children: entry.label }));
+}
 /** One connected account in a `ChannelList`. */
-export function ChannelRow({ item, labels, onDisconnect, onRename, onSwitchChange, onTagsChange, readOnly, reconnect, tagColors, tagSuggestions, }) {
+export function ChannelRow({ item, labels, onDisconnect, onRename, onSwitchChange, onTagsChange, readOnly, reconnect, switchIds, tagColors, tagSuggestions, }) {
     const actions = [
         ...(reconnect === null
             ? []
@@ -32,9 +46,7 @@ export function ChannelRow({ item, labels, onDisconnect, onRename, onSwitchChang
     ];
     return (_jsxs("li", { className: "od-channel-row", "data-warning": item.needsReconnect, children: [_jsx(NetworkIcon, { badge: true, className: "od-channel-mark", network: item.network }), _jsxs("span", { className: "od-channel-identity", children: [_jsx("span", { className: "od-channel-name", children: readOnly ? (item.name) : (_jsx(InlineEditableText, { label: `${labels.rename}: ${item.name}`, maxLength: 100, onSave: onRename, value: item.name })) }), _jsxs("span", { className: "od-channel-details", children: [_jsx("span", { className: "od-channel-handle", children: item.needsReconnect ? (_jsxs("span", { className: "od-channel-warning", children: [_jsx(Icon, { name: "alert", size: 13 }), labels.reconnectNeeded] })) : (item.handle) }), item.connectionLabel ? (_jsx("span", { className: "od-channel-provider", children: item.connectionLabel })) : null] })] }), _jsx(TagInput, { className: "od-channel-tags", ...(tagColors === undefined ? {} : { colors: tagColors }), ...(tagSuggestions === undefined
                     ? {}
-                    : { suggestions: tagSuggestions }), addLabel: labels.addTag, disabled: readOnly, label: `${labels.tags}: ${item.name}`, onChange: onTagsChange, removeLabel: labels.removeTag, value: item.tags }), _jsx("span", { className: "od-channel-switches", children: item.switches.map((entry) => readOnly ? (entry.on ? (_jsx(TagChip, { children: entry.label }, entry.id)) : null) : (_jsx(TagChip, { unavailable: entry.disabled ?? false, title: entry.disabledReason, onPressedChange: (on) => {
-                        onSwitchChange(entry.id, on);
-                    }, pressed: entry.on, children: entry.label }, entry.id))) }), readOnly ? null : (_jsxs("span", { className: "od-channel-actions", children: [!item.needsReconnect ||
+                    : { suggestions: tagSuggestions }), addLabel: labels.addTag, disabled: readOnly, label: `${labels.tags}: ${item.name}`, onChange: onTagsChange, removeLabel: labels.removeTag, value: item.tags }), _jsx("span", { className: "od-channel-switches", children: switchIds.map((id) => (_jsx(SwitchCell, { entry: item.switches.find((entry) => entry.id === id), onChange: onSwitchChange, readOnly: readOnly }, id))) }), readOnly ? null : (_jsxs("span", { className: "od-channel-actions", children: [!item.needsReconnect ||
                         reconnect === null ? null : typeof reconnect === "function" ? (_jsx(Button, { onClick: reconnect, size: "small", variant: "secondary", children: labels.reconnect })) : (_jsx("a", { className: "od-button od-button-secondary", "data-size": "small", href: reconnect.href, children: labels.reconnect })), _jsx(ActionMenu, { items: actions, label: `${labels.moreActions}: ${item.name}` })] }))] }));
 }
 //# sourceMappingURL=ChannelRow.js.map

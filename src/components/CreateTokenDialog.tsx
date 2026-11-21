@@ -26,6 +26,11 @@ export interface CreateTokenDialogProps {
   readonly onClose: () => void;
   readonly onCreate: (name: string) => Promise<string>;
   readonly errorMessage: (error: unknown) => string;
+  /**
+   * Show a failure outside the component, for example in a toast. With it,
+   * the component shows no failure of its own.
+   */
+  readonly onError?: (message: string) => void;
   readonly labels: ApiTokenListLabels;
 }
 
@@ -39,6 +44,7 @@ export function CreateTokenDialog({
   labels,
   onClose,
   onCreate,
+  onError,
   open,
 }: CreateTokenDialogProps) {
   const formId = useId();
@@ -64,14 +70,16 @@ export function CreateTokenDialog({
           secret: created,
         }));
       } catch (error) {
+        const message = errorMessage(error);
+        onError?.(message);
         setState((current) => ({
           ...current,
           pending: false,
-          failure: errorMessage(error),
+          failure: onError === undefined ? message : null,
         }));
       }
     },
-    [errorMessage, name, onCreate, pending],
+    [errorMessage, name, onCreate, onError, pending],
   );
 
   const actions =

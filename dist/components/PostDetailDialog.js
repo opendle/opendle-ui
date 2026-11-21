@@ -191,8 +191,8 @@ function VersionLabel({ version }) {
  * per channel with its state, its link, its error and its actions. When the
  * text or the media differs between channels, a tab shows each version.
  */
-export function PostDetailDialog({ actions, children, errorMessage, labels = postDetailLabels, media = null, metrics = noMetrics, onClose, onResetSchedule, onRetry, onReschedule, onScheduleDismiss, onTagsChange, rescheduleLabel = "Change date and time", resetScheduleLabel = "Use the time of the post", scheduleEditor, scheduleTargetId = null, open, tagColors, tagSuggestions, tags = noTags, targets, title, }) {
-    const retry = useAsyncAction(errorMessage);
+export function PostDetailDialog({ actions, children, errorMessage, labels = postDetailLabels, media = null, metrics = noMetrics, onClose, onError, onResetSchedule, onRetry, onReschedule, onScheduleDismiss, onTagsChange, rescheduleLabel = "Change date and time", resetScheduleLabel = "Use the time of the post", scheduleEditor, scheduleTargetId = null, open, tagColors, tagSuggestions, tags = noTags, targets, title, }) {
+    const retry = useAsyncAction(errorMessage, onError);
     const [selected, setSelected] = useState(null);
     const versions = versionsOf(targets);
     const version = versions.find((entry) => entry.id === selected) ?? versions[0];

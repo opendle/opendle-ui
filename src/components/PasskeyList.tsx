@@ -30,6 +30,11 @@ export interface PasskeyListProps {
   readonly onRename?: (id: string, label: string) => Promise<void>;
   /** Return `null` to show nothing, for example after the user cancels. */
   readonly errorMessage: (error: unknown) => string | null;
+  /**
+   * Show a failure outside the component, for example in a toast. With it,
+   * the component shows no failure of its own.
+   */
+  readonly onError?: (message: string) => void;
   readonly labels?: PasskeyListLabels;
 }
 
@@ -45,11 +50,12 @@ export function PasskeyList({
   items,
   labels = passkeyListLabels,
   onAdd,
+  onError,
   onRemove,
   onRename,
 }: PasskeyListProps) {
-  const change = useAsyncAction(errorMessage);
-  const removal = useAsyncAction(errorMessage);
+  const change = useAsyncAction(errorMessage, onError);
+  const removal = useAsyncAction(errorMessage, onError);
   const [adding, setAdding] = useState(false);
   const [removing, setRemoving] = useState<PasskeyItem | null>(null);
   const { run: runChange } = change;

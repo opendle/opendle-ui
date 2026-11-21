@@ -5,6 +5,9 @@ export interface AsyncAction {
     readonly run: (work: () => Promise<void>) => Promise<boolean>;
     readonly reset: () => void;
 }
-/** Track one asynchronous action: pending state and the failure message. */
-export declare function useAsyncAction(errorMessage: (error: unknown) => string | null): AsyncAction;
+/**
+ * Track one asynchronous action: pending state and the failure message. With
+ * `onError`, the host gets the message and `failure` stays `null`.
+ */
+export declare function useAsyncAction(errorMessage: (error: unknown) => string | null, onError?: (message: string) => void): AsyncAction;
 //# sourceMappingURL=useAsyncAction.d.ts.map

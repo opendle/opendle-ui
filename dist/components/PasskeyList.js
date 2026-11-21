@@ -19,9 +19,9 @@ const passkeyIcon = _jsx(Icon, { name: "passkey" });
  * The passkeys of one account. The last passkey has no remove button, because
  * the account must keep one.
  */
-export function PasskeyList({ errorMessage, items, labels = passkeyListLabels, onAdd, onRemove, onRename, }) {
-    const change = useAsyncAction(errorMessage);
-    const removal = useAsyncAction(errorMessage);
+export function PasskeyList({ errorMessage, items, labels = passkeyListLabels, onAdd, onError, onRemove, onRename, }) {
+    const change = useAsyncAction(errorMessage, onError);
+    const removal = useAsyncAction(errorMessage, onError);
     const [adding, setAdding] = useState(false);
     const [removing, setRemoving] = useState(null);
     const { run: runChange } = change;

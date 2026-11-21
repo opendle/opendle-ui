@@ -8,6 +8,11 @@ export interface AvatarUploadProps {
     readonly onUpload: (picture: Blob) => Promise<void>;
     readonly onRemove: () => Promise<void>;
     readonly errorMessage: (error: unknown) => string;
+    /**
+     * Show a failure outside the component, for example in a toast. With it,
+     * the component shows no failure of its own.
+     */
+    readonly onError?: (message: string) => void;
     /** The frame of the preview and of the crop. The default is `rounded`. */
     readonly shape?: AvatarShape;
     /** The width divided by the height of the picture. The default is 1. */
@@ -23,5 +28,5 @@ export interface AvatarUploadProps {
     readonly labels?: Partial<AvatarUploadLabels>;
 }
 /** Show, crop, replace and remove the picture of an account. */
-export declare function AvatarUpload({ appearance, aspectRatio, disabled, errorMessage, labels, name, onRemove, onUpload, output, shape, src, }: AvatarUploadProps): import("react").JSX.Element;
+export declare function AvatarUpload({ appearance, aspectRatio, disabled, errorMessage, labels, name, onError, onRemove, onUpload, output, shape, src, }: AvatarUploadProps): import("react").JSX.Element;
 //# sourceMappingURL=AvatarUpload.d.ts.map
