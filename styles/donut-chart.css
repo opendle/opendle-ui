@@ -1,0 +1,180 @@
+/*
+ * The share of each item in a total: a ring and its legend. The component
+ * fills the height of its container. In a narrow container, the legend goes
+ * below the ring.
+ */
+.od-donut {
+  height: 100%;
+  container-type: inline-size;
+}
+
+.od-donut-body {
+  display: flex;
+  height: 100%;
+  min-height: 0;
+  align-items: center;
+  gap: 24px;
+}
+
+/* The ring gives way to the legend; the circle stays round in its box. */
+.od-donut-ring {
+  position: relative;
+  min-width: 8rem;
+  flex: 0 1 auto;
+  height: 100%;
+  min-height: 9rem;
+  max-height: 18rem;
+  aspect-ratio: 1;
+}
+
+.od-donut-ring svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  outline-offset: 4px;
+}
+
+.od-donut-track,
+.od-donut-slice {
+  fill: none;
+  stroke-width: 11;
+}
+
+.od-donut-track {
+  stroke: var(--od-color-sunken);
+}
+
+.od-donut-slice {
+  stroke: var(--od-chart-color);
+}
+
+.od-donut[data-active] .od-donut-slice[data-active="false"] {
+  opacity: 0.3;
+}
+
+.od-donut-slice[data-active="true"] {
+  stroke-width: 14;
+}
+
+.od-donut-center {
+  position: absolute;
+  inset: 22%;
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  text-align: center;
+  pointer-events: none;
+}
+
+.od-donut-value {
+  max-width: 100%;
+  overflow: hidden;
+  font-family: var(--od-font-display);
+  font-size: 1.5rem;
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+  font-variant-numeric: tabular-nums;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.od-donut-caption {
+  display: flex;
+  max-width: 100%;
+  min-width: 0;
+  justify-content: center;
+  gap: 5px;
+  color: var(--od-color-muted);
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.od-donut-legend {
+  display: grid;
+  max-height: 100%;
+  min-width: 0;
+  flex: 1 0 13rem;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  list-style: none;
+  font-size: 0.78125rem;
+}
+
+.od-donut-legend li {
+  display: flex;
+  min-width: 0;
+  min-height: 30px;
+  align-items: center;
+  gap: 8px;
+  padding: 0 8px;
+  border-radius: var(--od-radius-sm);
+  color: var(--od-color-foreground);
+}
+
+.od-donut-legend li[data-active="true"] {
+  background: var(--od-color-hover);
+}
+
+.od-donut[data-active] .od-donut-legend li[data-active="false"] {
+  opacity: 0.55;
+}
+
+.od-donut-legend .od-network {
+  --od-network-size: 16px;
+}
+
+.od-donut-legend .od-chart-name {
+  flex: 1 1 auto;
+}
+
+.od-donut-amount {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.od-donut-percent {
+  min-width: 3.25em;
+  color: var(--od-color-muted);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .od-donut-slice,
+  .od-donut-legend li {
+    transition:
+      opacity 120ms ease,
+      stroke-width 120ms ease;
+  }
+}
+
+@media (forced-colors: active) {
+  .od-donut-slice {
+    stroke: CanvasText;
+  }
+}
+
+@container (max-width: 26rem) {
+  .od-donut-body {
+    flex-direction: column;
+    align-items: stretch;
+    height: auto;
+  }
+
+  .od-donut-ring {
+    width: min(100%, 13rem);
+    height: auto;
+    align-self: center;
+  }
+
+  .od-donut-legend {
+    max-height: none;
+    flex: none;
+  }
+}

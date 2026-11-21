@@ -438,6 +438,17 @@ export {
   type StackedBarChartProps,
 } from "./components/StackedBarChart.js";
 export {
+  RankedPostList,
+  type RankedPost,
+  type RankedPostListProps,
+  type RankedPostMetric,
+} from "./components/RankedPostList.js";
+export {
+  DonutChart,
+  type DonutChartItem,
+  type DonutChartProps,
+} from "./components/DonutChart.js";
+export {
   calendarBoardLabels,
   calendarItemState,
   type CalendarBoardLabels,

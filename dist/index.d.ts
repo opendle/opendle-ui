@@ -139,6 +139,8 @@ export { lastDays, type DateRange, type DateRangePreset, } from "./components/da
 export { RecordTable, type RecordTableColumn, type RecordTableProps, type RecordTableRow, } from "./components/RecordTable.js";
 export { ChartLegend, type ChartLegendItem, type ChartLegendProps, } from "./components/ChartLegend.js";
 export { StackedBarChart, type StackedBarChartProps, } from "./components/StackedBarChart.js";
+export { RankedPostList, type RankedPost, type RankedPostListProps, type RankedPostMetric, } from "./components/RankedPostList.js";
+export { DonutChart, type DonutChartItem, type DonutChartProps, } from "./components/DonutChart.js";
 export { calendarBoardLabels, calendarItemState, type CalendarBoardLabels, type CalendarFollowUp, type CalendarFollowUpLabels, type CalendarItem, type CalendarItemState, type CalendarItemTarget, } from "./components/calendarItems.js";
 export { calendarDayDate, calendarDayKey, calendarGridDays, calendarPeriod, calendarTitle, shiftCalendarAnchor, type CalendarMode, type CalendarPeriod, } from "./components/calendarDates.js";
 export { CalendarHeader, type CalendarHeaderProps, } from "./components/CalendarHeader.js";

@@ -11,6 +11,8 @@ export interface ChannelRowProps {
   readonly labels: ChannelListLabels;
   readonly readOnly: boolean;
   readonly tagColors: Readonly<Record<string, number>> | undefined;
+  /** Known tags that the tag input suggests. */
+  readonly tagSuggestions: readonly string[] | undefined;
   /**
    * How to connect the account again: an authorization address, a host flow,
    * or `null` when the user cannot connect it from here.
@@ -33,6 +35,7 @@ export function ChannelRow({
   readOnly,
   reconnect,
   tagColors,
+  tagSuggestions,
 }: ChannelRowProps) {
   const actions: readonly ActionMenuItem[] = [
     ...(reconnect === null
@@ -92,10 +95,13 @@ export function ChannelRow({
       <TagInput
         className="od-channel-tags"
         {...(tagColors === undefined ? {} : { colors: tagColors })}
+        {...(tagSuggestions === undefined
+          ? {}
+          : { suggestions: tagSuggestions })}
+        addLabel={labels.addTag}
         disabled={readOnly}
         label={`${labels.tags}: ${item.name}`}
         onChange={onTagsChange}
-        placeholder={labels.addTag}
         removeLabel={labels.removeTag}
         value={item.tags}
       />
@@ -107,7 +113,7 @@ export function ChannelRow({
             ) : null
           ) : (
             <TagChip
-              disabled={entry.disabled ?? false}
+              unavailable={entry.disabled ?? false}
               title={entry.disabledReason}
               key={entry.id}
               onPressedChange={(on) => {

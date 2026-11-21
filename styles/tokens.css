@@ -9194,17 +9194,45 @@ html:has(.od-dialog:modal) {
   color: var(--od-color-foreground);
 }
 
-/* The padding adds to the width of the text, so a placeholder fits. */
-.od-tag-input-field {
-  box-sizing: content-box;
+/* A fixed `#` comes before the text, so the user does not type it. */
+.od-tag-input-entry {
+  display: inline-flex;
   min-width: 0;
   height: 24px;
-  padding: 0 8px;
+  align-items: center;
+  padding: 0 9px 0 8px;
   border: 1px dashed var(--od-color-border-strong);
   border-radius: 13px;
-  background: none;
   color: var(--od-color-foreground);
   font-size: 0.78125rem;
+  cursor: text;
+}
+
+.od-tag-input-entry:hover {
+  border-color: var(--od-color-muted);
+}
+
+.od-tag-input-entry:focus-within {
+  border-style: solid;
+  border-color: var(--od-color-brand);
+  box-shadow: 0 0 0 3px var(--od-color-brand-soft);
+}
+
+.od-tag-input-hash {
+  flex: none;
+  color: var(--od-color-muted);
+  font-weight: 500;
+}
+
+.od-tag-input-field {
+  min-width: 0;
+  height: 22px;
+  field-sizing: content;
+  padding: 0 0 0 1px;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
 }
 
 .od-tag-input-field::placeholder {
@@ -9213,9 +9241,66 @@ html:has(.od-dialog:modal) {
 }
 
 .od-tag-input-field:focus {
-  border-style: solid;
-  border-color: var(--od-color-brand);
   outline: 0;
+}
+
+/* The known tags that match the text, in the browser top layer. */
+.od-tag-input-list {
+  position: fixed;
+  z-index: 50;
+  inset: auto;
+  box-sizing: border-box;
+  min-width: 11rem;
+  max-width: min(20rem, calc(100vw - 16px));
+  max-height: min(18rem, 50dvh);
+  margin: 0;
+  padding: 4px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  border: 1px solid var(--od-color-border);
+  border-radius: var(--od-radius-md);
+  background: var(--od-color-surface-raised);
+  box-shadow: var(--od-shadow);
+  color: var(--od-color-foreground);
+  font-family: var(--od-font-body);
+  list-style: none;
+}
+
+.od-tag-input-option {
+  display: flex;
+  min-height: 34px;
+  align-items: center;
+  gap: 6px;
+  padding: 0 8px;
+  border-radius: var(--od-radius-sm);
+  color: var(--od-color-muted);
+  cursor: pointer;
+}
+
+.od-tag-input-option:hover {
+  background: var(--od-color-hover);
+}
+
+.od-tag-input-option[aria-selected="true"] {
+  background: var(--od-color-brand-soft);
+}
+
+.od-tag-input-option .od-tag {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.od-tag-input-option[data-created] .od-tag {
+  border-style: dashed;
+  color: var(--od-color-foreground);
+}
+
+@media (forced-colors: active) {
+  .od-tag-input-option[aria-selected="true"] {
+    outline: 2px solid Highlight;
+    outline-offset: -2px;
+  }
 }
 
 /* Channel list */
@@ -11256,6 +11341,28 @@ button.od-tag[data-color][aria-pressed="true"] {
 button.od-tag:disabled {
   cursor: not-allowed;
   opacity: var(--od-tag-unselected-opacity);
+}
+
+/* A function that is not available: not a control, so no outline. */
+button.od-tag[data-unavailable="true"]:disabled {
+  gap: 5px;
+  border-color: transparent;
+  border-style: solid;
+  background: var(--od-color-sunken);
+  box-shadow: none;
+  color: var(--od-color-muted);
+  opacity: 1;
+}
+
+button.od-tag[data-unavailable="true"] .od-icon {
+  flex: none;
+  margin-left: -2px;
+}
+
+@media (forced-colors: active) {
+  button.od-tag[data-unavailable="true"]:disabled {
+    color: GrayText;
+  }
 }
 
 .od-navigation-group {

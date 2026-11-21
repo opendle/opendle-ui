@@ -31,6 +31,8 @@ export interface ChannelListProps {
   readonly onConnectOpenChange?: (open: boolean) => void;
   /** The colour key, from 1 to 12, of each tag name. */
   readonly tagColors?: Readonly<Record<string, number>>;
+  /** Known tags that the tag input of each channel suggests. */
+  readonly tagSuggestions?: readonly string[];
   readonly onRename: (id: string, name: string) => Promise<void>;
   readonly onTagsChange: (id: string, tags: readonly string[]) => Promise<void>;
   readonly onSwitchChange: (
@@ -91,6 +93,7 @@ export function ChannelList({
   onTagsChange,
   readOnly = false,
   tagColors,
+  tagSuggestions,
 }: ChannelListProps) {
   const change = useAsyncAction(errorMessage);
   const removal = useAsyncAction(errorMessage);
@@ -179,6 +182,7 @@ export function ChannelList({
                 readOnly={readOnly}
                 reconnect={reconnectOf(item)}
                 tagColors={tagColors}
+                tagSuggestions={tagSuggestions}
               />
             ))}
           </ul>

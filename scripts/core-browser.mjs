@@ -92,6 +92,7 @@ function App() {
         networks={[{network: "youtube", label: "YouTube", href: "#oauth-youtube"}, {network: "pinterest", label: "Pinterest", href: "#oauth-pinterest"}, {network: "bluesky", label: "Bluesky"}]}
         onRename={async (id, name) => patch(id, () => ({name}))}
         onTagsChange={async (id, tags) => patch(id, () => ({tags}))}
+        tagSuggestions={["long", "reel", "short-form"]}
         onSwitchChange={async (id, switchId, on) => patch(id, (c) => ({switches: c.switches.map((s) => s.id === switchId ? {...s, on} : s)}))}
         onDisconnect={async (id) => setChannels((list) => list.filter((c) => c.id !== id))}
         onPasswordConnect={async (network, handle) => { if (handle === "bad") throw new Error("no"); setChannels((list) => [...list, {id: "c3", network, name: handle, handle, tags: [], needsReconnect: false, switches: []}]); }}/>
@@ -135,7 +136,7 @@ const directory = mkdtempSync(join(tmpdir(), "opendle-core-"));
 const pagePath = join(directory, "index.html");
 writeFileSync(
   pagePath,
-  `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Core components</title><link rel="stylesheet" href="${pathToFileURL(join(root, "styles/tokens.css")).href}"></head><body><div id="root"></div><script>${bundled.outputFiles[0].text.replaceAll("</script", "<\\/script")}</script></body></html>`,
+  `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Core components</title><link rel="stylesheet" href="${pathToFileURL(join(root, "styles/index.css")).href}"></head><body><div id="root"></div><script>${bundled.outputFiles[0].text.replaceAll("</script", "<\\/script")}</script></body></html>`,
 );
 const pageUrl = pathToFileURL(pagePath).href;
 const browser = await chromium.launch({ headless: true });
@@ -445,12 +446,20 @@ try {
       await channelsRegion
         .getByRole("button", { name: "Rename: Main channel" })
         .waitFor();
-      const tagField = channelsRegion.getByRole("textbox", {
+      const tagField = channelsRegion.getByRole("combobox", {
         name: "Tags: Main channel",
       });
+      assert.equal(await tagField.getAttribute("placeholder"), "add tag");
       await tagField.fill("#Short Form");
       await page.keyboard.press("Enter");
       await channelsRegion.getByText("#short-form").waitFor();
+      // The channel list gives the known tags to each tag input.
+      await tagField.fill("re");
+      await page
+        .getByRole("listbox", { name: "Tags: Main channel" })
+        .getByRole("option", { name: "#reel" })
+        .click();
+      await channelsRegion.getByText("#reel").waitFor();
       await channelsRegion
         .getByRole("button", { name: "Remove tag: long" })
         .click();
@@ -470,6 +479,41 @@ try {
       );
       await unsupported.dispatchEvent("click");
       assert.equal(await unsupported.getAttribute("aria-pressed"), "false");
+      // On, off and unavailable switches look different: off has a solid
+      // outline and normal text; unavailable is flat, with a blocked mark.
+      const look = (chip) =>
+        chip.evaluate((node) => {
+          const style = getComputedStyle(node);
+          return {
+            border: `${style.borderTopStyle} ${style.borderTopColor}`,
+            background: style.backgroundColor,
+            color: style.color,
+            opacity: style.opacity,
+            cursor: style.cursor,
+          };
+        });
+      const off = channelsRegion
+        .getByRole("button", { name: "Analytics" })
+        .last();
+      assert.equal(await off.getAttribute("aria-pressed"), "false");
+      const on = channelsRegion.getByRole("button", { name: "Publish" }).last();
+      const [onLook, offLook, unavailableLook] = await Promise.all(
+        [on, off, unsupported].map(look),
+      );
+      assert.equal(offLook.border.startsWith("solid"), true);
+      assert.equal(offLook.opacity, "1");
+      assert.notEqual(offLook.color, unavailableLook.color);
+      assert.notEqual(offLook.background, unavailableLook.background);
+      assert.notEqual(onLook.background, unavailableLook.background);
+      assert.equal(unavailableLook.border.endsWith("rgba(0, 0, 0, 0)"), true);
+      assert.equal(unavailableLook.cursor, "not-allowed");
+      assert.equal(await unsupported.locator("svg").count(), 1);
+      assert.equal(await off.locator("svg").count(), 0);
+      if (screenshots !== null) {
+        await channelsRegion.screenshot({
+          path: join(screenshots, `${name}-switches.png`),
+        });
+      }
       await channelsRegion.getByText("Authorization ended").waitFor();
       assert.equal(
         await channelsRegion

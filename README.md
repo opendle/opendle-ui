@@ -85,7 +85,7 @@ End move in the menu. Escape returns the focus to the button. The menu is fixed
 to the window, so a container that hides its overflow does not cut it.
 
 `ChannelList` shows connected accounts: name edited in place, tags
-(`TagInput`), switches, the warning for an ended authorization, connect and
+(`TagInput`, with the known tags of `tagSuggestions`), switches, the warning for an ended authorization, connect and
 disconnect. Reconnect and disconnect are in the `ActionMenu` of each row; an
 ended authorization also shows a Reconnect button. `ChannelItem.reconnectHref`
 starts the authorization of that account. `onPasswordReconnect` gives an
@@ -98,6 +98,8 @@ own dialog state when these props are omitted. `readOnly` prevents the dialog
 from opening. Set `ChannelItem.connectionLabel` to show a host-owned connection
 route beside the handle. It stays visible with an ended authorization and in
 read-only lists. Omit it for a connection that needs no route label.
+A switch with `disabled` is a function that the connection does not support.
+It shows as an unavailable `TagChip`, with `disabledReason` as its title.
 `MetricTile` in a `dl.od-metrics` shows a key number with its
 change, and with `points` a small chart of the days of the period in the
 colour of the change: a smooth line by default, or `chart="bars"` for a value
@@ -120,7 +122,20 @@ the tenth and later series become one neutral series. `variant="area"` draws
 a level that continues, for example followers, as a stacked area; a day
 without a value keeps the last value. The values of the hovered day list the
 top of the stack first and mark the series under the pointer. `ChartLegend` is one
-legend for several charts. `DateRangeControl` and `RecordTable`
+legend for several charts. `DonutChart` shows the share of each item in a
+total: one slice for each item with a value, in the colour of its `slot` (the
+same colours as `StackedBarChart`), and a legend with the value and the
+percentage of each item. A small share keeps a visible slice and its true
+percentage. The centre shows `total` (by default the sum) and `totalLabel`; a
+pointer on a slice or a legend row, or the arrow keys on the ring, mark one
+item and show its value. The chart fills the height of its container. In a
+container narrower than 26rem, the legend goes below the ring.
+`RankedPostList` shows posts in rank order. Each row is one button
+(`onOpen`) with the rank, a picture of the media (or the network mark), the
+title, the network, the channel, the relative publication time and the
+`metrics`. The metrics align in columns from row to row, and `activeMetric`
+marks the value that gives the order. In a narrow list, the metrics go below
+the text. `DateRangeControl` and `RecordTable`
 complete an analytics view. `RecordTable` has a named, keyboard-focusable
 scroll region for wide tables. A `width` on a column gives the table a fixed
 layout, so stacked tables with the same columns align; `minimumWidth` sets
@@ -134,6 +149,9 @@ tooltip. `LoadingIndicator` is the one loading sign; `Button` shows it with
 `loading`. With reduced motion it fades and does not turn. `TagChip` takes a
 colour key from 1 to 12 (`color`); the twelve pairs of background and text
 are tokens (`--od-tag-N-background`, `--od-tag-N-text`) for light and dark.
+A toggle `TagChip` with `unavailable` is a function that is not available:
+it is disabled, has a flat muted fill and a blocked mark, and keeps its
+`title`.
 
 `Toast` shows above all content, also above an open dialog. `useToastQueue`
 holds one message: a new message replaces the old one.
@@ -221,9 +239,17 @@ channels as `ChannelChip` toggle buttons; `invalid` marks selected
 channels with a problem. `groups` adds tag chips above the channels: a click
 selects or removes all enabled channels of the group, and `onChange` gets the
 group as its second argument. A group shows as chosen when all its enabled
-channels are selected, or as its `pressed` value says. `TagInput.suggestions`
-offers known tags in a native suggestion list; a chosen suggestion is added at
-once. `CharacterCount` shows a count against an optional
+channels are selected, or as its `pressed` value says. `TagInput` shows a fixed
+`#` before its text and `addLabel` (default `add tag`) in the empty input; a
+typed `#` is removed. It is a combobox: while the user types, a list shows the
+known tags of `suggestions` that match, the tags that start with the text
+first, in their colours, and a last option creates the typed tag. ArrowDown
+opens the list also with no text. The arrow keys move in the list, Enter adds
+the active option or else the typed tag, a comma adds the typed tag, and
+Escape closes the list. A typed tag that is a known tag adds the known tag; a
+tag that is in the value is not added again. The list shows in the browser
+top layer, so a dialog does not cut it. `TagInput.placeholder` does not exist:
+use `addLabel`. `CharacterCount` shows a count against an optional
 limit; `characterCount()` counts code points. `MediaAttachmentList` shows the
 ordered files of a post as square tiles: drag and drop or move buttons
 reorder them, each has a remove button, an optional open button and host

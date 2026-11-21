@@ -1,0 +1,204 @@
+/*
+ * Posts in rank order. The rows share the columns of the list, so the
+ * metrics align from row to row. In a narrow list, the metrics go below the
+ * text.
+ */
+.od-ranked-posts {
+  min-width: 0;
+  container-type: inline-size;
+}
+
+.od-ranked-post-list {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  grid-template-columns:
+    auto auto minmax(0, 1fr)
+    repeat(var(--od-ranked-metrics, 1), minmax(3.75rem, auto));
+  list-style: none;
+}
+
+.od-ranked-post-list > li {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: subgrid;
+}
+
+.od-ranked-post-list > li + li {
+  border-top: 1px solid var(--od-color-border);
+}
+
+.od-ranked-post {
+  display: grid;
+  min-width: 0;
+  grid-column: 1 / -1;
+  grid-template-columns: subgrid;
+  align-items: center;
+  column-gap: 14px;
+  padding: 10px 12px;
+  border: 0;
+  border-radius: var(--od-radius-md);
+  background: none;
+  color: var(--od-color-foreground);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.od-ranked-post:hover {
+  background: var(--od-color-hover);
+}
+
+.od-ranked-post:focus-visible {
+  outline-offset: -2px;
+}
+
+.od-ranked-post-rank {
+  min-width: 1.25em;
+  color: var(--od-color-muted);
+  font-family: var(--od-font-display);
+  font-size: 1.125rem;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.od-ranked-post-media {
+  position: relative;
+  display: grid;
+  width: 60px;
+  height: 60px;
+  overflow: hidden;
+  place-items: center;
+  border-radius: 8px;
+  background: var(--od-color-sunken);
+}
+
+.od-ranked-post-media img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.od-ranked-post-media > .od-network {
+  --od-network-size: 22px;
+
+  opacity: 0.7;
+}
+
+/* A play mark on the picture of a video. */
+.od-ranked-post-media[data-video="true"]::after {
+  position: relative;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: rgb(0 0 0 / 55%)
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M6.4 4.9v6.2L11.2 8z' fill='white'/%3E%3C/svg%3E")
+    center / contain no-repeat;
+  content: "";
+}
+
+.od-ranked-post-text {
+  display: grid;
+  min-width: 0;
+  gap: 4px;
+}
+
+.od-ranked-post-title {
+  display: -webkit-box;
+  overflow: hidden;
+  font-size: 0.875rem;
+  font-weight: 500;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+}
+
+.od-ranked-post-meta {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 6px;
+  color: var(--od-color-muted);
+  font-size: 0.75rem;
+  white-space: nowrap;
+}
+
+.od-ranked-post-meta .od-network {
+  --od-network-size: 14px;
+}
+
+.od-ranked-post-channel {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* The metrics are cells of the list grid. */
+.od-ranked-post-metrics {
+  display: contents;
+}
+
+.od-ranked-post-metric {
+  display: grid;
+  justify-items: end;
+  gap: 1px;
+  color: var(--od-color-muted-strong);
+  white-space: nowrap;
+}
+
+.od-ranked-post-metric b {
+  font-size: 0.875rem;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+
+.od-ranked-post-metric span {
+  color: var(--od-color-muted);
+  font-size: 0.6875rem;
+}
+
+/* The metric that gives the order. */
+.od-ranked-post-metric[data-active="true"] {
+  color: var(--od-color-foreground);
+}
+
+.od-ranked-post-metric[data-active="true"] b {
+  font-size: 1rem;
+  font-weight: 650;
+}
+
+.od-ranked-post-metric[data-active="true"] span {
+  color: var(--od-color-brand-text);
+}
+
+@container (max-width: 35rem) {
+  .od-ranked-post-list {
+    grid-template-columns: auto auto minmax(0, 1fr);
+  }
+
+  .od-ranked-post {
+    row-gap: 8px;
+    column-gap: 12px;
+    padding-inline: 8px;
+  }
+
+  .od-ranked-post-media {
+    width: 48px;
+    height: 48px;
+  }
+
+  .od-ranked-post-metrics {
+    display: flex;
+    grid-column: 3;
+    flex-wrap: wrap;
+    gap: 6px 18px;
+  }
+
+  .od-ranked-post-metric {
+    justify-items: start;
+  }
+}

@@ -15,7 +15,7 @@ const noConnectionProviders = [];
  * The connected accounts of the networks: name, tags, switches, the warning
  * for an ended authorization, and the connect and disconnect actions.
  */
-export function ChannelList({ connectOpen, onConnectOpenChange, connectionProviders = noConnectionProviders, disconnectConfirmation, errorMessage, items, labels = channelListLabels, networks, onDisconnect, onPasswordConnect, onPasswordReconnect, onRename, onSwitchChange, onTagsChange, readOnly = false, tagColors, }) {
+export function ChannelList({ connectOpen, onConnectOpenChange, connectionProviders = noConnectionProviders, disconnectConfirmation, errorMessage, items, labels = channelListLabels, networks, onDisconnect, onPasswordConnect, onPasswordReconnect, onRename, onSwitchChange, onTagsChange, readOnly = false, tagColors, tagSuggestions, }) {
     const change = useAsyncAction(errorMessage);
     const removal = useAsyncAction(errorMessage);
     const [connection, setConnection] = useState(null);
@@ -64,7 +64,7 @@ export function ChannelList({ connectOpen, onConnectOpenChange, connectionProvid
                             void run(() => onSwitchChange(item.id, switchId, on));
                         }, onTagsChange: (tags) => {
                             void run(() => onTagsChange(item.id, tags));
-                        }, readOnly: readOnly, reconnect: reconnectOf(item), tagColors: tagColors }, item.id))) })) }), _jsx(ConnectChannelDialog, { connectionProviders: connectionProviders, errorMessage: errorMessage, labels: labels, network: connection?.network ?? null, networks: networks, onClose: () => {
+                        }, readOnly: readOnly, reconnect: reconnectOf(item), tagColors: tagColors, tagSuggestions: tagSuggestions }, item.id))) })) }), _jsx(ConnectChannelDialog, { connectionProviders: connectionProviders, errorMessage: errorMessage, labels: labels, network: connection?.network ?? null, networks: networks, onClose: () => {
                     setConnection(null);
                     onConnectOpenChange?.(false);
                 }, onPasswordConnect: reconnecting === undefined || onPasswordReconnect === undefined

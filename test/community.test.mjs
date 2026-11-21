@@ -5,7 +5,9 @@ import { renderToStaticMarkup } from "react-dom/server";
 import {
   Conversation,
   ChartLegend,
+  DonutChart,
   InboxList,
+  RankedPostList,
   SearchableMultiSelect,
   languageName,
   languageOptions,
@@ -293,6 +295,128 @@ test("ChartLegend names each series with its colour slot", () => {
     markup,
     /data-slot="2"><\/i><span class="od-chart-name">YouTube<\/span><\/li>/,
   );
+});
+
+test("DonutChart draws one slice for each item with a value", () => {
+  const markup = render(DonutChart, {
+    label: "Followers by channel",
+    formatValue: String,
+    totalLabel: "followers",
+    items: [
+      { id: "a", label: "YouTube", value: 750, slot: 0 },
+      { id: "b", label: "Bluesky", value: 0, slot: 1 },
+      { id: "c", label: "X", value: 247, slot: 2 },
+      { id: "d", label: "Threads", value: 3, slot: 3 },
+    ],
+  });
+  const slices = [...markup.matchAll(/<path class="od-donut-slice"[^>]*>/g)];
+  assert.deepEqual(
+    slices.map((slice) => slice[0].match(/data-slot="(\d)"/)?.[1]),
+    ["0", "2", "3"],
+  );
+  assert.doesNotMatch(markup, /Bluesky/);
+  assert.match(markup, /aria-label="Followers by channel: 1000"/);
+  assert.match(markup, /<strong class="od-donut-value">1000<\/strong>/);
+  assert.match(markup, /<span class="od-donut-caption">followers<\/span>/);
+  assert.match(
+    markup,
+    /YouTube<\/span><b class="od-donut-amount">750<\/b><span class="od-donut-percent">75%<\/span>/,
+  );
+  // A small share keeps its true percentage.
+  assert.match(markup, /<span class="od-donut-percent">0.3%<\/span>/);
+});
+
+test("DonutChart draws a full ring for one item and folds the others", () => {
+  const one = render(DonutChart, {
+    label: "Followers",
+    items: [{ id: "a", label: "YouTube", value: 5, slot: 4 }],
+  });
+  assert.match(one, /<circle class="od-donut-slice"[^>]*data-slot="4"/);
+  assert.doesNotMatch(one, /<path/);
+  assert.match(one, /<span class="od-donut-percent">100%<\/span>/);
+  const folded = render(DonutChart, {
+    label: "Followers",
+    otherLabel: "Others",
+    items: [
+      { id: "a", label: "YouTube", value: 5, slot: 0 },
+      { id: "b", label: "X", value: 2, slot: 9 },
+      { id: "c", label: "Threads", value: 3, slot: 12 },
+    ],
+  });
+  assert.match(
+    folded,
+    /data-slot="9"[^>]*><\/i><span class="od-chart-name">Others<\/span><b class="od-donut-amount">5<\/b>/,
+  );
+  assert.doesNotMatch(folded, /Threads/);
+});
+
+test("RankedPostList shows the posts in order and marks the sort metric", () => {
+  const metrics = (views, likes) => [
+    { id: "views", label: "Views", value: views },
+    { id: "likes", label: "Likes", value: likes },
+  ];
+  const markup = render(RankedPostList, {
+    label: "Top posts",
+    activeMetric: "likes",
+    empty: "No posts",
+    onOpen: () => undefined,
+    items: [
+      {
+        id: "a",
+        title: "Low Tide",
+        network: "youtube",
+        channel: "Main channel",
+        at: "2026-11-14T09:00:00Z",
+        previewUrl: "/a.jpg",
+        video: true,
+        metrics: metrics("1.2K", "320"),
+      },
+      {
+        id: "b",
+        title: "Take Me With You",
+        network: "bluesky",
+        channel: "vincent.music",
+        at: "2026-11-12T09:00:00Z",
+        previewUrl: null,
+        metrics: metrics("900", "41"),
+      },
+    ],
+  });
+  assert.match(
+    markup,
+    /<ol aria-label="Top posts" class="od-ranked-post-list"/,
+  );
+  assert.match(markup, /--od-ranked-metrics:2/);
+  const rows = [...markup.matchAll(/<li>(.*?)<\/li>/g)].map((row) => row[1]);
+  assert.equal(rows.length, 2);
+  assert.match(rows[0], /^<button class="od-ranked-post" type="button">/);
+  assert.match(rows[0], /od-ranked-post-rank">1<.*Low Tide.*Main channel/);
+  assert.match(rows[1], /od-ranked-post-rank">2<.*Take Me With You/);
+  assert.match(
+    rows[0],
+    /data-video="true"><img alt="" loading="lazy" src="\/a.jpg"/,
+  );
+  // Without a picture, the media shows the network.
+  assert.match(
+    rows[1],
+    /od-ranked-post-media"[^>]*><span aria-hidden="true" class="od-network"[^>]*data-network="bluesky"/,
+  );
+  assert.match(
+    rows[0],
+    /<time class="od-relative-time" dateTime="2026-11-14T09:00:00.000Z" title="[^"]+">/,
+  );
+  assert.match(
+    rows[0],
+    /data-active="false"><b>1.2K<\/b><span>Views<\/span><\/span><span class="od-ranked-post-metric" data-active="true"><b>320<\/b><span>Likes<\/span>/,
+  );
+  const none = render(RankedPostList, {
+    label: "Top posts",
+    empty: "No posts",
+    items: [],
+    onOpen: () => undefined,
+  });
+  assert.match(none, /<p class="od-list-empty">No posts<\/p>/);
+  assert.doesNotMatch(none, /<ol/);
 });
 
 test("the emoji search matches the start of each word", () => {

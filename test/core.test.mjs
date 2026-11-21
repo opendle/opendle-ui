@@ -311,6 +311,27 @@ test("disabled tag switches retain their reason and cannot be selected", () => {
   assert.match(markup, /aria-pressed="false"/);
 });
 
+test("an unavailable tag switch is disabled and has a blocked mark", () => {
+  const props = {
+    onPressedChange: () => undefined,
+    title: "Not supported",
+    pressed: false,
+  };
+  const unavailable = render(
+    TagChip,
+    { ...props, unavailable: true },
+    "Community",
+  );
+  assert.match(unavailable, /data-unavailable="true" disabled=""/);
+  assert.match(unavailable, /title="Not supported"/);
+  assert.match(
+    unavailable,
+    /<svg aria-hidden="true" class="od-icon"[^>]*>.*<\/svg>Community<\/button>/,
+  );
+  const off = render(TagChip, props, "Community");
+  assert.doesNotMatch(off, /data-unavailable|disabled=|<svg/);
+});
+
 test("navigation groups contain their parent and nested destinations", () => {
   const markup = render(
     NavigationGroup,

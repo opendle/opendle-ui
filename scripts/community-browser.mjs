@@ -17,6 +17,7 @@ import {createRoot} from "react-dom/client";
 import {
   Card, Conversation, ConversationPost, DateRangeControl, InboxList,
   RecordTable, Section, StackedBarChart, ChartLegend, lastDays,
+  DonutChart, MetricTile, NetworkIcon, RankedPostList,
 } from "./dist/index.js";
 
 const base = {avatarUrl: null, createdAt: "2026-11-14T09:00:00Z", own: false, liked: false, likeCount: null, state: "new", canReply: true, canLike: true, depth: 0};
@@ -76,6 +77,34 @@ function App() {
         columns={[{id: "post", label: "Post"}, {id: "views", label: "Views", numeric: true}, {id: "likes", label: "Reactions", numeric: true}]}
         rows={[{id: "p1", title: "Take Me With You", label: "Take Me With You", cells: ["18.4K", "1,204"]}, {id: "p2", title: "Paper Lanterns", label: "Paper Lanterns", cells: ["9.1K", "640"]}]}/>
       <p id="opened">{opened}</p>
+      <section aria-label="Followers" className="home-sample" style={{display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 300px), 1fr))", gap: 12}}>
+        <dl className="od-metrics" style={{gridTemplateColumns: "repeat(2, minmax(0, 1fr))"}}>
+          <MetricTile label="Followers" value="12.4K" change="+3%" trend="up" points={[1, 2, 3, 4]}/>
+          <MetricTile label="Views" value="18.4K" change="+12%" trend="up" points={[3, 2, 4, 5]}/>
+          <MetricTile label="Likes" value="1,204" change="-3%" trend="down" points={[5, 4, 4, 3]}/>
+          <MetricTile label="Comments" value="88" change="+1%" trend="up" points={[1, 1, 2, 2]}/>
+        </dl>
+        <div className="od-card" style={{padding: 16}}>
+          <DonutChart label="Follower share" totalLabel="followers" formatValue={(value) => value.toLocaleString("en-GB")}
+            items={[
+              {id: "youtube", label: "YouTube", value: 6200, slot: 2, icon: <NetworkIcon network="youtube"/>},
+              {id: "instagram", label: "Instagram", value: 4100, slot: 0, icon: <NetworkIcon network="instagram"/>},
+              {id: "tiktok", label: "TikTok", value: 2050, slot: 1, icon: <NetworkIcon network="tiktok"/>},
+              {id: "bluesky", label: "Bluesky", value: 0, slot: 6, icon: <NetworkIcon network="bluesky"/>},
+              {id: "threads", label: "Threads", value: 12, slot: 4, icon: <NetworkIcon network="threads"/>},
+            ]}/>
+        </div>
+      </section>
+      <div className="od-card">
+        <RankedPostList label="Top posts" activeMetric="views" empty="No posts" onOpen={setOpened}
+          items={[
+            {id: "r1", title: "Take Me With You — the night we wrote the chorus, nobody wanted to go home, so we kept the tape running", network: "youtube", channel: "tubededentifrice",
+              at: "2026-11-10T12:30:00Z", previewUrl: "data:image/svg+xml," + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="90" height="160"><rect width="90" height="160" fill="#b56c4a"/></svg>'), video: true,
+              metrics: [{id: "views", label: "Views", value: "18.4K"}, {id: "likes", label: "Likes", value: "1.2K"}, {id: "comments", label: "Comments", value: "37"}]},
+            {id: "r2", title: "Northern Lights", network: "bluesky", channel: "vincent.music", at: "2026-11-02T09:00:00Z", previewUrl: null,
+              metrics: [{id: "views", label: "Views", value: "9.1K"}, {id: "likes", label: "Likes", value: "640"}, {id: "comments", label: "Comments", value: "8"}]},
+          ]}/>
+      </div>
     </main>
   );
 }
@@ -292,7 +321,7 @@ try {
       assert.equal(await second.inputValue(), "fail");
 
       // Like where the network permits it, ignore and restore.
-      const likes = page.getByRole("button", { name: "Like" });
+      const likes = page.getByRole("button", { name: "Like", exact: true });
       assert.equal(await likes.count(), 3);
       await likes.nth(1).click();
       assert.equal(await likes.nth(1).getAttribute("aria-pressed"), "true");
@@ -443,6 +472,91 @@ try {
         await page.locator("#range").textContent(),
         "2026-11-01 2026-11-14",
       );
+
+      // The donut chart: one slice for each item with a value. A pointer on a
+      // legend row or the arrow keys on the ring mark one item.
+      const donut = page.locator("figure.od-donut");
+      const ring = page.getByRole("img", {
+        name: "Follower share: 12,362",
+      });
+      assert.equal(await ring.locator(".od-donut-slice").count(), 4);
+      assert.equal(await donut.locator(".od-donut-legend li").count(), 4);
+      const center = donut.locator(".od-donut-value");
+      assert.equal(await center.textContent(), "12,362");
+      await donut.locator(".od-donut-legend li", { hasText: "TikTok" }).hover();
+      assert.equal(await center.textContent(), "2,050");
+      assert.equal(
+        await ring.locator('[data-item="tiktok"]').getAttribute("data-active"),
+        "true",
+      );
+      assert.equal(
+        await ring
+          .locator('[data-item="youtube"]')
+          .evaluate((node) => getComputedStyle(node).opacity),
+        "0.3",
+      );
+      await page.mouse.move(0, 0);
+      assert.equal(await center.textContent(), "12,362");
+      await ring.focus();
+      await page.keyboard.press("ArrowRight");
+      assert.equal(await center.textContent(), "6,200");
+      await page.keyboard.press("Escape");
+      // A small share stays visible.
+      const small = await ring.locator('[data-item="threads"]').boundingBox();
+      assert.ok(small.width >= 2 && small.height >= 2, `${name}: small slice`);
+      const ringBox = await donut.locator(".od-donut-ring").boundingBox();
+      const legendBox = await donut.locator(".od-donut-legend").boundingBox();
+      const tiles = await page
+        .locator(".home-sample .od-metrics")
+        .boundingBox();
+      if ((await donut.boundingBox()).width > 416) {
+        // Next to the tiles, the ring fills the height of two rows.
+        assert.ok(ringBox.height >= tiles.height - 40, `${name}: ring height`);
+        assert.ok(legendBox.x >= ringBox.x + ringBox.width, `${name}: beside`);
+      } else {
+        assert.ok(legendBox.y >= ringBox.y + ringBox.height, `${name}: below`);
+      }
+
+      // The ranked posts: one button for each row, the metrics in columns.
+      const ranked = page.getByRole("list", { name: "Top posts" });
+      const rows = ranked.getByRole("button");
+      assert.equal(await rows.count(), 2);
+      const firstMetric = async (index) =>
+        await rows
+          .nth(index)
+          .locator(".od-ranked-post-metric")
+          .first()
+          .boundingBox();
+      const [one, two] = [await firstMetric(0), await firstMetric(1)];
+      // The values align at the end of the columns, or at the start of the
+      // line below the text in a narrow list.
+      const narrow = width < 768;
+      assert.ok(
+        narrow
+          ? Math.abs(one.x - two.x) < 1
+          : Math.abs(one.x + one.width - (two.x + two.width)) < 1,
+        `${name}: columns`,
+      );
+      const text = await rows
+        .nth(0)
+        .locator(".od-ranked-post-text")
+        .boundingBox();
+      if (width < 768)
+        assert.ok(one.y >= text.y + text.height - 1, `${name}: wrap`);
+      else assert.ok(one.x >= text.x + text.width, `${name}: metrics right`);
+      if (screenshots !== null) {
+        await page
+          .locator(".home-sample")
+          .screenshot({ path: join(screenshots, `${name}-donut.png`) });
+        await ranked.screenshot({
+          path: join(screenshots, `${name}-ranked.png`),
+        });
+      }
+      await rows.nth(1).click();
+      assert.equal(await page.locator("#opened").textContent(), "r2");
+      await rows.nth(0).focus();
+      await page.keyboard.press("Enter");
+      assert.equal(await page.locator("#opened").textContent(), "r1");
 
       // The first cell of a table row opens the record.
       await page.getByRole("button", { name: "Paper Lanterns" }).click();

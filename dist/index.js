@@ -138,6 +138,8 @@ export { lastDays, } from "./components/dateRange.js";
 export { RecordTable, } from "./components/RecordTable.js";
 export { ChartLegend, } from "./components/ChartLegend.js";
 export { StackedBarChart, } from "./components/StackedBarChart.js";
+export { RankedPostList, } from "./components/RankedPostList.js";
+export { DonutChart, } from "./components/DonutChart.js";
 export { calendarBoardLabels, calendarItemState, } from "./components/calendarItems.js";
 export { calendarDayDate, calendarDayKey, calendarGridDays, calendarPeriod, calendarTitle, shiftCalendarAnchor, } from "./components/calendarDates.js";
 export { CalendarHeader, } from "./components/CalendarHeader.js";

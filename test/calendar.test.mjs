@@ -466,8 +466,11 @@ test("PostDetailDialog shows the time of most channels and a reset for the other
     1,
   );
   assert.match(markup, /aria-label="Use the time of the post · tiktok"/);
-  // The tag input is an empty pill, without a placeholder.
-  assert.doesNotMatch(markup, /placeholder=/);
+  // The empty tag input reads "#add tag", with a fixed "#".
+  assert.match(
+    markup,
+    /<span aria-hidden="true" class="od-tag-input-hash">#<\/span><input [^>]*placeholder="add tag"/,
+  );
 });
 
 test("PostDetailDialog opens the time form of one channel next to its button", () => {
@@ -522,32 +525,34 @@ test("TagInput shows each tag with a remove button, or as text only", () => {
   };
   const editable = render(TagInput, props);
   assert.match(editable, /aria-label="Remove tag: short"/);
-  assert.match(editable, /<input aria-label="Tags"/);
+  assert.match(editable, /<input [^>]*aria-label="Tags"/);
   const fixed = render(TagInput, { ...props, disabled: true });
   assert.doesNotMatch(fixed, /<button|<input/);
 });
 
-test("TagInput suggests the known tags that are not in the list", () => {
-  const markup = render(TagInput, {
-    value: ["short"],
+test("TagInput is a closed combobox after a fixed # and its add label", () => {
+  const props = {
+    value: [],
     onChange: () => undefined,
     label: "Tags",
     removeLabel: "Remove tag",
     suggestions: ["long", "short"],
-  });
-  const list = markup.match(/<input[^>]* list="([^"]+)"/)?.[1];
-  assert.ok(list);
-  assert.match(markup, new RegExp(`<datalist id="${list}">`));
-  assert.match(markup, /<option value="long">long<\/option>/);
-  assert.doesNotMatch(markup, /<option value="short">/);
-  const none = render(TagInput, {
-    value: ["short"],
-    onChange: () => undefined,
-    label: "Tags",
-    removeLabel: "Remove tag",
-    suggestions: ["short"],
-  });
-  assert.doesNotMatch(none, /<datalist| list=/);
+  };
+  const markup = render(TagInput, props);
+  assert.match(
+    markup,
+    /<label class="od-tag-input-entry"><span aria-hidden="true" class="od-tag-input-hash">#<\/span><input /,
+  );
+  const input = markup.match(/<input [^>]*>/)?.[0] ?? "";
+  assert.match(input, /role="combobox"/);
+  assert.match(input, /aria-expanded="false"/);
+  assert.match(input, /aria-autocomplete="list"/);
+  assert.match(input, /placeholder="add tag"/);
+  assert.doesNotMatch(markup, /<datalist|role="listbox"/);
+  assert.match(
+    render(TagInput, { ...props, addLabel: "ajouter" }),
+    /placeholder="ajouter"/,
+  );
 });
 
 test("PostDetailDialog tags are editable only with onTagsChange", () => {
@@ -571,9 +576,7 @@ test("PostDetailDialog tags are editable only with onTagsChange", () => {
   assert.match(editable, /class="od-tag-input od-post-detail-tag-input"/);
   assert.match(editable, /class="od-tag od-tag-input-tag" data-color="3"/);
   assert.match(editable, /aria-label="Remove tag: long"/);
-  assert.match(editable, /<input aria-label="Tags" class="od-tag-input-field"/);
-  assert.doesNotMatch(editable, /placeholder=/);
-  assert.match(editable, /<option value="short">/);
+  assert.match(editable, /<input [^>]*aria-label="Tags"[^>]*role="combobox"/);
 });
 
 test("ChannelList warns about an ended authorization and hides writes", () => {

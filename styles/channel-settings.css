@@ -1,10 +1,18 @@
 /*
- * Channel switches: on is filled, off has a solid border, and a function
- * that the connection does not support has a faint dashed border.
+ * Channel switches: on is filled, off has a solid outline and normal text,
+ * and a function that the connection does not support is a flat muted chip
+ * with a blocked mark (see `TagChip.unavailable`).
  */
-.od-channel-switches button.od-tag:disabled {
-  border-style: dashed;
-  opacity: 0.5;
+.od-channel-switches button.od-tag[aria-pressed="false"]:enabled {
+  border-style: solid;
+  border-color: var(--od-color-border-strong);
+  color: var(--od-color-foreground);
+  opacity: 1;
+}
+
+.od-channel-switches button.od-tag[aria-pressed="false"]:enabled:hover {
+  border-color: var(--od-color-muted);
+  background: var(--od-color-hover);
 }
 
 /* A connection provider has a round mark as wide as a network badge. */

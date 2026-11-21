@@ -5,7 +5,7 @@ export const channelListLabels = {
     empty: "No channels",
     rename: "Rename",
     tags: "Tags",
-    addTag: "Add tag",
+    addTag: "add tag",
     removeTag: "Remove tag",
     reconnect: "Reconnect",
     reconnectNeeded: "Authorization ended",

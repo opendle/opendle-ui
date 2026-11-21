@@ -62,6 +62,7 @@ export interface ChannelListLabels {
   readonly empty: string;
   readonly rename: string;
   readonly tags: string;
+  /** The text after the fixed `#` in an empty tag input. */
   readonly addTag: string;
   readonly removeTag: string;
   readonly reconnect: string;
@@ -85,7 +86,7 @@ export const channelListLabels: ChannelListLabels = {
   empty: "No channels",
   rename: "Rename",
   tags: "Tags",
-  addTag: "Add tag",
+  addTag: "add tag",
   removeTag: "Remove tag",
   reconnect: "Reconnect",
   reconnectNeeded: "Authorization ended",

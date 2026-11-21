@@ -113,6 +113,6 @@ test("ChannelList disables an unsupported switch and gives its reason", () => {
   );
   assert.match(
     markup,
-    /<button aria-pressed="false" class="od-tag" disabled="" title="Community is not supported"[^>]*>Community<\/button>/,
+    /<button aria-pressed="false" class="od-tag" data-unavailable="true" disabled="" title="Community is not supported"[^>]*><svg aria-hidden="true"[^>]*>.*?<\/svg>Community<\/button>/,
   );
 });

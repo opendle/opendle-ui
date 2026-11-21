@@ -10,6 +10,7 @@ declare const extraIconPaths: {
     readonly "arrow-up": "M12 19V5m-5 5 5-5 5 5";
     readonly undo: "M9 14 4 9l5-5 M4 9h10.5a5.5 5.5 0 0 1 0 11H11";
     readonly audit: "M5 4h14v16H5z M8 8h8 M8 12h8 M8 16h5";
+    readonly blocked: "M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z M5.6 5.6l12.8 12.8";
     readonly bell: "M10.3 21a2 2 0 0 0 3.4 0 M3.3 15.3A1 1 0 0 0 4 17h16a1 1 0 0 0 .7-1.7C19.4 14 18 12.5 18 8A6 6 0 0 0 6 8c0 4.5-1.4 6-2.7 7.3";
     readonly book: "M4 5.5A2.5 2.5 0 0 1 6.5 3H20v16H6.5A2.5 2.5 0 0 0 4 21z M4 5.5v15";
     readonly chevron: "m6 9 6 6 6-6";

@@ -56,6 +56,7 @@ export interface ChannelListLabels {
     readonly empty: string;
     readonly rename: string;
     readonly tags: string;
+    /** The text after the fixed `#` in an empty tag input. */
     readonly addTag: string;
     readonly removeTag: string;
     readonly reconnect: string;
