@@ -49,13 +49,24 @@ function MediaGallery({ media, playLabel, }) {
 }
 function MediaTile({ media, playLabel }) {
     const [playing, setPlaying] = useState(false);
+    // A wide picture or video gets a wider column than a tall one.
+    const [wide, setWide] = useState(false);
+    const measureImage = (event) => {
+        const { naturalHeight, naturalWidth } = event.currentTarget;
+        setWide(naturalWidth > naturalHeight);
+    };
+    const measureVideo = (event) => {
+        const { videoHeight, videoWidth } = event.currentTarget;
+        if (videoWidth > 0 && videoHeight > 0)
+            setWide(videoWidth > videoHeight);
+    };
     if (media.type === "image") {
-        return (_jsx("div", { className: "od-post-detail-media", children: _jsx("img", { alt: media.alt ?? "", src: media.src }) }));
+        return (_jsx("div", { className: "od-post-detail-media", "data-wide": wide, children: _jsx("img", { alt: media.alt ?? "", onLoad: measureImage, src: media.src }) }));
     }
     if (playing) {
-        return (_jsx("div", { className: "od-post-detail-media", "data-playing": "true", children: _jsx("video", { "aria-label": playLabel, autoPlay: true, controls: true, playsInline: true, src: media.src }) }));
+        return (_jsx("div", { className: "od-post-detail-media", "data-playing": "true", "data-wide": wide, children: _jsx("video", { "aria-label": playLabel, autoPlay: true, controls: true, onLoadedMetadata: measureVideo, playsInline: true, ...(media.poster ? { poster: media.poster } : {}), src: media.src }) }));
     }
-    return (_jsxs("div", { className: "od-post-detail-media", children: [media.poster ? (_jsx("img", { alt: "", src: media.poster })) : (_jsx("video", { "aria-label": playLabel, muted: true, playsInline: true, preload: "metadata", src: media.src })), _jsx("button", { "aria-label": playLabel, className: "od-post-detail-play", onClick: () => {
+    return (_jsxs("div", { className: "od-post-detail-media", "data-wide": wide, children: [media.poster ? (_jsx("img", { alt: "", onLoad: measureImage, src: media.poster })) : (_jsx("video", { "aria-label": playLabel, muted: true, onLoadedMetadata: measureVideo, playsInline: true, preload: "metadata", src: media.src })), _jsx("button", { "aria-label": playLabel, className: "od-post-detail-play", onClick: () => {
                     setPlaying(true);
                 }, title: playLabel, type: "button", children: _jsx(Icon, { name: "play" }) }), media.duration ? (_jsx("span", { className: "od-post-detail-duration", children: media.duration })) : null] }));
 }

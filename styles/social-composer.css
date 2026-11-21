@@ -641,6 +641,13 @@ button.od-attachment-preview {
 
 .od-social-preview[data-layout="video"] .od-social-hero {
   aspect-ratio: 16 / 9;
+  background: #000;
+}
+
+/* A video player shows the full picture with bars, as the network does. */
+.od-social-preview[data-layout="video"] .od-social-hero img,
+.od-social-preview[data-layout="vertical"] .od-social-hero img {
+  object-fit: contain;
 }
 
 .od-social-preview[data-layout="video"] .od-social-title {

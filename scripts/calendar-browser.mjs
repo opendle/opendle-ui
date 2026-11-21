@@ -45,6 +45,7 @@ function entries(month, count) {
   });
 }
 const preview = (color) => "data:image/svg+xml," + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 9 16"><rect width="9" height="16" fill="' + color + '"/><circle cx="3" cy="5" r="2" fill="#fff8"/></svg>');
+const wide = "data:image/svg+xml," + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="160" height="90"><rect width="160" height="90" fill="#52708f"/></svg>');
 const channels = all.map((network) => ({id: network, network, label: network}));
 function Mark() {
   return <svg width="22" height="22" viewBox="0 0 22 22" aria-hidden="true"><circle cx="11" cy="11" r="11" fill="currentColor"/></svg>;
@@ -110,7 +111,7 @@ function App() {
       </TabPanel>
       <PostDetailDialog open={selected !== null} onClose={() => setSelected(null)}
         title={selected?.title ?? ""} tags={["take-me-with-you","reel"]}
-        media={{type: "video", src: "about:blank", duration: "0:38"}} targets={targets}
+        media={{type: "video", src: "about:blank", duration: "4:18", poster: wide}} targets={targets}
         onRetry={async () => { setRetried(true); }} errorMessage={() => "The request failed."}/>
     </ApplicationShell>
   );
@@ -351,6 +352,16 @@ try {
       );
       assert.equal(await details.getByText("Board not found").count(), 1);
       assert.equal(await details.getByRole("tab").count(), 0);
+      // A wide video keeps its proportions and gets a wider column.
+      const tile = details.locator('.od-post-detail-media[data-wide="true"]');
+      await tile.waitFor();
+      const tileBox = await tile.boundingBox();
+      assert.ok(
+        Math.abs(tileBox.width / tileBox.height - 16 / 9) < 0.03,
+        JSON.stringify(tileBox),
+      );
+      if (width !== 390)
+        assert.ok(tileBox.width > 300, JSON.stringify(tileBox));
       await audit(page, `${name}-details`);
       await details.getByRole("button", { name: "Retry" }).click();
       await details.getByText("1 scheduled").waitFor();

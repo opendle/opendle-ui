@@ -6,6 +6,7 @@ import {
   useState,
   type KeyboardEvent,
   type ReactNode,
+  type SyntheticEvent,
 } from "react";
 
 import { Button } from "./Button.js";
@@ -214,36 +215,53 @@ interface MediaTileProps {
 
 function MediaTile({ media, playLabel }: MediaTileProps) {
   const [playing, setPlaying] = useState(false);
+  // A wide picture or video gets a wider column than a tall one.
+  const [wide, setWide] = useState(false);
+  const measureImage = (event: SyntheticEvent<HTMLImageElement>) => {
+    const { naturalHeight, naturalWidth } = event.currentTarget;
+    setWide(naturalWidth > naturalHeight);
+  };
+  const measureVideo = (event: SyntheticEvent<HTMLVideoElement>) => {
+    const { videoHeight, videoWidth } = event.currentTarget;
+    if (videoWidth > 0 && videoHeight > 0) setWide(videoWidth > videoHeight);
+  };
   if (media.type === "image") {
     return (
-      <div className="od-post-detail-media">
-        <img alt={media.alt ?? ""} src={media.src} />
+      <div className="od-post-detail-media" data-wide={wide}>
+        <img alt={media.alt ?? ""} onLoad={measureImage} src={media.src} />
       </div>
     );
   }
   if (playing) {
     return (
-      <div className="od-post-detail-media" data-playing="true">
+      <div
+        className="od-post-detail-media"
+        data-playing="true"
+        data-wide={wide}
+      >
         {/* react-doctor-disable-next-line react-doctor/media-has-caption -- The host has no caption track for a social video. */}
         <video
           aria-label={playLabel}
           autoPlay
           controls
+          onLoadedMetadata={measureVideo}
           playsInline
+          {...(media.poster ? { poster: media.poster } : {})}
           src={media.src}
         />
       </div>
     );
   }
   return (
-    <div className="od-post-detail-media">
+    <div className="od-post-detail-media" data-wide={wide}>
       {media.poster ? (
-        <img alt="" src={media.poster} />
+        <img alt="" onLoad={measureImage} src={media.poster} />
       ) : (
         // react-doctor-disable-next-line react-doctor/media-has-caption -- This muted video supplies a still preview only.
         <video
           aria-label={playLabel}
           muted
+          onLoadedMetadata={measureVideo}
           playsInline
           preload="metadata"
           src={media.src}

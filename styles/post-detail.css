@@ -96,9 +96,12 @@
   gap: 20px;
 }
 
-/* The still picture has the size of the playing video. */
 .od-post-detail-main[data-media="true"] {
   grid-template-columns: minmax(0, 260px) minmax(0, 1fr);
+}
+
+.od-post-detail-main[data-media="true"]:has([data-wide="true"]) {
+  grid-template-columns: minmax(0, 400px) minmax(0, 1fr);
 }
 
 .od-post-detail-gallery {
@@ -124,7 +127,6 @@
   position: relative;
   display: grid;
   overflow: hidden;
-  aspect-ratio: 9 / 16;
   place-items: center;
   align-self: start;
   border-radius: var(--od-radius-md);
@@ -132,11 +134,12 @@
   color: #ffffff;
 }
 
+/* The picture and the video keep their own proportions. */
 .od-post-detail-media :is(img, video) {
-  position: absolute;
-  inset: 0;
+  grid-area: 1 / 1;
   width: 100%;
-  height: 100%;
+  height: auto;
+  max-height: min(32rem, 70dvh);
   object-fit: contain;
 }
 
@@ -147,6 +150,7 @@
 .od-post-detail-play {
   position: relative;
   display: grid;
+  grid-area: 1 / 1;
   width: 40px;
   height: 40px;
   padding: 0 0 0 2px;
@@ -477,12 +481,13 @@
     padding-top: 16px;
   }
 
-  .od-post-detail-main[data-media="true"] {
+  .od-post-detail-main[data-media="true"],
+  .od-post-detail-main[data-media="true"]:has([data-wide="true"]) {
     grid-template-columns: 120px minmax(0, 1fr);
     gap: 14px;
   }
 
-  .od-post-detail-main:has([data-playing="true"]) {
+  .od-post-detail-main[data-media="true"]:has([data-playing="true"]) {
     grid-template-columns: minmax(0, 1fr);
   }
 
