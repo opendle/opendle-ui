@@ -11282,10 +11282,6 @@ button.od-tag:disabled {
   margin-left: 0;
 }
 
-.od-navigation-group-children .od-navigation-item[aria-current="page"] {
-  background: var(--od-color-hover);
-}
-
 .od-application-shell[data-collapsed="true"]
   .od-application-sidebar
   .od-navigation-group {
