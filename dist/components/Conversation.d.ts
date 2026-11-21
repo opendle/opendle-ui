@@ -14,6 +14,8 @@ export interface ConversationProps {
     readonly suggestions?: readonly string[];
     readonly savedReplies?: ReplyComposerProps["savedReplies"];
     readonly savedRepliesLabel?: string;
+    /** The emoji that come first in the emoji picker of a reply. */
+    readonly emoji?: readonly string[];
     readonly messageActions?: (message: ConversationMessage) => ReactNode;
     /** Without it, the messages have no reply box. */
     readonly onReply?: (id: string, text: string) => Promise<void>;
@@ -30,5 +32,5 @@ export interface ConversationProps {
  * The comments of one post, or the messages of one thread, in order. One
  * message at a time has an open reply box.
  */
-export declare function Conversation({ className, errorMessage, labels, limit, mention, messages, onIgnore, onLike, onReply, onReplyRequest, onRestore, post, selectedId, suggestions, savedReplies, savedRepliesLabel, messageActions, }: ConversationProps): import("react").JSX.Element;
+export declare function Conversation({ className, emoji, errorMessage, labels, limit, mention, messages, onIgnore, onLike, onReply, onReplyRequest, onRestore, post, selectedId, suggestions, savedReplies, savedRepliesLabel, messageActions, }: ConversationProps): import("react").JSX.Element;
 //# sourceMappingURL=Conversation.d.ts.map

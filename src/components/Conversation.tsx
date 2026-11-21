@@ -28,6 +28,8 @@ export interface ConversationProps {
   readonly suggestions?: readonly string[];
   readonly savedReplies?: ReplyComposerProps["savedReplies"];
   readonly savedRepliesLabel?: string;
+  /** The emoji that come first in the emoji picker of a reply. */
+  readonly emoji?: readonly string[];
   readonly messageActions?: (message: ConversationMessage) => ReactNode;
   /** Without it, the messages have no reply box. */
   readonly onReply?: (id: string, text: string) => Promise<void>;
@@ -51,6 +53,7 @@ const noSuggestions: readonly string[] = [];
  */
 export function Conversation({
   className,
+  emoji,
   errorMessage = noError,
   labels = conversationLabels,
   limit = null,
@@ -214,8 +217,9 @@ export function Conversation({
                 )}
                 {open ? (
                   <ReplyComposer
-                    errorMessage={errorMessage}
                     key={message.id}
+                    {...(emoji === undefined ? {} : { emoji })}
+                    errorMessage={errorMessage}
                     label={`${labels.replyTo} ${message.authorName}`}
                     labels={labels}
                     limit={limit}

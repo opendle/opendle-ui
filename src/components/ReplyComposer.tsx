@@ -25,6 +25,8 @@ export interface ReplyComposerProps {
     readonly text: string;
   }[];
   readonly savedRepliesLabel?: string;
+  /** The emoji that come first in the emoji picker. */
+  readonly emoji?: readonly string[];
   /** Send the text. A rejection keeps the text and shows the message. */
   readonly onSend: (text: string) => Promise<void>;
   /** With it, a button next to the send button ignores the message. */
@@ -42,6 +44,7 @@ const noSavedReplies: NonNullable<ReplyComposerProps["savedReplies"]> = [];
  * sends. Shift+Enter adds a line.
  */
 export function ReplyComposer({
+  emoji,
   errorMessage,
   label,
   labels,
@@ -130,6 +133,7 @@ export function ReplyComposer({
         <div className="od-reply-foot">
           <EmojiPicker
             disabled={send.pending}
+            {...(emoji === undefined ? {} : { emoji })}
             label={labels.emoji}
             onSelect={insert}
           />
