@@ -350,6 +350,20 @@ test("DonutChart draws a full ring for one item and folds the others", () => {
   assert.doesNotMatch(folded, /Threads/);
 });
 
+test("DonutChart without a legend keeps the values for screen readers", () => {
+  const markup = render(DonutChart, {
+    label: "Followers",
+    legend: false,
+    items: [{ id: "a", label: "YouTube", value: 5, slot: 0 }],
+  });
+  assert.match(markup, /<figure [^>]*data-legend="hidden"/);
+  assert.match(
+    markup,
+    /<ul aria-label="Followers" class="od-donut-legend od-visually-hidden"/,
+  );
+  assert.match(markup, /YouTube<\/span><b class="od-donut-amount">5<\/b>/);
+});
+
 test("RankedPostList shows the posts in order and marks the sort metric", () => {
   const metrics = (views, likes) => [
     { id: "views", label: "Views", value: views },

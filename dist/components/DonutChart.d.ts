@@ -22,6 +22,11 @@ export interface DonutChartProps {
     readonly totalLabel?: ReactNode;
     /** The name of the item that holds the items without a colour. */
     readonly otherLabel?: string;
+    /**
+     * Show the legend next to the ring. Without it, the ring fills the width
+     * and the legend stays for screen readers only. The default is `true`.
+     */
+    readonly legend?: boolean;
     readonly className?: string;
 }
 /**
@@ -30,5 +35,5 @@ export interface DonutChartProps {
  * on a legend row, or the arrow keys on the ring, mark one item and show its
  * value in the centre. An item keeps the colour of its slot in all charts.
  */
-export declare function DonutChart({ className, formatValue, items, label, otherLabel, total, totalLabel, }: DonutChartProps): import("react").JSX.Element;
+export declare function DonutChart({ className, formatValue, items, label, legend, otherLabel, total, totalLabel, }: DonutChartProps): import("react").JSX.Element;
 //# sourceMappingURL=DonutChart.d.ts.map

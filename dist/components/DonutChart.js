@@ -98,7 +98,7 @@ function DonutShapes({ active, shown, slices }) {
  * on a legend row, or the arrow keys on the ring, mark one item and show its
  * value in the centre. An item keeps the colour of its slot in all charts.
  */
-export function DonutChart({ className, formatValue = defaultFormat, items, label, otherLabel = "Other", total, totalLabel, }) {
+export function DonutChart({ className, formatValue = defaultFormat, items, label, legend = true, otherLabel = "Other", total, totalLabel, }) {
     const [active, setActive] = useState(null);
     const shown = useMemo(() => foldItems(items, otherLabel), [items, otherLabel]);
     const sum = shown.reduce((value, item) => value + item.value, 0);
@@ -114,13 +114,13 @@ export function DonutChart({ className, formatValue = defaultFormat, items, labe
         const index = shown.findIndex((item) => item.id === active);
         setActive(shown[cycleIndex(index, shown.length, step)]?.id ?? null);
     };
-    return (_jsx("figure", { className: classes("od-chart od-donut", className), "data-active": marked === undefined ? undefined : true, children: _jsxs("div", { className: "od-donut-body", children: [_jsxs("div", { className: "od-donut-ring", children: [_jsx("svg", { "aria-label": `${label}: ${formatValue(sum)}`, onBlur: () => {
+    return (_jsx("figure", { className: classes("od-chart od-donut", className), "data-active": marked === undefined ? undefined : true, "data-legend": legend ? undefined : "hidden", children: _jsxs("div", { className: "od-donut-body", children: [_jsxs("div", { className: "od-donut-ring", children: [_jsx("svg", { "aria-label": `${label}: ${formatValue(sum)}`, onBlur: () => {
                                 setActive(null);
                             }, onKeyDown: keyDown, onPointerLeave: () => {
                                 setActive(null);
                             }, onPointerOver: (event) => {
                                 setActive(pointed(event));
-                            }, role: "img", tabIndex: 0, viewBox: "0 0 100 100", children: _jsx(DonutShapes, { active: active, shown: shown, slices: slices }) }), _jsx("div", { "aria-hidden": "true", className: "od-donut-center", children: marked === undefined ? (_jsxs(_Fragment, { children: [_jsx("strong", { className: "od-donut-value", children: total ?? formatValue(sum) }), totalLabel === undefined ? null : (_jsx("span", { className: "od-donut-caption", children: totalLabel }))] })) : (_jsxs(_Fragment, { children: [_jsx("strong", { className: "od-donut-value", children: formatValue(marked.value) }), _jsxs("span", { className: "od-donut-caption", children: [_jsx("span", { className: "od-chart-name", children: marked.label }), _jsx("span", { children: percent(marked.value / sum) })] })] })) })] }), _jsx("ul", { "aria-label": label, className: "od-donut-legend", onPointerLeave: () => {
+                            }, role: "img", tabIndex: 0, viewBox: "0 0 100 100", children: _jsx(DonutShapes, { active: active, shown: shown, slices: slices }) }), _jsx("div", { "aria-hidden": "true", className: "od-donut-center", children: marked === undefined ? (_jsxs(_Fragment, { children: [_jsx("strong", { className: "od-donut-value", children: total ?? formatValue(sum) }), totalLabel === undefined ? null : (_jsx("span", { className: "od-donut-caption", children: totalLabel }))] })) : (_jsxs(_Fragment, { children: [_jsx("strong", { className: "od-donut-value", children: formatValue(marked.value) }), _jsxs("span", { className: "od-donut-caption", children: [_jsx("span", { className: "od-chart-name", children: marked.label }), _jsx("span", { children: percent(marked.value / sum) })] })] })) })] }), _jsx("ul", { "aria-label": label, className: classes("od-donut-legend", legend ? undefined : "od-visually-hidden"), onPointerLeave: () => {
                         setActive(null);
                     }, onPointerOver: (event) => {
                         setActive(pointed(event));

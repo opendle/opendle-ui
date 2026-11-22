@@ -145,6 +145,17 @@
   text-align: right;
 }
 
+/* Without a visible legend, the ring fills the width up to its largest size. */
+.od-donut[data-legend="hidden"] .od-donut-body {
+  justify-content: center;
+}
+
+.od-donut[data-legend="hidden"] .od-donut-ring {
+  width: min(100%, 18rem);
+  height: auto;
+  min-height: 0;
+}
+
 @media (prefers-reduced-motion: no-preference) {
   .od-donut-slice,
   .od-donut-legend li {

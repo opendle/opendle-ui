@@ -34,6 +34,11 @@ export interface DonutChartProps {
   readonly totalLabel?: ReactNode;
   /** The name of the item that holds the items without a colour. */
   readonly otherLabel?: string;
+  /**
+   * Show the legend next to the ring. Without it, the ring fills the width
+   * and the legend stays for screen readers only. The default is `true`.
+   */
+  readonly legend?: boolean;
   readonly className?: string;
 }
 
@@ -181,6 +186,7 @@ export function DonutChart({
   formatValue = defaultFormat,
   items,
   label,
+  legend = true,
   otherLabel = "Other",
   total,
   totalLabel,
@@ -207,6 +213,7 @@ export function DonutChart({
     <figure
       className={classes("od-chart od-donut", className)}
       data-active={marked === undefined ? undefined : true}
+      data-legend={legend ? undefined : "hidden"}
     >
       <div className="od-donut-body">
         <div className="od-donut-ring">
@@ -255,7 +262,10 @@ export function DonutChart({
         {/* react-doctor-disable-next-line react-doctor/no-noninteractive-element-interactions -- A pointer on a legend row marks its slice; the ring gives the same marks to the keyboard. */}
         <ul
           aria-label={label}
-          className="od-donut-legend"
+          className={classes(
+            "od-donut-legend",
+            legend ? undefined : "od-visually-hidden",
+          )}
           onPointerLeave={() => {
             setActive(null);
           }}
