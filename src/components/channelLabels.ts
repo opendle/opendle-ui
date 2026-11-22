@@ -67,6 +67,8 @@ export interface ChannelListLabels {
   readonly connect: string;
   readonly connectTitle: string;
   readonly empty: string;
+  /** The accessible name of the loading sign before the first answer. */
+  readonly loading: string;
   readonly rename: string;
   readonly tags: string;
   /** The text after the fixed `#` in an empty tag input. */
@@ -91,6 +93,7 @@ export const channelListLabels: ChannelListLabels = {
   connect: "Connect",
   connectTitle: "Connect a channel",
   empty: "No channels",
+  loading: "Loading channels",
   rename: "Rename",
   tags: "Tags",
   addTag: "add tag",

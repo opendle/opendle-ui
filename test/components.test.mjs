@@ -45,7 +45,9 @@ import {
   PanelHeader,
   PlanCardShell,
   ReviewPlanCard,
+  FormDialog,
   SessionCard,
+  SessionFormCard,
   SessionPage,
   ShellErrorBoundary,
   StatCard,
@@ -1668,4 +1670,56 @@ test("ToastStack shows the toasts in order, each an output", () => {
     ),
     "",
   );
+});
+
+test("SessionFormCard puts its fields and submit button in one form", () => {
+  const markup = renderToStaticMarkup(
+    React.createElement(
+      SessionFormCard,
+      {
+        title: "Recover",
+        submitLabel: "Send link",
+        pendingLabel: "Sending…",
+        onSubmit: async () => {},
+        errorMessage: () => null,
+        footer: React.createElement("button", { type: "button" }, "Back"),
+      },
+      React.createElement("input", { "aria-label": "Email", type: "email" }),
+    ),
+  );
+  assert.match(
+    markup,
+    /<div class="od-session-actions"><form class="od-session-form"><input aria-label="Email" type="email"\/><button[^>]*type="submit"[^>]*>.*Send link.*<\/button><\/form><\/div>/,
+  );
+  assert.match(
+    markup,
+    /<footer class="od-session-footer"><button type="button">Back<\/button><\/footer>/,
+  );
+});
+
+test("FormDialog joins its submit button to its form", () => {
+  const markup = renderToStaticMarkup(
+    React.createElement(
+      FormDialog,
+      {
+        open: true,
+        title: "Change email",
+        submitLabel: "Send link",
+        onSubmit: async () => {},
+        onClose: () => {},
+        errorMessage: () => null,
+      },
+      React.createElement("input", { "aria-label": "Email" }),
+    ),
+  );
+  const form =
+    /<form class="od-form-dialog-form" id="([^"]+)"><input aria-label="Email"\/><\/form>/.exec(
+      markup,
+    );
+  assert.ok(form);
+  assert.match(
+    markup,
+    new RegExp(`<button[^>]*form="${form[1]}"[^>]*type="submit"`),
+  );
+  assert.match(markup, />Cancel</);
 });

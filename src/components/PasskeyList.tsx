@@ -102,17 +102,21 @@ export function PasskeyList({
         </InlineAlert>
       )}
       <Card>
-        <ItemList>
-          {items.map((item) => (
-            <PasskeyRow
-              item={item}
-              key={item.id}
-              labels={labels}
-              onRemove={items.length > 1 ? setRemoving : null}
-              onRename={rename}
-            />
-          ))}
-        </ItemList>
+        {items.length === 0 ? (
+          <p className="od-list-empty">{labels.empty}</p>
+        ) : (
+          <ItemList>
+            {items.map((item) => (
+              <PasskeyRow
+                item={item}
+                key={item.id}
+                labels={labels}
+                onRemove={items.length > 1 ? setRemoving : null}
+                onRename={rename}
+              />
+            ))}
+          </ItemList>
+        )}
       </Card>
       <ConfirmationDialog
         cancelLabel={labels.cancel}

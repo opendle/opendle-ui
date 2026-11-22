@@ -27,6 +27,11 @@ export {
   type IconProps,
   type NetworkIconProps,
 } from "./components/Icon.js";
+export {
+  ProviderIcon,
+  type ProviderIconProps,
+  type ProviderName,
+} from "./components/ProviderIcon.js";
 export { formatAge } from "./components/formatAge.js";
 export {
   formatRelativeTime,
@@ -709,6 +714,11 @@ export {
   type SessionPageProps,
 } from "./components/SessionPage.js";
 export { SignInCard, type SignInCardProps } from "./components/SignInCard.js";
+export {
+  SessionFormCard,
+  type SessionFormCardProps,
+} from "./components/SessionFormCard.js";
+export { FormDialog, type FormDialogProps } from "./components/FormDialog.js";
 export { StatCard, type StatCardProps } from "./components/StatCard.js";
 export {
   StatePanel,

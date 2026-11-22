@@ -3,6 +3,8 @@ import { type ChannelConnectionProvider, type ChannelItem, type ChannelListLabel
 import type { NetworkName } from "./networks.js";
 export interface ChannelListProps {
     readonly items: readonly ChannelItem[];
+    /** Show a loading sign in place of the empty list until the first answer. */
+    readonly loading?: boolean;
     /** The networks that the user can connect. */
     readonly networks: readonly ChannelNetwork[];
     /** Extra host-owned connection flows in the network picker. */
@@ -43,5 +45,5 @@ export interface ChannelListProps {
  * The connected accounts of the networks: name, tags, switches, the warning
  * for an ended authorization, and the connect and disconnect actions.
  */
-export declare function ChannelList({ connectOpen, onConnectOpenChange, connectionProviders, disconnectConfirmation, errorMessage, items, labels, networks, onDisconnect, onError, onPasswordConnect, onPasswordReconnect, onRename, onSwitchChange, onTagsChange, readOnly, tagColors, tagSuggestions, }: ChannelListProps): import("react").JSX.Element;
+export declare function ChannelList({ connectOpen, onConnectOpenChange, connectionProviders, disconnectConfirmation, errorMessage, items, labels, loading, networks, onDisconnect, onError, onPasswordConnect, onPasswordReconnect, onRename, onSwitchChange, onTagsChange, readOnly, tagColors, tagSuggestions, }: ChannelListProps): import("react").JSX.Element;
 //# sourceMappingURL=ChannelList.d.ts.map

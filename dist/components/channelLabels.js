@@ -3,6 +3,7 @@ export const channelListLabels = {
     connect: "Connect",
     connectTitle: "Connect a channel",
     empty: "No channels",
+    loading: "Loading channels",
     rename: "Rename",
     tags: "Tags",
     addTag: "add tag",

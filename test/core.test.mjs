@@ -261,6 +261,16 @@ test("PasskeyList has no remove control for the last passkey", () => {
   assert.match(markup, /aria-label="Remove: Passkey"/);
 });
 
+test("PasskeyList without passkeys says so", () => {
+  const markup = render(PasskeyList, {
+    onAdd: async () => undefined,
+    onRemove: async () => undefined,
+    errorMessage: () => "",
+    items: [],
+  });
+  assert.match(markup, /<p class="od-list-empty">No passkeys<\/p>/);
+});
+
 test("PasskeyList names are editable only with a rename handler", () => {
   const props = {
     onAdd: async () => undefined,

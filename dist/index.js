@@ -5,6 +5,7 @@ export { CapabilityTag, } from "./components/CapabilityTag.js";
 /** Public package version. Keep this value aligned with package.json. */
 export const OPENDLE_UI_VERSION = "0.4.0";
 export { Icon, NetworkIcon, } from "./components/Icon.js";
+export { ProviderIcon, } from "./components/ProviderIcon.js";
 export { formatAge } from "./components/formatAge.js";
 export { formatRelativeTime, } from "./components/formatRelativeTime.js";
 export { RelativeTime, } from "./components/RelativeTime.js";
@@ -175,6 +176,8 @@ export { ReviewPlanCard, } from "./components/ReviewPlanCard.js";
 export { ShellErrorBoundary, } from "./components/ShellErrorBoundary.js";
 export { SessionCard, SessionPage, } from "./components/SessionPage.js";
 export { SignInCard } from "./components/SignInCard.js";
+export { SessionFormCard, } from "./components/SessionFormCard.js";
+export { FormDialog } from "./components/FormDialog.js";
 export { StatCard } from "./components/StatCard.js";
 export { StatePanel, } from "./components/StatePanel.js";
 export { NoResults } from "./components/NoResults.js";

@@ -2,7 +2,12 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
-import { ChannelList, NavigationGroup, NavigationLink } from "../dist/index.js";
+import {
+  ChannelList,
+  NavigationGroup,
+  NavigationLink,
+  ProviderIcon,
+} from "../dist/index.js";
 
 const element = React.createElement;
 
@@ -189,5 +194,38 @@ test("ChannelList switches show their icon and their help text", () => {
   assert.match(
     fixed,
     /<span class="od-tag od-channel-switch" title="Publish posts to this channel">/,
+  );
+});
+
+test("ChannelList shows a loading sign until the first answer", () => {
+  const props = {
+    items: [],
+    networks: [],
+    onRename: async () => {},
+    onTagsChange: async () => {},
+    onSwitchChange: async () => {},
+    onDisconnect: async () => {},
+    onPasswordConnect: async () => {},
+    errorMessage: () => "Failed",
+  };
+  const loading = renderToStaticMarkup(
+    element(ChannelList, { ...props, loading: true }),
+  );
+  assert.match(
+    loading,
+    /<output aria-label="Loading channels" class="od-loading"/,
+  );
+  assert.doesNotMatch(loading, /No channels/);
+  const empty = renderToStaticMarkup(element(ChannelList, props));
+  assert.match(empty, /No channels/);
+});
+
+test("ProviderIcon draws the provider mark in the text colour", () => {
+  const markup = renderToStaticMarkup(
+    element(ProviderIcon, { provider: "buffer" }),
+  );
+  assert.match(
+    markup,
+    /^<svg aria-hidden="true" class="od-provider-icon" fill="currentColor" height="16" viewBox="0 0 24 24" width="16"><path d="M1\.371 /,
   );
 });

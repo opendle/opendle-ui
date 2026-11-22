@@ -1,6 +1,7 @@
 /** Default English text of the identity components. */
 export interface PasskeyListLabels {
     readonly title: string;
+    readonly empty: string;
     readonly add: string;
     readonly adding: string;
     readonly unnamed: string;

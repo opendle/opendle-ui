@@ -14,12 +14,15 @@ import { ConfirmationDialog } from "./ConfirmationDialog.js";
 import { ConnectChannelDialog } from "./ConnectChannelDialog.js";
 import { Icon } from "./Icon.js";
 import { InlineAlert } from "./InlineAlert.js";
+import { LoadingIndicator } from "./LoadingIndicator.js";
 import type { NetworkName } from "./networks.js";
 import { Section } from "./Section.js";
 import { useAsyncAction } from "./useAsyncAction.js";
 
 export interface ChannelListProps {
   readonly items: readonly ChannelItem[];
+  /** Show a loading sign in place of the empty list until the first answer. */
+  readonly loading?: boolean;
   /** The networks that the user can connect. */
   readonly networks: readonly ChannelNetwork[];
   /** Extra host-owned connection flows in the network picker. */
@@ -89,6 +92,7 @@ export function ChannelList({
   errorMessage,
   items,
   labels = channelListLabels,
+  loading = false,
   networks,
   onDisconnect,
   onError,
@@ -172,7 +176,9 @@ export function ChannelList({
         </InlineAlert>
       )}
       <Card>
-        {items.length === 0 ? (
+        {items.length === 0 && loading ? (
+          <LoadingIndicator block label={labels.loading} />
+        ) : items.length === 0 ? (
           <p className="od-list-empty">{labels.empty}</p>
         ) : (
           <div className="od-channel-table">

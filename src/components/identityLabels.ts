@@ -2,6 +2,7 @@
 
 export interface PasskeyListLabels {
   readonly title: string;
+  readonly empty: string;
   readonly add: string;
   readonly adding: string;
   readonly unnamed: string;
@@ -15,6 +16,7 @@ export interface PasskeyListLabels {
 
 export const passkeyListLabels: PasskeyListLabels = {
   title: "Passkeys",
+  empty: "No passkeys",
   add: "Add passkey",
   adding: "Waiting for passkey…",
   unnamed: "Passkey",

@@ -1,6 +1,7 @@
 /** Default English text of the identity components. */
 export const passkeyListLabels = {
     title: "Passkeys",
+    empty: "No passkeys",
     add: "Add passkey",
     adding: "Waiting for passkey…",
     unnamed: "Passkey",

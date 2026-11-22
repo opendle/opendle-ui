@@ -13,7 +13,7 @@ interface ControlledInputProps extends Omit<InputHTMLAttributes<HTMLInputElement
 }
 export interface TextControlProps extends ControlledInputProps, ControlFieldProps {
     /** Mask a secret without changing label, validation or input behavior. */
-    readonly type?: "text" | "password" | "search" | "number" | "date";
+    readonly type?: "text" | "email" | "password" | "search" | "number" | "date";
     readonly onChange: ChangeEventHandler<HTMLInputElement>;
     readonly value: string;
 }

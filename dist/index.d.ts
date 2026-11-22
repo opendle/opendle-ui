@@ -5,6 +5,7 @@ export { CapabilityTag, type CapabilityTagProps, type CapabilityTagTone, } from 
 /** Public package version. Keep this value aligned with package.json. */
 export declare const OPENDLE_UI_VERSION: "0.4.0";
 export { Icon, NetworkIcon, type IconName, type IconProps, type NetworkIconProps, } from "./components/Icon.js";
+export { ProviderIcon, type ProviderIconProps, type ProviderName, } from "./components/ProviderIcon.js";
 export { formatAge } from "./components/formatAge.js";
 export { formatRelativeTime, type RelativeTimeOptions, } from "./components/formatRelativeTime.js";
 export { RelativeTime, type RelativeTimeProps, } from "./components/RelativeTime.js";
@@ -176,6 +177,8 @@ export { ReviewPlanCard, type ReviewPlanCardProps, type ReviewPlanDetail, type R
 export { ShellErrorBoundary, type ShellErrorBoundaryProps, } from "./components/ShellErrorBoundary.js";
 export { SessionCard, SessionPage, type SessionCardProps, type SessionPageProps, } from "./components/SessionPage.js";
 export { SignInCard, type SignInCardProps } from "./components/SignInCard.js";
+export { SessionFormCard, type SessionFormCardProps, } from "./components/SessionFormCard.js";
+export { FormDialog, type FormDialogProps } from "./components/FormDialog.js";
 export { StatCard, type StatCardProps } from "./components/StatCard.js";
 export { StatePanel, type StatePanelKind, type StatePanelProps, } from "./components/StatePanel.js";
 export { NoResults, type NoResultsProps } from "./components/NoResults.js";

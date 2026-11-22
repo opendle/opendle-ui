@@ -8,6 +8,7 @@ import { ConfirmationDialog } from "./ConfirmationDialog.js";
 import { ConnectChannelDialog } from "./ConnectChannelDialog.js";
 import { Icon } from "./Icon.js";
 import { InlineAlert } from "./InlineAlert.js";
+import { LoadingIndicator } from "./LoadingIndicator.js";
 import { Section } from "./Section.js";
 import { useAsyncAction } from "./useAsyncAction.js";
 const noConnectionProviders = [];
@@ -15,7 +16,7 @@ const noConnectionProviders = [];
  * The connected accounts of the networks: name, tags, switches, the warning
  * for an ended authorization, and the connect and disconnect actions.
  */
-export function ChannelList({ connectOpen, onConnectOpenChange, connectionProviders = noConnectionProviders, disconnectConfirmation, errorMessage, items, labels = channelListLabels, networks, onDisconnect, onError, onPasswordConnect, onPasswordReconnect, onRename, onSwitchChange, onTagsChange, readOnly = false, tagColors, tagSuggestions, }) {
+export function ChannelList({ connectOpen, onConnectOpenChange, connectionProviders = noConnectionProviders, disconnectConfirmation, errorMessage, items, labels = channelListLabels, loading = false, networks, onDisconnect, onError, onPasswordConnect, onPasswordReconnect, onRename, onSwitchChange, onTagsChange, readOnly = false, tagColors, tagSuggestions, }) {
     const change = useAsyncAction(errorMessage, onError);
     const removal = useAsyncAction(errorMessage, onError);
     const [connection, setConnection] = useState(null);
@@ -64,7 +65,7 @@ export function ChannelList({ connectOpen, onConnectOpenChange, connectionProvid
             (networks.length === 0 && connectionProviders.length === 0) ? null : (_jsx(Button, { icon: _jsx(Icon, { name: "plus", size: 15 }), onClick: () => {
                 setConnection({ network: null });
                 onConnectOpenChange?.(true);
-            }, variant: "secondary", children: labels.connect })), title: labels.title, children: [change.failure === null ? null : (_jsx(InlineAlert, { className: "od-section-alert", tone: "error", children: change.failure })), _jsx(Card, { children: items.length === 0 ? (_jsx("p", { className: "od-list-empty", children: labels.empty })) : (_jsx("div", { className: "od-channel-table", children: _jsx("ul", { className: "od-channel-list", style: {
+            }, variant: "secondary", children: labels.connect })), title: labels.title, children: [change.failure === null ? null : (_jsx(InlineAlert, { className: "od-section-alert", tone: "error", children: change.failure })), _jsx(Card, { children: items.length === 0 && loading ? (_jsx(LoadingIndicator, { block: true, label: labels.loading })) : items.length === 0 ? (_jsx("p", { className: "od-list-empty", children: labels.empty })) : (_jsx("div", { className: "od-channel-table", children: _jsx("ul", { className: "od-channel-list", style: {
                             "--od-channel-switch-columns": Math.max(1, switchIds.length),
                         }, children: items.map((item) => (_jsx(ChannelRow, { switchIds: switchIds, item: item, labels: labels, onDisconnect: setRemoving, onRename: (name) => guarded(() => onRename(item.id, name)), onSwitchChange: (switchId, on) => {
                                 void run(() => onSwitchChange(item.id, switchId, on));
