@@ -346,7 +346,7 @@ test("the application shell keeps caller-owned content in semantic slots", () =>
           sections: [],
         }),
         brandMark: React.createElement("strong", null, "E"),
-        brandName: "Example",
+        brandName: React.createElement("em", null, "Example"),
         mainProps: { "aria-label": "Current page" },
         navigation: React.createElement(NavigationItem, {
           active: true,
@@ -360,6 +360,10 @@ test("the application shell keeps caller-owned content in semantic slots", () =>
     ),
   );
   assert.match(markup, /class="od-application-shell"/);
+  assert.match(
+    markup,
+    /<span class="od-application-brand-name"><em>Example<\/em><\/span>/,
+  );
   assert.match(markup, /<a class="od-skip-link" href="#od-main">/);
   assert.match(markup, /<aside class="od-application-sidebar"/);
   assert.match(markup, /<nav aria-label="Primary navigation"/);

@@ -2,7 +2,8 @@ import { type HTMLAttributes, type ReactNode } from "react";
 export interface ApplicationShellProps extends Omit<HTMLAttributes<HTMLDivElement>, "children"> {
     /** The product mark, shown before the product name. */
     readonly brandMark: ReactNode;
-    readonly brandName: string;
+    /** The product name: a string or a styled wordmark. */
+    readonly brandName: ReactNode;
     readonly brandHref?: string;
     /** `NavigationLink` or `NavigationItem` elements. */
     readonly navigation: ReactNode;
