@@ -94,6 +94,13 @@ function App() {
               {id: "threads", label: "Threads", value: 12, slot: 4, icon: <NetworkIcon network="threads"/>},
             ]}/>
         </div>
+        <div className="od-card compact-donut" style={{padding: 16, width: 240}}>
+          <DonutChart label="Compact share" legend={false}
+            items={[
+              {id: "youtube", label: "YouTube", value: 6200, slot: 2},
+              {id: "instagram", label: "Instagram", value: 4100, slot: 0},
+            ]}/>
+        </div>
       </section>
       <div className="od-card">
         <RankedPostList label="Top posts" activeMetric="views" empty="No posts" onOpen={setOpened}
@@ -475,7 +482,7 @@ try {
 
       // The donut chart: one slice for each item with a value. A pointer on a
       // legend row or the arrow keys on the ring mark one item.
-      const donut = page.locator("figure.od-donut");
+      const donut = page.locator("figure.od-donut:not([data-legend])");
       const ring = page.getByRole("img", {
         name: "Follower share: 12,362",
       });
@@ -516,6 +523,20 @@ try {
       } else {
         assert.ok(legendBox.y >= ringBox.y + ringBox.height, `${name}: below`);
       }
+      // Without a visible legend, the ring fills the width of its card.
+      const compact = page.locator(".compact-donut");
+      const compactRing = await compact.locator(".od-donut-ring").boundingBox();
+      const compactWidth = await compact.evaluate(
+        (node) => node.clientWidth - 32,
+      );
+      assert.ok(
+        Math.abs(compactRing.width - compactWidth) < 1,
+        `${name}: compact ring ${String(compactRing.width)} ${String(compactWidth)}`,
+      );
+      assert.equal(
+        await compact.getByRole("list", { name: "Compact share" }).count(),
+        1,
+      );
 
       // The ranked posts: one button for each row, the metrics in columns.
       const ranked = page.getByRole("list", { name: "Top posts" });
