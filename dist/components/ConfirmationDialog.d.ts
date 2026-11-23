@@ -8,8 +8,24 @@ export interface ConfirmationDialogProps extends Omit<DialogHTMLAttributes<HTMLD
     /** A failure of the last attempt. It shows in the dialog body. */
     readonly error?: ReactNode;
     readonly tone?: "default" | "danger";
+    /**
+     * Put the first focus on the confirm button, so Enter confirms. Use it only
+     * for an action that is safe to do by accident. Without it, the first focus
+     * is on Cancel. With an impact statement, Enter confirms when the typed
+     * text agrees.
+     */
+    readonly confirmOnEnter?: boolean;
+    /** The user must type this text. Enter confirms when the text agrees. */
     readonly impactStatement?: string;
-    readonly impactLabel?: ReactNode;
+    /** The prompt around the statement box, for example `Type {box} to confirm.` */
+    readonly impactLabel?: (statement: ReactNode) => ReactNode;
+    /** The accessible name of the input. */
+    readonly impactInputLabel?: string;
+    readonly copyLabel?: string;
+    readonly copiedLabel?: string;
+    /** Shows the irreversible warning in the danger color. */
+    readonly irreversible?: boolean;
+    readonly irreversibleLabel?: ReactNode;
     readonly pending?: boolean;
     readonly pendingLabel?: ReactNode;
     readonly returnFocusRef?: RefObject<HTMLElement | null>;

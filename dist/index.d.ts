@@ -99,6 +99,7 @@ export { ItemRow, type ItemRowProps } from "./components/ItemRow.js";
 export { Section, type SectionProps } from "./components/Section.js";
 export { PasskeyList, type PasskeyItem, type PasskeyListProps, } from "./components/PasskeyList.js";
 export { SecretValue, type SecretValueProps, } from "./components/SecretValue.js";
+export { CopyButton, type CopyButtonProps } from "./components/CopyButton.js";
 export { squarePicture } from "./components/squarePicture.js";
 export type { PictureOutput, PictureType } from "./components/pictureCrop.js";
 export { TabPanel, Tabs, type TabItem, type TabPanelProps, type TabsProps, } from "./components/Tabs.js";

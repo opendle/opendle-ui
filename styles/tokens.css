@@ -5592,18 +5592,47 @@ samp {
   }
 }
 
-.od-confirmation-dialog-impact {
-  display: grid;
-  gap: var(--od-space-sm);
-  color: var(--od-color-muted-strong);
-  font-size: 0.75rem;
+.od-confirmation-dialog-irreversible {
+  margin: 0;
+  color: var(--od-color-danger);
   font-weight: 700;
 }
 
-.od-confirmation-dialog-impact strong {
+.od-confirmation-dialog-impact {
+  display: grid;
+  gap: var(--od-space-sm);
+}
+
+.od-confirmation-dialog-impact p {
+  margin: 0;
+  line-height: 2.25;
+}
+
+.od-confirmation-dialog-statement {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  max-width: 100%;
+  margin: 0 0.25em;
+  padding: 0 2px 0 10px;
+  border-radius: var(--od-radius-sm);
+  background: var(--od-color-sunken);
+  line-height: 1.5;
+  vertical-align: middle;
+}
+
+.od-confirmation-dialog-statement code {
+  min-width: 0;
   overflow-wrap: anywhere;
   color: var(--od-color-foreground);
   font-family: var(--od-font-mono), monospace;
+  font-size: 0.875rem;
+  user-select: all;
+}
+
+.od-confirmation-dialog-statement .od-icon-button {
+  width: 1.75rem;
+  height: 1.75rem;
 }
 
 .od-confirmation-dialog-impact input {
@@ -5615,6 +5644,10 @@ samp {
   color: var(--od-color-foreground);
   background: var(--od-color-surface);
   font: inherit;
+}
+
+.od-confirmation-dialog-impact input::placeholder {
+  color: var(--od-color-muted);
 }
 
 .od-confirmation-dialog-impact input:focus-visible {

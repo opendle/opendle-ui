@@ -114,6 +114,8 @@ test("ConfirmationDialog labels a modal confirmation and its exact impact input"
       title: "Delete workspace",
       description: "All current records will be deleted.",
       impactStatement: "delete service-a/workspace-a with 12 records",
+      irreversible: true,
+      tone: "danger",
       confirmLabel: "Delete",
       onCancel: () => undefined,
       onConfirm: () => undefined,
@@ -126,10 +128,30 @@ test("ConfirmationDialog labels a modal confirmation and its exact impact input"
   assert.match(markup, /delete service-a\/workspace-a with 12 records/);
   assert.match(
     markup,
-    /<input[^>]*aria-describedby="[^"]+"[^>]*aria-label="Enter the impact statement to continue"/,
+    /<input[^>]*aria-describedby="[^"]+"[^>]*aria-label="Confirmation text"[^>]*data-dialog-initial-focus="true"[^>]*placeholder="delete service-a\/workspace-a with 12 records"/,
+  );
+  assert.match(
+    markup,
+    /Type <span class="od-confirmation-dialog-statement"><code/,
+  );
+  assert.match(markup, /aria-label="Copy"/);
+  assert.match(markup, / to confirm\.<\/p>/);
+  assert.match(
+    markup,
+    /class="od-confirmation-dialog-irreversible">This cannot be undone\.</,
   );
   assert.doesNotMatch(markup, /autofocus=/);
-  assert.match(markup, /<button[^>]*disabled=""[^>]*>Delete<\/button>/);
+  // Enter in the input clicks the confirm button only when it is enabled.
+  const formId = /<form[^>]*id="([^"]+)"/.exec(markup)?.[1];
+  assert.ok(formId);
+  assert.match(
+    markup,
+    new RegExp(
+      `<button(?=[^>]*disabled="")(?=[^>]*form="${formId}")(?=[^>]*type="submit")[^>]*>Delete</button>`,
+    ),
+  );
+  const cancel = /<button[^>]*>Cancel<\/button>/.exec(markup)?.[0] ?? "";
+  assert.doesNotMatch(cancel, /data-dialog-initial-focus/);
   assert.throws(
     () =>
       renderToStaticMarkup(
@@ -145,6 +167,27 @@ test("ConfirmationDialog labels a modal confirmation and its exact impact input"
       ),
     /must not be empty/,
   );
+});
+
+test("ConfirmationDialog gives Enter to the confirm button only when the host asks", () => {
+  const confirmation = (confirmOnEnter) =>
+    renderToStaticMarkup(
+      React.createElement(ConfirmationDialog, {
+        open: true,
+        title: "Publish",
+        description: "Publish now.",
+        confirmOnEnter,
+        confirmLabel: "Confirm",
+        onCancel: () => undefined,
+        onConfirm: () => undefined,
+      }),
+    );
+  const focused = (markup) =>
+    /<button[^>]*data-dialog-initial-focus="true"[^>]*>(.*?)<\/button>/.exec(
+      markup,
+    )?.[1];
+  assert.match(focused(confirmation(true)) ?? "", /Confirm/);
+  assert.match(focused(confirmation(false)) ?? "", /Cancel/);
 });
 
 test("MediaLightbox accepts only a labelled host-owned image or PDF blob", () => {

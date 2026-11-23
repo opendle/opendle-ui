@@ -329,7 +329,12 @@ apps keep drafts, records, API calls, permissions, and product copy outside
 the package. `Dialog` supplies a controlled native modal with focus return,
 fixed framing, local body scrolling, three desktop sizes, and a full phone
 sheet. `ConfirmationDialog` composes it for an optional exact impact-statement
-check. Host apps keep the target, effect, impact text, and mutation behavior.
+check. The statement shows inline in a box with a `CopyButton`, and it is the
+placeholder of the input. Enter in the input confirms only when the typed text
+agrees. Without a statement, the first focus is on Cancel, so Enter cancels;
+`confirmOnEnter` moves it to the confirm button for a safe action.
+`irreversible` adds the "This cannot be undone." line in the danger color.
+Host apps keep the target, effect, impact text, and mutation behavior.
 `MediaLightbox` previews one host-owned image, video or PDF. The source is a
 blob URL or a same-origin path that starts with `/`; remote URLs are refused.
 A video plays with its controls and an optional `poster`. `details` shows

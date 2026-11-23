@@ -99,6 +99,7 @@ export { ItemRow } from "./components/ItemRow.js";
 export { Section } from "./components/Section.js";
 export { PasskeyList, } from "./components/PasskeyList.js";
 export { SecretValue, } from "./components/SecretValue.js";
+export { CopyButton } from "./components/CopyButton.js";
 export { squarePicture } from "./components/squarePicture.js";
 export { TabPanel, Tabs, } from "./components/Tabs.js";
 export { TagChip } from "./components/TagChip.js";

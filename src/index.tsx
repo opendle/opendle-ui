@@ -245,6 +245,7 @@ export {
   SecretValue,
   type SecretValueProps,
 } from "./components/SecretValue.js";
+export { CopyButton, type CopyButtonProps } from "./components/CopyButton.js";
 export { squarePicture } from "./components/squarePicture.js";
 export type { PictureOutput, PictureType } from "./components/pictureCrop.js";
 export {

@@ -344,11 +344,17 @@ try {
     "delete record-1",
   );
   assert.equal(
-    await confirmation
-      .getByRole("button", { name: "Cancel" })
-      .evaluate((element) => element === document.activeElement),
+    await impactInput.evaluate((element) => element === document.activeElement),
     true,
   );
+  assert.equal(
+    await impactInput.getAttribute("placeholder"),
+    "delete record-1",
+  );
+  // Enter does nothing while the typed text differs.
+  await impactInput.fill("delete record");
+  await impactInput.press("Enter");
+  assert.equal(await confirmation.isVisible(), true);
   await impactInput.fill("delete record-1");
   assert.equal(
     await confirmation
@@ -383,8 +389,16 @@ try {
   );
   await desktop.getByRole("button", { name: "Review deletion" }).click();
   await impactInput.fill("delete record-1");
+  // Enter confirms when the typed text agrees.
+  await impactInput.press("Enter");
+  assert.equal(
+    await desktop
+      .getByRole("status", { name: "Confirmation count" })
+      .textContent(),
+    "1",
+  );
   await confirmation
-    .getByRole("button", { name: "Delete record" })
+    .getByRole("button", { name: /Delet/ })
     .evaluate((button) => {
       button.click();
       button.click();

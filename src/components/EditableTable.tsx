@@ -9,7 +9,10 @@ import {
   type ReactNode,
 } from "react";
 
-import { ConfirmationDialog } from "./ConfirmationDialog.js";
+import {
+  ConfirmationDialog,
+  type ConfirmationDialogProps,
+} from "./ConfirmationDialog.js";
 import {
   DataTable,
   type DataTableActionContext,
@@ -70,7 +73,7 @@ export interface EditableTableDeleteConfirmation<TDraft> {
   readonly description: ReactNode;
   readonly confirmLabel?: ReactNode;
   readonly impactStatement?: string;
-  readonly impactLabel?: ReactNode;
+  readonly impactLabel?: ConfirmationDialogProps["impactLabel"];
   readonly pendingLabel?: ReactNode;
   readonly row: EditableTableRow<TDraft>;
 }
