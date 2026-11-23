@@ -657,6 +657,10 @@ export {
 } from "./GraphLayout.js";
 export { IconButton, type IconButtonProps } from "./components/IconButton.js";
 export {
+  InheritedSwitchControl,
+  type InheritedSwitchControlProps,
+} from "./components/InheritedSwitchControl.js";
+export {
   NavigationItem,
   type NavigationItemProps,
 } from "./components/NavigationItem.js";

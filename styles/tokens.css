@@ -5994,6 +5994,30 @@ samp {
   cursor: not-allowed;
 }
 
+/* A switch that inherits: a dimmed value with an edit button, or an own
+   value with a reset button. The button keeps its place in both states. */
+.od-inherited-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  vertical-align: middle;
+}
+
+.od-inherited-switch > .od-form-field {
+  display: inline-grid;
+  gap: 0;
+}
+
+.od-inherited-switch > .od-icon-button {
+  width: 1.875rem;
+  height: 1.875rem;
+}
+
+.od-inherited-switch[data-inherited="true"] .od-switch-control-input {
+  opacity: 0.45;
+  cursor: default;
+}
+
 .od-form-field[data-orientation="inline"] :is(.od-field-help, .od-field-error) {
   grid-column: 2;
 }

@@ -16,6 +16,7 @@ import {
   FormActions,
   FormField,
   FormSection,
+  InheritedSwitchControl,
   InlineAlert,
   NumberControl,
   SearchableSelect,
@@ -564,4 +565,30 @@ test("TextControl preserves native search, number and date fields", () => {
     );
     assert.ok(markup.includes(`type="${type}"`));
   }
+});
+
+test("InheritedSwitchControl shows the inherited value or the own value", () => {
+  const render = (value) =>
+    renderToStaticMarkup(
+      React.createElement(InheritedSwitchControl, {
+        inherited: true,
+        label: "Email",
+        onChange: () => undefined,
+        overrideLabel: "Change",
+        resetLabel: "Inherit",
+        value,
+      }),
+    );
+  const inherits = render(null);
+  assert.match(inherits, /data-inherited="true"/);
+  assert.match(
+    inherits,
+    /<input(?=[^>]*role="switch")(?=[^>]*checked="")(?=[^>]*disabled="")/,
+  );
+  assert.match(inherits, /<button[^>]*aria-label="Change"/);
+
+  const own = render(false);
+  assert.match(own, /data-inherited="false"/);
+  assert.doesNotMatch(own, /<input[^>]*(checked|disabled)=""/);
+  assert.match(own, /<button[^>]*aria-label="Inherit"/);
 });
