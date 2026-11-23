@@ -5613,7 +5613,6 @@ samp {
   align-items: center;
   gap: 2px;
   max-width: 100%;
-  margin: 0 0.25em;
   padding: 0 2px 0 10px;
   border-radius: var(--od-radius-sm);
   background: var(--od-color-sunken);
@@ -5648,6 +5647,7 @@ samp {
 
 .od-confirmation-dialog-impact input::placeholder {
   color: var(--od-color-muted);
+  opacity: 0.7;
 }
 
 .od-confirmation-dialog-impact input:focus-visible {
