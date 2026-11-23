@@ -1245,7 +1245,18 @@ try {
   }
 
   const combobox = desktop.getByRole("combobox", { name: "Model" });
-  await combobox.focus();
+  for (const control of [...sharedControls.slice(0, 4), combobox]) {
+    await control.focus();
+    assert.equal(
+      await control.evaluate((element) => {
+        const style = getComputedStyle(element);
+        const width = parseFloat(style.outlineWidth);
+        return width > 0 && width + parseFloat(style.outlineOffset) <= 0;
+      }),
+      true,
+      "The focus outline must fit inside the field border.",
+    );
+  }
   const listbox = desktop.getByRole("listbox", { name: "Model" });
   await listbox.waitFor();
   assert.equal(await listbox.getByRole("option").count(), 3);

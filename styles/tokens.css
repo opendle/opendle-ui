@@ -2994,10 +2994,30 @@ button:not(:disabled) {
   cursor: pointer;
 }
 
-button:focus-visible,
 input:focus-visible,
 select:focus-visible,
-textarea:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid var(--od-color-focus);
+  outline-offset: -2px;
+}
+
+:is(input, select, textarea):focus-visible:where([aria-invalid="true"]) {
+  /* Keep the validation border visible. */
+  outline-width: 1px;
+}
+
+button:focus-visible,
+input:where(
+    [type="button"],
+    [type="checkbox"],
+    [type="color"],
+    [type="file"],
+    [type="image"],
+    [type="radio"],
+    [type="range"],
+    [type="reset"],
+    [type="submit"]
+  ):focus-visible,
 a:focus-visible {
   outline: 3px solid color-mix(in srgb, var(--od-color-focus) 58%, transparent);
   outline-offset: 2px;
@@ -3144,7 +3164,8 @@ samp {
 .od-graph-toolbar
   .od-form-field-control
   > :where(input, select, textarea):focus-visible {
-  outline-color: var(--od-color-blue);
+  outline: 3px solid var(--od-color-blue);
+  outline-offset: 2px;
 }
 
 @media (forced-colors: active) {
@@ -5648,11 +5669,6 @@ samp {
 .od-confirmation-dialog-impact input::placeholder {
   color: var(--od-color-muted);
   opacity: 0.7;
-}
-
-.od-confirmation-dialog-impact input:focus-visible {
-  outline: 0.1875rem solid var(--od-color-focus);
-  outline-offset: 0.125rem;
 }
 
 .od-state-panel {
@@ -10263,11 +10279,6 @@ button.od-message-action:hover {
   color: var(--od-color-foreground);
   font: inherit;
   font-size: 0.875rem;
-}
-
-.od-emoji-search:focus-visible {
-  outline: 2px solid var(--od-color-focus);
-  outline-offset: 1px;
 }
 
 .od-emoji-grid {
