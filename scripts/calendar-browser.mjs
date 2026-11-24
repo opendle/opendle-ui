@@ -245,13 +245,15 @@ try {
           .getAttribute("data-past"),
         "false",
       );
-      if (width !== 390) {
-        assert.match(
-          await pastDays
-            .first()
-            .evaluate((day) => getComputedStyle(day).backgroundImage),
-          /repeating-linear-gradient/,
-        );
+      const hatch = await pastDays.first().evaluate((day) => {
+        const { backgroundAttachment, backgroundImage } = getComputedStyle(day);
+        return { backgroundAttachment, backgroundImage };
+      });
+      if (width === 390) {
+        assert.equal(hatch.backgroundImage, "none");
+      } else {
+        assert.match(hatch.backgroundImage, /repeating-linear-gradient/);
+        assert.equal(hatch.backgroundAttachment, "fixed");
       }
       await baselines(page, `${name} month`);
       // The network marks follow the time in the first block of the card,
@@ -423,12 +425,24 @@ try {
           const box = { height: cell.clientHeight };
           const hatch = getComputedStyle(cell, "::before");
           const line = getComputedStyle(cell, "::after");
+          const { backgroundAttachment, backgroundImage } = hatch;
           return {
             height: box.height,
             hatch: Number.parseFloat(hatch.height),
             line: Number.parseFloat(line.top),
+            backgroundAttachment,
+            backgroundImage,
           };
         });
+        const past = await todayCell(25).evaluate((cell) => {
+          const { backgroundAttachment, backgroundImage } =
+            getComputedStyle(cell);
+          return { backgroundAttachment, backgroundImage };
+        });
+        assert.match(past.backgroundImage, /repeating-linear-gradient/);
+        assert.equal(past.backgroundAttachment, "fixed");
+        assert.equal(nowLine.backgroundAttachment, past.backgroundAttachment);
+        assert.equal(nowLine.backgroundImage, past.backgroundImage);
         assert.ok(
           Math.abs(nowLine.hatch / nowLine.height - 2 / 3) < 0.03 &&
             Math.abs(nowLine.line / nowLine.height - 2 / 3) < 0.03,

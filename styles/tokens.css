@@ -11180,7 +11180,10 @@ button.od-tag[data-color][aria-pressed="true"] {
 
 @media (min-width: 721px) {
   .od-calendar-grid .od-calendar-day[data-past="true"],
-  .od-calendar-week tbody td[data-past="true"] {
+  .od-calendar-week tbody td[data-past="true"],
+  .od-calendar-week tbody td[data-now="true"]::before {
+    /* Use one origin so the lines meet at each cell boundary. */
+    background-attachment: fixed;
     background-image: var(--od-calendar-hatch);
   }
 
@@ -11192,8 +11195,8 @@ button.od-tag[data-color][aria-pressed="true"] {
     position: absolute;
     inset: 0 0 auto;
     height: var(--od-calendar-now);
-    background-image: var(--od-calendar-hatch);
     content: "";
+    pointer-events: none;
   }
 
   /* The present. */
