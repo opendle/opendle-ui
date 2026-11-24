@@ -53,6 +53,7 @@ import {
   StatCard,
   StatePanel,
   StatusPill,
+  TextControl,
   Toast,
   ToastStack,
   WorkspaceSelector,
@@ -1721,18 +1722,24 @@ test("SessionFormCard puts its fields and submit button in one form", () => {
       SessionFormCard,
       {
         title: "Recover",
+        formId: "account-recovery",
         submitLabel: "Send link",
         pendingLabel: "Sending…",
         onSubmit: async () => {},
         errorMessage: () => null,
         footer: React.createElement("button", { type: "button" }, "Back"),
       },
-      React.createElement("input", { "aria-label": "Email", type: "email" }),
+      React.createElement(TextControl, {
+        label: "Email",
+        type: "email",
+        name: "email",
+        defaultValue: "owner@example.test",
+      }),
     ),
   );
   assert.match(
     markup,
-    /<div class="od-session-actions"><form class="od-session-form"><input aria-label="Email" type="email"\/><button[^>]*type="submit"[^>]*>.*Send link.*<\/button><\/form><\/div>/,
+    /<div class="od-session-actions"><form class="od-session-form" id="account-recovery" method="post">.*<input[^>]*name="email"[^>]*value="owner@example\.test"[^>]*\/>.*<button[^>]*type="submit"[^>]*>.*Send link.*<\/button><\/form><\/div>/,
   );
   assert.match(
     markup,

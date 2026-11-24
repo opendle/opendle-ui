@@ -14,7 +14,10 @@ export interface SessionFormCardProps extends Omit<
   readonly pendingLabel: ReactNode;
   /** An icon before the submit label. */
   readonly submitIcon?: ReactNode;
-  readonly onSubmit: () => Promise<void>;
+  /** A stable ID for the form when a browser needs to identify it. */
+  readonly formId?: string;
+  /** The form values at submit time, including values filled by the browser. */
+  readonly onSubmit: (data: FormData) => Promise<void>;
   /** Return `null` to show nothing. */
   readonly errorMessage: (error: unknown) => string | null;
 }
@@ -27,6 +30,7 @@ export interface SessionFormCardProps extends Omit<
 export function SessionFormCard({
   children,
   errorMessage,
+  formId,
   onSubmit,
   pendingLabel,
   submitIcon,
@@ -36,14 +40,19 @@ export function SessionFormCard({
   const { feedback, pending, run } = useSessionAction(onSubmit, errorMessage);
   const submit = (event: SyntheticEvent<HTMLFormElement>) => {
     event.preventDefault();
-    void run();
+    void run(new FormData(event.currentTarget));
   };
 
   return (
     <SessionCard
       {...props}
       actions={
-        <form className="od-session-form" onSubmit={submit}>
+        <form
+          className="od-session-form"
+          id={formId}
+          method="post"
+          onSubmit={submit}
+        >
           {children}
           <Button icon={submitIcon} loading={pending} type="submit">
             {pending ? pendingLabel : submitLabel}

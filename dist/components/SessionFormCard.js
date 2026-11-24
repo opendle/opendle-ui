@@ -7,12 +7,12 @@ import { useSessionAction } from "./useSessionAction.js";
  * password sign-in. It has the pending, failure, and retry behavior of
  * `SignInCard`.
  */
-export function SessionFormCard({ children, errorMessage, onSubmit, pendingLabel, submitIcon, submitLabel, ...props }) {
+export function SessionFormCard({ children, errorMessage, formId, onSubmit, pendingLabel, submitIcon, submitLabel, ...props }) {
     const { feedback, pending, run } = useSessionAction(onSubmit, errorMessage);
     const submit = (event) => {
         event.preventDefault();
-        void run();
+        void run(new FormData(event.currentTarget));
     };
-    return (_jsx(SessionCard, { ...props, actions: _jsxs("form", { className: "od-session-form", onSubmit: submit, children: [children, _jsx(Button, { icon: submitIcon, loading: pending, type: "submit", children: pending ? pendingLabel : submitLabel })] }), feedback: feedback }));
+    return (_jsx(SessionCard, { ...props, actions: _jsxs("form", { className: "od-session-form", id: formId, method: "post", onSubmit: submit, children: [children, _jsx(Button, { icon: submitIcon, loading: pending, type: "submit", children: pending ? pendingLabel : submitLabel })] }), feedback: feedback }));
 }
 //# sourceMappingURL=SessionFormCard.js.map

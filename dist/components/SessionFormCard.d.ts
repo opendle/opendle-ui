@@ -7,7 +7,10 @@ export interface SessionFormCardProps extends Omit<SessionCardProps, "actions" |
     readonly pendingLabel: ReactNode;
     /** An icon before the submit label. */
     readonly submitIcon?: ReactNode;
-    readonly onSubmit: () => Promise<void>;
+    /** A stable ID for the form when a browser needs to identify it. */
+    readonly formId?: string;
+    /** The form values at submit time, including values filled by the browser. */
+    readonly onSubmit: (data: FormData) => Promise<void>;
     /** Return `null` to show nothing. */
     readonly errorMessage: (error: unknown) => string | null;
 }
@@ -16,5 +19,5 @@ export interface SessionFormCardProps extends Omit<SessionCardProps, "actions" |
  * password sign-in. It has the pending, failure, and retry behavior of
  * `SignInCard`.
  */
-export declare function SessionFormCard({ children, errorMessage, onSubmit, pendingLabel, submitIcon, submitLabel, ...props }: SessionFormCardProps): import("react").JSX.Element;
+export declare function SessionFormCard({ children, errorMessage, formId, onSubmit, pendingLabel, submitIcon, submitLabel, ...props }: SessionFormCardProps): import("react").JSX.Element;
 //# sourceMappingURL=SessionFormCard.d.ts.map

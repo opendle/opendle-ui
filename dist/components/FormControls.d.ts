@@ -11,13 +11,20 @@ interface ControlFieldProps {
 interface ControlledInputProps extends Omit<InputHTMLAttributes<HTMLInputElement>, "children" | "className" | "defaultChecked" | "defaultValue" | "type"> {
     readonly "aria-invalid"?: AriaAttributes["aria-invalid"];
 }
-export interface TextControlProps extends ControlledInputProps, ControlFieldProps {
+interface TextControlFieldProps extends ControlledInputProps, ControlFieldProps {
     /** Mask a secret without changing label, validation or input behavior. */
     readonly type?: "text" | "email" | "password" | "search" | "number" | "date";
+}
+export interface TextControlProps extends TextControlFieldProps {
+    readonly defaultValue?: never;
     readonly onChange: ChangeEventHandler<HTMLInputElement>;
     readonly value: string;
 }
-export declare function TextControl({ className, controlClassName: controlClass, error, help, label, onChange, requirement, required, ...props }: TextControlProps): import("react").JSX.Element;
+interface UncontrolledTextControlProps extends TextControlFieldProps {
+    readonly defaultValue?: string;
+    readonly value?: never;
+}
+export declare function TextControl({ className, controlClassName: controlClass, error, help, label, onChange, requirement, required, ...props }: TextControlProps | UncontrolledTextControlProps): import("react").JSX.Element;
 export interface NumberControlProps extends Omit<ControlledInputProps, "value">, ControlFieldProps {
     readonly onChange: ChangeEventHandler<HTMLInputElement>;
     readonly value: number | "";

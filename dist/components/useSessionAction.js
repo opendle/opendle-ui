@@ -6,14 +6,14 @@ export function useSessionAction(action, errorMessage) {
     const inFlight = useRef(false);
     const [pending, setPending] = useState(false);
     const [failure, setFailure] = useState(null);
-    const run = useCallback(async () => {
+    const run = useCallback(async (...args) => {
         if (inFlight.current)
             return;
         inFlight.current = true;
         setPending(true);
         setFailure(null);
         try {
-            await action();
+            await action(...args);
         }
         catch (error) {
             setFailure(errorMessage(error));

@@ -47,12 +47,21 @@ function requirementProps(
   return value ? { requirement: value } : {};
 }
 
-export interface TextControlProps
+interface TextControlFieldProps
   extends ControlledInputProps, ControlFieldProps {
   /** Mask a secret without changing label, validation or input behavior. */
   readonly type?: "text" | "email" | "password" | "search" | "number" | "date";
+}
+
+export interface TextControlProps extends TextControlFieldProps {
+  readonly defaultValue?: never;
   readonly onChange: ChangeEventHandler<HTMLInputElement>;
   readonly value: string;
+}
+
+interface UncontrolledTextControlProps extends TextControlFieldProps {
+  readonly defaultValue?: string;
+  readonly value?: never;
 }
 
 export function TextControl({
@@ -65,7 +74,7 @@ export function TextControl({
   requirement,
   required,
   ...props
-}: TextControlProps) {
+}: TextControlProps | UncontrolledTextControlProps) {
   return (
     <FormField
       className={["od-text-control", className].filter(Boolean).join(" ")}
