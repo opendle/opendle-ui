@@ -216,7 +216,8 @@ and sorts the data. A `ChannelSwitch` can have `disabled` and
 
 `NavigationGroup` keeps a parent link and its `nested` links in one frame.
 Set `active` for the open group. Each nested `NavigationLink` keeps its own
-current-page state.
+current-page state. In the bottom bar of a phone, a group of the main
+navigation shows its parent link only: show the child destinations in the page.
 
 Set `CalendarBoard.canMove` and `onMove` to enable drag and drop for future
 entries. A month drop keeps the local time. A week drop uses a half-hour

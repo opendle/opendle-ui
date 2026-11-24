@@ -630,6 +630,21 @@ span.od-tag {
     min-height: 44px;
   }
 
+  /*
+   * A group in the bottom bar shows its parent link only. The host shows
+   * the child destinations in the page.
+   */
+  .od-application-sidebar .od-navigation-group,
+  .od-application-sidebar .od-navigation-group[data-active="true"] {
+    padding: 0;
+    border-color: transparent;
+    background: none;
+  }
+
+  .od-application-sidebar .od-navigation-group-children {
+    display: none;
+  }
+
   .od-account-menu {
     margin: 0;
   }
