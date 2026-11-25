@@ -77,8 +77,13 @@
   display: contents;
 }
 
+/* An item without a value keeps a readable text. */
 .od-usage-meter-legend li[data-empty] > * {
-  opacity: 0.55;
+  color: var(--od-color-muted);
+}
+
+.od-usage-meter-legend li[data-empty] > .od-chart-swatch {
+  opacity: 0.45;
 }
 
 .od-usage-meter-detail {
