@@ -143,6 +143,8 @@ export { ChartLegend, type ChartLegendItem, type ChartLegendProps, } from "./com
 export { StackedBarChart, type StackedBarChartProps, } from "./components/StackedBarChart.js";
 export { RankedPostList, type RankedPost, type RankedPostListProps, type RankedPostMetric, } from "./components/RankedPostList.js";
 export { DonutChart, type DonutChartItem, type DonutChartProps, } from "./components/DonutChart.js";
+export { UsageMeter, type UsageMeterItem, type UsageMeterLabels, type UsageMeterProps, } from "./components/UsageMeter.js";
+export { formatBytes } from "./components/formatBytes.js";
 export { calendarBoardLabels, calendarItemState, type CalendarBoardLabels, type CalendarFollowUp, type CalendarFollowUpLabels, type CalendarItem, type CalendarItemState, type CalendarItemTarget, } from "./components/calendarItems.js";
 export { calendarDayDate, calendarDayKey, calendarGridDays, calendarPeriod, calendarTitle, shiftCalendarAnchor, type CalendarMode, type CalendarPeriod, } from "./components/calendarDates.js";
 export { CalendarHeader, type CalendarHeaderProps, } from "./components/CalendarHeader.js";

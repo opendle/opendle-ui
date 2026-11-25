@@ -137,6 +137,12 @@ percentage. The centre shows `total` (by default the sum) and `totalLabel`; a
 pointer on a slice or a legend row, or the arrow keys on the ring, mark one
 item and show its value. The chart fills the height of its container. In a
 container narrower than 26rem, the legend goes below the ring.
+`UsageMeter` shows the use of a resource with an optional `limit`, for
+example the storage of an account: the total, the limit and the free amount,
+one bar with a part for each item in its colour `slot`, and a legend with the
+value and an optional `detail` of each item. From 80 % of the limit the meter
+shows a warning; at the limit it shows `labels.full`. `formatBytes` writes a
+byte count in decimal units, for example `1.5 GB`.
 `RankedPostList` shows posts in rank order. Each row is one button
 (`onOpen`) with the rank, a picture of the media (or the network mark), the
 title, the network, the channel, the relative publication time and the

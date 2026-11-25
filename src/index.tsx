@@ -455,6 +455,13 @@ export {
   type DonutChartProps,
 } from "./components/DonutChart.js";
 export {
+  UsageMeter,
+  type UsageMeterItem,
+  type UsageMeterLabels,
+  type UsageMeterProps,
+} from "./components/UsageMeter.js";
+export { formatBytes } from "./components/formatBytes.js";
+export {
   calendarBoardLabels,
   calendarItemState,
   type CalendarBoardLabels,

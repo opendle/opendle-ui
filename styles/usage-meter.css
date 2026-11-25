@@ -1,0 +1,95 @@
+/*
+ * The use of a resource with a limit: a summary line, one bar with a part
+ * for each item, and a legend with the values.
+ */
+.od-usage-meter {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+}
+
+.od-usage-meter-summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 8px;
+  color: var(--od-color-muted);
+  font-size: 0.8125rem;
+}
+
+.od-usage-meter-value {
+  color: var(--od-color-foreground);
+  font-family: var(--od-font-display);
+  font-size: 1.5rem;
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+}
+
+.od-usage-meter-free {
+  margin-left: auto;
+  font-variant-numeric: tabular-nums;
+}
+
+.od-usage-meter[data-level="high"] .od-usage-meter-free {
+  color: var(--od-color-warning);
+  font-weight: 600;
+}
+
+.od-usage-meter[data-level="full"] .od-usage-meter-free {
+  color: var(--od-color-danger);
+  font-weight: 600;
+}
+
+.od-usage-meter-track {
+  display: flex;
+  height: 10px;
+  overflow: hidden;
+  gap: 2px;
+  border-radius: 999px;
+  background: var(--od-color-sunken);
+}
+
+.od-usage-meter[data-level="full"] .od-usage-meter-track {
+  box-shadow: 0 0 0 1px var(--od-color-danger-border);
+}
+
+/* A small part stays visible. */
+.od-usage-meter-part {
+  min-width: 3px;
+  flex: 0 0 var(--od-usage-share);
+  background: var(--od-chart-color);
+}
+
+.od-usage-meter-legend {
+  display: grid;
+  max-inline-size: 30rem;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  align-items: center;
+  margin: 0;
+  padding: 0;
+  gap: 6px 10px;
+  font-size: 0.8125rem;
+  list-style: none;
+}
+
+.od-usage-meter-legend li {
+  display: contents;
+}
+
+.od-usage-meter-legend li[data-empty] > * {
+  opacity: 0.55;
+}
+
+.od-usage-meter-detail {
+  color: var(--od-color-muted);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.od-usage-meter-amount {
+  min-width: 4.5em;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  text-align: right;
+}
