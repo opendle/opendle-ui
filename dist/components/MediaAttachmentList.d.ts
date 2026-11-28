@@ -21,7 +21,8 @@ export interface MediaAttachmentListProps {
     readonly items: readonly MediaAttachment[];
     /** Put the item at `from` at the position `to`. Without it, no reorder. */
     readonly onMove?: (from: number, to: number) => void;
-    readonly onRemove: (id: string) => void;
+    /** Remove the item. Without it, the items have no remove button. */
+    readonly onRemove?: (id: string) => void;
     /** Open a large preview of the item. */
     readonly onOpen?: (id: string) => void;
     /** More actions of one item, for example a button for its alternative text. */
@@ -34,7 +35,8 @@ export interface MediaAttachmentListProps {
 }
 /**
  * The ordered files of a post: square previews that move by drag and drop or
- * with the move buttons, and a remove button on each.
+ * with the move buttons, and a remove button on each. Without `onMove` and
+ * `onRemove`, the list only shows the files.
  */
 export declare function MediaAttachmentList({ actions, children, className, disabled, items, labels, onMove, onOpen, onRemove, }: MediaAttachmentListProps): import("react").JSX.Element;
 //# sourceMappingURL=MediaAttachmentList.d.ts.map

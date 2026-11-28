@@ -77,6 +77,28 @@ test("Button and IconButton are native buttons with a safe default type", () => 
   );
 });
 
+test("IconButton with a disabled reason is disabled and describes the reason", () => {
+  const markup = render(IconButton, {
+    label: "Edit",
+    icon: "e",
+    disabledReason: "The network does not permit changes",
+  });
+  assert.match(markup, /aria-label="Edit"/);
+  assert.match(markup, /title="The network does not permit changes"/);
+  assert.match(markup, /disabled=""/);
+  assert.match(markup, /data-reason=""/);
+  const described = /aria-describedby="([^"]+)"/.exec(markup)?.[1];
+  assert.ok(described);
+  assert.match(
+    markup,
+    new RegExp(
+      `<span hidden="" id="${described}">The network does not permit changes</span>`,
+    ),
+  );
+  const enabled = render(IconButton, { label: "Edit", icon: "e" });
+  assert.doesNotMatch(enabled, /disabled|aria-describedby|data-reason/);
+});
+
 test("Avatar shows the picture, or the first letter of the name", () => {
   assert.match(render(Avatar, { name: " émile" }), />É<\/span>$/);
   assert.match(

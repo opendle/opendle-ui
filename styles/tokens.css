@@ -412,6 +412,17 @@ a {
   color: var(--od-color-danger);
 }
 
+/* A disabled icon button with a reason keeps the pointer for its tooltip. */
+.od-icon-button[data-reason]:disabled {
+  cursor: not-allowed;
+  pointer-events: auto;
+}
+
+.od-icon-button[data-reason]:disabled:hover {
+  background: transparent;
+  color: var(--od-color-muted);
+}
+
 /* Tag chip */
 
 .od-tag {

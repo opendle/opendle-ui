@@ -12,7 +12,8 @@ function durationOf(seconds) {
 const kindIcons = { image: "image", video: "play", file: "file" };
 /**
  * The ordered files of a post: square previews that move by drag and drop or
- * with the move buttons, and a remove button on each.
+ * with the move buttons, and a remove button on each. Without `onMove` and
+ * `onRemove`, the list only shows the files.
  */
 export function MediaAttachmentList({ actions, children, className, disabled = false, items, labels = mediaAttachmentListLabels, onMove, onOpen, onRemove, }) {
     const [dragged, setDragged] = useState(null);
@@ -54,9 +55,9 @@ export function MediaAttachmentList({ actions, children, className, disabled = f
                                                 onMove(index, index - 1);
                                             }, title: labels.moveEarlier, type: "button", children: _jsx(Icon, { name: "chevron-left", size: 14 }) }), _jsx("button", { "aria-label": `${labels.moveLater}: ${item.label}`, className: "od-attachment-action", disabled: index === items.length - 1, onClick: () => {
                                                 onMove(index, index + 1);
-                                            }, title: labels.moveLater, type: "button", children: _jsx(Icon, { name: "chevron-right", size: 14 }) })] })) : null, uploading ? null : actions?.(item, index), _jsx("button", { "aria-label": `${labels.remove}: ${item.label}`, className: "od-attachment-action", disabled: disabled, onClick: () => {
+                                            }, title: labels.moveLater, type: "button", children: _jsx(Icon, { name: "chevron-right", size: 14 }) })] })) : null, uploading ? null : actions?.(item, index), onRemove === undefined ? null : (_jsx("button", { "aria-label": `${labels.remove}: ${item.label}`, className: "od-attachment-action", disabled: disabled, onClick: () => {
                                         onRemove(item.id);
-                                    }, title: labels.remove, type: "button", children: _jsx(Icon, { name: "close", size: 14 }) })] })] }, item.id));
+                                    }, title: labels.remove, type: "button", children: _jsx(Icon, { name: "close", size: 14 }) }))] })] }, item.id));
             }), children === undefined || children === null ? null : (_jsx("li", { className: "od-attachment od-attachment-extra", children: children }))] }));
 }
 function AttachmentPicture({ item }) {

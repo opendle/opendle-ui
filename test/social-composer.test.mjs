@@ -208,6 +208,21 @@ test("MediaAttachmentList gives each item named move, remove and open buttons", 
   assert.match(markup, /od-attachment-extra/);
 });
 
+test("MediaAttachmentList without move and remove only shows the files", () => {
+  const markup = renderToStaticMarkup(
+    element(MediaAttachmentList, {
+      items: [
+        { id: "a", kind: "image", previewUrl: "/a.jpg", label: "Image 1" },
+        { id: "b", kind: "image", previewUrl: "/b.jpg", label: "Image 2" },
+      ],
+      onOpen: () => {},
+    }),
+  );
+  assert.match(markup, /aria-label="Open: Image 2"/);
+  assert.doesNotMatch(markup, /Remove|Move earlier|Move later/);
+  assert.doesNotMatch(markup, /draggable="true"/);
+});
+
 test("MediaGridPicker marks the place of each selected item", () => {
   const markup = renderToStaticMarkup(
     element(MediaGridPicker, {

@@ -283,7 +283,8 @@ use `addLabel`. `CharacterCount` shows a count against an optional
 limit; `characterCount()` counts code points. `MediaAttachmentList` shows the
 ordered files of a post as square tiles: drag and drop or move buttons
 reorder them, each has a remove button, an optional open button and host
-`actions`, and an upload shows a `progress` bar. `MediaGridPicker` is a grid
+`actions`, and an upload shows a `progress` bar. Without `onMove` and
+`onRemove`, the list only shows the files. `MediaGridPicker` is a grid
 of toggle buttons for a choice of library files, with the place of each
 selected file. `SocialPostPreview` shows an approximate post in the layout of
 its network: a feed post, an Instagram photo, a pin, a YouTube video or a
@@ -293,6 +294,8 @@ week view. `CalendarHeader.actions` and `PostDetailDialog.actions` take page
 or dialog actions.
 
 `TagChip` supports `disabled` and a native `title` for unavailable actions.
+`IconButton.disabledReason` disables the button and gives the reason as its
+tooltip and accessible description; the pointer still shows the tooltip.
 Unselected tags use a dashed border and 60% opacity for the complete chip,
 including its text. `--od-tag-unselected-opacity` controls this value. The
 source text colours keep sufficient contrast after the opacity is applied.

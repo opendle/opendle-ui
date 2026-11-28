@@ -30,7 +30,8 @@ export interface MediaAttachmentListProps {
   readonly items: readonly MediaAttachment[];
   /** Put the item at `from` at the position `to`. Without it, no reorder. */
   readonly onMove?: (from: number, to: number) => void;
-  readonly onRemove: (id: string) => void;
+  /** Remove the item. Without it, the items have no remove button. */
+  readonly onRemove?: (id: string) => void;
   /** Open a large preview of the item. */
   readonly onOpen?: (id: string) => void;
   /** More actions of one item, for example a button for its alternative text. */
@@ -54,7 +55,8 @@ const kindIcons = { image: "image", video: "play", file: "file" } as const;
 
 /**
  * The ordered files of a post: square previews that move by drag and drop or
- * with the move buttons, and a remove button on each.
+ * with the move buttons, and a remove button on each. Without `onMove` and
+ * `onRemove`, the list only shows the files.
  */
 export function MediaAttachmentList({
   actions,
@@ -181,18 +183,20 @@ export function MediaAttachmentList({
                 </>
               ) : null}
               {uploading ? null : actions?.(item, index)}
-              <button
-                aria-label={`${labels.remove}: ${item.label}`}
-                className="od-attachment-action"
-                disabled={disabled}
-                onClick={() => {
-                  onRemove(item.id);
-                }}
-                title={labels.remove}
-                type="button"
-              >
-                <Icon name="close" size={14} />
-              </button>
+              {onRemove === undefined ? null : (
+                <button
+                  aria-label={`${labels.remove}: ${item.label}`}
+                  className="od-attachment-action"
+                  disabled={disabled}
+                  onClick={() => {
+                    onRemove(item.id);
+                  }}
+                  title={labels.remove}
+                  type="button"
+                >
+                  <Icon name="close" size={14} />
+                </button>
+              )}
             </span>
           </li>
         );
