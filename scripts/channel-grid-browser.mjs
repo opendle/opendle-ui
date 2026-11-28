@@ -32,19 +32,26 @@ const rows = [
   ["pinterest", "Vincent Music", "vincentmusic", "1---", ["boards"], "via Buffer"],
   ["tumblr", "vincentmusic", "vincentmusic.tumblr.com", "1-01", []],
 ];
+// The reads of the network show their last time, except on the Buffer row.
+const readAt = (index, place) =>
+  index === 5 ? null : new Date(Date.now() - (index + 1) * place * 3_600_000).toISOString();
 const items = rows.map(([network, name, handle, states, tags, connectionLabel], index) => ({
   id: "c" + index, network, name, handle, tags, needsReconnect: index === 4,
   ...(connectionLabel ? {connectionLabel} : {}),
   switches: names.map((id, place) => ({
     id, label: labels[id], on: states[place] === "1", icon: icons[id], description: help[id],
     ...(states[place] === "-" ? {disabled: true, disabledReason: labels[id] + " is not supported"} : {}),
+    ...(place > 0 && !connectionLabel ? {sync: {at: readAt(index, place)}} : {}),
   })),
 }));
 const nothing = async () => {};
+const slow = () => new Promise((resolve) => { window.finishRead = resolve; });
 createRoot(document.getElementById("root")).render(
   <main style={{padding: 16, maxWidth: 1600, margin: "0 auto"}}>
     <ChannelList items={items} networks={[]} errorMessage={() => "Failed"} tagColors={{long: 2, short: 5, music: 8}}
-      onRename={nothing} onTagsChange={nothing} onSwitchChange={nothing} onDisconnect={nothing} onPasswordConnect={nothing}/>
+      onRename={nothing} onTagsChange={nothing} onSwitchChange={nothing} onSwitchRefresh={slow}
+      refreshConfirmation={(item) => item.network === "x" ? {title: "Read now?", description: "This read uses about 3 X API calls.", confirmLabel: "Read now"} : null}
+      onDisconnect={nothing} onPasswordConnect={nothing}/>
   </main>,
 );`;
 const bundled = await build({
@@ -137,6 +144,56 @@ try {
         1,
         `${name}: unavailable icon`,
       );
+      // Each supported read shows its age and a read button, also when its
+      // switch is off. A row that must connect again has no read button.
+      const syncRows = await page
+        .locator(".od-channel-row")
+        .evaluateAll((rows) =>
+          rows.map((row) => [
+            row.querySelectorAll(".od-channel-sync").length,
+            row.querySelectorAll(".od-channel-sync-button").length,
+          ]),
+        );
+      assert.deepEqual(
+        syncRows,
+        [
+          [2, 2],
+          [3, 3],
+          [1, 1],
+          [3, 3],
+          [2, 0],
+          [3, 3],
+          [2, 2],
+          [0, 0],
+          [2, 2],
+        ],
+        `${name}: read lines`,
+      );
+      const read = page.getByRole("button", {
+        name: "Read now: Comments & mentions, tubededentifrice",
+      });
+      assert.equal(await read.count(), 1);
+      if (width === 1400 && colorScheme === "light") {
+        // A read without a confirmation starts at once and shows its state.
+        await read.click();
+        assert.equal(await read.getAttribute("aria-busy"), "true");
+        await page.evaluate(() => window.finishRead());
+        await page.waitForFunction(
+          () => document.querySelector("[aria-busy='true']") === null,
+        );
+        // An X read asks first.
+        await page
+          .getByRole("button", {
+            name: "Read now: Comments & mentions, Vincent",
+            exact: true,
+          })
+          .click();
+        const dialog = page.getByRole("dialog", { name: "Read now?" });
+        await dialog.waitFor();
+        await dialog.getByRole("button", { name: "Cancel" }).click();
+        await dialog.waitFor({ state: "hidden" });
+        assert.equal(await page.locator("[aria-busy='true']").count(), 0);
+      }
       if (width > 1100) {
         const actions = await edges(page, ".od-action-menu");
         assert.equal(

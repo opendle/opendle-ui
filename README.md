@@ -65,6 +65,10 @@ menu button with sections of actions and choices. Use `appearance="workspace"`
 for a workspace card with an optional `detail` and an explicit accessible
 `label`. Its menu opens below the card. Put it in `ApplicationShell.workspace`
 to show it above navigation, in the icon rail, and in a top bar on phones.
+`AccountMenu.count` shows a badge on the card, for example for open
+invitations; `countLabel` adds its text to the accessible name. The badge is
+on the corner of the card. `AccountMenuItem.detail` adds a
+second line below the label of an item.
 `ApplicationShell.actions` puts controls next to the account at the end of
 the sidebar, below the account in the icon rail, and next to the workspace in
 the top bar on phones. A `Popover` panel of the actions opens beside the
@@ -107,6 +111,23 @@ line across its icon. In a list from 981 px to 1200 px wide, and below
 accessible name. The rows share the columns of the list: each switch ID has one column, so the
 switches and the actions of all rows align. In a list narrower than 980 px,
 the switches go below the account in columns of one width.
+`ChannelSwitch.sync` gives the time of the last read of a function (`at`, or
+`null` before the first read). The age shows below the switch, with the full
+date on hover. With `onSwitchRefresh`, an icon button reads the function now,
+also when its switch is off; it spins while the read runs. A function that the
+connection does not support, a read-only list and an ended authorization show
+no read button. `switchConfirmation` and `refreshConfirmation` return a
+confirmation (title, description, confirm label) to show before a switch
+change or a read, or `null` to act at once.
+
+`MemberList` shows the members of a group and the invitations to it, in a
+`Card`: picture (a mail mark for `invitation`), name (a link with `href` and
+`onLinkClick`), email address, a `You` marker, a `StatusPill` state, an extra
+`detail` line, the role, and an `ActionMenu` of `actions`. A row with
+`roleEditable` has a role select when the host gives `onRoleChange`; the other
+rows show the role as text in the same column. `roleConfirmation` returns a
+confirmation before a role change, or `null`. The roles and the menus of all
+rows align; in a narrow list, the role goes below the name.
 `MetricTile` in a `dl.od-metrics` shows a key number with its
 change, and with `points` a small chart of the days of the period in the
 colour of the change: a smooth line by default, or `chart="bars"` for a value
@@ -724,7 +745,9 @@ it for a list of posts, with the date and time in the title of the entry.
 
 `RadioGroup` shows a static single-choice list with complete wrapping labels.
 Supply `label`, ordered `options` with unique string values and labels,
-`value`, and `onChange(value)`. An option can be disabled. The host owns state,
+`value`, and `onChange(value)`. An option can be disabled. An option
+`description` is a short second line below its label that also describes the
+radio, for example what a role can do. The host owns state,
 validation, and all copy. A value without a current option leaves all radios
 unchecked. Use an explicit empty-value option when a filter has an all-values
 choice.

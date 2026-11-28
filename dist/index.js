@@ -113,6 +113,8 @@ export { AttentionRow, } from "./components/AttentionRow.js";
 export { CalendarBoard, } from "./components/CalendarBoard.js";
 export { CalendarEntry, } from "./components/CalendarEntry.js";
 export { ChannelList, } from "./components/ChannelList.js";
+export { MemberList } from "./components/MemberList.js";
+export { memberListLabels, } from "./components/memberLabels.js";
 export { channelListLabels, } from "./components/channelLabels.js";
 export { TagInput } from "./components/TagInput.js";
 export { LoadingIndicator, } from "./components/LoadingIndicator.js";

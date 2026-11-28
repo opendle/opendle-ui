@@ -114,7 +114,9 @@ export { AttentionRow, type AttentionRowProps, type AttentionTone, } from "./com
 export { CalendarBoard, type CalendarBoardProps, } from "./components/CalendarBoard.js";
 export { CalendarEntry, type CalendarEntryProps, } from "./components/CalendarEntry.js";
 export { ChannelList, type ChannelListProps, } from "./components/ChannelList.js";
-export { channelListLabels, type ChannelConnectionProvider, type ChannelItem, type ChannelListLabels, type ChannelNetwork, type ChannelSwitch, } from "./components/channelLabels.js";
+export { MemberList, type MemberListProps } from "./components/MemberList.js";
+export { memberListLabels, type MemberConfirmation, type MemberItem, type MemberListLabels, type MemberRoleOption, } from "./components/memberLabels.js";
+export { channelListLabels, type ChannelConfirmation, type ChannelConnectionProvider, type ChannelItem, type ChannelListLabels, type ChannelNetwork, type ChannelSwitch, } from "./components/channelLabels.js";
 export { TagInput, type TagInputProps } from "./components/TagInput.js";
 export { LoadingIndicator, type LoadingIndicatorProps, } from "./components/LoadingIndicator.js";
 export { Conversation, type ConversationProps, } from "./components/Conversation.js";

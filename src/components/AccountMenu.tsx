@@ -15,6 +15,8 @@ export interface AccountMenuItem {
   readonly id: string;
   readonly label: string;
   readonly icon?: ReactNode;
+  /** A second line below the label, for example who sent an invitation. */
+  readonly detail?: string;
   /** Mark the selected entry of a section of choices. */
   readonly current?: boolean;
   readonly onSelect: () => void;
@@ -37,6 +39,13 @@ export interface AccountMenuProps {
   readonly appearance?: "account" | "workspace";
   readonly detail?: string;
   readonly label?: string;
+  /**
+   * A count badge on the trigger, for example open invitations. Zero shows
+   * no badge.
+   */
+  readonly count?: number;
+  /** The accessible text of the count, for example `2 invitations`. */
+  readonly countLabel?: string;
 }
 
 const itemSelector = '[role="menuitem"], [role="menuitemradio"]';
@@ -49,6 +58,8 @@ export function AccountMenu({
   avatar,
   appearance = "account",
   className,
+  count = 0,
+  countLabel,
   detail,
   label,
   name,
@@ -119,6 +130,9 @@ export function AccountMenu({
     items[target]?.focus();
   }
 
+  const counted = count > 0 && countLabel !== undefined;
+  const accessibleName =
+    label === undefined || !counted ? label : `${label} (${countLabel})`;
   return (
     <div
       className={classes("od-account", className)}
@@ -126,7 +140,7 @@ export function AccountMenu({
       ref={rootRef}
     >
       <button
-        aria-label={label}
+        aria-label={accessibleName}
         aria-controls={open ? menuId : undefined}
         aria-expanded={open}
         aria-haspopup="menu"
@@ -143,6 +157,11 @@ export function AccountMenu({
           <strong>{name}</strong>
           {detail === undefined ? null : <small>{detail}</small>}
         </span>
+        {count > 0 ? (
+          <span aria-hidden={counted || undefined} className="od-count">
+            {count}
+          </span>
+        ) : null}
         <Icon className="od-account-chevron" name="chevron-down" size={15} />
       </button>
       {open ? (
@@ -182,7 +201,14 @@ export function AccountMenu({
                   type="button"
                 >
                   {item.icon}
-                  <span>{item.label}</span>
+                  {item.detail === undefined ? (
+                    <span>{item.label}</span>
+                  ) : (
+                    <span className="od-account-item-text">
+                      <span>{item.label}</span>
+                      <small>{item.detail}</small>
+                    </span>
+                  )}
                   {item.current === true ? (
                     <Icon
                       className="od-account-item-check"

@@ -1,5 +1,5 @@
 import { type ReactNode } from "react";
-import { type ChannelConnectionProvider, type ChannelItem, type ChannelListLabels, type ChannelNetwork } from "./channelLabels.js";
+import { type ChannelConfirmation, type ChannelConnectionProvider, type ChannelItem, type ChannelListLabels, type ChannelNetwork } from "./channelLabels.js";
 import type { NetworkName } from "./networks.js";
 export interface ChannelListProps {
     readonly items: readonly ChannelItem[];
@@ -21,6 +21,18 @@ export interface ChannelListProps {
     readonly onRename: (id: string, name: string) => Promise<void>;
     readonly onTagsChange: (id: string, tags: readonly string[]) => Promise<void>;
     readonly onSwitchChange: (id: string, switchId: string, on: boolean) => Promise<void>;
+    /**
+     * Read a function of the channel now, also when its switch is off. The
+     * switches with `sync` then show a read button.
+     */
+    readonly onSwitchRefresh?: (id: string, switchId: string) => Promise<void>;
+    /**
+     * A confirmation before a switch change, for example for a read that costs
+     * money. `null` changes the switch at once.
+     */
+    readonly switchConfirmation?: (item: ChannelItem, switchId: string, on: boolean) => ChannelConfirmation | null;
+    /** A confirmation before a read now. `null` reads at once. */
+    readonly refreshConfirmation?: (item: ChannelItem, switchId: string) => ChannelConfirmation | null;
     readonly onDisconnect: (id: string) => Promise<void>;
     readonly onPasswordConnect: (network: NetworkName, handle: string, password: string) => Promise<void>;
     /**
@@ -45,5 +57,5 @@ export interface ChannelListProps {
  * The connected accounts of the networks: name, tags, switches, the warning
  * for an ended authorization, and the connect and disconnect actions.
  */
-export declare function ChannelList({ connectOpen, onConnectOpenChange, connectionProviders, disconnectConfirmation, errorMessage, items, labels, loading, networks, onDisconnect, onError, onPasswordConnect, onPasswordReconnect, onRename, onSwitchChange, onTagsChange, readOnly, tagColors, tagSuggestions, }: ChannelListProps): import("react").JSX.Element;
+export declare function ChannelList({ connectOpen, onConnectOpenChange, connectionProviders, disconnectConfirmation, errorMessage, items, labels, loading, networks, onDisconnect, onError, onPasswordConnect, onPasswordReconnect, onRename, onSwitchChange, onSwitchRefresh, onTagsChange, readOnly, refreshConfirmation, switchConfirmation, tagColors, tagSuggestions, }: ChannelListProps): import("react").JSX.Element;
 //# sourceMappingURL=ChannelList.d.ts.map

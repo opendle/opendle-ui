@@ -2,6 +2,8 @@ import { type FieldsetHTMLAttributes, type ReactNode, type Ref } from "react";
 export interface RadioGroupOption<Value extends string = string> {
     readonly value: Value;
     readonly label: string;
+    /** A short second line below the label, for example what a role can do. */
+    readonly description?: string;
     readonly disabled?: boolean;
 }
 export interface RadioGroupProps<Value extends string = string> extends Omit<FieldsetHTMLAttributes<HTMLFieldSetElement>, "children" | "onChange" | "name"> {

@@ -3,6 +3,8 @@ export interface AccountMenuItem {
     readonly id: string;
     readonly label: string;
     readonly icon?: ReactNode;
+    /** A second line below the label, for example who sent an invitation. */
+    readonly detail?: string;
     /** Mark the selected entry of a section of choices. */
     readonly current?: boolean;
     readonly onSelect: () => void;
@@ -23,10 +25,17 @@ export interface AccountMenuProps {
     readonly appearance?: "account" | "workspace";
     readonly detail?: string;
     readonly label?: string;
+    /**
+     * A count badge on the trigger, for example open invitations. Zero shows
+     * no badge.
+     */
+    readonly count?: number;
+    /** The accessible text of the count, for example `2 invitations`. */
+    readonly countLabel?: string;
 }
 /**
  * The signed-in person at the end of the application sidebar. A press opens
  * a menu with the actions of the account.
  */
-export declare function AccountMenu({ avatar, appearance, className, detail, label, name, sections, }: AccountMenuProps): import("react").JSX.Element;
+export declare function AccountMenu({ avatar, appearance, className, count, countLabel, detail, label, name, sections, }: AccountMenuProps): import("react").JSX.Element;
 //# sourceMappingURL=AccountMenu.d.ts.map

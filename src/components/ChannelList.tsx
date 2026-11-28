@@ -4,6 +4,7 @@ import { Button } from "./Button.js";
 import { Card } from "./Card.js";
 import {
   channelListLabels,
+  type ChannelConfirmation,
   type ChannelConnectionProvider,
   type ChannelItem,
   type ChannelListLabels,
@@ -43,6 +44,25 @@ export interface ChannelListProps {
     switchId: string,
     on: boolean,
   ) => Promise<void>;
+  /**
+   * Read a function of the channel now, also when its switch is off. The
+   * switches with `sync` then show a read button.
+   */
+  readonly onSwitchRefresh?: (id: string, switchId: string) => Promise<void>;
+  /**
+   * A confirmation before a switch change, for example for a read that costs
+   * money. `null` changes the switch at once.
+   */
+  readonly switchConfirmation?: (
+    item: ChannelItem,
+    switchId: string,
+    on: boolean,
+  ) => ChannelConfirmation | null;
+  /** A confirmation before a read now. `null` reads at once. */
+  readonly refreshConfirmation?: (
+    item: ChannelItem,
+    switchId: string,
+  ) => ChannelConfirmation | null;
   readonly onDisconnect: (id: string) => Promise<void>;
   readonly onPasswordConnect: (
     network: NetworkName,
@@ -79,6 +99,12 @@ type Connection = {
 } | null;
 
 const noConnectionProviders: readonly ChannelConnectionProvider[] = [];
+const noRefreshes: ReadonlySet<string> = new Set();
+
+/** A confirmed change that waits for the answer of the user. */
+interface Pending extends ChannelConfirmation {
+  readonly run: () => void;
+}
 
 /**
  * The connected accounts of the networks: name, tags, switches, the warning
@@ -100,8 +126,11 @@ export function ChannelList({
   onPasswordReconnect,
   onRename,
   onSwitchChange,
+  onSwitchRefresh,
   onTagsChange,
   readOnly = false,
+  refreshConfirmation,
+  switchConfirmation,
   tagColors,
   tagSuggestions,
 }: ChannelListProps) {
@@ -109,7 +138,45 @@ export function ChannelList({
   const removal = useAsyncAction(errorMessage, onError);
   const [connection, setConnection] = useState<Connection>(null);
   const [removing, setRemoving] = useState<ChannelItem | null>(null);
+  const [pending, setPending] = useState<Pending | null>(null);
+  // The reads that run now, as `channel ID` and `switch ID` pairs.
+  const [refreshing, setRefreshing] = useState<
+    ReadonlyMap<string, ReadonlySet<string>>
+  >(new Map());
   const { run } = change;
+
+  /** Run the change at once, or after the confirmation of the host. */
+  const confirmThen = (
+    confirmation: ChannelConfirmation | null | undefined,
+    work: () => void,
+  ) => {
+    if (confirmation === null || confirmation === undefined) work();
+    else setPending({ ...confirmation, run: work });
+  };
+
+  const markRefresh = (id: string, switchId: string, on: boolean) => {
+    setRefreshing((current) => {
+      const ids = new Set(current.get(id));
+      if (on) ids.add(switchId);
+      else ids.delete(switchId);
+      const next = new Map(current);
+      if (ids.size === 0) next.delete(id);
+      else next.set(id, ids);
+      return next;
+    });
+  };
+
+  const refresh =
+    onSwitchRefresh === undefined
+      ? undefined
+      : (item: ChannelItem, switchId: string) => {
+          confirmThen(refreshConfirmation?.(item, switchId), () => {
+            markRefresh(item.id, switchId, true);
+            void run(() => onSwitchRefresh(item.id, switchId)).finally(() => {
+              markRefresh(item.id, switchId, false);
+            });
+          });
+        };
 
   const guarded = async (work: () => Promise<void>) => {
     const done = await run(work);
@@ -199,13 +266,26 @@ export function ChannelList({
                   onDisconnect={setRemoving}
                   onRename={(name) => guarded(() => onRename(item.id, name))}
                   onSwitchChange={(switchId, on) => {
-                    void run(() => onSwitchChange(item.id, switchId, on));
+                    confirmThen(
+                      switchConfirmation?.(item, switchId, on),
+                      () => {
+                        void run(() => onSwitchChange(item.id, switchId, on));
+                      },
+                    );
                   }}
+                  onSwitchRefresh={
+                    refresh === undefined
+                      ? undefined
+                      : (switchId) => {
+                          refresh(item, switchId);
+                        }
+                  }
                   onTagsChange={(tags) => {
                     void run(() => onTagsChange(item.id, tags));
                   }}
                   readOnly={readOnly}
                   reconnect={reconnectOf(item)}
+                  refreshing={refreshing.get(item.id) ?? noRefreshes}
                   tagColors={tagColors}
                   tagSuggestions={tagSuggestions}
                 />
@@ -239,6 +319,21 @@ export function ChannelList({
               handle: reconnecting.handle,
               title: `${labels.reconnect} ${reconnecting.name}`,
             })}
+      />
+      <ConfirmationDialog
+        cancelLabel={labels.cancel}
+        confirmLabel={pending?.confirmLabel ?? ""}
+        description={pending?.description ?? ""}
+        onCancel={() => {
+          setPending(null);
+        }}
+        onConfirm={() => {
+          if (pending === null) return;
+          setPending(null);
+          pending.run();
+        }}
+        open={pending !== null}
+        title={pending?.title ?? ""}
       />
       <ConfirmationDialog
         cancelLabel={labels.cancel}

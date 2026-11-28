@@ -10,6 +10,8 @@ import { FieldError, FieldHelp } from "./Form.js";
 export interface RadioGroupOption<Value extends string = string> {
   readonly value: Value;
   readonly label: string;
+  /** A short second line below the label, for example what a role can do. */
+  readonly description?: string;
   readonly disabled?: boolean;
 }
 
@@ -43,6 +45,8 @@ function RadioChoice<Value extends string>({
   readonly onChange: (value: Value) => void;
 }) {
   const id = useId();
+  const description = option.description ?? "";
+  const descriptionId = description === "" ? undefined : `${id}-description`;
   return (
     <label
       className="od-radio-group-choice"
@@ -55,7 +59,9 @@ function RadioChoice<Value extends string>({
       }}
     >
       <input
-        aria-describedby={describedBy}
+        aria-describedby={
+          [describedBy, descriptionId].filter(Boolean).join(" ") || undefined
+        }
         aria-labelledby={`${id}-label`}
         checked={checked}
         className="od-form-control od-radio-group-input"
@@ -72,6 +78,11 @@ function RadioChoice<Value extends string>({
       <span className="od-radio-group-choice-label" id={`${id}-label`}>
         {option.label}
       </span>
+      {descriptionId === undefined ? null : (
+        <span className="od-radio-group-choice-description" id={descriptionId}>
+          {description}
+        </span>
+      )}
     </label>
   );
 }

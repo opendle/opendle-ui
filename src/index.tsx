@@ -320,8 +320,17 @@ export {
   ChannelList,
   type ChannelListProps,
 } from "./components/ChannelList.js";
+export { MemberList, type MemberListProps } from "./components/MemberList.js";
+export {
+  memberListLabels,
+  type MemberConfirmation,
+  type MemberItem,
+  type MemberListLabels,
+  type MemberRoleOption,
+} from "./components/memberLabels.js";
 export {
   channelListLabels,
+  type ChannelConfirmation,
   type ChannelConnectionProvider,
   type ChannelItem,
   type ChannelListLabels,

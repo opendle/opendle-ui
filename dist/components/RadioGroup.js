@@ -3,14 +3,16 @@ import { useId, } from "react";
 import { FieldError, FieldHelp } from "./Form.js";
 function RadioChoice({ option, checked, name, form, describedBy, onChange, }) {
     const id = useId();
+    const description = option.description ?? "";
+    const descriptionId = description === "" ? undefined : `${id}-description`;
     return (_jsxs("label", { className: "od-radio-group-choice", htmlFor: id, onFocus: (event) => {
             event.currentTarget.scrollIntoView({
                 block: "nearest",
                 inline: "nearest",
             });
-        }, children: [_jsx("input", { "aria-describedby": describedBy, "aria-labelledby": `${id}-label`, checked: checked, className: "od-form-control od-radio-group-input", disabled: option.disabled, form: form, id: id, name: name, onChange: () => {
+        }, children: [_jsx("input", { "aria-describedby": [describedBy, descriptionId].filter(Boolean).join(" ") || undefined, "aria-labelledby": `${id}-label`, checked: checked, className: "od-form-control od-radio-group-input", disabled: option.disabled, form: form, id: id, name: name, onChange: () => {
                     onChange(option.value);
-                }, type: "radio", value: option.value }), _jsx("span", { className: "od-radio-group-choice-label", id: `${id}-label`, children: option.label })] }));
+                }, type: "radio", value: option.value }), _jsx("span", { className: "od-radio-group-choice-label", id: `${id}-label`, children: option.label }), descriptionId === undefined ? null : (_jsx("span", { className: "od-radio-group-choice-description", id: descriptionId, children: description }))] }));
 }
 export function RadioGroup({ className, error, help, label, name, options, value, onChange, ...props }) {
     const id = useId();

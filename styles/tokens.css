@@ -5004,7 +5004,7 @@ samp {
   background: var(--od-color-amber-soft);
 }
 .od-status-blue {
-  color: #4d80b7;
+  color: #3d6c9f;
   background: var(--od-color-blue-soft);
 }
 .od-status-green {
@@ -5016,7 +5016,7 @@ samp {
   background: var(--od-color-coral-soft);
 }
 .od-status-slate {
-  color: #697679;
+  color: #5e6a6d;
   background: #edf0ee;
 }
 
@@ -7562,6 +7562,16 @@ samp {
   overflow-wrap: anywhere;
 }
 
+.od-radio-group-choice-description {
+  grid-column: 2;
+  min-inline-size: 0;
+  margin-top: -0.375rem;
+  color: var(--od-color-muted);
+  font-size: 0.78125rem;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
 .od-radio-group[aria-invalid="true"] .od-radio-group-choice {
   border-color: var(--od-color-coral-strong);
 }
@@ -7581,6 +7591,10 @@ samp {
 
   .od-radio-group-choice > input {
     margin-inline-start: 0.375rem;
+  }
+
+  .od-radio-group-choice-description {
+    grid-column: 1;
   }
 }
 
@@ -11774,4 +11788,36 @@ button.od-tag[data-unavailable="true"] .od-icon {
     .od-application-main {
     padding-top: 100px;
   }
+}
+
+/* The count badge sits on the corner of the account or workspace card. */
+.od-account-menu > .od-count {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  min-width: 18px;
+  height: 18px;
+  margin-left: 0;
+  padding: 0 5px;
+  box-shadow: 0 0 0 2px var(--od-color-background);
+  font-size: 0.625rem;
+}
+
+/* A second line below the label of a menu item. */
+.od-account-item-text {
+  display: grid;
+  gap: 1px;
+}
+
+.od-account-item-text > :is(span, small) {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.od-account-item-text > small {
+  color: var(--od-color-muted);
+  font-size: 0.75rem;
+  font-weight: 400;
 }

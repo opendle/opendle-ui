@@ -160,3 +160,23 @@ test("radio browser check rejects unsafe arguments before browser work", () => {
   assert.match(result.stderr, /This check accepts no arguments\./);
   assert.equal(result.stdout, "");
 });
+
+test("a radio choice description is a second line that describes the input", () => {
+  const markup = render({
+    options: [
+      { value: "reader", label: "Reader", description: "Reads all content." },
+      { value: "admin", label: "Admin" },
+    ],
+    value: "reader",
+  });
+  const [, described] =
+    /<input aria-describedby="([^"]+)"[^>]*value="reader"/.exec(markup) ?? [];
+  assert.ok(described);
+  assert.match(
+    markup,
+    new RegExp(
+      `<span class="od-radio-group-choice-description" id="${described}">Reads all content\\.</span>`,
+    ),
+  );
+  assert.doesNotMatch(markup, /<input aria-describedby[^>]*value="admin"/);
+});

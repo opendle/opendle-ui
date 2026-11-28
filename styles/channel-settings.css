@@ -83,3 +83,69 @@
   background: var(--od-color-sunken);
   color: var(--od-color-muted-strong);
 }
+
+/*
+ * A switch with a read of the network: the age of the last read and a read
+ * button below the switch. All cells of the row keep the place of the line,
+ * so the switches of the row align.
+ */
+.od-channel-switch-cell {
+  display: grid;
+  min-width: 0;
+  grid-template-rows: auto 22px;
+  justify-self: stretch;
+  row-gap: 3px;
+}
+
+.od-channel-switch-cell > .od-tag {
+  justify-content: center;
+}
+
+.od-channel-sync {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  color: var(--od-color-muted);
+  font-size: 0.6875rem;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.od-channel-sync > time {
+  cursor: default;
+}
+
+.od-channel-sync-button {
+  width: 22px;
+  height: 22px;
+}
+
+.od-channel-sync-button[data-pending] {
+  color: var(--od-color-brand-text);
+  cursor: progress;
+}
+
+.od-channel-sync-button[data-pending] > .od-icon {
+  animation: od-state-spin 0.9s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .od-channel-sync-button[data-pending] > .od-icon {
+    animation-duration: 2.4s;
+  }
+}
+
+/*
+ * On a phone, the columns of a list with read lines are as wide as a line,
+ * and they use the full width of the row.
+ */
+@container (max-width: 560px) {
+  .od-channel-list:has(.od-channel-sync)
+    .od-channel-switches:has(.od-channel-switch-icon) {
+    grid-column: 1 / -1;
+    grid-template-columns: repeat(auto-fill, minmax(4.25rem, 1fr));
+  }
+}

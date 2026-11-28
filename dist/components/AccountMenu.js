@@ -7,7 +7,7 @@ const itemSelector = '[role="menuitem"], [role="menuitemradio"]';
  * The signed-in person at the end of the application sidebar. A press opens
  * a menu with the actions of the account.
  */
-export function AccountMenu({ avatar, appearance = "account", className, detail, label, name, sections, }) {
+export function AccountMenu({ avatar, appearance = "account", className, count = 0, countLabel, detail, label, name, sections, }) {
     const [open, setOpen] = useState(false);
     const rootRef = useRef(null);
     const buttonRef = useRef(null);
@@ -68,11 +68,13 @@ export function AccountMenu({ avatar, appearance = "account", className, detail,
         event.preventDefault();
         items[target]?.focus();
     }
-    return (_jsxs("div", { className: classes("od-account", className), "data-appearance": appearance, ref: rootRef, children: [_jsxs("button", { "aria-label": label, "aria-controls": open ? menuId : undefined, "aria-expanded": open, "aria-haspopup": "menu", className: "od-account-menu", onClick: () => {
+    const counted = count > 0 && countLabel !== undefined;
+    const accessibleName = label === undefined || !counted ? label : `${label} (${countLabel})`;
+    return (_jsxs("div", { className: classes("od-account", className), "data-appearance": appearance, ref: rootRef, children: [_jsxs("button", { "aria-label": accessibleName, "aria-controls": open ? menuId : undefined, "aria-expanded": open, "aria-haspopup": "menu", className: "od-account-menu", onClick: () => {
                     setOpen((value) => !value);
-                }, ref: buttonRef, title: name, type: "button", children: [avatar, _jsxs("span", { className: "od-navigation-label", children: [_jsx("strong", { children: name }), detail === undefined ? null : _jsx("small", { children: detail })] }), _jsx(Icon, { className: "od-account-chevron", name: "chevron-down", size: 15 })] }), open ? (_jsx("div", { "aria-label": name, className: "od-account-popup", id: menuId, onKeyDown: move, ref: focusFirst, role: "menu", tabIndex: -1, children: sections.map((section) => (_jsxs("fieldset", { "aria-label": section.label, className: "od-account-section", children: [section.label === undefined ? null : (_jsx("span", { "aria-hidden": "true", className: "od-account-section-label", children: section.label })), section.items.map((item) => (_jsxs("button", { "aria-checked": item.current, className: "od-account-item", onClick: () => {
+                }, ref: buttonRef, title: name, type: "button", children: [avatar, _jsxs("span", { className: "od-navigation-label", children: [_jsx("strong", { children: name }), detail === undefined ? null : _jsx("small", { children: detail })] }), count > 0 ? (_jsx("span", { "aria-hidden": counted || undefined, className: "od-count", children: count })) : null, _jsx(Icon, { className: "od-account-chevron", name: "chevron-down", size: 15 })] }), open ? (_jsx("div", { "aria-label": name, className: "od-account-popup", id: menuId, onKeyDown: move, ref: focusFirst, role: "menu", tabIndex: -1, children: sections.map((section) => (_jsxs("fieldset", { "aria-label": section.label, className: "od-account-section", children: [section.label === undefined ? null : (_jsx("span", { "aria-hidden": "true", className: "od-account-section-label", children: section.label })), section.items.map((item) => (_jsxs("button", { "aria-checked": item.current, className: "od-account-item", onClick: () => {
                                 close(true);
                                 item.onSelect();
-                            }, role: item.current === undefined ? "menuitem" : "menuitemradio", tabIndex: -1, type: "button", children: [item.icon, _jsx("span", { children: item.label }), item.current === true ? (_jsx(Icon, { className: "od-account-item-check", name: "check", size: 15 })) : null] }, item.id)))] }, section.id))) })) : null] }));
+                            }, role: item.current === undefined ? "menuitem" : "menuitemradio", tabIndex: -1, type: "button", children: [item.icon, item.detail === undefined ? (_jsx("span", { children: item.label })) : (_jsxs("span", { className: "od-account-item-text", children: [_jsx("span", { children: item.label }), _jsx("small", { children: item.detail })] })), item.current === true ? (_jsx(Icon, { className: "od-account-item-check", name: "check", size: 15 })) : null] }, item.id)))] }, section.id))) })) : null] }));
 }
 //# sourceMappingURL=AccountMenu.js.map

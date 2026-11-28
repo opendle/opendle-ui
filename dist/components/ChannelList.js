@@ -12,16 +12,52 @@ import { LoadingIndicator } from "./LoadingIndicator.js";
 import { Section } from "./Section.js";
 import { useAsyncAction } from "./useAsyncAction.js";
 const noConnectionProviders = [];
+const noRefreshes = new Set();
 /**
  * The connected accounts of the networks: name, tags, switches, the warning
  * for an ended authorization, and the connect and disconnect actions.
  */
-export function ChannelList({ connectOpen, onConnectOpenChange, connectionProviders = noConnectionProviders, disconnectConfirmation, errorMessage, items, labels = channelListLabels, loading = false, networks, onDisconnect, onError, onPasswordConnect, onPasswordReconnect, onRename, onSwitchChange, onTagsChange, readOnly = false, tagColors, tagSuggestions, }) {
+export function ChannelList({ connectOpen, onConnectOpenChange, connectionProviders = noConnectionProviders, disconnectConfirmation, errorMessage, items, labels = channelListLabels, loading = false, networks, onDisconnect, onError, onPasswordConnect, onPasswordReconnect, onRename, onSwitchChange, onSwitchRefresh, onTagsChange, readOnly = false, refreshConfirmation, switchConfirmation, tagColors, tagSuggestions, }) {
     const change = useAsyncAction(errorMessage, onError);
     const removal = useAsyncAction(errorMessage, onError);
     const [connection, setConnection] = useState(null);
     const [removing, setRemoving] = useState(null);
+    const [pending, setPending] = useState(null);
+    // The reads that run now, as `channel ID` and `switch ID` pairs.
+    const [refreshing, setRefreshing] = useState(new Map());
     const { run } = change;
+    /** Run the change at once, or after the confirmation of the host. */
+    const confirmThen = (confirmation, work) => {
+        if (confirmation === null || confirmation === undefined)
+            work();
+        else
+            setPending({ ...confirmation, run: work });
+    };
+    const markRefresh = (id, switchId, on) => {
+        setRefreshing((current) => {
+            const ids = new Set(current.get(id));
+            if (on)
+                ids.add(switchId);
+            else
+                ids.delete(switchId);
+            const next = new Map(current);
+            if (ids.size === 0)
+                next.delete(id);
+            else
+                next.set(id, ids);
+            return next;
+        });
+    };
+    const refresh = onSwitchRefresh === undefined
+        ? undefined
+        : (item, switchId) => {
+            confirmThen(refreshConfirmation?.(item, switchId), () => {
+                markRefresh(item.id, switchId, true);
+                void run(() => onSwitchRefresh(item.id, switchId)).finally(() => {
+                    markRefresh(item.id, switchId, false);
+                });
+            });
+        };
     const guarded = async (work) => {
         const done = await run(work);
         if (!done)
@@ -68,10 +104,16 @@ export function ChannelList({ connectOpen, onConnectOpenChange, connectionProvid
             }, variant: "secondary", children: labels.connect })), title: labels.title, children: [change.failure === null ? null : (_jsx(InlineAlert, { className: "od-section-alert", tone: "error", children: change.failure })), _jsx(Card, { children: items.length === 0 && loading ? (_jsx(LoadingIndicator, { block: true, label: labels.loading })) : items.length === 0 ? (_jsx("p", { className: "od-list-empty", children: labels.empty })) : (_jsx("div", { className: "od-channel-table", children: _jsx("ul", { className: "od-channel-list", style: {
                             "--od-channel-switch-columns": Math.max(1, switchIds.length),
                         }, children: items.map((item) => (_jsx(ChannelRow, { switchIds: switchIds, item: item, labels: labels, onDisconnect: setRemoving, onRename: (name) => guarded(() => onRename(item.id, name)), onSwitchChange: (switchId, on) => {
-                                void run(() => onSwitchChange(item.id, switchId, on));
-                            }, onTagsChange: (tags) => {
+                                confirmThen(switchConfirmation?.(item, switchId, on), () => {
+                                    void run(() => onSwitchChange(item.id, switchId, on));
+                                });
+                            }, onSwitchRefresh: refresh === undefined
+                                ? undefined
+                                : (switchId) => {
+                                    refresh(item, switchId);
+                                }, onTagsChange: (tags) => {
                                 void run(() => onTagsChange(item.id, tags));
-                            }, readOnly: readOnly, reconnect: reconnectOf(item), tagColors: tagColors, tagSuggestions: tagSuggestions }, item.id))) }) })) }), _jsx(ConnectChannelDialog, { connectionProviders: connectionProviders, errorMessage: errorMessage, ...(onError === undefined ? {} : { onError }), labels: labels, network: connection?.network ?? null, networks: networks, onClose: () => {
+                            }, readOnly: readOnly, reconnect: reconnectOf(item), refreshing: refreshing.get(item.id) ?? noRefreshes, tagColors: tagColors, tagSuggestions: tagSuggestions }, item.id))) }) })) }), _jsx(ConnectChannelDialog, { connectionProviders: connectionProviders, errorMessage: errorMessage, ...(onError === undefined ? {} : { onError }), labels: labels, network: connection?.network ?? null, networks: networks, onClose: () => {
                     setConnection(null);
                     onConnectOpenChange?.(false);
                 }, onPasswordConnect: reconnecting === undefined || onPasswordReconnect === undefined
@@ -81,7 +123,14 @@ export function ChannelList({ connectOpen, onConnectOpenChange, connectionProvid
                     : {
                         handle: reconnecting.handle,
                         title: `${labels.reconnect} ${reconnecting.name}`,
-                    }) }, reconnecting?.id ?? ""), _jsx(ConfirmationDialog, { cancelLabel: labels.cancel, confirmLabel: labels.disconnect, description: confirmation?.description ?? "", error: removal.failure, onCancel: () => {
+                    }) }, reconnecting?.id ?? ""), _jsx(ConfirmationDialog, { cancelLabel: labels.cancel, confirmLabel: pending?.confirmLabel ?? "", description: pending?.description ?? "", onCancel: () => {
+                    setPending(null);
+                }, onConfirm: () => {
+                    if (pending === null)
+                        return;
+                    setPending(null);
+                    pending.run();
+                }, open: pending !== null, title: pending?.title ?? "" }), _jsx(ConfirmationDialog, { cancelLabel: labels.cancel, confirmLabel: labels.disconnect, description: confirmation?.description ?? "", error: removal.failure, onCancel: () => {
                     removal.reset();
                     setRemoving(null);
                 }, onConfirm: () => {

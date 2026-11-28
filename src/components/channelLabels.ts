@@ -15,6 +15,20 @@ export interface ChannelSwitch {
   readonly disabled?: boolean;
   /** Why the function is not available. It shows on hover. */
   readonly disabledReason?: string;
+  /**
+   * The last read of a function that reads the network, for example the
+   * comments. `at` is `null` before the first read. With
+   * `ChannelList.onSwitchRefresh`, a button reads it now, also when the
+   * switch is off.
+   */
+  readonly sync?: { readonly at: string | null };
+}
+
+/** A confirmation that the host shows before a switch change or a read. */
+export interface ChannelConfirmation {
+  readonly title: ReactNode;
+  readonly description: ReactNode;
+  readonly confirmLabel: string;
 }
 
 /** One connected account of a network. */
@@ -86,6 +100,12 @@ export interface ChannelListLabels {
   readonly back: string;
   readonly cancel: string;
   readonly close: string;
+  /** The hidden text before the time of the last read. */
+  readonly lastRead: string;
+  /** The text of a function that was not read yet. */
+  readonly neverRead: string;
+  /** The accessible name of the read button, before the switch label. */
+  readonly readNow: string;
 }
 
 export const channelListLabels: ChannelListLabels = {
@@ -109,4 +129,7 @@ export const channelListLabels: ChannelListLabels = {
   back: "Back",
   cancel: "Cancel",
   close: "Close",
+  lastRead: "Last read",
+  neverRead: "Not read",
+  readNow: "Read now",
 };

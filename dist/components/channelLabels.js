@@ -19,5 +19,8 @@ export const channelListLabels = {
     back: "Back",
     cancel: "Cancel",
     close: "Close",
+    lastRead: "Last read",
+    neverRead: "Not read",
+    readNow: "Read now",
 };
 //# sourceMappingURL=channelLabels.js.map
