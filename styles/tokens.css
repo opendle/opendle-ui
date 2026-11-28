@@ -7566,7 +7566,7 @@ samp {
   grid-column: 2;
   min-inline-size: 0;
   margin-top: -0.375rem;
-  color: var(--od-color-muted);
+  color: var(--od-color-muted-strong);
   font-size: 0.78125rem;
   line-height: 1.4;
   overflow-wrap: anywhere;

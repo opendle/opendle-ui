@@ -43,7 +43,7 @@ function Fixture() {
  <RadioGroup ref={groupRef} label="Call actor" name="actor" options={state.options} value={state.value} onChange={changed} disabled={state.disabled} error={state.error} help={state.reflow ? undefined : state.help} aria-describedby="host-help" form={state.external?'external-report':undefined}/>}
  <Button>After choices</Button>
  <RadioGroup label="Independent source" options={options} value={other} onChange={setOther}/>
- <RadioGroup label="Another source" options={options} value="service" onChange={()=>{}}/>
+ <RadioGroup label="Another source" options={options.map(option=>option.value==='service'?{...option,description:'Calls of the service accounts.'}:option)} value="service" onChange={()=>{}}/>
  </AdvancedFieldsDisclosure>
  <Button type="submit">Run report</Button>
  </form><form id="external-report" aria-label="External report"/>
